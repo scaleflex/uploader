@@ -1,0 +1,167 @@
+import { LitElement, html, css } from 'lit';
+import { property } from 'lit/decorators.js';
+
+export class SfxSuccessCard extends LitElement {
+  static styles = css`
+    :host {
+      display: flex;
+      flex: 1;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .card {
+      background: var(--sfx-up-bg, #fff);
+      border-radius: 20px;
+      border: 1.5px solid #bbf7d0;
+      padding: 64px 48px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      box-shadow: 0 8px 40px rgba(34, 197, 94, 0.08);
+      animation: fadeUp 0.4s ease both;
+    }
+
+    .icon {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 18px;
+      color: var(--sfx-up-success, #16a34a);
+      box-shadow: 0 4px 18px rgba(22, 163, 74, 0.16);
+      animation: popBounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s both;
+    }
+
+    .icon svg {
+      width: 30px;
+      height: 30px;
+    }
+
+    .title {
+      font-size: 21px;
+      font-weight: 800;
+      color: #0f172a;
+      letter-spacing: -0.4px;
+      margin-bottom: 7px;
+    }
+
+    .subtitle {
+      font-size: 13.5px;
+      color: var(--sfx-up-text-muted, #94a3b8);
+      line-height: 1.6;
+      max-width: 320px;
+      margin-bottom: 22px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 9px;
+    }
+
+    button {
+      height: 36px;
+      padding: 0 17px;
+      border-radius: 9px;
+      border: none;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.18s ease;
+      white-space: nowrap;
+    }
+
+    .btn-ghost {
+      background: none;
+      color: var(--sfx-up-text-muted, #94a3b8);
+      border: 1.5px solid var(--sfx-up-border, #e8edf5);
+    }
+
+    .btn-ghost:hover {
+      background: #f8faff;
+      color: #64748b;
+      border-color: #d1dff0;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--sfx-up-primary, #2563eb), var(--sfx-up-primary-mid, #3b82f6));
+      color: #fff;
+      box-shadow: 0 2px 10px rgba(37, 99, 235, 0.28);
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, var(--sfx-up-primary-hover, #1d4ed8), var(--sfx-up-primary, #2563eb));
+      box-shadow: 0 4px 16px rgba(37, 99, 235, 0.38);
+      transform: translateY(-1px);
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes popBounce {
+      0% { transform: scale(0); opacity: 0; }
+      55% { transform: scale(1.2); opacity: 1; }
+      75% { transform: scale(0.94); }
+      100% { transform: scale(1); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .card { animation: none; }
+      .icon { animation: none; }
+    }
+  `;
+
+  @property({ type: Number }) fileCount = 0;
+  @property({ type: String }) primaryLabel = 'Done';
+
+  private _uploadMore() {
+    this.dispatchEvent(
+      new CustomEvent('upload-more', { bubbles: true, composed: true }),
+    );
+  }
+
+  private _primaryAction() {
+    this.dispatchEvent(
+      new CustomEvent('primary-action', { bubbles: true, composed: true }),
+    );
+  }
+
+  render() {
+    const noun = this.fileCount === 1 ? 'file has' : 'files have';
+
+    return html`
+      <div class="card">
+        <div class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        </div>
+        <div class="title">Uploaded successfully!</div>
+        <div class="subtitle">
+          All ${this.fileCount} ${noun} been uploaded and are ready for review.
+        </div>
+        <div class="actions">
+          <button class="btn-ghost" @click=${this._uploadMore}>Upload more</button>
+          <button class="btn-primary" @click=${this._primaryAction}>${this.primaryLabel}</button>
+        </div>
+      </div>
+    `;
+  }
+}

@@ -1,0 +1,346 @@
+import { UploadEngine } from './upload-engine';
+import { Store } from '../store/store';
+import { makeUploadFile, makeDefaultState } from '../test-utils';
+import type { UploaderState, UploadResponse } from '../store/store.types';
+
+// Mock the upload modules
+vi.mock('./xhr-upload', () => ({
+  xhrUploadFile: vi.fn(() => ({ abort: vi.fn() })),
+  xhrUploadUrl: vi.fn(() => ({ abort: vi.fn() })),
+}));
+
+vi.mock('./companion-upload', () => ({
+  companionUploadFile: vi.fn(() => ({ abort: vi.fn() })),
+}));
+
+import { xhrUploadFile, xhrUploadUrl } from './xhr-upload';
+import { companionUploadFile } from './companion-upload';
+
+function createEngine(stateOverrides: Partial<UploaderState> = {}) {
+  const store = new Store(makeDefaultState(stateOverrides));
+  const config = {
+    apiBase: 'https://api.filerobot.com/test',
+    authHeaders: { 'X-Filerobot-Key': 'key' },
+  };
+  const engine = new UploadEngine(store, config);
+  return { store, engine };
+}
+
+const mockResponse: UploadResponse = {
+  status: 'success',
+  file: {
+    uuid: '123',
+    name: 'test.png',
+    extension: 'png',
+    type: 'image/png',
+    size: 100,
+    url: { public: 'https://pub', cdn: 'https://cdn' },
+    meta: {},
+    tags: [],
+    info: {},
+    created_at: '2025-01-01',
+    modified_at: '2025-01-01',
+  },
+};
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  vi.useFakeTimers();
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
+
+describe('UploadEngine', () => {
+  describe('uploadAll', () => {
+    it('transitions idle files to queued and starts uploading', () => {
+      const file = makeUploadFile({ id: 'f1', status: 'idle' });
+      const { store, engine } = createEngine({ files: new Map([['f1', file]]) });
+
+      engine.start();
+      engine.uploadAll();
+
+      expect(store.getState().isUploading).toBe(true);
+      expect(xhrUploadFile).toHaveBeenCalled();
+    });
+
+    it('does nothing when no idle or queued files', () => {
+      const file = makeUploadFile({ id: 'f1', status: 'complete' });
+      const { store, engine } = createEngine({ files: new Map([['f1', file]]) });
+
+      engine.start();
+      engine.uploadAll();
+
+      expect(store.getState().isUploading).toBe(false);
+      expect(xhrUploadFile).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('processQueue', () => {
+    it('starts all queued files', () => {
+      const files = new Map([
+        ['f1', makeUploadFile({ id: 'f1', status: 'queued', addedAt: 1 })],
+        ['f2', makeUploadFile({ id: 'f2', status: 'queued', addedAt: 2 })],
+      ]);
+
+      const { store, engine } = createEngine({ files });
+
+      engine.start();
+
+      // All queued files should eventually be started
+      const statuses = [...store.getState().files.values()].map((f) => f.status);
+      expect(statuses.every((s) => s === 'uploading')).toBe(true);
+      expect(xhrUploadFile).toHaveBeenCalled();
+    });
+
+    it('does not process when paused', () => {
+      const files = new Map([['f1', makeUploadFile({ id: 'f1', status: 'queued' })]]);
+      const { engine } = createEngine({ files, isPaused: true });
+
+      engine.start();
+      expect(xhrUploadFile).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('startUpload routing', () => {
+    it('uses xhrUploadUrl for remote URL files', () => {
+      const file = makeUploadFile({
+        id: 'f1',
+        status: 'queued',
+        file: null,
+        remoteUrl: 'https://example.com/img.jpg',
+      });
+      const { engine } = createEngine({ files: new Map([['f1', file]]) });
+
+      engine.start();
+      expect(xhrUploadUrl).toHaveBeenCalled();
+      expect(xhrUploadFile).not.toHaveBeenCalled();
+    });
+
+    it('uses companionUploadFile for remote info files', () => {
+      const file = makeUploadFile({
+        id: 'f1',
+        status: 'queued',
+        file: null,
+        remoteInfo: {
+          companionUrl: 'https://companion.test',
+          provider: 'google-drive',
+          token: 'tok',
+          requestPath: '/path',
+          fileId: 'gd-1',
+          name: 'doc.pdf',
+          mimeType: 'application/pdf',
+          size: 1000,
+          thumbnail: null,
+        },
+      });
+      const { engine } = createEngine({ files: new Map([['f1', file]]) });
+
+      engine.start();
+      expect(companionUploadFile).toHaveBeenCalled();
+    });
+  });
+
+  describe('handleComplete', () => {
+    it('marks file as complete and checks all complete', () => {
+      const file = makeUploadFile({ id: 'f1', status: 'queued' });
+      const { store, engine } = createEngine({
+        files: new Map([['f1', file]]),
+        isUploading: true,
+      });
+
+      // Capture onComplete callback
+      (xhrUploadFile as ReturnType<typeof vi.fn>).mockImplementation((_file: any, opts: any) => {
+        // Simulate immediate completion
+        setTimeout(() => opts.onComplete(mockResponse), 0);
+        return { abort: vi.fn() };
+      });
+
+      engine.start();
+      vi.runAllTimers();
+
+      const updated = store.getState().files.get('f1')!;
+      expect(updated.status).toBe('complete');
+      expect(updated.progress).toBe(100);
+      expect(updated.response).toEqual(mockResponse);
+      expect(store.getState().isUploading).toBe(false);
+    });
+  });
+
+  describe('handleError with retry', () => {
+    it('retries with exponential backoff', () => {
+      const file = makeUploadFile({ id: 'f1', status: 'queued', retryCount: 0 });
+      const { store, engine } = createEngine({
+        files: new Map([['f1', file]]),
+        queueConfig: {
+          concurrency: 3,
+          autoProceed: false,
+          retryConfig: { maxRetries: 3, baseDelay: 1000, maxDelay: 30000, backoffFactor: 2 },
+        },
+      });
+
+      (xhrUploadFile as ReturnType<typeof vi.fn>).mockImplementation((_file: any, opts: any) => {
+        setTimeout(() => opts.onError(new Error('Network fail')), 0);
+        return { abort: vi.fn() };
+      });
+
+      engine.start();
+      vi.advanceTimersByTime(1); // trigger the error
+
+      const retrying = store.getState().files.get('f1')!;
+      expect(retrying.status).toBe('retrying');
+      expect(retrying.retryCount).toBe(1);
+      expect(retrying.error).toBe('Network fail');
+    });
+
+    it('marks as failed after max retries', () => {
+      const file = makeUploadFile({ id: 'f1', status: 'queued', retryCount: 3 });
+      const { store, engine } = createEngine({
+        files: new Map([['f1', file]]),
+        queueConfig: {
+          concurrency: 3,
+          autoProceed: false,
+          retryConfig: { maxRetries: 3, baseDelay: 1000, maxDelay: 30000, backoffFactor: 2 },
+        },
+      });
+
+      (xhrUploadFile as ReturnType<typeof vi.fn>).mockImplementation((_file: any, opts: any) => {
+        setTimeout(() => opts.onError(new Error('Final fail')), 0);
+        return { abort: vi.fn() };
+      });
+
+      engine.start();
+      vi.advanceTimersByTime(1);
+
+      const failed = store.getState().files.get('f1')!;
+      expect(failed.status).toBe('failed');
+      expect(failed.error).toBe('Final fail');
+    });
+  });
+
+  describe('cancelFile', () => {
+    it('aborts and marks as cancelled', () => {
+      const abortFn = vi.fn();
+      const file = makeUploadFile({ id: 'f1', status: 'queued' });
+      const { store, engine } = createEngine({ files: new Map([['f1', file]]) });
+
+      (xhrUploadFile as ReturnType<typeof vi.fn>).mockReturnValue({ abort: abortFn });
+
+      engine.start();
+      engine.cancelFile('f1');
+
+      expect(abortFn).toHaveBeenCalled();
+      expect(store.getState().files.get('f1')!.status).toBe('cancelled');
+    });
+  });
+
+  describe('cancelAll', () => {
+    it('cancels all active uploads and sets isUploading=false', () => {
+      const files = new Map([
+        ['f1', makeUploadFile({ id: 'f1', status: 'queued', addedAt: 1 })],
+        ['f2', makeUploadFile({ id: 'f2', status: 'queued', addedAt: 2 })],
+      ]);
+      const { store, engine } = createEngine({ files, isUploading: true });
+
+      engine.start();
+      engine.cancelAll();
+
+      expect(store.getState().isUploading).toBe(false);
+      // All files should be cancelled
+      for (const f of store.getState().files.values()) {
+        expect(f.status).toBe('cancelled');
+      }
+    });
+  });
+
+  describe('retryFile', () => {
+    it('re-queues a failed file', () => {
+      const file = makeUploadFile({ id: 'f1', status: 'failed', error: 'old error', progress: 50 });
+      const { store, engine } = createEngine({ files: new Map([['f1', file]]) });
+
+      engine.start();
+      engine.retryFile('f1');
+
+      const updated = store.getState().files.get('f1')!;
+      expect(updated.status).toBe('uploading'); // queued → immediately picked up
+      expect(updated.error).toBeNull();
+    });
+
+    it('ignores non-failed files', () => {
+      const file = makeUploadFile({ id: 'f1', status: 'uploading' });
+      const { store, engine } = createEngine({ files: new Map([['f1', file]]) });
+
+      engine.retryFile('f1');
+      expect(store.getState().files.get('f1')!.status).toBe('uploading');
+    });
+  });
+
+  describe('retryAll', () => {
+    it('re-queues all failed/errored files', () => {
+      const files = new Map([
+        ['f1', makeUploadFile({ id: 'f1', status: 'failed' })],
+        ['f2', makeUploadFile({ id: 'f2', status: 'error' })],
+        ['f3', makeUploadFile({ id: 'f3', status: 'complete' })],
+      ]);
+      const { store, engine } = createEngine({ files });
+
+      engine.start();
+      engine.retryAll();
+
+      expect(store.getState().files.get('f1')!.status).toBe('uploading');
+      expect(store.getState().files.get('f2')!.status).toBe('uploading');
+      expect(store.getState().files.get('f3')!.status).toBe('complete');
+    });
+  });
+
+  describe('updateConfig', () => {
+    it('patches the engine config', () => {
+      const { engine } = createEngine();
+      engine.updateConfig({ authHeaders: { 'X-Filerobot-Key': 'new-key' } });
+
+      // Start an upload to verify the new headers are used
+      const file = makeUploadFile({ id: 'f1', status: 'queued' });
+      const { store, engine: engine2 } = createEngine({ files: new Map([['f1', file]]) });
+      engine2.updateConfig({ authHeaders: { 'X-Filerobot-Key': 'updated' } });
+      engine2.start();
+
+      expect(xhrUploadFile).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          authHeaders: { 'X-Filerobot-Key': 'updated' },
+        }),
+      );
+    });
+  });
+
+  describe('destroy', () => {
+    it('aborts uploads, clears timers, and unsubscribes', () => {
+      const abortFn = vi.fn();
+      (xhrUploadFile as ReturnType<typeof vi.fn>).mockReturnValue({ abort: abortFn });
+
+      const file = makeUploadFile({ id: 'f1', status: 'queued' });
+      const { store, engine } = createEngine({ files: new Map([['f1', file]]) });
+
+      engine.start();
+      expect(xhrUploadFile).toHaveBeenCalledTimes(1);
+
+      engine.destroy();
+      expect(abortFn).toHaveBeenCalled();
+
+      // After destroy, store changes should not trigger processQueue
+      vi.clearAllMocks();
+      store.setState({ isPaused: false });
+      expect(xhrUploadFile).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('start', () => {
+    it('is idempotent', () => {
+      const { engine } = createEngine();
+      engine.start();
+      engine.start(); // should not subscribe twice
+      engine.destroy();
+    });
+  });
+});

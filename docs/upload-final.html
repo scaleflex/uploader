@@ -1,0 +1,2513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Upload — Q1 Marketing Assets · Airbox</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --blue:       #2563eb;
+  --blue-dark:  #1d4ed8;
+  --blue-mid:   #3b82f6;
+  --blue-light: #eff6ff;
+  --blue-glow:  rgba(37,99,235,0.18);
+  --green:      #16a34a;
+  --amber:      #d97706;
+  --red:        #dc2626;
+  --t: 0.18s ease;
+}
+
+html, body {
+  height: 100%;
+  font-family: 'Inter', -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+/* ══════════════════════════════════════════
+   SHELL
+══════════════════════════════════════════ */
+.shell {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+/* ══════════════════════════════════════════
+   LEFT PANEL
+══════════════════════════════════════════ */
+.left {
+  width: 260px;
+  min-width: 0;
+  flex-shrink: 0;
+  background: #ffffff;
+  border-right: 1px solid #ebebeb;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  padding: 28px 12px 24px 12px;
+  overflow: hidden;
+}
+
+
+.left-blob1, .left-blob2 { display: none; }
+
+.left-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* logo */
+.l-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 36px;
+  animation: fadeUp 0.4s ease both;
+  white-space: nowrap;
+  padding: 0 4px;
+}
+.l-logo-mark {
+  width: 28px; height: 28px;
+  border-radius: 7px;
+  background: linear-gradient(135deg, var(--blue) 0%, var(--blue-mid) 100%);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 8px rgba(37,99,235,0.18);
+}
+.l-logo-mark svg { width: 14px; height: 14px; color: #fff; }
+.l-logo-text {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  color: #374151;
+}
+
+/* section label (like "CONFIGURATION") */
+.l-section-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
+  color: #9ca3af;
+  margin: 0 0 6px;
+  animation: fadeUp 0.4s 0.06s ease both;
+}
+
+/* "upload to" small label above title */
+.l-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
+  color: #9ca3af;
+  margin-bottom: 6px;
+  padding: 0 4px;
+  animation: fadeUp 0.4s 0.06s ease both;
+}
+.l-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+  letter-spacing: -0.2px;
+  line-height: 1.3;
+  margin-bottom: 8px;
+  padding: 0 4px;
+  animation: fadeUp 0.4s 0.1s ease both;
+}
+.l-desc {
+  font-size: 13px;
+  font-weight: 400;
+  color: #6b7280;
+  line-height: 1.6;
+  padding: 0 4px;
+  animation: fadeUp 0.4s 0.14s ease both;
+}
+
+/* divider */
+.l-divider {
+  height: 1px;
+  background: #f3f4f6;
+  margin: 20px 0;
+  animation: fadeUp 0.4s 0.18s ease both;
+}
+
+/* meta rows */
+.l-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: fadeUp 0.4s 0.2s ease both;
+}
+.l-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: background 0.14s ease;
+  cursor: default;
+}
+.l-meta-row:hover { background: lab(48.6796 20.8679 -70.2042 / 0.07); }
+.l-meta-row span {
+  font-size: 13.5px;
+  font-weight: 400;
+  color: #374151;
+}
+
+/* icon */
+.l-meta-icon {
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; color: #9ca3af;
+}
+.l-meta-icon svg { width: 20px; height: 20px; }
+
+/* spacer */
+.l-spacer { flex: 1; }
+
+/* sent by */
+.l-sent {
+  animation: fadeUp 0.4s 0.26s ease both;
+}
+.l-sent-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
+  color: #9ca3af;
+  margin-bottom: 10px;
+  padding: 0 4px;
+}
+.l-sender {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 4px;
+}
+.l-avatar {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6, #6366f1);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  flex-shrink: 0;
+}
+.l-sender-info { display: flex; flex-direction: column; gap: 2px; }
+.l-sender-name { font-size: 14px; font-weight: 500; color: #374151; }
+.l-sender-role { font-size: 12px; font-weight: 400; color: #9ca3af; }
+
+.l-footer {
+  margin-top: 16px;
+  font-size: 11px;
+  font-weight: 400;
+  color: #d1d5db;
+  letter-spacing: 0.2px;
+  padding: 0 4px;
+  animation: fadeUp 0.4s 0.3s ease both;
+}
+
+/* ══════════════════════════════════════════
+   RIGHT PANEL
+══════════════════════════════════════════ */
+.right {
+  flex: 1;
+  background: #f5f5f7;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.right-inner {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 48px 56px 32px;
+  gap: 20px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* ── DROP ZONE ── */
+.drop-zone {
+  border: 1.5px dashed #d8d8d8;
+  border-radius: 16px;
+  background: #ffffff;
+  padding: 52px 40px 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.22s, background 0.22s, padding 0.35s ease, flex-direction 0s;
+  user-select: none;
+  flex-shrink: 0;
+}
+.drop-zone:hover {
+  border-color: #bbb;
+  background: #fafafa;
+}
+.drop-zone.drag-over {
+  border: 2px solid var(--blue);
+  background: var(--blue-light);
+  box-shadow: 0 0 0 5px rgba(37,99,235,0.06);
+}
+.drop-zone.has-files {
+  padding: 14px 24px;
+  flex-direction: row;
+  gap: 12px;
+  justify-content: flex-start;
+}
+
+/* orbit rings */
+.dz-rings {
+  width: 110px; height: 110px;
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 20px;
+  flex-shrink: 0;
+}
+.dz-ring {
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  border: 1.5px dashed #c4d5ef;
+  animation: slowSpin 20s linear infinite;
+  transition: border-color 0.3s;
+}
+.dz-ring:nth-child(2) {
+  inset: 13px;
+  border-color: #d8e5f5;
+  border-style: dotted;
+  animation-direction: reverse;
+  animation-duration: 14s;
+}
+.drop-zone.drag-over .dz-ring { border-color: var(--blue); animation-duration: 3s; }
+.drop-zone.drag-over .dz-ring:nth-child(2) { border-color: rgba(37,99,235,0.4); animation-duration: 2s; }
+
+.dz-core {
+  width: 54px; height: 54px;
+  border-radius: 50%;
+  background: var(--blue-light);
+  color: var(--blue);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1;
+  transition: all 0.28s cubic-bezier(0.34,1.4,0.64,1);
+  box-shadow: 0 3px 12px rgba(37,99,235,0.15);
+}
+.dz-core svg { width: 24px; height: 24px; }
+.drop-zone:hover .dz-core { transform: translateY(-2px); box-shadow: 0 5px 18px rgba(37,99,235,0.22); }
+.drop-zone.drag-over .dz-core {
+  background: var(--blue); color: #fff;
+  transform: scale(1.12);
+  box-shadow: 0 8px 24px rgba(37,99,235,0.38);
+}
+.drop-zone.drag-over .dz-core svg { transform: translateY(-2px); }
+
+.dz-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 5px;
+  transition: font-size 0.3s, margin 0.3s;
+}
+.dz-title span { color: var(--blue); }
+.dz-sub { font-size: 13px; color: #94a3b8; transition: opacity 0.2s; }
+
+/* compact state when files added */
+.drop-zone.has-files .dz-rings { width: 36px; height: 36px; margin-bottom: 0; flex-shrink: 0; }
+.drop-zone.has-files .dz-ring { border-width: 1px; }
+.drop-zone.has-files .dz-core { width: 36px; height: 36px; box-shadow: none; }
+.drop-zone.has-files .dz-core svg { width: 16px; height: 16px; }
+.drop-zone.has-files .dz-title { font-size: 13.5px; font-weight: 600; margin-bottom: 0; }
+.drop-zone.has-files .dz-sub { display: none; }
+
+/* ripple */
+.dz-ripple {
+  position: absolute;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--blue);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%,-50%) scale(0);
+}
+.dz-ripple.go { animation: ripple 0.55s ease-out forwards; }
+
+/* ── DIVIDER ── */
+.import-divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.import-line { flex: 1; height: 1px; background: #f1f5f9; }
+.import-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #cbd5e1;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+/* ── SOURCES ── */
+.sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+.src-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 13px 24px;
+  border-radius: 50px;
+  border: 1.5px solid #e8edf5;
+  background: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  transition: all var(--t);
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.src-pill:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+  background: var(--blue-light);
+  box-shadow: 0 2px 10px var(--blue-glow);
+  transform: translateY(-1px);
+}
+.src-pill svg { width: 17px; height: 17px; flex-shrink: 0; }
+.src-pill .bi { width: 20px; height: 20px; border-radius: 5px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.src-pill .bi.db { background:#0061ff; }
+.src-pill .bi.bx { background:#0e50a0; font-size:9px; font-weight:800; color:#fff; }
+.src-pill .bi.od { background:#0078d4; }
+
+
+/* ── FILE GRID ── */
+.file-stack {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(186px, 1fr));
+  gap: 12px;
+}
+
+/* ── FILE TILE — card layout ── */
+.tile {
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #e8eaed;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  animation: tileIn 0.6s cubic-bezier(0.34,1.2,0.64,1) both;
+  will-change: transform, opacity, filter;
+  transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s;
+  cursor: default;
+  display: flex; flex-direction: column;
+  position: relative;
+}
+.tile:hover {
+  box-shadow: 0 6px 24px rgba(0,0,0,0.11);
+  transform: translateY(-2px);
+  border-color: #d1d5db;
+}
+
+/* preview area */
+.tile-preview {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #f3f4f6;
+}
+
+/* bg layer */
+.tile-bg {
+  position: absolute; inset: 0;
+  background-size: cover; background-position: center;
+  transition: transform 0.4s ease;
+}
+.tile:hover .tile-bg { transform: scale(1.03); }
+.tile-bg.pdf { background: linear-gradient(135deg,#fef2f2,#fee2e2); }
+.tile-bg.doc { background: linear-gradient(135deg,#eff6ff,#dbeafe); }
+.tile-bg.vid { background: linear-gradient(135deg,#f5f3ff,#ede9fe); }
+.tile-bg.zip { background: linear-gradient(135deg,#fffbeb,#fef3c7); }
+.tile-bg.gen { background: linear-gradient(135deg,#f8fafc,#f1f5f9); }
+
+/* icon for non-image */
+.tile-icon {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none;
+}
+.tile-icon-inner {
+  width: 44px; height: 44px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.9);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+.tile-icon-inner svg { width: 22px; height: 22px; }
+.tile-icon-inner.pdf { color:#dc2626; }
+.tile-icon-inner.doc { color:#1d4ed8; }
+.tile-icon-inner.vid { color:#7c3aed; }
+.tile-icon-inner.zip { color:#b45309; }
+.tile-icon-inner.gen { color:#64748b; }
+
+/* info bar below preview */
+.tile-info {
+  padding: 9px 11px 10px;
+  background: #fff;
+  min-width: 0;
+}
+.tile-name {
+  font-size: 12.5px; font-weight: 600; color: #111827;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+.tile-meta {
+  font-size: 11px; font-weight: 400; color: #9ca3af;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* done overlay — on preview only */
+.tile-done-overlay {
+  position: absolute; inset: 0;
+  background: rgba(5,150,105,0.72);
+  opacity: 0; transition: opacity 0.45s cubic-bezier(0.4,0,0.2,1);
+  pointer-events: none;
+  display: flex; align-items: center; justify-content: center;
+}
+.tile.done .tile-done-overlay { opacity: 1; pointer-events: auto; }
+.tile-check { animation: popBounce 0.55s cubic-bezier(0.34,1.56,0.64,1) 0.15s both; }
+.tile-check svg { width: 28px; height: 28px; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.2)); }
+.tile-undo {
+  position: absolute; bottom: 8px; right: 8px;
+  font-size: 10px; font-weight: 600; color: rgba(255,255,255,0.7);
+  background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 5px; padding: 3px 8px; cursor: pointer; transition: all 0.15s;
+  font-family: inherit;
+}
+.tile-undo:hover { background: rgba(0,0,0,0.35); color: #fff; }
+/* dim info bar on done */
+.tile.done .tile-info { opacity: 0.5; }
+
+/* uploading spinner */
+.tile-spinner {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.22);
+  opacity: 0; transition: opacity 0.2s; pointer-events: none;
+}
+.tile.uploading .tile-spinner { opacity: 1; }
+.fp-spin { width:28px; height:28px; border:2.5px solid rgba(255,255,255,0.22); border-top-color:#fff; border-radius:50%; animation:spinRing 0.7s linear infinite; }
+
+/* progress bar */
+.tile-prog { position:absolute; bottom:0; left:0; right:0; height:2px; background:rgba(255,255,255,0.15); }
+.tile-prog-fill { height:100%; background:#fff; transform-origin:left; transform:scaleX(0); transition:transform 0.32s ease; }
+.tile.done .tile-prog-fill { transform:scaleX(1); background:rgba(255,255,255,0.6); }
+
+/* tile action buttons — on preview */
+.tile-actions {
+  position: absolute; top: 6px; right: 6px;
+  display: flex; gap: 3px;
+  opacity: 0; transition: opacity 0.15s; z-index: 10;
+}
+.tile:hover .tile-actions { opacity: 1; }
+.tile-btn {
+  width: 26px; height: 26px; border-radius: 6px;
+  border: none; background: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s, transform 0.12s; color: #374151; flex-shrink: 0;
+}
+.tile-btn:hover { background: #f3f4f6; transform: scale(1.08); }
+.tile-btn.del { color: #6b7280; }
+.tile-btn.del:hover { background: #fee2e2; color: #dc2626; }
+.tile-btn svg { width: 11px; height: 11px; }
+
+/* rename overlay — covers whole tile */
+.tile-rename {
+  position: absolute; inset: 0; z-index: 20;
+  background: rgba(0,0,0,0.55); backdrop-filter: blur(2px);
+  border-radius: 6px; display: none;
+  align-items: center; justify-content: center; padding: 14px;
+}
+.tile-rename.active { display: flex; }
+.tile-rename-inner { width: 100%; }
+.tile-rename-label { font-size: 10.5px; font-weight: 600; color: rgba(255,255,255,0.5); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.6px; }
+.tile-rename-input {
+  width: 100%; background: rgba(255,255,255,0.12);
+  border: 1.5px solid rgba(255,255,255,0.45);
+  border-radius: 8px; padding: 7px 10px;
+  font-size: 12px; font-weight: 600; color: #fff;
+  font-family: inherit; outline: none; transition: border-color 0.15s;
+}
+.tile-rename-input:focus { border-color: rgba(255,255,255,0.85); }
+.tile-rename-hint { font-size: 10px; color: rgba(255,255,255,0.35); margin-top: 6px; text-align: center; }
+
+/* ── ACTIONS BAR ── */
+.actions-bar {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  border-top: 1px solid #ebebeb;
+  padding: 14px 56px;
+  flex-shrink: 0;
+  box-shadow: 0 -4px 16px rgba(0,0,0,0.04);
+}
+.actions-bar.visible { display:flex; }
+.a-count { font-size:13.5px; font-weight:700; color:#1e293b; }
+.a-count span { font-weight:400; color:#94a3b8; }
+.a-right { display:flex; align-items:center; gap:9px; }
+
+/* ── BUTTONS ── */
+.btn { height:36px; padding:0 17px; border-radius:9px; border:none; font-family:'Inter',sans-serif; font-size:13px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; transition:all var(--t); white-space:nowrap; }
+.btn svg { width:14px; height:14px; }
+.btn-ghost { background:none; color:#94a3b8; border:1.5px solid #e8edf5; }
+.btn-ghost:hover { background:#f8faff; color:#64748b; border-color:#d1dff0; }
+.btn-sec { background:#eff6ff; color:var(--blue); border:1.5px solid rgba(37,99,235,0.15); }
+.btn-sec:hover { background:#dbeafe; }
+.btn-primary { background:linear-gradient(135deg,var(--blue),var(--blue-mid)); color:#fff; box-shadow:0 2px 10px rgba(37,99,235,0.28); min-width:110px; position:relative; overflow:hidden; }
+.btn-primary:hover:not(:disabled) { background:linear-gradient(135deg,var(--blue-dark),var(--blue)); box-shadow:0 4px 16px rgba(37,99,235,0.38); transform:translateY(-1px); }
+.btn-primary:active { transform:translateY(0); }
+.btn-primary:disabled { opacity:0.55; cursor:not-allowed; }
+.btn-primary.done-state { background:linear-gradient(135deg,var(--green),#22c55e); box-shadow:0 2px 10px rgba(22,163,74,0.28); }
+.btn-spin { width:14px; height:14px; border:2px solid rgba(255,255,255,0.3); border-top-color:#fff; border-radius:50%; animation:spinRing 0.7s linear infinite; }
+
+/* ── SUCCESS ── */
+.success-card {
+  background:#fff;
+  border-radius:20px;
+  border:1.5px solid #bbf7d0;
+  padding:64px 48px;
+  display:none;
+  flex-direction:column;
+  align-items:center;
+  text-align:center;
+  box-shadow:0 8px 40px rgba(34,197,94,0.08);
+  flex:1;
+  justify-content:center;
+}
+.success-card.visible { display:flex; animation:fadeUp 0.4s ease both; }
+.s-icon { width:64px; height:64px; border-radius:50%; background:linear-gradient(135deg,#dcfce7,#bbf7d0); display:flex; align-items:center; justify-content:center; margin-bottom:18px; color:var(--green); box-shadow:0 4px 18px rgba(22,163,74,0.16); animation:popBounce 0.6s cubic-bezier(0.34,1.56,0.64,1) 0.1s both; }
+.s-icon svg { width:30px; height:30px; }
+.s-title { font-size:21px; font-weight:800; color:#0f172a; letter-spacing:-0.4px; margin-bottom:7px; }
+.s-sub { font-size:13.5px; color:#94a3b8; line-height:1.6; max-width:320px; margin-bottom:22px; }
+.s-actions { display:flex; gap:9px; }
+
+/* ── KEYFRAMES ── */
+@keyframes fadeUp { from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)} }
+@keyframes tileIn {
+  0%   { opacity:0; transform:scale(0.8) translateY(22px); filter:blur(10px); }
+  55%  { opacity:1; filter:blur(0); }
+  80%  { transform:scale(1.03) translateY(-3px); }
+  100% { opacity:1; transform:scale(1) translateY(0); filter:blur(0); }
+}
+@keyframes popBounce { 0%{transform:scale(0);opacity:0} 55%{transform:scale(1.2);opacity:1} 75%{transform:scale(0.94)} 100%{transform:scale(1)} }
+@keyframes slowSpin { to{transform:rotate(360deg)} }
+@keyframes spinRing { to{transform:rotate(360deg)} }
+@keyframes checkFall { from{transform:translateY(-4px) scale(0.7);opacity:0} to{transform:translateY(0) scale(1);opacity:1} }
+@keyframes ripple { from{transform:translate(-50%,-50%) scale(0);opacity:0.18} to{transform:translate(-50%,-50%) scale(12);opacity:0} }
+
+/* ══════════════════════════════════════════
+   MODALS
+══════════════════════════════════════════ */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal {
+  background: #fff; border-radius: 20px;
+  box-shadow: 0 28px 80px rgba(0,0,0,0.18), 0 4px 16px rgba(0,0,0,0.06);
+  width: 100%; max-width: 480px; max-height: 88vh;
+  overflow: hidden; display: flex; flex-direction: column;
+  transform: translateY(18px) scale(0.97);
+  transition: transform 0.28s cubic-bezier(0.34,1.2,0.64,1);
+}
+.modal-overlay.open .modal { transform: translateY(0) scale(1); }
+.modal-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 18px 20px 0; flex-shrink: 0;
+}
+.modal-head-icon {
+  width: 34px; height: 34px; border-radius: 10px;
+  background: #f5f5f7; display: flex; align-items: center;
+  justify-content: center; flex-shrink: 0;
+}
+.modal-title { font-size: 15px; font-weight: 700; color: #1a1a1a; flex: 1; }
+.modal-close {
+  width: 28px; height: 28px; border-radius: 8px; border: none;
+  background: #f0f0f0; color: #888; font-size: 14px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s, color 0.15s; flex-shrink: 0; line-height: 1;
+}
+.modal-close:hover { background: #e4e4e4; color: #333; }
+.modal-body { padding: 18px 20px 20px; overflow-y: auto; flex: 1; }
+
+/* ── VIEW MODAL (wide) ── */
+.modal-wide { max-width: min(920px, 92vw); max-height: 88vh; border-radius: 14px; }
+.modal-wide .modal-head { display: none; }
+.modal-wide .modal-body { padding: 0; overflow: hidden; display: flex; flex-direction: column; }
+.vm-layout { display: flex; flex-direction: column; height: 82vh; max-height: 82vh; }
+.vm-topbar {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 16px; border-bottom: 1px solid #f0f0f0; flex-shrink: 0;
+}
+.vm-filename { font-size: 13px; font-weight: 600; color: #1a1a1a; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vm-topbar-actions { display: flex; align-items: center; flex-shrink: 0; }
+.vm-top-btn {
+  width: 32px; height: 32px; border-radius: 8px; border: none;
+  background: none; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  color: #9ca3af; transition: background 0.14s, color 0.14s;
+}
+.vm-top-btn:hover { background: #f5f5f7; color: #374151; }
+.vm-top-btn svg { width: 15px; height: 15px; }
+.vm-info-footer {
+  flex-shrink: 0; border-top: 1px solid #f0f0f0;
+  padding: 12px 16px; display: flex; gap: 8px;
+}
+.vm-info-footer .btn { flex: 1; justify-content: center; font-size: 13px; padding: 8px 0; }
+.vm-btn-delete {
+  flex: 1; padding: 8px 0; border: 1.5px solid #e5e7eb; border-radius: 8px;
+  background: none; font-size: 13px; font-weight: 500; font-family: inherit;
+  color: #6b7280; cursor: pointer; transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.vm-btn-delete:hover { border-color: #fca5a5; color: #dc2626; background: #fff5f5; }
+.del-confirm-overlay { position: fixed; inset: 0; background: rgba(17,24,39,0.4); display: flex; align-items: center; justify-content: center; z-index: 1100; backdrop-filter: blur(2px); }
+.del-confirm-overlay.hidden { display: none; }
+.del-confirm-box { background: #fff; border-radius: 20px; padding: 36px 32px 32px; width: 530px; box-shadow: 0 24px 60px rgba(0,0,0,0.16); position: relative; }
+.del-confirm-close { position: absolute; top: 16px; right: 16px; width: 32px; height: 32px; border: none; background: none; color: #9ca3af; cursor: pointer; border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: background 0.15s; font-size: 18px; }
+.del-confirm-close:hover { background: #f3f4f6; }
+.del-confirm-icon { width: 64px; height: 64px; border-radius: 50%; background: #fee2e2; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
+.del-confirm-title { font-size: 20px; font-weight: 700; color: #111827; text-align: center; margin-bottom: 16px; }
+.del-confirm-msg { font-size: 15px; color: #374151; text-align: center; line-height: 1.6; margin-bottom: 32px; }
+.del-confirm-actions { display: flex; gap: 12px; }
+.del-confirm-cancel { flex: 1; height: 52px; border: 1.5px solid #d1d5db; background: #fff; border-radius: 12px; font-size: 15px; font-weight: 500; font-family: inherit; color: #374151; cursor: pointer; transition: background 0.15s; }
+.del-confirm-cancel:hover { background: #f9fafb; }
+.del-confirm-ok { flex: 1; height: 52px; border: none; background: #dc2626; color: #fff; border-radius: 12px; font-size: 15px; font-weight: 600; font-family: inherit; cursor: pointer; transition: background 0.15s; }
+.del-confirm-ok:hover { background: #b91c1c; }
+.vm-body { display: flex; flex: 1; min-height: 0; }
+.vm-preview {
+  flex: 1; background: #f8f9fb; display: flex; flex-direction: column;
+  position: relative; overflow: hidden; min-width: 0;
+}
+.vm-preview-area {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  overflow: hidden; padding: 28px;
+}
+.vm-preview-img {
+  max-width: 100%; max-height: 100%; object-fit: contain;
+  border-radius: 6px; box-shadow: 0 6px 32px rgba(0,0,0,0.1);
+  transform-origin: center; transition: transform 0.18s ease;
+}
+.vm-preview-file {
+  display: flex; flex-direction: column; align-items: center; gap: 16px; text-align: center;
+}
+.vm-preview-file-icon { width: 80px; height: 80px; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 36px; }
+.vm-preview-file-name { font-size: 14px; font-weight: 600; color: #666; max-width: 280px; word-break: break-word; line-height: 1.4; }
+.vm-zoombar {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 9px 16px; border-top: 1px solid #f0f0f0; flex-shrink: 0; background: #fff;
+}
+.vm-zoom-btn {
+  width: 26px; height: 26px; border-radius: 7px; border: 1.5px solid #ebebeb;
+  background: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 15px; color: #666; transition: background 0.12s; font-weight: 700; line-height: 1;
+}
+.vm-zoom-btn:hover { background: #f5f5f7; }
+.vm-zoom-pct { font-size: 12px; font-weight: 600; color: #999; min-width: 40px; text-align: center; }
+.vm-zoom-fit {
+  margin-left: 4px; width: 26px; height: 26px; border-radius: 7px;
+  border: 1.5px solid #ebebeb; background: #fff; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: #aaa; transition: background 0.12s;
+}
+.vm-zoom-fit:hover { background: #f5f5f7; color: #333; }
+.vm-zoom-fit svg { width: 12px; height: 12px; }
+/* Info panel */
+/* ── View modal: accordion info panel ── */
+.vm-info { width: 280px; flex-shrink: 0; border-left: 1px solid #f0f0f0; display: flex; flex-direction: column; background: #fff; overflow: hidden; }
+.vm-info-scroll { flex: 1; overflow-y: auto; }
+.vm-info::-webkit-scrollbar { width: 4px; }
+.vm-info::-webkit-scrollbar-track { background: transparent; }
+.vm-info::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 4px; }
+.vm-acc-sec { border-bottom: 1px solid #f3f4f6; }
+.vm-acc-sec:last-child { border-bottom: none; }
+.vm-acc-header { display: flex; align-items: center; padding: 12px 16px 8px; gap: 6px; }
+.vm-acc-label { font-size: 12px; font-weight: 600; letter-spacing: 0; color: #374151; text-transform: none; flex: 1; user-select: none; }
+.vm-acc-actions { display: flex; align-items: center; gap: 2px; }
+.vm-acc-btn { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; background: none; border: none; border-radius: 4px; cursor: pointer; color: #9ca3af; transition: background 0.12s, color 0.12s; }
+.vm-acc-btn:hover { background: #f3f4f6; color: #374151; }
+.vm-acc-btn.edit-active { color: #2563eb; }
+.vm-acc-btn svg { width: 13px; height: 13px; display: block; }
+.vm-chevron { transition: transform 0.22s cubic-bezier(0.4,0,0.2,1); display: block; }
+.vm-acc-sec.collapsed .vm-chevron { transform: rotate(-90deg); }
+.vm-acc-body { overflow: hidden; transition: max-height 0.28s cubic-bezier(0.4,0,0.2,1); }
+.vm-acc-sec.collapsed .vm-acc-body { max-height: 0 !important; }
+.vm-acc-inner { padding: 0 16px 12px; }
+.vm-info-row { display: flex; align-items: flex-start; justify-content: space-between; padding: 5px 0; gap: 8px; }
+.vm-info-lbl { font-size: 11px; font-weight: 500; letter-spacing: 0; color: #9ca3af; white-space: nowrap; padding-top: 1px; }
+.vm-info-val { font-size: 12px; color: #111827; text-align: right; word-break: break-word; }
+.vm-badge-ready { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 500; color: #059669; }
+.vm-badge-ready::before { content:''; width: 7px; height: 7px; border-radius: 50%; background: #10b981; display: inline-block; }
+/* Custom field dropdowns */
+.vm-cfd-row { display: flex; align-items: flex-start; gap: 10px; padding: 7px 0; }
+.vm-cfd-label { font-size: 12px; color: #374151; width: 68px; flex-shrink: 0; padding-top: 10px; }
+.vm-cfd-control { flex: 1; position: relative; }
+.vm-cfd-box { border: 1.5px solid #e5e7eb; border-radius: 10px; background: #fff; cursor: pointer; transition: border-color 0.15s; user-select: none; }
+.vm-cfd-box.open { border-color: #2563eb; }
+.vm-cfd-box.has-value { border-color: #93c5fd; }
+.vm-cfd-search { width: 100%; border: none; outline: none; padding: 8px 12px 4px; font-size: 13px; font-family: inherit; color: #374151; background: transparent; }
+.vm-cfd-search::placeholder { color: #9ca3af; }
+.vm-cfd-trigger { display: flex; align-items: center; justify-content: space-between; padding: 2px 12px 8px; }
+.vm-cfd-trigger-lbl { font-size: 12px; color: #2563eb; font-weight: 500; }
+.vm-cfd-single { display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; }
+.vm-cfd-single-lbl { font-size: 13px; color: #9ca3af; }
+.vm-cfd-chevron { transition: transform 0.18s ease; color: #374151; flex-shrink: 0; }
+.vm-cfd-box.open .vm-cfd-chevron { transform: rotate(180deg); }
+.vm-cfd-chevron svg { width: 13px; height: 13px; display: block; }
+.vm-cfd-dropdown { display: none; width: 100%; background: #fff; border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.10); margin-top: 4px; }
+.vm-cfd-box.open + .vm-cfd-dropdown { display: block; }
+.vm-cfd-option { padding: 10px 14px; font-size: 13px; color: #111827; cursor: pointer; transition: background 0.1s; }
+.vm-cfd-option:hover { background: #eff6ff; }
+.vm-cfd-option.selected { color: #2563eb; font-weight: 500; background: #eff6ff; }
+/* Edit mode toggle */
+.vm-cfd-view { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; }
+.vm-cfd-view-lbl { font-size: 13px; color: #374151; }
+.vm-cfd-view-val { font-size: 13px; color: #9ca3af; }
+.vm-cfd-row { display: none; }
+.vm-acc-edit .vm-cfd-view { display: none; }
+.vm-acc-edit .vm-cfd-row { display: flex; }
+
+/* URL modal */
+.m-field { margin-bottom: 14px; }
+.m-label { font-size: 11px; font-weight: 600; color: #aaa; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.7px; }
+.m-input {
+  width: 100%; height: 42px; border: 1.5px solid #ebebeb;
+  border-radius: 10px; padding: 0 14px; font-size: 14px;
+  font-family: inherit; color: #1a1a1a; background: #fafafa;
+  transition: border-color 0.15s, background 0.15s; outline: none;
+}
+.m-input:focus { border-color: #2563eb; background: #fff; }
+.m-input::placeholder { color: #ccc; }
+.m-actions { display: flex; gap: 9px; justify-content: flex-end; margin-top: 18px; }
+
+/* Camera modal */
+.cam-wrap {
+  border-radius: 12px; overflow: hidden;
+  background: #111; aspect-ratio: 4/3; width: 100%;
+  position: relative;
+}
+.cam-video, .cam-canvas { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cam-canvas { display: none; }
+.cam-capture-row {
+  display: flex; align-items: center; justify-content: center;
+  gap: 14px; padding: 14px 0 2px;
+}
+.cam-btn-capture {
+  width: 54px; height: 54px; border-radius: 50%;
+  border: 3px solid #2563eb; background: #fff; cursor: pointer;
+  position: relative; transition: transform 0.15s; flex-shrink: 0;
+}
+.cam-btn-capture::after {
+  content: ''; position: absolute; inset: 5px;
+  border-radius: 50%; background: #2563eb; transition: transform 0.15s;
+}
+.cam-btn-capture:hover { transform: scale(1.07); }
+.cam-btn-retake {
+  height: 36px; padding: 0 16px; border-radius: 10px;
+  border: 1.5px solid #e8e8e8; background: #fff;
+  font-size: 13px; font-weight: 600; color: #555;
+  cursor: pointer; transition: border-color 0.15s; font-family: inherit;
+}
+.cam-btn-retake:hover { border-color: #bbb; }
+.cam-msg { font-size: 11.5px; color: #bbb; text-align: center; margin-top: 6px; }
+.cam-error {
+  font-size: 13px; color: #dc2626; text-align: center;
+  padding: 36px 0; line-height: 1.7;
+}
+
+/* Cloud connect */
+.cloud-connect {
+  display: flex; flex-direction: column; align-items: center;
+  text-align: center; padding: 8px 0 4px; gap: 0;
+}
+.cloud-connect-icon {
+  width: 60px; height: 60px; border-radius: 16px;
+  display: flex; align-items: center; justify-content: center; margin-bottom: 14px;
+}
+.cloud-connect-title { font-size: 16px; font-weight: 700; color: #1a1a1a; margin-bottom: 7px; }
+.cloud-connect-desc { font-size: 13px; color: #999; line-height: 1.6; margin-bottom: 22px; max-width: 290px; }
+.cloud-connect-btn {
+  display: flex; align-items: center; gap: 9px;
+  padding: 11px 22px; border-radius: 12px; border: 1.5px solid #e0e0e0;
+  background: #fff; font-size: 14px; font-weight: 600; color: #1a1a1a;
+  cursor: pointer; transition: border-color 0.15s, background 0.15s;
+  width: 100%; max-width: 270px; justify-content: center; font-family: inherit;
+}
+.cloud-connect-btn:hover { border-color: #2563eb; background: #f6f9ff; }
+.cloud-divider {
+  display: flex; align-items: center; gap: 10px; margin: 18px 0 0;
+  width: 100%; max-width: 270px;
+}
+.cloud-divider-line { flex: 1; height: 1px; background: #f0f0f0; }
+.cloud-divider-text { font-size: 11px; color: #ccc; font-weight: 500; }
+
+/* Cloud browser */
+.cloud-search { position: relative; margin-bottom: 12px; }
+.cloud-search input {
+  width: 100%; height: 36px; border: 1.5px solid #ebebeb;
+  border-radius: 9px; padding: 0 12px 0 34px;
+  font-size: 13px; font-family: inherit; color: #1a1a1a;
+  background: #fafafa; outline: none; transition: border-color 0.15s;
+}
+.cloud-search input:focus { border-color: #2563eb; background: #fff; }
+.cloud-search-ico { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #ccc; width: 14px; height: 14px; }
+.cloud-path { display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: #ccc; margin-bottom: 10px; font-weight: 500; }
+.cloud-path span { color: #555; }
+.cloud-files { display: flex; flex-direction: column; gap: 1px; }
+.cf-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 8px; border-radius: 9px; cursor: pointer;
+  transition: background 0.12s; user-select: none;
+}
+.cf-row:hover { background: #f7f7f8; }
+.cf-row.selected { background: #eff6ff; }
+.cf-check {
+  width: 17px; height: 17px; border-radius: 5px;
+  border: 1.5px solid #d8d8d8; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color 0.12s, background 0.12s; font-size: 10px; color: transparent;
+}
+.cf-row.selected .cf-check { border-color: #2563eb; background: #2563eb; color: #fff; }
+.cf-icon {
+  width: 30px; height: 30px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; font-size: 15px;
+}
+.cf-icon.img { background: #fef9c3; }
+.cf-icon.pdf { background: #fee2e2; }
+.cf-icon.doc { background: #dbeafe; }
+.cf-icon.vid { background: #ede9fe; }
+.cf-icon.zip { background: #fef3c7; }
+.cf-icon.folder { background: #f5f5f7; }
+.cf-info { flex: 1; min-width: 0; }
+.cf-name { font-size: 13px; font-weight: 500; color: #1a1a1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cf-meta { font-size: 11px; color: #bbb; margin-top: 1px; }
+.cloud-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-top: 14px; margin-top: 6px; border-top: 1px solid #f2f2f2;
+}
+.cloud-sel-count { font-size: 12px; color: #aaa; font-weight: 500; }
+.cloud-loading {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 44px 0; gap: 14px;
+  color: #bbb; font-size: 13px;
+}
+.cloud-spinner {
+  width: 26px; height: 26px; border: 2.5px solid #f0f0f0;
+  border-top-color: #2563eb; border-radius: 50%;
+  animation: spin 0.65s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── MOBILE ── */
+@media (max-width: 768px) {
+  html, body { overflow: auto; }
+  .shell { flex-direction: column; height: auto; min-height: 100vh; }
+  .left { width: 100% !important; padding: 28px 24px 28px; overflow: visible; }
+  .l-logo { margin-bottom: 24px; }
+  .l-spacer { display: none; }
+  .l-sent, .l-footer { display: none; }
+  .right-inner { padding: 28px 20px 24px; }
+  .actions-bar { padding: 12px 20px; }
+  .drop-zone { padding: 40px 20px 32px; }
+  .fp-thumb { width: 100px; }
+}
+
+/* ══ FILL METADATA MODAL ══ */
+.fm-overlay { position: fixed; inset: 0; background: rgba(17,24,39,0.45); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; z-index: 500; }
+.fm-overlay.hidden { display: none; }
+.fm-modal { width: 980px; height: 82vh; background: #fff; border-radius: 14px; box-shadow: 0 24px 80px rgba(0,0,0,0.18); display: flex; flex-direction: column; overflow: hidden; }
+.fm-topbar { height: 48px; border-bottom: 1px solid #f0f0f0; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+.fm-topbar-title { font-size: 14px; font-weight: 600; color: #111827; }
+.fm-close-btn { width: 32px; height: 32px; border: none; background: transparent; border-radius: 6px; cursor: pointer; color: #9ca3af; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
+.fm-close-btn:hover { background: #f5f5f7; }
+.fm-modal-body { flex: 1; display: flex; overflow: hidden; }
+.fm-sidebar { width: 220px; border-right: 1px solid #f0f0f0; padding: 20px 0; display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; }
+.fm-sidebar-group-label { font-size: 12px; font-weight: 600; color: #9ca3af; padding: 6px 16px; }
+.fm-sidebar-item { height: 36px; padding: 0 16px; display: flex; align-items: center; font-size: 13px; color: #374151; cursor: pointer; border-left: 2px solid transparent; transition: background 0.12s, color 0.12s; }
+.fm-sidebar-item:hover { background: #f5f5f7; }
+.fm-sidebar-item.active { background: #eff6ff; color: #2563eb; border-left-color: transparent; }
+.fm-main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.fm-op-bar { padding: 14px 24px; border-bottom: 1px solid #f0f0f0; display: flex; gap: 12px; align-items: flex-start; flex-shrink: 0; overflow: visible; position: relative; z-index: 10; }
+.fm-op-field { display: flex; flex-direction: column; gap: 5px; }
+.fm-op-label { font-size: 11px; font-weight: 500; color: #9ca3af; letter-spacing: 0.4px; }
+.fm-op-value { flex: 1; }
+.fm-op-value-label { font-size: 11px; font-weight: 500; color: #9ca3af; letter-spacing: 0.4px; margin-bottom: 5px; }
+.fm-op-value input[type="text"] { width: 100%; height: 38px; border: 1.5px solid #e5e7eb; border-radius: 8px; padding: 0 12px; font-size: 13px; font-family: 'Inter', sans-serif; color: #374151; outline: none; transition: border-color 0.15s; background: #fff; }
+.fm-op-value input[type="text"]:focus { border-color: #2563eb; }
+.fm-op-value input[type="text"]::placeholder { color: #d1d5db; }
+.fm-apply-btn { height: 38px; padding: 0 16px; background: #eff6ff; color: #2563eb; border: none; border-radius: 8px; font-size: 13px; font-weight: 500; font-family: 'Inter', sans-serif; cursor: pointer; white-space: nowrap; transition: background 0.15s; }
+.fm-apply-btn:hover { background: #dbeafe; }
+.fm-confirm-overlay { position: fixed; inset: 0; background: rgba(17,24,39,0.4); display: flex; align-items: center; justify-content: center; z-index: 600; backdrop-filter: blur(2px); }
+.fm-confirm-overlay.hidden { display: none; }
+.fm-confirm-box { background: #fff; border-radius: 16px; padding: 32px 32px 28px; width: 480px; box-shadow: 0 24px 60px rgba(0,0,0,0.16); position: relative; }
+.fm-confirm-close { position: absolute; top: 16px; right: 16px; width: 32px; height: 32px; border: none; background: none; color: #9ca3af; cursor: pointer; border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
+.fm-confirm-close:hover { background: #f3f4f6; }
+.fm-confirm-icon { width: 56px; height: 56px; border-radius: 50%; background: #fff7ed; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+.fm-confirm-title { font-size: 17px; font-weight: 600; color: #111827; text-align: center; margin-bottom: 12px; }
+.fm-confirm-msg { font-size: 14px; color: #374151; text-align: center; line-height: 1.55; margin-bottom: 28px; }
+.fm-confirm-actions { display: flex; gap: 12px; }
+.fm-confirm-cancel { flex: 1; height: 44px; border: 1.5px solid #d1d5db; background: #fff; border-radius: 10px; font-size: 14px; font-weight: 500; font-family: 'Inter', sans-serif; color: #374151; cursor: pointer; transition: background 0.15s; }
+.fm-confirm-cancel:hover { background: #f9fafb; }
+.fm-confirm-ok { flex: 1; height: 44px; border: none; background: #f59e0b; color: #fff; border-radius: 10px; font-size: 14px; font-weight: 600; font-family: 'Inter', sans-serif; cursor: pointer; transition: background 0.15s; }
+.fm-confirm-ok:hover { background: #d97706; }
+.fm-table-header { padding: 10px 24px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; background: #fafafa; gap: 12px; flex-shrink: 0; }
+.fm-th-check { width: 18px; flex-shrink: 0; }
+.fm-th-cell { font-size: 11px; font-weight: 600; color: #9ca3af; letter-spacing: 0.5px; }
+.fm-th-thumb { width: 52px; flex-shrink: 0; }
+.fm-th-name { flex: 1.5; cursor: pointer; user-select: none; transition: color 0.15s; }
+.fm-th-name:hover { color: #6b7280; }
+.fm-th-name.sort-active { color: #2563eb; }
+.fm-th-size { width: 100px; flex-shrink: 0; }
+.fm-th-field { flex: 2; }
+.fm-table-body { flex: 1; overflow-y: auto; }
+.fm-file-row { padding: 10px 24px; border-bottom: 1px solid #f9fafb; display: flex; align-items: flex-start; gap: 12px; }
+.fm-file-row:hover { background: #fafafa; }
+.fm-file-row > input[type="checkbox"] { margin-top: 10px; accent-color: #2563eb; width: 18px; height: 18px; cursor: pointer; flex-shrink: 0; }
+.fm-file-thumb { width: 52px; height: 38px; border-radius: 6px; flex-shrink: 0; object-fit: cover; background: #f3f4f6; display: block; margin-top: 3px; }
+.fm-file-info { flex: 1.5; display: flex; flex-direction: column; gap: 2px; min-width: 0; padding-top: 6px; }
+.fm-file-name { font-size: 13px; font-weight: 500; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fm-file-meta { font-size: 11px; color: #9ca3af; }
+.fm-file-size-col { width: 100px; flex-shrink: 0; font-size: 12px; color: #9ca3af; padding-top: 10px; }
+.fm-file-input { flex: 2; }
+.fm-file-input input[type="text"] { width: 100%; height: 34px; border: 1.5px solid #e5e7eb; border-radius: 8px; padding: 0 10px; font-size: 13px; font-family: 'Inter', sans-serif; color: #374151; outline: none; transition: border-color 0.15s; background: #fff; }
+.fm-file-input input[type="text"]:focus { border-color: #2563eb; }
+.fm-file-input input[type="text"]::placeholder { color: #d1d5db; }
+.cfd-wrap { position: relative; width: 100%; }
+.cfd-box { border: 1.5px solid #e5e7eb; border-radius: 10px; background: #fff; cursor: pointer; transition: border-color 0.15s; user-select: none; }
+.cfd-box.open { border-color: #2563eb; }
+.cfd-box.has-value { border-color: #93c5fd; }
+.cfd-single-box { display: flex; align-items: center; justify-content: space-between; padding: 0 12px; height: 34px; }
+.cfd-single-box.cfd-lg { height: 38px; }
+.cfd-single-lbl { font-size: 13px; color: #9ca3af; }
+.cfd-single-lbl.picked { color: #111827; }
+.cfd-tags-area { display: flex; flex-wrap: wrap; gap: 5px; padding: 8px 12px 4px; min-height: 38px; align-items: center; }
+.cfd-search { border: none; outline: none; min-width: 80px; flex: 1; font-size: 13px; font-family: inherit; color: #374151; background: transparent; cursor: text; padding: 0; }
+.cfd-search::placeholder { color: #9ca3af; }
+.cfd-tag { display: inline-flex; align-items: center; gap: 4px; background: #f3f4f6; border-radius: 6px; padding: 3px 6px 3px 10px; font-size: 12px; color: #374151; white-space: nowrap; }
+.cfd-tag-x { border: none; background: none; cursor: pointer; color: #9ca3af; font-size: 15px; line-height: 1; padding: 0; display: flex; align-items: center; }
+.cfd-tag-x:hover { color: #374151; }
+.cfd-multi-footer { display: flex; align-items: center; gap: 8px; padding: 2px 12px 8px; }
+.cfd-select-all-lbl { font-size: 12px; color: #2563eb; font-weight: 500; cursor: pointer; }
+.cfd-clear-lbl { font-size: 12px; color: #2563eb; font-weight: 500; cursor: pointer; display: none; }
+.cfd-footer-chevron { margin-left: auto; }
+.cfd-chevron { flex-shrink: 0; transition: transform 0.18s ease; color: #374151; }
+.cfd-box.open .cfd-chevron { transform: rotate(180deg); }
+.cfd-chevron svg { width: 13px; height: 13px; display: block; }
+.cfd-panel { display: none; background: #fff; border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); position: absolute; top: calc(100% + 4px); left: 0; width: 100%; z-index: 300; }
+.cfd-box.open + .cfd-panel { display: block; }
+.cfd-opt { padding: 10px 14px; font-size: 13px; color: #111827; cursor: pointer; transition: background 0.1s; }
+.cfd-opt:hover { background: #eff6ff; }
+.cfd-opt.selected { color: #2563eb; font-weight: 500; background: #eff6ff; }
+.cfd-applied-wrap { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px 0; align-items: center; min-height: 34px; }
+.cfd-applied-badge { display: inline-flex; align-items: center; background: #dcfce7; color: #166534; border-radius: 6px; padding: 3px 10px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+.fm-modal-footer { padding: 14px 24px; border-top: 1px solid #f0f0f0; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+.fm-back-btn { background: none; border: none; color: #6b7280; font-size: 13px; font-family: 'Inter', sans-serif; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: color 0.15s; padding: 0; }
+.fm-back-btn:hover { color: #374151; }
+.fm-footer-right { display: flex; gap: 8px; }
+.fm-cancel-btn { height: 36px; padding: 0 20px; border: 1.5px solid #e5e7eb; background: #fff; color: #374151; border-radius: 8px; font-size: 13px; font-family: 'Inter', sans-serif; cursor: pointer; transition: background 0.15s; }
+.fm-cancel-btn:hover { background: #f9fafb; }
+.fm-upload-btn { height: 36px; padding: 0 20px; background: #2563eb; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; font-family: 'Inter', sans-serif; cursor: pointer; display: flex; align-items: center; gap: 7px; transition: background 0.15s; }
+.fm-upload-btn:hover { background: #1d4ed8; }
+#fmSelectAll { accent-color: #2563eb; width: 18px; height: 18px; cursor: pointer; flex-shrink: 0; margin-top: 0; }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- ══ LEFT PANEL ══ -->
+  <div class="left" id="leftPanel">
+    <div class="left-blob1"></div>
+    <div class="left-blob2"></div>
+
+    <div class="left-content">
+      <!-- Logo -->
+      <div class="l-logo">
+        <div class="l-logo-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
+          </svg>
+        </div>
+        <span class="l-logo-text">Airbox</span>
+      </div>
+
+      <!-- Title block -->
+      <div class="l-label">Upload to</div>
+      <div class="l-title">Q1 Marketing Assets</div>
+      <div class="l-desc">Please drop your final creative files here — banners, logos and brand visuals for the Q1 campaign.</div>
+
+      <div class="l-divider"></div>
+
+      <!-- Meta rows -->
+      <div class="l-meta">
+        <div class="l-meta-row" title="JPG, PNG, PDF, SVG">
+          <div class="l-meta-icon c-blue">
+            <!-- Lucide: image -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+          </div>
+          <span>JPG, PNG, PDF, SVG</span>
+        </div>
+        <div class="l-meta-row" title="Max 50 MB / file">
+          <div class="l-meta-icon c-slate">
+            <!-- Lucide: hard-drive -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><line x1="22" x2="2" y1="12" y2="12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><line x1="6" x2="6.01" y1="16" y2="16"/><line x1="10" x2="10.01" y1="16" y2="16"/></svg>
+          </div>
+          <span>Max 50 MB / file</span>
+        </div>
+        <div class="l-meta-row" title="Password protected">
+          <div class="l-meta-icon c-blue">
+            <!-- Lucide: lock -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <span>Password protected</span>
+        </div>
+        <div class="l-meta-row" title="Expires Apr 15, 2026">
+          <div class="l-meta-icon c-orange">
+            <!-- Lucide: hourglass -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/></svg>
+          </div>
+          <span>Expires Apr 15, 2026</span>
+        </div>
+      </div>
+
+      <div class="l-spacer"></div>
+
+      <div class="l-divider"></div>
+
+      <!-- Sender -->
+      <div class="l-sent">
+        <div class="l-sent-label">Sent by</div>
+        <div class="l-sender">
+          <div class="l-avatar">A</div>
+          <div class="l-sender-info">
+            <div class="l-sender-name">Anna K.</div>
+            <div class="l-sender-role">Marketing Director</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="l-footer">Powered by Scaleflex Airbox</div>
+    </div>
+  </div>
+
+  <!-- ══ RIGHT PANEL ══ -->
+  <div class="right">
+    <div class="right-inner">
+
+      <!-- Drop zone -->
+      <div class="drop-zone" id="dropZone">
+        <div class="dz-rings">
+          <div class="dz-ring"></div>
+          <div class="dz-ring"></div>
+          <div class="dz-core">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+              <polyline points="16 16 12 12 8 16"/>
+              <line x1="12" y1="12" x2="12" y2="21"/>
+              <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/>
+            </svg>
+          </div>
+        </div>
+        <div class="dz-title">Drag &amp; Drop or click to <span>browse</span></div>
+        <div class="dz-sub">Drop files anywhere on this page</div>
+<div class="dz-ripple" id="dzRipple"></div>
+        <input type="file" id="fileInput" multiple style="display:none">
+      </div>
+
+      <!-- Import divider -->
+      <div class="import-divider">
+        <div class="import-line"></div>
+        <div class="import-label">or import from</div>
+        <div class="import-line"></div>
+      </div>
+
+      <!-- Sources -->
+      <div class="sources">
+        <button class="src-pill" onclick="document.getElementById('fileInput').click()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          My Device
+        </button>
+        <button class="src-pill" onclick="openCamera()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          Camera
+        </button>
+        <button class="src-pill" onclick="openUrlModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+          URL link
+        </button>
+        <button class="src-pill" onclick="openGDriveModal()">
+          <svg width="18" height="18" viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3L27.5 53H0c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/>
+            <path d="M43.65 25L29.9 1.2C28.55 2 27.4 3.1 26.6 4.5L1.2 48.5C.4 49.9 0 51.45 0 53h27.5z" fill="#00ac47"/>
+            <path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5H59.8l5.65 10.85z" fill="#ea4335"/>
+            <path d="M43.65 25L57.4 1.2C56.05.4 54.5 0 52.9 0H34.4c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d"/>
+            <path d="M59.8 53H27.5L13.75 76.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc"/>
+            <path d="M73.4 26.5l-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25 59.8 53h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00"/>
+          </svg>
+          Google Drive
+        </button>
+        <button class="src-pill" onclick="openCloud('dropbox')">
+          <span class="bi db">
+            <svg width="12" height="12" viewBox="0 0 528 512" fill="white"><path d="M264.4 116.3l-132 84.3 132 84.3-132 84.3L0 284.1l132.3-84.3L0 116.3 132.3 32l132.1 84.3zm-132 284.5l132-84.3 132 84.3-132 84.4-132-84.4zm132-116.6l132.3-84.3-132.3-83.9 131.6-84.3L528 116.3l-132.3 84.1L528 284.7l-132.4 83.9-131.2-84.4z"/></svg>
+          </span>
+          Dropbox
+        </button>
+        <button class="src-pill" onclick="openCloud('box')">
+          <span class="bi bx">box</span>
+          Box
+        </button>
+        <button class="src-pill" onclick="openCloud('onedrive')">
+          <span class="bi od">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M10.5 13.5C10.5 11.57 12.07 10 14 10h6.5c.17 0 .34.01.5.02A6 6 0 009.01 11.6 4 4 0 0010.5 13.5zM12 14.5a5 5 0 00-5-5 5 5 0 00-5 5 3 3 0 003 3h9.5A3.5 3.5 0 0018 14c0-.18-.01-.35-.03-.52A5.48 5.48 0 0112 14.5z"/></svg>
+          </span>
+          OneDrive
+        </button>
+      </div>
+
+      <!-- File stack -->
+      <div class="file-stack" id="fileStack"></div>
+
+      <!-- Success -->
+      <div class="success-card" id="successCard">
+        <div class="s-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="s-title">Uploaded successfully!</div>
+        <div class="s-sub">All files have been uploaded to Q1 Marketing Assets and are ready for review.</div>
+        <div class="s-actions">
+          <button class="btn btn-ghost" onclick="reset()">Upload more</button>
+          <button class="btn btn-primary">View in Airbox</button>
+        </div>
+      </div>
+
+    </div><!-- /right-inner -->
+
+    <!-- Actions bar — footer, always at bottom -->
+    <div class="actions-bar" id="actionsBar">
+      <button class="btn btn-sec" onclick="openFillMetadata()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><line x1="10" y1="9" x2="8" y2="9"/></svg>
+        Fill Metadata
+      </button>
+      <div class="a-right">
+        <button class="btn btn-ghost" onclick="clearAll()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+          Clear
+        </button>
+        <button class="btn btn-sec" onclick="document.getElementById('fileInput').click()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add more
+        </button>
+        <button class="btn btn-primary" id="uploadBtn" onclick="startUpload()">
+          <span id="bIdle" style="display:flex;align-items:center;gap:6px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>
+            Upload
+          </span>
+          <span id="bUpl" style="display:none;align-items:center;gap:6px"><span class="btn-spin"></span>Uploading…</span>
+          <span id="bDone" style="display:none;align-items:center;gap:6px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Done!
+          </span>
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /right -->
+
+</div><!-- /shell -->
+
+<!-- ══ DELETE CONFIRM ══ -->
+<div class="del-confirm-overlay hidden" id="delConfirmOverlay">
+  <div class="del-confirm-box">
+    <button class="del-confirm-close" onclick="hideDeleteConfirm()">✕</button>
+    <div class="del-confirm-icon">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
+      </svg>
+    </div>
+    <div class="del-confirm-title">Delete asset</div>
+    <div class="del-confirm-msg" id="delConfirmMsg"></div>
+    <div class="del-confirm-actions">
+      <button class="del-confirm-cancel" onclick="hideDeleteConfirm()">Cancel</button>
+      <button class="del-confirm-ok" onclick="confirmDelete()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL OVERLAY ══ -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-head-icon" id="modalIcon"></div>
+      <div class="modal-title" id="modalTitle"></div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="modalContent"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const EXT = {jpg:'img',jpeg:'img',png:'img',gif:'img',webp:'img',svg:'img',heic:'img',pdf:'pdf',doc:'doc',docx:'doc',xls:'doc',xlsx:'doc',ppt:'doc',pptx:'doc',mp4:'vid',mov:'vid',avi:'vid',webm:'vid',zip:'zip',rar:'zip',gz:'zip','7z':'zip'};
+const ICONS = {
+  img:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`,
+  pdf:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`,
+  doc:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>`,
+  vid:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="7" width="15" height="10" rx="2"/><polygon points="17 9 22 7 22 17 17 15 17 9"/></svg>`,
+  zip:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>`,
+  gen:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>`
+};
+
+let files = [], uploading = false;
+
+function getType(name){ return EXT[name.split('.').pop().toLowerCase()] || 'gen'; }
+function fmtSize(b){ return b<1024?b+' B':b<1048576?(b/1024).toFixed(1)+' KB':(b/1048576).toFixed(1)+' MB'; }
+
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const dzRipple  = document.getElementById('dzRipple');
+
+dropZone.addEventListener('click', e=>{
+  const r = dropZone.getBoundingClientRect();
+  dzRipple.style.left=(e.clientX-r.left)+'px'; dzRipple.style.top=(e.clientY-r.top)+'px';
+  dzRipple.classList.remove('go'); void dzRipple.offsetWidth; dzRipple.classList.add('go');
+  fileInput.click();
+});
+document.addEventListener('dragover', e=>e.preventDefault());
+document.addEventListener('drop', e=>{ e.preventDefault(); handleFiles(Array.from(e.dataTransfer.files)); });
+dropZone.addEventListener('dragenter', ()=>dropZone.classList.add('drag-over'));
+dropZone.addEventListener('dragleave', e=>{ if(!dropZone.contains(e.relatedTarget)) dropZone.classList.remove('drag-over'); });
+dropZone.addEventListener('drop', e=>{ dropZone.classList.remove('drag-over'); e.preventDefault(); handleFiles(Array.from(e.dataTransfer.files)); });
+fileInput.addEventListener('change', ()=>{ handleFiles(Array.from(fileInput.files)); fileInput.value=''; });
+
+function handleFiles(newFiles){
+  newFiles.forEach((f,i)=>{
+    const id=Date.now()+i, type=getType(f.name);
+    const item={id,file:f,type,state:'pending'};
+    files.push(item);
+    renderCard(item,i*55);
+  });
+  if(files.length) dropZone.classList.add('has-files');
+  updateActions();
+}
+
+function renderCard(item,delay){
+  const stack=document.getElementById('fileStack');
+  const tile=document.createElement('div');
+  tile.className='tile pending'; tile.id='card-'+item.id;
+  tile.style.animationDelay=delay+'ms';
+  const isImg=item.type==='img';
+  const bgAttr=isImg?`style="background-image:url('${URL.createObjectURL(item.file)}')"`:'';;
+  const bgClass=isImg?'':item.type;
+  const iconHtml=isImg?'':`<div class="tile-icon"><div class="tile-icon-inner ${item.type}">${ICONS[item.type]}</div></div>`;
+  const ext=(item.file.name.split('.').pop()||'file').toUpperCase();
+  tile.innerHTML=`
+    <div class="tile-preview">
+      <div class="tile-bg ${bgClass}" ${bgAttr}></div>
+      ${iconHtml}
+      <div class="tile-done-overlay">
+        <div class="tile-check"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+        <button class="tile-undo" onclick="undoFile(${item.id})">tap to undo</button>
+      </div>
+      <div class="tile-spinner"><div class="fp-spin"></div></div>
+      <div class="tile-prog"><div class="tile-prog-fill" id="pr-${item.id}"></div></div>
+      <div class="tile-actions">
+        <button class="tile-btn" onclick="viewFile(${item.id})" title="Preview">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+        <button class="tile-btn" onclick="renameFile(${item.id})" title="Rename">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+        <button class="tile-btn del" onclick="removeCard(${item.id})" title="Delete">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="tile-info">
+      <div class="tile-name" id="tname-${item.id}">${item.file.name}</div>
+      <div class="tile-meta">${ext} · ${fmtSize(item.file.size)}</div>
+    </div>
+    <div class="tile-rename" id="rename-${item.id}">
+      <div class="tile-rename-inner">
+        <div class="tile-rename-label">Rename file</div>
+        <input class="tile-rename-input" id="rname-${item.id}"
+          onkeydown="renameDone(event,${item.id})"
+          onblur="cancelRename(${item.id})" />
+        <div class="tile-rename-hint">Enter to save · Esc to cancel</div>
+      </div>
+    </div>`;
+  stack.appendChild(tile);
+}
+
+function removeCard(id){
+  files=files.filter(f=>f.id!==id);
+  const c=document.getElementById('card-'+id);
+  if(c){c.style.cssText='opacity:0;transform:scale(0.96);transition:0.2s;'; setTimeout(()=>c.remove(),200);}
+  if(!files.length) dropZone.classList.remove('has-files');
+  updateActions();
+}
+
+function undoFile(id){
+  const item=files.find(f=>f.id===id); if(!item) return;
+  item.state='pending';
+  const c=document.getElementById('card-'+id);
+  if(c){c.className='tile pending'; document.getElementById('pr-'+id).style.transform='scaleX(0)';}
+}
+
+function clearAll(){
+  files=[]; document.getElementById('fileStack').innerHTML='';
+  dropZone.classList.remove('has-files'); updateActions();
+}
+
+function updateActions(){
+  const bar=document.getElementById('actionsBar');
+  if(files.length) bar.classList.add('visible');
+  else bar.classList.remove('visible');
+}
+
+function startUpload(){
+  if(uploading||!files.length) return; uploading=true;
+  document.getElementById('bIdle').style.display='none';
+  document.getElementById('bUpl').style.display='flex';
+  files.forEach(item=>{
+    item.state='uploading';
+    const c=document.getElementById('card-'+item.id);
+    if(c) c.className='tile uploading';
+  });
+  let done=0;
+  files.forEach((item,idx)=>{
+    const pr=document.getElementById('pr-'+item.id); let pct=0;
+    const iv=setInterval(()=>{
+      pct+=Math.random()*9+3;
+      if(pct>=100){
+        pct=100; clearInterval(iv); item.state='done'; done++;
+        const c=document.getElementById('card-'+item.id);
+        if(c) c.className='tile done';
+        if(done===files.length) finish();
+      }
+      if(pr) pr.style.transform=`scaleX(${pct/100})`;
+    },110+idx*35);
+  });
+}
+
+function finish(){
+  document.getElementById('bUpl').style.display='none';
+  document.getElementById('bDone').style.display='flex';
+  document.getElementById('uploadBtn').classList.add('done-state');
+  setTimeout(()=>{
+    document.getElementById('dropZone').style.display='none';
+    document.querySelectorAll('.import-divider,.sources').forEach(el=>el.style.display='none');
+    document.getElementById('fileStack').style.display='none';
+    document.getElementById('actionsBar').classList.remove('visible');
+    document.getElementById('successCard').classList.add('visible');
+  },1100);
+}
+
+function reset(){
+  uploading=false; files=[];
+  document.getElementById('fileStack').innerHTML='';
+  ['fileStack','dropZone'].forEach(id=>document.getElementById(id).style.display='');
+  document.querySelectorAll('.import-divider,.sources').forEach(el=>el.style.display='');
+  document.getElementById('successCard').classList.remove('visible');
+  document.getElementById('actionsBar').classList.remove('visible');
+  document.getElementById('bIdle').style.display='flex';
+  document.getElementById('bUpl').style.display='none';
+  document.getElementById('bDone').style.display='none';
+  document.getElementById('uploadBtn').classList.remove('done-state');
+  dropZone.classList.remove('has-files');
+}
+
+// ── VIEW FILE ──
+let vmZoomLevel = 100;
+
+function viewFile(id) {
+  const item = files.find(f => f.id === id); if (!item) return;
+  vmZoomLevel = 100;
+
+  const isImg = item.type === 'img';
+  const imgUrl = isImg ? URL.createObjectURL(item.file) : null;
+  const ext = item.file.name.split('.').pop().toUpperCase();
+  const typeBg  = { pdf:'#fee2e2', doc:'#dbeafe', vid:'#ede9fe', zip:'#fef3c7', gen:'#f5f5f7' };
+  const typeEmj = { pdf:'📄', doc:'📝', vid:'🎬', zip:'🗜️', gen:'📁' };
+  const today   = new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  const mimeLabel = isImg ? (ext || 'Image') : (ext || 'File');
+
+  const previewArea = isImg
+    ? `<img id="vmImg" class="vm-preview-img" src="${imgUrl}" />`
+    : `<div class="vm-preview-file">
+        <div class="vm-preview-file-icon" style="background:${typeBg[item.type]||'#f5f5f7'}">${typeEmj[item.type]||'📄'}</div>
+        <div class="vm-preview-file-name">${item.file.name}</div>
+       </div>`;
+
+  const zoomBar = isImg ? `
+    <div class="vm-zoombar">
+      <button class="vm-zoom-btn" onclick="vmZoom(-15)">−</button>
+      <span class="vm-zoom-pct" id="vmZoomPct">100%</span>
+      <button class="vm-zoom-btn" onclick="vmZoom(15)">+</button>
+      <button class="vm-zoom-fit" onclick="vmZoomReset()" title="Reset zoom">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+      </button>
+    </div>` : '';
+
+  const dimsRow = isImg ? `<div class="vm-field-row"><span class="vm-field-label">Dimensions</span><span class="vm-field-val" id="vmDims">—</span></div>` : '';
+
+  openModal(`
+    <div class="vm-layout">
+      <div class="vm-topbar">
+        <div class="vm-filename">${item.file.name}</div>
+        <div class="vm-topbar-actions">
+          <button class="vm-top-btn" onclick="closeModal()" title="Close">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="vm-body">
+        <div class="vm-preview">
+          <div class="vm-preview-area">${previewArea}</div>
+          ${zoomBar}
+        </div>
+        <div class="vm-info" id="vmInfoPanel">
+        <div class="vm-info-scroll">
+
+          <!-- Section 1: File Info (always open) -->
+          <div class="vm-acc-sec" id="vmSecInfo">
+            <div class="vm-acc-header">
+              <span class="vm-acc-label">File Info</span>
+            </div>
+            <div class="vm-acc-body" style="max-height:600px">
+              <div class="vm-acc-inner">
+                <div class="vm-info-row"><span class="vm-info-lbl">Type</span><span class="vm-info-val">${mimeLabel}</span></div>
+                <div class="vm-info-row"><span class="vm-info-lbl">Size</span><span class="vm-info-val">${fmtSize(item.file.size)}</span></div>
+                ${isImg ? `<div class="vm-info-row"><span class="vm-info-lbl">Dimensions</span><span class="vm-info-val" id="vmDims">—</span></div>` : ''}
+                <div class="vm-info-row"><span class="vm-info-lbl">Name</span><span class="vm-info-val">${item.file.name}</span></div>
+                <div class="vm-info-row"><span class="vm-info-lbl">Folder</span><span class="vm-info-val">Q1 Marketing Assets</span></div>
+                <div class="vm-info-row"><span class="vm-info-lbl">Added</span><span class="vm-info-val">${today}</span></div>
+                <div class="vm-info-row"><span class="vm-info-lbl">Status</span><span class="vm-info-val"><span class="vm-badge-ready">Ready</span></span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2: Custom Fields -->
+          <div class="vm-acc-sec" id="vmSecCustom">
+            <div class="vm-acc-header">
+              <span class="vm-acc-label">Custom Fields</span>
+              <div class="vm-acc-actions">
+                <button class="vm-acc-btn" id="vmEditBtn" title="Edit" onclick="vmToggleEdit()">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+                <button class="vm-acc-btn" onclick="vmAccToggle('vmSecCustom')" title="Toggle">
+                  <svg class="vm-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+              </div>
+            </div>
+            <div class="vm-acc-body" id="vmSecCustomBody" style="max-height:600px">
+              <div class="vm-acc-inner">
+
+                <!-- Color -->
+                <div class="vm-cfd-view"><span class="vm-cfd-view-lbl">Color</span><span class="vm-cfd-view-val">—</span></div>
+                <div class="vm-cfd-row">
+                  <span class="vm-cfd-label">Color</span>
+                  <div class="vm-cfd-control">
+                    <div class="vm-cfd-box" onclick="vmCfdToggle(this)">
+                      <input class="vm-cfd-search" placeholder="Enter colors" onclick="event.stopPropagation()" />
+                      <div class="vm-cfd-trigger">
+                        <span class="vm-cfd-trigger-lbl">Select all</span>
+                        <span class="vm-cfd-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+                      </div>
+                    </div>
+                    <div class="vm-cfd-dropdown">
+                      <div class="vm-cfd-option" onclick="vmCfdMulti(this)">Beige</div>
+                      <div class="vm-cfd-option" onclick="vmCfdMulti(this)">Black</div>
+                      <div class="vm-cfd-option" onclick="vmCfdMulti(this)">Black and white</div>
+                      <div class="vm-cfd-option" onclick="vmCfdMulti(this)">Blue</div>
+                      <div class="vm-cfd-option" onclick="vmCfdMulti(this)">Brown</div>
+                      <div class="vm-cfd-option" onclick="vmCfdMulti(this)">Colorful</div>
+                      <div class="vm-cfd-option" onclick="vmCfdMulti(this)">Green</div>
+                      <div class="vm-cfd-option" onclick="vmCfdMulti(this)">White</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Year -->
+                <div class="vm-cfd-view"><span class="vm-cfd-view-lbl">Year</span><span class="vm-cfd-view-val">—</span></div>
+                <div class="vm-cfd-row">
+                  <span class="vm-cfd-label">Year</span>
+                  <div class="vm-cfd-control">
+                    <div class="vm-cfd-box" onclick="vmCfdToggle(this)">
+                      <div class="vm-cfd-single">
+                        <span class="vm-cfd-single-lbl">Select year</span>
+                        <span class="vm-cfd-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+                      </div>
+                    </div>
+                    <div class="vm-cfd-dropdown">
+                      <div class="vm-cfd-option" onclick="vmCfdSingle(this)">2024</div>
+                      <div class="vm-cfd-option" onclick="vmCfdSingle(this)">2025</div>
+                      <div class="vm-cfd-option" onclick="vmCfdSingle(this)">2026</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Seasons -->
+                <div class="vm-cfd-view"><span class="vm-cfd-view-lbl">Seasons</span><span class="vm-cfd-view-val">—</span></div>
+                <div class="vm-cfd-row">
+                  <span class="vm-cfd-label">Seasons</span>
+                  <div class="vm-cfd-control">
+                    <div class="vm-cfd-box" onclick="vmCfdToggle(this)">
+                      <input class="vm-cfd-search" placeholder="Select product seasons" onclick="event.stopPropagation()" />
+                      <div class="vm-cfd-trigger">
+                        <span class="vm-cfd-trigger-lbl">Select all</span>
+                        <span class="vm-cfd-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+                      </div>
+                    </div>
+                    <div class="vm-cfd-dropdown">
+                      <div class="vm-cfd-option" onclick="vmCfdMulti(this)">Spring</div>
+                      <div class="vm-cfd-option" onclick="vmCfdMulti(this)">Summer</div>
+                      <div class="vm-cfd-option" onclick="vmCfdMulti(this)">Autumn</div>
+                      <div class="vm-cfd-option" onclick="vmCfdMulti(this)">Winter</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Materials -->
+                <div class="vm-cfd-view"><span class="vm-cfd-view-lbl">Materials</span><span class="vm-cfd-view-val">—</span></div>
+                <div class="vm-cfd-row">
+                  <span class="vm-cfd-label">Materials</span>
+                  <div class="vm-cfd-control">
+                    <div class="vm-cfd-box" onclick="vmCfdToggle(this)">
+                      <div class="vm-cfd-single">
+                        <span class="vm-cfd-single-lbl">Select product material</span>
+                        <span class="vm-cfd-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+                      </div>
+                    </div>
+                    <div class="vm-cfd-dropdown">
+                      <div class="vm-cfd-option" onclick="vmCfdSingle(this)">Cotton</div>
+                      <div class="vm-cfd-option" onclick="vmCfdSingle(this)">Polyester</div>
+                      <div class="vm-cfd-option" onclick="vmCfdSingle(this)">Wool</div>
+                      <div class="vm-cfd-option" onclick="vmCfdSingle(this)">Leather</div>
+                      <div class="vm-cfd-option" onclick="vmCfdSingle(this)">Denim</div>
+                      <div class="vm-cfd-option" onclick="vmCfdSingle(this)">Silk</div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 3: Embedded (collapsed, read-only) -->
+          <div class="vm-acc-sec collapsed" id="vmSecEmbedded">
+            <div class="vm-acc-header">
+              <span class="vm-acc-label">Embedded</span>
+              <div class="vm-acc-actions">
+                <button class="vm-acc-btn" onclick="vmAccToggle('vmSecEmbedded')" title="Toggle">
+                  <svg class="vm-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+              </div>
+            </div>
+            <div class="vm-acc-body" id="vmSecEmbeddedBody" style="max-height:0">
+              <div class="vm-acc-inner">
+                <div class="vm-info-row"><span class="vm-info-lbl">Camera</span><span class="vm-info-val">Apple iPhone 14 Pro</span></div>
+                <div class="vm-info-row"><span class="vm-info-lbl">ISO</span><span class="vm-info-val">125</span></div>
+                <div class="vm-info-row"><span class="vm-info-lbl">Aperture</span><span class="vm-info-val">f/1.78</span></div>
+                <div class="vm-info-row"><span class="vm-info-lbl">Shutter</span><span class="vm-info-val">1/120s</span></div>
+                <div class="vm-info-row"><span class="vm-info-lbl">Focal</span><span class="vm-info-val">6.86mm</span></div>
+                <div class="vm-info-row"><span class="vm-info-lbl">GPS</span><span class="vm-info-val">48.8566, 2.3522</span></div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /vm-info-scroll -->
+
+        <!-- Footer actions -->
+        <div class="vm-info-footer">
+          <button class="btn btn-primary" onclick="closeModal()">Done</button>
+          <button class="vm-btn-delete" onclick="showDeleteConfirm(${id})">Delete</button>
+        </div>
+
+        </div>
+      </div>
+    </div>
+  `, '', '');
+
+  // Add wide class
+  document.querySelector('.modal').classList.add('modal-wide');
+
+  // Get image natural dimensions
+  if (isImg) {
+    setTimeout(() => {
+      const img = document.getElementById('vmImg');
+      if (img && img.complete) {
+        const d = document.getElementById('vmDims');
+        if (d && img.naturalWidth) d.textContent = `${img.naturalWidth} × ${img.naturalHeight}`;
+      } else if (img) {
+        img.onload = () => {
+          const d = document.getElementById('vmDims');
+          if (d) d.textContent = `${img.naturalWidth} × ${img.naturalHeight}`;
+        };
+      }
+    }, 50);
+  }
+}
+
+function vmZoom(delta) {
+  vmZoomLevel = Math.max(20, Math.min(500, vmZoomLevel + delta));
+  const img = document.getElementById('vmImg');
+  const pct = document.getElementById('vmZoomPct');
+  if (img) img.style.transform = `scale(${vmZoomLevel/100})`;
+  if (pct) pct.textContent = vmZoomLevel + '%';
+}
+
+function vmZoomReset() {
+  vmZoomLevel = 100;
+  const img = document.getElementById('vmImg');
+  const pct = document.getElementById('vmZoomPct');
+  if (img) img.style.transform = 'scale(1)';
+  if (pct) pct.textContent = '100%';
+}
+
+function vmAccToggle(secId) {
+  const sec = document.getElementById(secId);
+  const body = sec.querySelector('.vm-acc-body');
+  const isCollapsed = sec.classList.contains('collapsed');
+  if (isCollapsed) {
+    sec.classList.remove('collapsed');
+    body.style.maxHeight = body.scrollHeight + 'px';
+  } else {
+    body.style.maxHeight = body.scrollHeight + 'px';
+    requestAnimationFrame(() => requestAnimationFrame(() => { body.style.maxHeight = '0'; }));
+    sec.classList.add('collapsed');
+  }
+}
+
+function vmToggleEdit() {
+  const sec = document.getElementById('vmSecCustom');
+  const btn = document.getElementById('vmEditBtn');
+  const body = document.getElementById('vmSecCustomBody');
+  const isEdit = sec.classList.contains('vm-acc-edit');
+  sec.classList.toggle('vm-acc-edit', !isEdit);
+  btn.classList.toggle('edit-active', !isEdit);
+  if (!isEdit && sec.classList.contains('collapsed')) vmAccToggle('vmSecCustom');
+  setTimeout(() => { if (body) body.style.maxHeight = body.scrollHeight + 'px'; }, 10);
+}
+
+function vmCfdToggle(box) {
+  const isOpen = box.classList.contains('open');
+  document.querySelectorAll('.vm-cfd-box.open').forEach(b => b.classList.remove('open'));
+  if (!isOpen) box.classList.add('open');
+  const body = document.getElementById('vmSecCustomBody');
+  if (body) setTimeout(() => { body.style.maxHeight = body.scrollHeight + 'px'; }, 10);
+}
+
+function vmCfdMulti(opt) {
+  opt.classList.toggle('selected');
+  const dropdown = opt.closest('.vm-cfd-dropdown');
+  const box = dropdown.previousElementSibling;
+  const count = dropdown.querySelectorAll('.selected').length;
+  const lbl = box.querySelector('.vm-cfd-trigger-lbl');
+  if (lbl) lbl.textContent = count ? `${count} selected` : 'Select all';
+  box.classList.toggle('has-value', count > 0);
+  const body = document.getElementById('vmSecCustomBody');
+  if (body) body.style.maxHeight = body.scrollHeight + 'px';
+}
+
+function vmCfdSingle(opt) {
+  const dropdown = opt.closest('.vm-cfd-dropdown');
+  dropdown.querySelectorAll('.selected').forEach(o => o.classList.remove('selected'));
+  opt.classList.add('selected');
+  const box = dropdown.previousElementSibling;
+  const lbl = box.querySelector('.vm-cfd-single-lbl');
+  if (lbl) { lbl.textContent = opt.textContent; lbl.style.color = '#111827'; }
+  box.classList.add('has-value');
+  box.classList.remove('open');
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.vm-cfd-control')) {
+    document.querySelectorAll('.vm-cfd-box.open').forEach(b => b.classList.remove('open'));
+  }
+});
+
+function removeAndCloseView(id) { removeCard(id); closeModal(); }
+
+let _pendingDeleteId = null;
+function showDeleteConfirm(id) {
+  _pendingDeleteId = id;
+  const item = files.find(f => f.id === id);
+  const name = item ? item.file.name : 'this asset';
+  document.getElementById('delConfirmMsg').innerHTML = `Are you sure you want to delete asset<br><strong>"${name}"</strong> ?`;
+  document.getElementById('delConfirmOverlay').classList.remove('hidden');
+}
+function hideDeleteConfirm() {
+  document.getElementById('delConfirmOverlay').classList.add('hidden');
+  _pendingDeleteId = null;
+}
+function confirmDelete() {
+  if (_pendingDeleteId !== null) removeAndCloseView(_pendingDeleteId);
+  hideDeleteConfirm();
+}
+
+// ── RENAME FILE ──
+function renameFile(id) {
+  const item = files.find(f => f.id === id); if (!item) return;
+  const overlay = document.getElementById('rename-' + id);
+  const input = document.getElementById('rname-' + id);
+  if (!overlay || !input) return;
+  input.value = item.file.name;
+  overlay.classList.add('active');
+  input.focus();
+  // Select just the name part (without extension)
+  const dotIdx = item.file.name.lastIndexOf('.');
+  input.setSelectionRange(0, dotIdx > 0 ? dotIdx : item.file.name.length);
+}
+
+function renameDone(e, id) {
+  if (e.key === 'Enter') {
+    const input = document.getElementById('rname-' + id);
+    const newName = input?.value.trim();
+    if (newName) applyRename(id, newName);
+    else cancelRename(id);
+  } else if (e.key === 'Escape') {
+    cancelRename(id);
+  }
+}
+
+function cancelRename(id) {
+  const overlay = document.getElementById('rename-' + id);
+  if (overlay) overlay.classList.remove('active');
+}
+
+function applyRename(id, newName) {
+  const item = files.find(f => f.id === id); if (!item) return;
+  // Preserve extension if user didn't include one
+  const oldExt = item.file.name.includes('.') ? '.' + item.file.name.split('.').pop() : '';
+  const hasExt = newName.includes('.');
+  const finalName = hasExt ? newName : newName + oldExt;
+  // Create a new File object with the new name
+  const renamed = new File([item.file], finalName, { type: item.file.type });
+  item.file = renamed;
+  // Update displayed name in tile
+  const tile = document.getElementById('card-' + id);
+  if (tile) {
+    const nameEl = tile.querySelector('.tile-name');
+    if (nameEl) nameEl.textContent = finalName;
+  }
+  cancelRename(id);
+}
+
+// ════════════════════════════════════════
+// MODAL SYSTEM
+// ════════════════════════════════════════
+let cameraStream = null;
+
+function openModal(html, title, iconHtml) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalIcon').innerHTML = iconHtml || '';
+  document.getElementById('modalContent').innerHTML = html;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  if (cameraStream) { cameraStream.getTracks().forEach(t => t.stop()); cameraStream = null; }
+  setTimeout(() => document.querySelector('.modal')?.classList.remove('modal-wide'), 250);
+}
+
+document.getElementById('modalOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+});
+
+// ── CAMERA ──
+function openCamera() {
+  const icon = `<svg viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" width="18" height="18"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
+  openModal(`
+    <div class="cam-wrap">
+      <video id="camVideo" class="cam-video" autoplay playsinline muted></video>
+      <canvas id="camCanvas" class="cam-canvas"></canvas>
+    </div>
+    <div class="cam-capture-row" id="camControls">
+      <button class="cam-btn-capture" onclick="capturePhoto()" title="Take photo"></button>
+    </div>
+    <div class="cam-msg" id="camMsg">Point the camera and press the button to capture</div>
+  `, 'Take a photo', icon);
+
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+    .then(stream => {
+      cameraStream = stream;
+      const v = document.getElementById('camVideo');
+      if (v) v.srcObject = stream;
+    })
+    .catch(() => {
+      document.getElementById('modalContent').innerHTML = `
+        <div class="cam-error">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" width="36" height="36" style="margin-bottom:12px;display:block;margin-left:auto;margin-right:auto"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Camera access was denied.<br>Please allow camera access in your browser settings.
+        </div>`;
+    });
+}
+
+function capturePhoto() {
+  const v = document.getElementById('camVideo'), c = document.getElementById('camCanvas');
+  if (!v || !c) return;
+  c.width = v.videoWidth; c.height = v.videoHeight;
+  c.getContext('2d').drawImage(v, 0, 0);
+  v.style.display = 'none'; c.style.display = 'block';
+  document.getElementById('camControls').innerHTML = `
+    <button class="cam-btn-retake" onclick="retakePhoto()">Retake</button>
+    <button class="btn btn-primary" onclick="usePhoto()" style="height:36px;font-size:13px;padding:0 18px">Use photo</button>`;
+  document.getElementById('camMsg').textContent = '';
+}
+
+function retakePhoto() {
+  const v = document.getElementById('camVideo'), c = document.getElementById('camCanvas');
+  if (!v || !c) return;
+  v.style.display = 'block'; c.style.display = 'none';
+  document.getElementById('camControls').innerHTML = `<button class="cam-btn-capture" onclick="capturePhoto()" title="Take photo"></button>`;
+  document.getElementById('camMsg').textContent = 'Point the camera and press the button to capture';
+}
+
+function usePhoto() {
+  const c = document.getElementById('camCanvas'); if (!c) return;
+  c.toBlob(blob => {
+    if (!blob) return;
+    const ts = new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+    handleFiles([new File([blob], `photo_${ts}.jpg`, { type:'image/jpeg' })]);
+    closeModal();
+  }, 'image/jpeg', 0.92);
+}
+
+// ── URL IMPORT ──
+function openUrlModal() {
+  const icon = `<svg viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" width="18" height="18"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>`;
+  openModal(`
+    <div class="m-field">
+      <div class="m-label">File URL</div>
+      <input class="m-input" id="urlInput" type="url" placeholder="https://example.com/file.pdf" oninput="urlAutoName()" />
+    </div>
+    <div class="m-field">
+      <div class="m-label">File name <span style="color:#ccc;font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></div>
+      <input class="m-input" id="urlName" type="text" placeholder="document.pdf" />
+    </div>
+    <div id="urlError" style="font-size:12px;color:#dc2626;margin-top:-6px;margin-bottom:8px;display:none"></div>
+    <div class="m-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="urlImportBtn" onclick="importFromUrl()" style="height:36px;font-size:13px">Import file</button>
+    </div>
+  `, 'Import from URL', icon);
+  setTimeout(() => document.getElementById('urlInput')?.focus(), 80);
+}
+
+function urlAutoName() {
+  const u = document.getElementById('urlInput').value.trim();
+  const n = document.getElementById('urlName');
+  if (u && !n.value) {
+    try { const p = new URL(u).pathname.split('/'); n.placeholder = p[p.length-1] || 'file'; } catch(e) {}
+  }
+}
+
+function importFromUrl() {
+  const u = document.getElementById('urlInput').value.trim();
+  const n = document.getElementById('urlName').value.trim();
+  const err = document.getElementById('urlError');
+  if (!u) { err.textContent='Please enter a URL'; err.style.display='block'; return; }
+  try { new URL(u); } catch(e) { err.textContent='Please enter a valid URL'; err.style.display='block'; return; }
+  err.style.display = 'none';
+  let fname = n;
+  if (!fname) { try { const p=new URL(u).pathname.split('/'); fname=p[p.length-1]||'imported-file'; } catch(e) { fname='imported-file'; } }
+  if (!fname.includes('.')) fname += '.file';
+  const btn = document.getElementById('urlImportBtn');
+  btn.innerHTML = '<span class="btn-spin"></span>'; btn.disabled = true;
+  setTimeout(() => {
+    const blob = new Blob([`Imported from: ${u}`], { type: guessType(fname) });
+    handleFiles([new File([blob], fname, { type: guessType(fname) })]);
+    closeModal();
+  }, 800);
+}
+
+function guessType(name) {
+  const m = {jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',gif:'image/gif',webp:'image/webp',pdf:'application/pdf',mp4:'video/mp4',zip:'application/zip',doc:'application/msword',docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'};
+  return m[name.split('.').pop().toLowerCase()] || 'application/octet-stream';
+}
+
+// ── GOOGLE DRIVE IMPORT ──
+function openGDriveModal() {
+  const icon = `<svg width="18" height="18" viewBox="0 0 87.3 78"><path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3L27.5 53H0c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/><path d="M43.65 25L29.9 1.2C28.55 2 27.4 3.1 26.6 4.5L1.2 48.5C.4 49.9 0 51.45 0 53h27.5z" fill="#00ac47"/><path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5H59.8l5.65 10.85z" fill="#ea4335"/><path d="M43.65 25L57.4 1.2C56.05.4 54.5 0 52.9 0H34.4c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d"/><path d="M59.8 53H27.5L13.75 76.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc"/><path d="M73.4 26.5l-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25 59.8 53h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00"/></svg>`;
+  openModal(`
+    <div class="m-field">
+      <div class="m-label">Google Drive link</div>
+      <input class="m-input" id="gdriveInput" type="url" placeholder="https://drive.google.com/file/d/..." oninput="gdriveAutoName()" />
+    </div>
+    <div class="m-field">
+      <div class="m-label">File name <span style="color:#ccc;font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></div>
+      <input class="m-input" id="gdriveName" type="text" placeholder="document.pdf" />
+    </div>
+    <div id="gdriveError" style="font-size:12px;color:#dc2626;margin-top:-6px;margin-bottom:8px;display:none"></div>
+    <div class="m-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="gdriveImportBtn" onclick="importFromGDrive()" style="height:36px;font-size:13px">Import file</button>
+    </div>
+  `, 'Import from Google Drive', icon);
+  setTimeout(() => document.getElementById('gdriveInput')?.focus(), 80);
+}
+
+function gdriveAutoName() {
+  const u = document.getElementById('gdriveInput').value.trim();
+  const n = document.getElementById('gdriveName');
+  if (u && !n.value) {
+    try { const p = new URL(u).pathname.split('/'); const last = p[p.length-1]; if(last && last.includes('.')) n.placeholder = last; else n.placeholder = 'google-drive-file'; } catch(e) {}
+  }
+}
+
+function importFromGDrive() {
+  const u = document.getElementById('gdriveInput').value.trim();
+  const n = document.getElementById('gdriveName').value.trim();
+  const err = document.getElementById('gdriveError');
+  if (!u) { err.textContent='Please enter a Google Drive link'; err.style.display='block'; return; }
+  try { new URL(u); } catch(e) { err.textContent='Please enter a valid URL'; err.style.display='block'; return; }
+  err.style.display = 'none';
+  let fname = n;
+  if (!fname) { try { const p=new URL(u).pathname.split('/'); const last=p[p.length-1]; if(last&&last.includes('.')) fname=last; else fname='google-drive-file'; } catch(e) { fname='google-drive-file'; } }
+  if (!fname.includes('.')) fname += '.file';
+  const btn = document.getElementById('gdriveImportBtn');
+  btn.innerHTML = '<span class="btn-spin"></span>'; btn.disabled = true;
+  setTimeout(() => {
+    const blob = new Blob([`Imported from Google Drive: ${u}`], { type: guessType(fname) });
+    handleFiles([new File([blob], fname, { type: guessType(fname) })]);
+    closeModal();
+  }, 800);
+}
+
+// ── CLOUD STORAGE ──
+const CLOUD_FILES = {
+  gdrive:   [
+    { name:'Q1_Campaign_Brief.pdf',      type:'pdf', size:'245 KB',  date:'Mar 3' },
+    { name:'Hero_Banner_Final.png',      type:'img', size:'1.2 MB',  date:'Mar 5' },
+    { name:'Product_Shoot_01.jpg',       type:'img', size:'3.4 MB',  date:'Mar 6' },
+    { name:'Brand_Guidelines_2024.pdf',  type:'pdf', size:'8.1 MB',  date:'Feb 28' },
+    { name:'Social_Assets_Pack.zip',     type:'zip', size:'12.3 MB', date:'Mar 1' },
+    { name:'Video_Ad_15sec.mp4',         type:'vid', size:'24.8 MB', date:'Mar 4' },
+    { name:'Copy_Deck_v3.docx',          type:'doc', size:'87 KB',   date:'Mar 7' },
+  ],
+  dropbox:  [
+    { name:'Creative_Concepts.pdf',      type:'pdf', size:'3.2 MB',  date:'Mar 2' },
+    { name:'Photography_Finals',         type:'folder', size:'—',    date:'Mar 5' },
+    { name:'Logo_Pack_2024.zip',         type:'zip', size:'5.7 MB',  date:'Feb 20' },
+    { name:'Campaign_Video_Draft.mp4',   type:'vid', size:'41.2 MB', date:'Mar 6' },
+    { name:'Presentation_Final.pptx',   type:'doc', size:'18.4 MB', date:'Mar 3' },
+  ],
+  box:      [
+    { name:'Marketing_Strategy_Q1.pdf', type:'pdf', size:'1.8 MB',  date:'Mar 1' },
+    { name:'Asset_Library',             type:'folder', size:'—',    date:'Feb 15' },
+    { name:'Approved_Creatives.zip',    type:'zip', size:'22.1 MB', date:'Mar 4' },
+    { name:'Testimonial_Video.mp4',     type:'vid', size:'67.3 MB', date:'Mar 5' },
+  ],
+  onedrive: [
+    { name:'Q1_Report_Draft.docx',      type:'doc', size:'234 KB',  date:'Mar 6' },
+    { name:'Budget_Tracker.xlsx',       type:'doc', size:'45 KB',   date:'Mar 3' },
+    { name:'Event_Photos',              type:'folder', size:'—',    date:'Mar 1' },
+    { name:'Brand_Video_Final.mp4',     type:'vid', size:'88.5 MB', date:'Feb 25' },
+    { name:'Press_Kit.pdf',             type:'pdf', size:'4.2 MB',  date:'Feb 28' },
+  ]
+};
+const CLOUD_META = {
+  gdrive:   { name:'Google Drive', email:'anna@acme.com',       path:'My Drive'  },
+  dropbox:  { name:'Dropbox',      email:'anna.k@dropbox.com',  path:'Dropbox'   },
+  box:      { name:'Box',          email:'anna@boxuser.com',     path:'All Files' },
+  onedrive: { name:'OneDrive',     email:'anna@outlook.com',     path:'OneDrive'  },
+};
+const cloudConnected = {}, cloudSelected = {};
+
+function getCloudIconHtml(service, size=18) {
+  const s = size;
+  if (service==='gdrive') return `<svg width="${s}" height="${s}" viewBox="0 0 87.3 78"><path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3L27.5 53H0c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/><path d="M43.65 25L29.9 1.2C28.55 2 27.4 3.1 26.6 4.5L1.2 48.5C.4 49.9 0 51.45 0 53h27.5z" fill="#00ac47"/><path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5H59.8l5.65 10.85z" fill="#ea4335"/><path d="M43.65 25L57.4 1.2C56.05.4 54.5 0 52.9 0H34.4c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d"/><path d="M59.8 53H27.5L13.75 76.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc"/><path d="M73.4 26.5l-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25 59.8 53h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00"/></svg>`;
+  if (service==='dropbox') return `<svg width="${s}" height="${s}" viewBox="0 0 528 512" fill="#0061ff"><path d="M264.4 116.3l-132 84.3 132 84.3-132 84.3L0 284.1l132.3-84.3L0 116.3 132.3 32l132.1 84.3zm-132 284.5l132-84.3 132 84.3-132 84.4-132-84.4zm132-116.6l132.3-84.3-132.3-83.9 131.6-84.3L528 116.3l-132.3 84.1L528 284.7l-132.4 83.9-131.2-84.4z"/></svg>`;
+  if (service==='box') return `<span style="font-size:${s*0.72}px;font-weight:900;color:#0e50a0;line-height:1">box</span>`;
+  if (service==='onedrive') return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="#0078d4"><path d="M10.5 13.5C10.5 11.57 12.07 10 14 10h6.5c.17 0 .34.01.5.02A6 6 0 009.01 11.6 4 4 0 0010.5 13.5zM12 14.5a5 5 0 00-5-5 5 5 0 00-5 5 3 3 0 003 3h9.5A3.5 3.5 0 0018 14c0-.18-.01-.35-.03-.52A5.48 5.48 0 0112 14.5z"/></svg>`;
+  return '';
+}
+const CLOUD_BG = { gdrive:'#e8f0fe', dropbox:'#e5efff', box:'#e6eef8', onedrive:'#e4f0fb' };
+const FILE_EMOJI = { img:'🖼️', pdf:'📄', doc:'📝', vid:'🎬', zip:'🗜️', folder:'📁' };
+
+function openCloud(service) {
+  cloudSelected[service] = cloudSelected[service] || new Set();
+  if (cloudConnected[service]) openCloudBrowser(service);
+  else openCloudConnect(service);
+}
+
+function openCloudConnect(service) {
+  const meta = CLOUD_META[service];
+  const iconHtml = getCloudIconHtml(service, 24);
+  openModal(`
+    <div class="cloud-connect">
+      <div class="cloud-connect-icon" style="background:${CLOUD_BG[service]}">${iconHtml}</div>
+      <div class="cloud-connect-title">Connect ${meta.name}</div>
+      <div class="cloud-connect-desc">Sign in to your ${meta.name} account to browse and import files directly.</div>
+      <button class="cloud-connect-btn" onclick="connectCloud('${service}')">
+        ${getCloudIconHtml(service, 18)} Sign in with ${meta.name}
+      </button>
+      <div class="cloud-divider"><div class="cloud-divider-line"></div><div class="cloud-divider-text">OR</div><div class="cloud-divider-line"></div></div>
+      <div style="width:100%;max-width:270px;margin-top:16px">
+        <div class="m-label" style="text-align:left">Paste a shared link</div>
+        <div style="display:flex;gap:8px;margin-top:6px">
+          <input class="m-input" id="cloudLinkInput" placeholder="Paste link here…" style="flex:1;height:38px" />
+          <button class="btn btn-primary" onclick="importCloudLink('${service}')" style="height:38px;flex-shrink:0;font-size:13px;padding:0 14px">Import</button>
+        </div>
+      </div>
+    </div>
+  `, meta.name, getCloudIconHtml(service, 18));
+}
+
+function connectCloud(service) {
+  const meta = CLOUD_META[service];
+  document.getElementById('modalContent').innerHTML = `
+    <div class="cloud-loading">
+      <div class="cloud-spinner"></div>
+      Connecting to ${meta.name}…
+    </div>`;
+  setTimeout(() => {
+    cloudConnected[service] = true;
+    cloudSelected[service] = new Set();
+    openCloudBrowser(service);
+  }, 1100);
+}
+
+function openCloudBrowser(service) {
+  const meta = CLOUD_META[service];
+  const files = CLOUD_FILES[service];
+  const sel = cloudSelected[service];
+  const rows = files.map((f, i) => `
+    <div class="cf-row ${sel.has(i)?'selected':''}" onclick="toggleCloudFile('${service}',${i},this)">
+      <div class="cf-check">${sel.has(i)?'✓':''}</div>
+      <div class="cf-icon ${f.type}">${FILE_EMOJI[f.type]||'📄'}</div>
+      <div class="cf-info">
+        <div class="cf-name">${f.name}</div>
+        <div class="cf-meta">${f.size} · ${f.date}</div>
+      </div>
+    </div>`).join('');
+  const cnt = sel.size;
+  document.getElementById('modalContent').innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+      <div style="width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0">${getCloudIconHtml(service,16)}</div>
+      <span style="font-size:11.5px;font-weight:500;color:#aaa">${meta.email}</span>
+      <button onclick="disconnectCloud('${service}')" style="margin-left:auto;font-size:11px;color:#ccc;background:none;border:none;cursor:pointer;padding:2px 6px;border-radius:6px;font-family:inherit" onmouseover="this.style.color='#555'" onmouseout="this.style.color='#ccc'">Disconnect</button>
+    </div>
+    <div class="cloud-search">
+      <svg class="cloud-search-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" placeholder="Search files…" />
+    </div>
+    <div class="cloud-path">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="11" height="11"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+      / <span>${meta.path}</span>
+    </div>
+    <div class="cloud-files" id="cloudFileList">${rows}</div>
+    <div class="cloud-footer">
+      <span class="cloud-sel-count" id="cloudSelCount">${cnt>0?cnt+' selected':'No files selected'}</span>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost" onclick="closeModal()" style="height:32px;font-size:12px;padding:0 12px">Cancel</button>
+        <button class="btn btn-primary" id="cloudImportBtn" onclick="importCloudFiles('${service}')" style="height:32px;font-size:12px;padding:0 14px"${cnt===0?' disabled':''}>
+          Import${cnt>0?' '+cnt+' file'+(cnt>1?'s':''):''}
+        </button>
+      </div>
+    </div>`;
+}
+
+function toggleCloudFile(service, idx, el) {
+  const sel = cloudSelected[service];
+  sel.has(idx) ? sel.delete(idx) : sel.add(idx);
+  el.classList.toggle('selected');
+  const check = el.querySelector('.cf-check');
+  if (check) check.textContent = sel.has(idx) ? '✓' : '';
+  const cnt = sel.size;
+  const countEl = document.getElementById('cloudSelCount');
+  const importBtn = document.getElementById('cloudImportBtn');
+  if (countEl) countEl.textContent = cnt>0 ? cnt+' selected' : 'No files selected';
+  if (importBtn) { importBtn.disabled = cnt===0; importBtn.textContent = 'Import'+(cnt>0?' '+cnt+' file'+(cnt>1?'s':''):''); }
+}
+
+function importCloudFiles(service) {
+  const sel = cloudSelected[service]; if (!sel||!sel.size) return;
+  const mockFiles = Array.from(sel).map(i => {
+    const f = CLOUD_FILES[service][i]; if (f.type==='folder') return null;
+    const blob = new Blob([`Cloud import: ${f.name}`], { type: guessType(f.name) });
+    return new File([blob], f.name, { type: guessType(f.name) });
+  }).filter(Boolean);
+  if (mockFiles.length) { handleFiles(mockFiles); cloudSelected[service] = new Set(); }
+  closeModal();
+}
+
+function importCloudLink(service) {
+  const v = document.getElementById('cloudLinkInput')?.value.trim(); if (!v) return;
+  let fname = 'cloud-import';
+  try { const p=new URL(v).pathname.split('/'); const l=p[p.length-1]; if(l&&l.includes('.')) fname=l; else fname=`import_${service}.file`; } catch(e) {}
+  const blob = new Blob([`Imported from: ${v}`], { type: guessType(fname) });
+  handleFiles([new File([blob], fname, { type: guessType(fname) })]);
+  closeModal();
+}
+
+function disconnectCloud(service) {
+  cloudConnected[service] = false; cloudSelected[service] = new Set();
+  openCloudConnect(service);
+}
+</script>
+
+<!-- ══ FILL METADATA MODAL ══ -->
+<div class="fm-confirm-overlay hidden" id="fmConfirmOverlay">
+  <div class="fm-confirm-box">
+    <button class="fm-confirm-close" onclick="fmHideConfirm()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div class="fm-confirm-icon">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
+    </div>
+    <div class="fm-confirm-title">Apply changes</div>
+    <div class="fm-confirm-msg" id="fmConfirmMsg"></div>
+    <div class="fm-confirm-actions">
+      <button class="fm-confirm-cancel" onclick="fmHideConfirm()">Cancel</button>
+      <button class="fm-confirm-ok" onclick="fmConfirmApply()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<div class="fm-overlay hidden" id="fillMetaOverlay">
+  <div class="fm-modal">
+    <div class="fm-topbar">
+      <span class="fm-topbar-title">Fill multiple assets</span>
+      <button class="fm-close-btn" onclick="closeFillMetadata()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="fm-modal-body">
+      <div class="fm-sidebar">
+        <div class="fm-sidebar-group-label">General fields</div>
+        <div class="fm-sidebar-item active" data-field="Title" onclick="fmActivateField(this)">Title</div>
+        <div class="fm-sidebar-item" data-field="Description" onclick="fmActivateField(this)">Description</div>
+        <div class="fm-sidebar-item" data-field="Alt Text" onclick="fmActivateField(this)">Alt Text</div>
+        <div class="fm-sidebar-item" data-field="Tags" onclick="fmActivateField(this)">Tags</div>
+        <div class="fm-sidebar-group-label" style="margin-top:8px;">Product fields</div>
+        <div class="fm-sidebar-item" data-field="Color" onclick="fmActivateField(this)">Color</div>
+        <div class="fm-sidebar-item" data-field="Year" onclick="fmActivateField(this)">Year</div>
+        <div class="fm-sidebar-item" data-field="Seasons" onclick="fmActivateField(this)">Seasons</div>
+        <div class="fm-sidebar-item" data-field="Materials" onclick="fmActivateField(this)">Materials</div>
+      </div>
+      <div class="fm-main-area">
+        <div class="fm-op-bar">
+          <div class="fm-op-field">
+            <span class="fm-op-label">Operation</span>
+            <div class="cfd-wrap" style="min-width:160px;">
+              <div class="cfd-box cfd-single-box cfd-lg" onclick="cfdToggle(this)">
+                <span class="cfd-single-lbl picked">Overwrite</span>
+                <span class="cfd-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+              </div>
+              <div class="cfd-panel">
+                <div class="cfd-opt selected" onclick="cfdPick(this)">Overwrite</div>
+                <div class="cfd-opt" onclick="cfdPick(this)">Append</div>
+                <div class="cfd-opt" onclick="cfdPick(this)">Clear</div>
+              </div>
+            </div>
+          </div>
+          <div class="fm-op-value">
+            <div class="fm-op-value-label" id="fmOpFieldLabel">Title</div>
+            <div id="fmOpValueWrap"></div>
+          </div>
+          <div class="fm-op-field">
+            <span class="fm-op-label">&nbsp;</span>
+            <button class="fm-apply-btn" onclick="fmShowConfirm()">Apply</button>
+          </div>
+        </div>
+        <div class="fm-table-header">
+          <input type="checkbox" id="fmSelectAll" class="fm-th-check" onclick="fmToggleAll(this)" />
+          <span class="fm-th-cell fm-th-thumb"></span>
+          <span class="fm-th-cell fm-th-name" id="fmThName" onclick="fmToggleSort()">Name ↑</span>
+          <span class="fm-th-cell fm-th-size">Size</span>
+          <span class="fm-th-cell fm-th-field" id="fmThFieldLabel">Title</span>
+        </div>
+        <div class="fm-table-body" id="fmTableBody"></div>
+        <div class="fm-modal-footer">
+          <button class="fm-back-btn" onclick="closeFillMetadata()">← Back</button>
+          <div class="fm-footer-right">
+            <button class="fm-cancel-btn" onclick="closeFillMetadata()">Cancel</button>
+            <button class="fm-upload-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>
+              Upload
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const FM_CHEVRON = `<span class="cfd-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>`;
+const FM_FIELDS = {
+  'Title':       { type: 'text',   placeholder: 'Type title…' },
+  'Description': { type: 'text',   placeholder: 'Type description…' },
+  'Alt Text':    { type: 'text',   placeholder: 'Describe image for accessibility…' },
+  'Tags':        { type: 'text',   placeholder: 'q1, marketing, campaign…' },
+  'Color':       { type: 'multi',  placeholder: 'Enter colors',           options: ['Beige','Black','Black and white','Blue','Brown','Colorful','Green','Red','White','Yellow'] },
+  'Year':        { type: 'single', placeholder: 'Select year',            options: ['2023','2024','2025','2026'] },
+  'Seasons':     { type: 'multi',  placeholder: 'Select product seasons', options: ['Spring','Summer','Autumn','Winter'] },
+  'Materials':   { type: 'single', placeholder: 'Select product material',options: ['Cotton','Polyester','Wool','Leather','Denim','Silk','Linen'] },
+};
+
+function openFillMetadata() {
+  const overlay = document.getElementById('fillMetaOverlay');
+  overlay.classList.remove('hidden');
+  fmBuildRows();
+  fmActivateField(overlay.querySelector('.fm-sidebar-item.active'));
+}
+function closeFillMetadata() {
+  document.getElementById('fillMetaOverlay').classList.add('hidden');
+}
+
+function fmBuildRows() {
+  const tbody = document.getElementById('fmTableBody');
+  const items = files.length ? files : [
+    { id: 'demo0', file: { name: 'IMG_6268.png', size: 1468006 }, type: 'img', _demoSrc: 'https://picsum.photos/seed/img6268/104/76', _demoDim: '1170 × 2532' },
+    { id: 'demo1', file: { name: 'IMG_6274.png', size: 856064 },  type: 'img', _demoSrc: 'https://picsum.photos/seed/img6274/104/76', _demoDim: '1170 × 2532' },
+    { id: 'demo2', file: { name: 'Yellow sweater.jpg', size: 1992294 }, type: 'img', _demoSrc: 'https://picsum.photos/seed/sweater/104/76', _demoDim: '6000 × 4000' },
+  ];
+  tbody.innerHTML = items.map((item, i) => {
+    const src = item._demoSrc || (item.type === 'img' ? URL.createObjectURL(item.file) : '');
+    const dim = item._demoDim || '';
+    const size = fmtSize ? fmtSize(item.file.size) : (item.file.size / 1048576).toFixed(1) + ' MB';
+    const thumb = src ? `<img class="fm-file-thumb" src="${src}" alt="" />` : `<div class="fm-file-thumb"></div>`;
+    return `<div class="fm-file-row" id="fmRow-${item.id}">
+      <input type="checkbox" class="fm-row-check" onchange="fmUpdateSelectAll()" />
+      ${thumb}
+      <div class="fm-file-info">
+        <span class="fm-file-name">${item.file.name}</span>
+        <span class="fm-file-meta">${dim}</span>
+      </div>
+      <div class="fm-file-size-col">${size}</div>
+      <div class="fm-file-input" id="fmRowInput-${item.id}"></div>
+    </div>`;
+  }).join('');
+  window._fmItems = items;
+}
+
+function fmBuildSingle(opts, wrapId, lg) {
+  const options = opts.map(o => `<div class="cfd-opt" onclick="cfdPick(this)">${o}</div>`).join('');
+  return `<div class="cfd-wrap" id="${wrapId}"><div class="cfd-box cfd-single-box${lg?' cfd-lg':''}" onclick="cfdToggle(this)"><span class="cfd-single-lbl">Select value</span>${FM_CHEVRON}</div><div class="cfd-panel">${options}</div></div>`;
+}
+function fmBuildMulti(opts, placeholder, wrapId) {
+  const options = opts.map(o => `<div class="cfd-opt" onclick="cfdMultiPick(this)">${o}</div>`).join('');
+  return `<div class="cfd-wrap" id="${wrapId}"><div class="cfd-box cfd-multi-box" onclick="cfdToggle(this)"><div class="cfd-tags-area" data-placeholder="${placeholder}"><input class="cfd-search" placeholder="${placeholder}" onclick="event.stopPropagation()" /></div><div class="cfd-multi-footer"><span class="cfd-select-all-lbl" onclick="event.stopPropagation();cfdSelectAll(this.closest('.cfd-wrap'))">Select all</span><span class="cfd-clear-lbl" onclick="event.stopPropagation();cfdClearAll(this.closest('.cfd-wrap'))">Clear all</span><span class="cfd-footer-chevron">${FM_CHEVRON}</span></div></div><div class="cfd-panel">${options}</div></div>`;
+}
+function fmBuildInput(field, itemId) {
+  const cfg = FM_FIELDS[field] || { type: 'text', placeholder: 'Type value…' };
+  const id = 'fmRi-' + itemId;
+  if (cfg.type === 'single') return fmBuildSingle(cfg.options, id, false);
+  if (cfg.type === 'multi')  return fmBuildMulti(cfg.options, cfg.placeholder, id);
+  return `<input type="text" placeholder="${cfg.placeholder}" id="${id}" />`;
+}
+function fmBuildBulkInput(field) {
+  const cfg = FM_FIELDS[field] || { type: 'text', placeholder: 'Type value…' };
+  if (cfg.type === 'single') return fmBuildSingle(cfg.options, 'fmBulk', true);
+  if (cfg.type === 'multi')  return fmBuildMulti(cfg.options, cfg.placeholder, 'fmBulk');
+  return `<input id="fmBulkVal" type="text" placeholder="${cfg.placeholder}" />`;
+}
+
+function cfdToggle(box) {
+  const isOpen = box.classList.contains('open');
+  document.querySelectorAll('.cfd-box.open').forEach(b => b.classList.remove('open'));
+  if (!isOpen) box.classList.add('open');
+}
+function cfdPick(opt) {
+  const panel = opt.closest('.cfd-panel');
+  const box = panel.previousElementSibling;
+  panel.querySelectorAll('.cfd-opt').forEach(o => o.classList.remove('selected'));
+  opt.classList.add('selected');
+  const lbl = box.querySelector('.cfd-single-lbl');
+  lbl.textContent = opt.textContent; lbl.classList.add('picked');
+  box.classList.remove('open'); box.classList.add('has-value');
+}
+function cfdMultiPick(opt) {
+  opt.classList.toggle('selected');
+  const panel = opt.closest('.cfd-panel');
+  const box = panel.previousElementSibling;
+  cfdUpdateMultiTags(box, panel);
+}
+function cfdUpdateMultiTags(box, panel) {
+  const tagsArea = box.querySelector('.cfd-tags-area');
+  const placeholder = tagsArea.dataset.placeholder;
+  const selected = Array.from(panel.querySelectorAll('.cfd-opt.selected')).map(o => o.textContent);
+  const clearLbl = box.querySelector('.cfd-clear-lbl');
+  if (selected.length === 0) {
+    tagsArea.innerHTML = `<input class="cfd-search" placeholder="${placeholder}" onclick="event.stopPropagation()" />`;
+    box.classList.remove('has-value'); clearLbl.style.display = 'none';
+  } else {
+    tagsArea.innerHTML = selected.map(v => `<span class="cfd-tag">${v}<button class="cfd-tag-x" onclick="event.stopPropagation();cfdRemoveTag(this,'${v.replace(/'/g,"\\'")}')">&times;</button></span>`).join('') + `<input class="cfd-search" placeholder="" onclick="event.stopPropagation()" style="min-width:4px;flex:0 1 4px;" />`;
+    box.classList.add('has-value'); clearLbl.style.display = '';
+  }
+}
+function cfdRemoveTag(btn, val) {
+  const wrap = btn.closest('.cfd-wrap');
+  const panel = wrap.querySelector('.cfd-panel');
+  const opt = Array.from(panel.querySelectorAll('.cfd-opt')).find(o => o.textContent === val);
+  if (opt) opt.classList.remove('selected');
+  cfdUpdateMultiTags(wrap.querySelector('.cfd-box'), panel);
+}
+function cfdSelectAll(wrap) {
+  const panel = wrap.querySelector('.cfd-panel');
+  panel.querySelectorAll('.cfd-opt').forEach(o => o.classList.add('selected'));
+  cfdUpdateMultiTags(wrap.querySelector('.cfd-box'), panel);
+}
+function cfdClearAll(wrap) {
+  const panel = wrap.querySelector('.cfd-panel');
+  panel.querySelectorAll('.cfd-opt').forEach(o => o.classList.remove('selected'));
+  cfdUpdateMultiTags(wrap.querySelector('.cfd-box'), panel);
+}
+
+function fmRenderBadges(containerId, values) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = `<div class="cfd-applied-wrap">${values.map(v=>`<span class="cfd-applied-badge">${v}</span>`).join('')}</div>`;
+}
+
+if (!window._fmApplied) window._fmApplied = {};
+
+function fmActivateField(el) {
+  document.querySelectorAll('.fm-sidebar-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+  const field = el.dataset.field;
+  document.getElementById('fmOpFieldLabel').textContent = field;
+  document.getElementById('fmThFieldLabel').textContent = field;
+  document.getElementById('fmOpValueWrap').innerHTML = fmBuildBulkInput(field);
+  (window._fmItems || []).forEach(item => {
+    const saved = (window._fmApplied[field] || {})[item.id];
+    if (saved) {
+      fmRenderBadges('fmRowInput-' + item.id, saved);
+    } else {
+      document.getElementById('fmRowInput-' + item.id).innerHTML = fmBuildInput(field, item.id);
+    }
+  });
+}
+
+function fmApplyToAll() {
+  const field = document.querySelector('.fm-sidebar-item.active').dataset.field;
+  const cfg = FM_FIELDS[field] || { type: 'text' };
+  const operation = document.querySelector('.fm-op-bar .cfd-single-lbl.picked')?.textContent || 'Overwrite';
+  const items = window._fmItems || [];
+  if (!window._fmApplied[field]) window._fmApplied[field] = {};
+
+  if (operation === 'Clear') {
+    items.forEach(item => {
+      delete window._fmApplied[field][item.id];
+      document.getElementById('fmRowInput-' + item.id).innerHTML = fmBuildInput(field, item.id);
+    });
+    const bulkWrap = document.getElementById('fmBulk');
+    if (bulkWrap) cfdClearAll(bulkWrap);
+    const bulkVal = document.getElementById('fmBulkVal');
+    if (bulkVal) bulkVal.value = '';
+    return;
+  }
+  if (cfg.type === 'text') {
+    const inp = document.getElementById('fmBulkVal');
+    if (!inp || !inp.value) return;
+    items.forEach(item => {
+      window._fmApplied[field][item.id] = [inp.value];
+      fmRenderBadges('fmRowInput-' + item.id, [inp.value]);
+    });
+    return;
+  }
+  if (cfg.type === 'single') {
+    const selOpt = document.querySelector('#fmBulk .cfd-opt.selected');
+    if (!selOpt) return;
+    items.forEach(item => {
+      window._fmApplied[field][item.id] = [selOpt.textContent];
+      fmRenderBadges('fmRowInput-' + item.id, [selOpt.textContent]);
+    });
+    return;
+  }
+  if (cfg.type === 'multi') {
+    const selected = Array.from(document.querySelectorAll('#fmBulk .cfd-opt.selected')).map(o => o.textContent);
+    if (!selected.length) return;
+    items.forEach(item => {
+      window._fmApplied[field][item.id] = selected;
+      fmRenderBadges('fmRowInput-' + item.id, selected);
+    });
+  }
+}
+
+let fmSortAsc = true;
+function fmToggleSort() {
+  fmSortAsc = !fmSortAsc;
+  const el = document.getElementById('fmThName');
+  el.textContent = 'Name ' + (fmSortAsc ? '↑' : '↓');
+  el.classList.add('sort-active');
+  const tbody = document.getElementById('fmTableBody');
+  const rows = Array.from(tbody.querySelectorAll('.fm-file-row'));
+  rows.sort((a, b) => {
+    const na = a.querySelector('.fm-file-name').textContent.toLowerCase();
+    const nb = b.querySelector('.fm-file-name').textContent.toLowerCase();
+    return fmSortAsc ? na.localeCompare(nb) : nb.localeCompare(na);
+  });
+  rows.forEach(r => tbody.appendChild(r));
+}
+
+function fmToggleAll(el) {
+  el.checked = false; el.indeterminate = false;
+  const anyChecked = document.querySelectorAll('.fm-row-check:checked').length > 0;
+  document.querySelectorAll('.fm-row-check').forEach(cb => cb.checked = !anyChecked);
+  fmUpdateSelectAll();
+}
+function fmUpdateSelectAll() {
+  const checked = document.querySelectorAll('.fm-row-check:checked').length;
+  const master = document.getElementById('fmSelectAll');
+  master.checked = false;
+  master.indeterminate = checked > 0;
+}
+
+function fmShowConfirm() {
+  const field = document.querySelector('.fm-sidebar-item.active').dataset.field;
+  const count = document.querySelectorAll('.fm-row-check:checked').length || document.querySelectorAll('.fm-row-check').length;
+  document.getElementById('fmConfirmMsg').textContent = `Are you sure you want to apply changes for ${count} asset${count!==1?'s':''} to metadata "${field}"?`;
+  document.getElementById('fmConfirmOverlay').classList.remove('hidden');
+}
+function fmHideConfirm() { document.getElementById('fmConfirmOverlay').classList.add('hidden'); }
+function fmConfirmApply() { fmHideConfirm(); fmApplyToAll(); }
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.cfd-wrap')) {
+    document.querySelectorAll('.cfd-box.open').forEach(b => b.classList.remove('open'));
+  }
+});
+</script>
+</body>
+</html>
