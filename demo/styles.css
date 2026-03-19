@@ -310,14 +310,18 @@ body {
   min-height: calc(100vh - var(--topbar-height));
 }
 
+body.has-sidebar #app {
+  max-width: 1280px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 32px;
+}
+
 #content {
   flex: 1;
   padding: 40px 48px;
   max-width: 920px;
-}
-
-body.has-sidebar #content {
-  margin-left: var(--sidebar-width, 260px);
+  min-width: 0;
 }
 
 body.is-home #app {
@@ -332,17 +336,17 @@ body:not(.has-sidebar) #content {
 
 /* ── Sidebar ───────────────────────────────────── */
 .sidebar {
-  position: fixed;
+  position: sticky;
   top: var(--topbar-height);
-  left: max(32px, calc((100vw - 1280px) / 2 + 32px));
-  bottom: 0;
+  align-self: flex-start;
+  height: calc(100vh - var(--topbar-height));
   width: var(--sidebar-width, 260px);
+  flex-shrink: 0;
   background: #fff;
   border-right: 1px solid var(--sf-light-border);
   overflow-y: auto;
   padding: 20px 0;
   z-index: 50;
-  transition: transform 200ms ease;
 }
 
 .sidebar.hidden { display: none; }
@@ -1540,7 +1544,12 @@ body:not(.has-sidebar) #content {
   .sidebar-toggle { display: block; }
 
   .sidebar {
+    position: fixed;
+    top: var(--topbar-height);
     left: 0;
+    bottom: 0;
+    height: auto;
+    align-self: auto;
     transform: translateX(-100%);
   }
 
@@ -1549,8 +1558,8 @@ body:not(.has-sidebar) #content {
     box-shadow: 4px 0 20px rgba(0,0,0,0.15);
   }
 
-  body.has-sidebar #content {
-    margin-left: 0;
+  body.has-sidebar #app {
+    padding: 0;
   }
 
   #content {

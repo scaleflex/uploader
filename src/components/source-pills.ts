@@ -58,7 +58,7 @@ export class SfxSourcePills extends LitElement {
       transform: translateY(0) scale(0.98);
     }
 
-    svg {
+    :host > button > svg {
       width: 17px;
       height: 17px;
       flex-shrink: 0;
@@ -68,7 +68,7 @@ export class SfxSourcePills extends LitElement {
       stroke-linecap: round;
     }
 
-    svg.fill-icon {
+    :host > button > svg.fill-icon {
       fill: currentColor;
       stroke: none;
       stroke-width: 0;
@@ -83,6 +83,14 @@ export class SfxSourcePills extends LitElement {
       justify-content: center;
       flex-shrink: 0;
       line-height: 1;
+    }
+
+    .brand-ico svg {
+      width: auto;
+      height: auto;
+      fill: white;
+      stroke: none;
+      stroke-width: 0;
     }
   `;
 

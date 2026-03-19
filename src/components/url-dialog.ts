@@ -144,6 +144,7 @@ export class SfxUrlDialog extends LitElement {
 
     input::placeholder {
       color: var(--sfx-up-text-muted, #ccc);
+      text-align: center;
     }
 
     .error {

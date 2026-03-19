@@ -255,7 +255,7 @@ export class SfxDropZone extends LitElement {
       flex-shrink: 0;
     }
 
-    .src-pill svg {
+    .src-pill .pill-ico svg {
       width: 16px;
       height: 16px;
       flex-shrink: 0;
@@ -265,8 +265,16 @@ export class SfxDropZone extends LitElement {
       stroke-linecap: round;
     }
 
-    .src-pill svg.fill-icon {
+    .src-pill .pill-ico svg.fill-icon {
       fill: currentColor;
+      stroke: none;
+      stroke-width: 0;
+    }
+
+    .src-pill .brand-ico svg {
+      width: auto;
+      height: auto;
+      fill: white;
       stroke: none;
       stroke-width: 0;
     }
@@ -627,11 +635,11 @@ export class SfxDropZone extends LitElement {
                         this._onSourceIconClick(s);
                       }}
                     >
-                      <span class="pill-ico" style=${s.iconColor ? `color:${s.iconColor}` : ''}>
-                        ${s.brandHtml
-                          ? unsafeHTML(s.brandHtml)
-                          : svgTag`<svg viewBox="0 0 24 24" class=${s.fillIcon ? 'fill-icon' : ''}>${unsafeSVG(s.icon)}</svg>`}
-                      </span>
+                      ${s.brandHtml
+                        ? unsafeHTML(s.brandHtml)
+                        : html`<span class="pill-ico" style=${s.iconColor ? `color:${s.iconColor}` : ''}>
+                            ${svgTag`<svg viewBox="0 0 24 24" class=${s.fillIcon ? 'fill-icon' : ''}>${unsafeSVG(s.icon)}</svg>`}
+                          </span>`}
                       ${s.label}
                     </button>
                   `,

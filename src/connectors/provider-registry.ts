@@ -51,7 +51,7 @@ const PROVIDER_DEFS: Record<ProviderId, SourceDef> = {
     label: 'Unsplash',
     fillIcon: true,
     icon: '',
-    brandHtml: `<span class="brand-ico" style="background:#111"><svg width="11" height="11" viewBox="0 0 24 24" fill="white"><path d="M7.5 6.75V0h9v6.75h-9zM0 24V10.5h7.5v6.75h9V10.5H24V24H0z"/></svg></span>`,
+    brandHtml: `<span class="brand-ico" style="background:#111"><svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M8.5 11.5v5h7v-5h5.5V21h-18v-9.5h5.5zm7-8v5h-7v-5h7z"/></svg></span>`,
   },
 };
 
