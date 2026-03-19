@@ -191,8 +191,11 @@ export class SfxUploader extends LitElement {
       padding: 24px;
       display: flex;
       flex-direction: column;
+      align-items: center;
+      justify-content: center;
       gap: 4px;
       min-height: 0;
+      background: #fff;
     }
 
     .body sfx-drop-zone {
@@ -204,6 +207,7 @@ export class SfxUploader extends LitElement {
     .inline {
       border: 1px solid var(--sfx-up-border, #e8edf5);
       border-radius: var(--sfx-up-radius, 16px);
+      background: #fff;
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -996,6 +1000,12 @@ export class SfxUploader extends LitElement {
     }
   };
 
+  /** Dismiss handler for inline mode X button */
+  private _onInlineDismiss = () => {
+    this.config?.callbacks?.onCancel?.();
+    this._dispatchPublic(PublicEvents.CANCEL, {});
+  };
+
   /** Shared dismiss handler for X button, backdrop click, Escape */
   private _onModalDismiss = () => {
     this.config?.callbacks?.onCancel?.();
@@ -1035,12 +1045,14 @@ export class SfxUploader extends LitElement {
     // Inline mode
     return html`
       <div class="inline">
+        ${this._renderHeader()}
         ${this._renderBody()}
       </div>
     `;
   }
 
   private _renderHeader() {
+    const mode = this.config?.mode ?? 'modal';
     return html`
       <div class="header">
         <div class="header-icon">
@@ -1051,7 +1063,9 @@ export class SfxUploader extends LitElement {
           </svg>
         </div>
         <div class="header-title">Upload Files</div>
-        <button class="close-btn" @click=${this._onModalDismiss}>&#x2715;</button>
+        ${mode === 'modal'
+          ? html`<button class="close-btn" @click=${this._onModalDismiss}>&#x2715;</button>`
+          : html`<button class="close-btn" @click=${this._onInlineDismiss}>&#x2715;</button>`}
       </div>
     `;
   }

@@ -18,8 +18,8 @@ export class SfxDropZone extends LitElement {
     .drop-zone {
       border: none;
       border-radius: 12px;
-      background: transparent;
-      padding: 56px 40px 44px;
+      background: #fff;
+      padding: 50px 40px 50px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -177,6 +177,36 @@ export class SfxDropZone extends LitElement {
     }
 
     .compact .subtitle {
+      display: none;
+    }
+
+    /* --- "or Import From" divider --- */
+    .import-divider {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      width: 100%;
+      max-width: 420px;
+      margin-bottom: 20px;
+    }
+
+    .import-divider::before,
+    .import-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #e5e7eb;
+    }
+
+    .import-divider span {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--sfx-up-text-muted, #94a3b8);
+      white-space: nowrap;
+      letter-spacing: 0.3px;
+    }
+
+    .compact .import-divider {
       display: none;
     }
 
@@ -817,6 +847,7 @@ export class SfxDropZone extends LitElement {
 
         ${!this.compact && this.sources.length > 0
           ? html`
+              <div class="import-divider"><span>Or import from</span></div>
               <div class="sources-grid">
                 ${visibleSources.map((s) => this._renderPill(s))}
                 ${overflowSources.length > 0
