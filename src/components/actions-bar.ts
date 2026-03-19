@@ -10,10 +10,10 @@ export class SfxActionsBar extends LitElement {
       align-items: center;
       justify-content: space-between;
       background: var(--sfx-up-bg, #ffffff);
-      border-top: 1px solid #ebebeb;
+      border-top: 1px solid var(--sfx-up-border, #ebebeb);
       padding: 14px 24px;
       flex-shrink: 0;
-      box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.04);
+      box-shadow: 0 -4px 16px var(--sfx-up-shadow, rgba(0, 0, 0, 0.04));
     }
 
     .left {
@@ -58,37 +58,37 @@ export class SfxActionsBar extends LitElement {
     }
 
     .btn-ghost:hover {
-      background: #f8faff;
-      color: #64748b;
-      border-color: #d1dff0;
+      background: var(--sfx-up-border-light, #f8faff);
+      color: var(--sfx-up-text-secondary, #64748b);
+      border-color: var(--sfx-up-border, #d1dff0);
     }
 
     .btn-sec {
       background: var(--sfx-up-primary-bg, #eff6ff);
       color: var(--sfx-up-primary, #2563eb);
-      border: 1.5px solid rgba(37, 99, 235, 0.15);
+      border: 1.5px solid var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.15));
     }
 
     .btn-sec:hover {
-      background: #dbeafe;
+      background: var(--sfx-up-primary-bg, #dbeafe);
     }
 
     .btn-retry {
-      background: #fef2f2;
-      color: #dc2626;
-      border: 1.5px solid rgba(220, 38, 38, 0.2);
+      background: var(--destructive-10, #fef2f2);
+      color: var(--sfx-up-error, #dc2626);
+      border: 1.5px solid var(--sfx-up-error, rgba(220, 38, 38, 0.2));
     }
 
     .btn-retry:hover {
-      background: #fee2e2;
-      color: #b91c1c;
-      border-color: rgba(220, 38, 38, 0.35);
+      background: var(--destructive-10, #fee2e2);
+      color: var(--destructive-foreground, #b91c1c);
+      border-color: var(--sfx-up-error, rgba(220, 38, 38, 0.35));
     }
 
     .btn-primary {
       background: linear-gradient(135deg, var(--sfx-up-primary, #2563eb), var(--sfx-up-primary-mid, #3b82f6));
-      color: #fff;
-      box-shadow: 0 2px 10px rgba(37, 99, 235, 0.28);
+      color: var(--primary-foreground, #fff);
+      box-shadow: 0 2px 10px var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.28));
       min-width: 110px;
       position: relative;
       overflow: hidden;
@@ -96,7 +96,7 @@ export class SfxActionsBar extends LitElement {
 
     .btn-primary:hover:not(:disabled) {
       background: linear-gradient(135deg, var(--sfx-up-primary-hover, #1d4ed8), var(--sfx-up-primary, #2563eb));
-      box-shadow: 0 4px 16px rgba(37, 99, 235, 0.38);
+      box-shadow: 0 4px 16px var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.38));
       transform: translateY(-1px);
     }
 
@@ -110,8 +110,8 @@ export class SfxActionsBar extends LitElement {
     }
 
     .btn-primary.done-state {
-      background: linear-gradient(135deg, var(--sfx-up-success, #16a34a), #22c55e);
-      box-shadow: 0 2px 10px rgba(22, 163, 74, 0.28);
+      background: var(--sfx-up-success, #16a34a);
+      box-shadow: 0 2px 10px var(--sfx-up-shadow, rgba(22, 163, 74, 0.28));
     }
 
     /* --- Spinner --- */

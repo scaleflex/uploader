@@ -53,7 +53,7 @@ export class SfxProviderBrowser extends LitElement {
     }
 
     .back-btn:hover {
-      background: #f1f5f9;
+      background: var(--sfx-up-border-light, #f1f5f9);
       color: var(--sfx-up-text, #1e293b);
     }
 
@@ -82,7 +82,7 @@ export class SfxProviderBrowser extends LitElement {
     }
 
     .logout-btn:hover {
-      background: #fef2f2;
+      background: var(--destructive-10, #fef2f2);
       color: var(--sfx-up-error, #dc2626);
     }
 
@@ -133,18 +133,18 @@ export class SfxProviderBrowser extends LitElement {
       border: none;
       border-radius: 10px;
       background: linear-gradient(135deg, var(--sfx-up-primary, #2563eb), var(--sfx-up-primary-mid, #3b82f6));
-      color: #fff;
+      color: var(--primary-foreground, #fff);
       font-family: inherit;
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.18s;
-      box-shadow: 0 2px 10px rgba(37, 99, 235, 0.28);
+      box-shadow: 0 2px 10px var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.28));
     }
 
     .connect-btn:hover {
       transform: translateY(-1px);
-      box-shadow: 0 4px 16px rgba(37, 99, 235, 0.38);
+      box-shadow: 0 4px 16px var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.38));
     }
 
     /* --- Breadcrumbs --- */
@@ -205,7 +205,7 @@ export class SfxProviderBrowser extends LitElement {
     }
 
     .file-item:hover {
-      background: #f8fafc;
+      background: var(--sfx-up-border-light, #f8fafc);
     }
 
     .file-item.selected {
@@ -224,7 +224,7 @@ export class SfxProviderBrowser extends LitElement {
       width: 36px;
       height: 36px;
       border-radius: 8px;
-      background: #f1f5f9;
+      background: var(--sfx-up-border-light, #f1f5f9);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -284,18 +284,18 @@ export class SfxProviderBrowser extends LitElement {
       border: none;
       border-radius: 9px;
       background: linear-gradient(135deg, var(--sfx-up-primary, #2563eb), var(--sfx-up-primary-mid, #3b82f6));
-      color: #fff;
+      color: var(--primary-foreground, #fff);
       font-family: inherit;
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.18s;
-      box-shadow: 0 2px 10px rgba(37, 99, 235, 0.28);
+      box-shadow: 0 2px 10px var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.28));
     }
 
     .add-btn:hover:not(:disabled) {
       transform: translateY(-1px);
-      box-shadow: 0 4px 16px rgba(37, 99, 235, 0.38);
+      box-shadow: 0 4px 16px var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.38));
     }
 
     .add-btn:disabled {
@@ -362,8 +362,8 @@ export class SfxProviderBrowser extends LitElement {
     }
 
     .retry-btn:hover {
-      background: #f8faff;
-      border-color: #d1dff0;
+      background: var(--sfx-up-border-light, #f8faff);
+      border-color: var(--sfx-up-border, #d1dff0);
     }
 
     .load-more-btn {
@@ -408,14 +408,14 @@ export class SfxProviderBrowser extends LitElement {
       width: 16px;
       height: 16px;
       border-radius: 4px;
-      background: #f1f5f9;
+      background: var(--sfx-up-border-light, #f1f5f9);
     }
 
     .skeleton-thumb {
       width: 36px;
       height: 36px;
       border-radius: 8px;
-      background: #f1f5f9;
+      background: var(--sfx-up-border-light, #f1f5f9);
       flex-shrink: 0;
       animation: shimmer 1.5s ease-in-out infinite;
     }
@@ -430,7 +430,7 @@ export class SfxProviderBrowser extends LitElement {
     .skeleton-name {
       height: 14px;
       border-radius: 6px;
-      background: #f1f5f9;
+      background: var(--sfx-up-border-light, #f1f5f9);
       animation: shimmer 1.5s ease-in-out infinite;
     }
 
@@ -438,7 +438,7 @@ export class SfxProviderBrowser extends LitElement {
       height: 11px;
       width: 60px;
       border-radius: 6px;
-      background: #f1f5f9;
+      background: var(--sfx-up-border-light, #f1f5f9);
       animation: shimmer 1.5s ease-in-out infinite;
     }
 

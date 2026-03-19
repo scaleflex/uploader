@@ -72,28 +72,30 @@ export class SfxUploader extends LitElement {
       display: block;
       font-family: var(--sfx-up-font, 'Inter', system-ui, -apple-system, sans-serif);
       color: var(--sfx-up-text, #1e293b);
-      --sfx-up-primary: #2563eb;
-      --sfx-up-primary-hover: #1d4ed8;
-      --sfx-up-primary-mid: #3b82f6;
-      --sfx-up-primary-bg: #eff6ff;
+      /* Bridge to Scaleflex design system with standalone fallbacks */
+      --sfx-up-primary: var(--primary, #2563eb);
+      --sfx-up-primary-hover: var(--primary-hover, #1d4ed8);
+      --sfx-up-primary-mid: var(--primary-mid, #3b82f6);
+      --sfx-up-primary-bg: var(--accent, #eff6ff);
       --sfx-up-primary-glow: rgba(37, 99, 235, 0.18);
-      --sfx-up-success: #16a34a;
-      --sfx-up-error: #dc2626;
-      --sfx-up-text: #1e293b;
-      --sfx-up-text-secondary: #475569;
-      --sfx-up-text-muted: #94a3b8;
-      --sfx-up-border: #e8edf5;
-      --sfx-up-border-light: #f1f5f9;
-      --sfx-up-bg: #ffffff;
+      --sfx-up-success: var(--success, #16a34a);
+      --sfx-up-error: var(--destructive, #dc2626);
+      --sfx-up-text: var(--foreground, #1e293b);
+      --sfx-up-text-secondary: var(--secondary-foreground, #475569);
+      --sfx-up-text-muted: var(--muted-foreground, #94a3b8);
+      --sfx-up-border: var(--border, #e8edf5);
+      --sfx-up-border-light: var(--muted, #f1f5f9);
+      --sfx-up-bg: var(--background, #ffffff);
       --sfx-up-radius: 16px;
       --sfx-up-font: 'Inter', system-ui, -apple-system, sans-serif;
+      --sfx-up-shadow: var(--shadow, rgba(0, 0, 0, 0.1));
     }
 
     /* --- Modal overlay --- */
     .modal-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.45);
+      background: oklch(0 0 0 / 0.45);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -104,7 +106,7 @@ export class SfxUploader extends LitElement {
     .modal-card {
       background: var(--sfx-up-bg, #fff);
       border-radius: 20px;
-      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 25px 60px var(--sfx-up-shadow, rgba(0, 0, 0, 0.2));
       width: 90vw;
       max-width: 680px;
       max-height: 85vh;
@@ -144,7 +146,7 @@ export class SfxUploader extends LitElement {
     }
 
     .close-btn:hover {
-      background: #f1f5f9;
+      background: var(--sfx-up-border-light, #f1f5f9);
       color: var(--sfx-up-text, #1e293b);
     }
 
@@ -191,7 +193,7 @@ export class SfxUploader extends LitElement {
       position: fixed;
       inset: 0;
       z-index: 1000;
-      background: rgba(0, 0, 0, 0.4);
+      background: oklch(0 0 0 / 0.4);
       backdrop-filter: blur(6px);
       display: flex;
       align-items: center;
@@ -203,7 +205,7 @@ export class SfxUploader extends LitElement {
     .connector-modal {
       background: var(--sfx-up-bg, #fff);
       border-radius: 20px;
-      box-shadow: 0 28px 80px rgba(0, 0, 0, 0.18), 0 4px 16px rgba(0, 0, 0, 0.06);
+      box-shadow: 0 28px 80px var(--sfx-up-shadow, rgba(0, 0, 0, 0.18)), 0 4px 16px oklch(0 0 0 / 0.06);
       width: 100%;
       max-width: 540px;
       height: 80vh;
@@ -1071,13 +1073,6 @@ export class SfxUploader extends LitElement {
                     .accept=${accept}
                     .sources=${this._mergedSources}
                   ></sfx-drop-zone>
-
-                  ${!hasFiles
-                    ? html`
-                        <sfx-import-divider></sfx-import-divider>
-                        <sfx-source-pills .sources=${this._mergedSources}></sfx-source-pills>
-                      `
-                    : nothing}
 
                   ${hasFiles
                     ? html`

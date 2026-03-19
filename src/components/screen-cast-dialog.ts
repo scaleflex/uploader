@@ -48,11 +48,11 @@ export class SfxScreenCastDialog extends LitElement {
 
     .close-btn {
       width: 28px; height: 28px; border-radius: 8px; border: none;
-      background: #f0f0f0; color: #888; font-size: 14px; cursor: pointer;
+      background: var(--sfx-up-border-light, #f0f0f0); color: var(--sfx-up-text-muted, #888); font-size: 14px; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       transition: background 0.15s, color 0.15s; flex-shrink: 0; line-height: 1;
     }
-    .close-btn:hover { background: #e4e4e4; color: #333; }
+    .close-btn:hover { background: var(--sfx-up-border, #e4e4e4); color: var(--sfx-up-text, #333); }
 
     .body { padding: 18px 20px 20px; display: flex; flex-direction: column; align-items: center; gap: 16px; }
 
@@ -61,7 +61,7 @@ export class SfxScreenCastDialog extends LitElement {
       background: #000; object-fit: contain;
     }
 
-    .error { font-size: 13px; color: #dc2626; text-align: center; padding: 40px 20px; }
+    .error { font-size: 13px; color: var(--sfx-up-error, #dc2626); text-align: center; padding: 40px 20px; }
 
     .status {
       font-size: 13px; color: var(--sfx-up-text-secondary, #475569);
@@ -70,7 +70,7 @@ export class SfxScreenCastDialog extends LitElement {
 
     .rec-dot {
       width: 10px; height: 10px; border-radius: 50%;
-      background: #dc2626; animation: pulse 1s ease-in-out infinite;
+      background: var(--sfx-up-error, #dc2626); animation: pulse 1s ease-in-out infinite;
     }
 
     .actions { display: flex; gap: 9px; justify-content: center; width: 100%; }
@@ -82,20 +82,20 @@ export class SfxScreenCastDialog extends LitElement {
       transition: all 0.18s ease; white-space: nowrap;
     }
 
-    .btn-ghost { background: none; color: #94a3b8; border: 1.5px solid #e8edf5; }
-    .btn-ghost:hover { background: #f8faff; color: #64748b; border-color: #d1dff0; }
+    .btn-ghost { background: none; color: var(--sfx-up-text-muted, #94a3b8); border: 1.5px solid var(--sfx-up-border, #e8edf5); }
+    .btn-ghost:hover { background: var(--sfx-up-border-light, #f8faff); color: var(--sfx-up-text-secondary, #64748b); border-color: var(--sfx-up-border, #d1dff0); }
 
     .btn-primary {
-      background: linear-gradient(135deg, var(--sfx-up-primary, #2563eb), #3b82f6);
-      color: #fff; box-shadow: 0 2px 10px rgba(37, 99, 235, 0.28);
+      background: linear-gradient(135deg, var(--sfx-up-primary, #2563eb), var(--sfx-up-primary-mid, #3b82f6));
+      color: var(--primary-foreground, #fff); box-shadow: 0 2px 10px var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.28));
     }
-    .btn-primary:hover { background: linear-gradient(135deg, #1d4ed8, var(--sfx-up-primary, #2563eb)); box-shadow: 0 4px 16px rgba(37, 99, 235, 0.38); transform: translateY(-1px); }
+    .btn-primary:hover { background: linear-gradient(135deg, var(--sfx-up-primary-hover, #1d4ed8), var(--sfx-up-primary, #2563eb)); box-shadow: 0 4px 16px var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.38)); transform: translateY(-1px); }
 
     .btn-danger {
-      background: #dc2626; color: #fff;
-      box-shadow: 0 2px 10px rgba(220, 38, 38, 0.28);
+      background: var(--sfx-up-error, #dc2626); color: var(--primary-foreground, #fff);
+      box-shadow: 0 2px 10px var(--sfx-up-shadow, rgba(220, 38, 38, 0.28));
     }
-    .btn-danger:hover { background: #b91c1c; }
+    .btn-danger:hover { background: var(--destructive-foreground, #b91c1c); }
 
     .start-view {
       display: flex; flex-direction: column; align-items: center; gap: 16px;

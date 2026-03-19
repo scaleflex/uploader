@@ -8,5 +8,6 @@ export interface SourceDef {
   label: string;
   icon: string;        // inner SVG content (without outer <svg> tag)
   fillIcon?: boolean;  // true for brand icons that use fill instead of stroke
+  iconColor?: string;  // CSS color for the icon (e.g. '#2563eb')
   onActivate?: (uploader: UploaderHandle) => void;  // custom click handler for external integrations
 }

@@ -1,0 +1,3093 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Airbox</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  /* ============ CREATE PAGE OVERLAY ============ */
+  #createPage {
+    display: none;
+    position: fixed;
+    inset: 0;
+    overflow-y: auto;
+    z-index: 500;
+    background: #ffffff;
+    padding: 40px;
+    font-family: 'Inter', -apple-system, sans-serif;
+    color: #1a1a1a;
+  }
+
+  /* ============ GLOBAL CHECKBOX STYLE ============ */
+  input[type="checkbox"] {
+    appearance: none; -webkit-appearance: none;
+    width: 16px; height: 16px; flex-shrink: 0;
+    border: 1.5px solid #E3E8ED; border-radius: 4px;
+    background: #fff; cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    position: relative; display: inline-flex;
+    align-items: center; justify-content: center;
+  }
+  input[type="checkbox"]:hover { border-color: #c5cdd5; }
+  input[type="checkbox"]:checked {
+    background: #2563eb; border-color: #2563eb;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' xmlns='http://www.w3.org/2000/svg'%3E%3Cpolyline points='2.5 8 6 11.5 13.5 4.5'/%3E%3C/svg%3E");
+    background-size: 100% 100%;
+  }
+  input[type="checkbox"]:indeterminate {
+    background: #2563eb; border-color: #2563eb;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' xmlns='http://www.w3.org/2000/svg'%3E%3Cline x1='3.5' y1='8' x2='12.5' y2='8'/%3E%3C/svg%3E");
+    background-size: 100% 100%;
+  }
+  input[type="checkbox"]:disabled { border-color: #e0e0e0; background: #f9f9f9; cursor: default; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: #ffffff;
+    min-height: 100vh;
+    padding: 28px 36px;
+    color: #1a1a1a;
+  }
+
+  /* ============ HEADER ============ */
+  .header-top {
+    display: flex; align-items: center; gap: 14px; margin-bottom: 14px;
+    min-height: 36px;
+  }
+
+  .page-title { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+
+  .airbox-count {
+    font-size: 13px; font-weight: 500; color: #777;
+    background: #f3f4f6; padding: 4px 12px; border-radius: 20px;
+    border: 1.5px solid #e0e0e0;
+  }
+
+  .header-spacer { flex: 1; }
+
+  .header-controls {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 18px;
+  }
+
+  .search-box {
+    display: flex; align-items: center; gap: 8px;
+    padding: 0 14px; background: #fff;
+    border: 1.5px solid #e5e5e5; border-radius: 11px;
+    width: 380px; min-width: 160px; transition: border-color 0.2s, box-shadow 0.2s;
+    align-self: stretch;
+  }
+
+  .search-box:focus-within { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.08); }
+  .search-box svg { width: 15px; height: 15px; color: #bbb; flex-shrink: 0; }
+
+  .search-box input {
+    border: none; outline: none; font-size: 13px;
+    font-family: inherit; color: #1a1a1a; width: 100%; background: transparent;
+  }
+
+  .search-box input::placeholder { color: #bbb; }
+
+  .view-toggle {
+    display: flex; background: #eee; border-radius: 11px; padding: 3px; gap: 2px;
+  }
+
+  .view-btn {
+    width: 36px; height: 32px; border: none; background: transparent;
+    border-radius: 9px; cursor: pointer; display: flex;
+    align-items: center; justify-content: center; color: #999; transition: all 0.2s;
+  }
+
+  .view-btn.active { background: #fff; color: #333; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+  .view-btn:not(.active):hover { color: #666; background: #e0e0e0; }
+  .view-btn svg { width: 15px; height: 15px; }
+
+  .btn-add {
+    display: flex; align-items: center; gap: 6px;
+    padding: 9px 18px; background: #2563eb; color: #fff;
+    border: none; border-radius: 11px; font-size: 13px;
+    font-weight: 600; font-family: inherit; cursor: pointer;
+    box-shadow: 0 2px 8px rgba(37,99,235,0.25);
+    transition: background 0.15s, box-shadow 0.15s;
+  }
+
+  .btn-add:hover { background: #1d4ed8; box-shadow: 0 4px 14px rgba(37,99,235,0.35); }
+  .btn-add svg { width: 14px; height: 14px; }
+
+  /* ============ COLUMNS BUTTON ============ */
+  .col-btn-wrap { position: relative; }
+  .btn-columns {
+    display: flex; align-items: center; gap: 6px;
+    padding: 9px 14px; background: transparent; color: #5B6E82;
+    border: none; border-radius: 11px;
+    font-size: 13px; font-weight: 500; font-family: inherit; cursor: pointer;
+    transition: color 0.15s, background 0.15s; white-space: nowrap;
+  }
+  .btn-columns:hover { background: #f3f4f6; color: #555; }
+  .btn-columns.open { background: #f3f4f6; color: #2563eb; }
+  .btn-columns .col-icon { width: 14px; height: 14px; color: #5B6E82; }
+  .btn-columns.open .col-icon { color: #2563eb; }
+  .btn-columns .chev { width: 11px; height: 11px; color: #5B6E82; }
+  .col-popover {
+    position: absolute; top: calc(100% + 8px); left: 0;
+    background: #fff; border: 1.5px solid #e5e5e5; border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12); min-width: 200px;
+    z-index: 300; display: none;
+  }
+  .col-popover.open { display: block; animation: colPopIn 0.15s ease; }
+  @keyframes colPopIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
+  .col-pop-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px 8px; border-bottom: 1px solid #f0f0f0; }
+  .col-pop-header span { font-size: 12px; font-weight: 400; color: #888; letter-spacing: 0; }
+  .col-pop-reset { font-size: 11px; font-weight: 500; color: #2563eb; border: none; background: none; cursor: pointer; font-family: inherit; }
+  .col-pop-list { padding: 6px 0; }
+  .col-pop-row { display: flex; align-items: center; gap: 9px; padding: 7px 14px; cursor: pointer; transition: background 0.1s; }
+  .col-pop-row:hover { background: #f7f7f8; }
+  .col-pop-row.selected { background: #eff6ff; }
+  .col-pop-row.selected:hover { background: #e0eeff; }
+  .col-pop-name { font-size: 13px; color: #333; flex: 1; }
+  .col-pop-row.selected .col-pop-name { color: #2563eb; font-weight: 400; }
+  .col-pop-row.fixed { cursor: default; }
+  .col-pop-row.fixed .col-pop-name { color: #bbb; }
+  .col-pop-check { width: 16px; height: 16px; flex-shrink: 0; color: #2563eb; opacity: 0; stroke-width: 1.5; }
+  .col-pop-row.selected .col-pop-check { opacity: 1; }
+  .col-pop-divider { height: 1px; background: #f0f0f0; margin: 4px 0; }
+
+  /* User filter — button active state */
+  /* User filter — active state for Created by (keeps blue text + badge) */
+  .btn-columns.has-filter { color: #2563eb; }
+  .btn-columns.has-filter .col-icon { color: #2563eb; }
+  .filter-badge { background: #2563eb; color: #fff; font-size: 10px; font-weight: 700; border-radius: 10px; padding: 1px 6px; line-height: 1.4; }
+
+  /* User avatar circle */
+  .user-ava { width: 22px; height: 22px; border-radius: 50%; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+  /* User pop rows */
+  .user-pop-row { display: flex; align-items: center; gap: 9px; padding: 7px 14px; cursor: pointer; transition: background 0.1s; }
+  .user-pop-row:hover { background: #f7f7f8; }
+  .user-pop-row.selected { background: #eff6ff; }
+  .user-pop-name { font-size: 13px; color: #333; flex: 1; }
+  .user-pop-row.selected .user-pop-name { color: #2563eb; font-weight: 500; }
+  .user-pop-check { width: 16px; height: 16px; flex-shrink: 0; color: #2563eb; opacity: 0; stroke-width: 1.5; }
+  .user-pop-row.selected .user-pop-check { opacity: 1; }
+
+  /* ============ STAT CARDS ============ */
+  .stat-cards-group {
+    display: flex; gap: 10px; align-items: stretch;
+  }
+
+  .stat-card {
+    background: #fff; border-radius: 10px; padding: 7px 20px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    border: 1px solid #ebebeb; cursor: pointer;
+    transition: all 0.15s; white-space: nowrap; flex: 1;
+  }
+
+  .stat-card:hover { border-color: #d0d0d0; background: #fafafa; }
+  .stat-card.filter-active { border-color: #2563eb; background: #fff; }
+  .stat-card.filter-active .stat-number,
+  .stat-card.filter-active .stat-label { color: #2563eb; }
+
+  .stat-icon {
+    width: 26px; height: 26px; border-radius: 7px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+
+  .stat-icon svg { width: 13px; height: 13px; }
+  .stat-icon.total { background: #f3f4f6; color: #9ca3af; }
+  .stat-icon.active { background: #f0fdf4; color: #22c55e; }
+  .stat-icon.protected { background: #dbeafe; color: #3b82f6; }
+  .stat-icon.expiring { background: #fef3c7; color: #d97706; }
+  .stat-icon.expired { background: #fef2f2; color: #ef4444; }
+
+  .stat-number { font-size: 14px; font-weight: 700; color: #37414B; }
+  .stat-label { font-size: 11px; color: #999; font-weight: 500; margin-left: -2px; }
+
+  /* ============ GRID VIEW ============ */
+  .grid-view {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+  }
+
+  .grid-view.hidden { display: none; }
+
+  .g-card {
+    background: #fff; border-radius: 14px; border: 1.5px solid #ebebeb;
+    cursor: pointer; transition: all 0.2s ease;
+    overflow: hidden; display: flex; flex-direction: column;
+  }
+
+  .g-card:hover { border-color: #ddd; box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+
+  .g-body { padding: 18px 18px 14px 18px; flex: 1; position: relative; }
+
+  .g-top { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+
+  /* === Single orange icon for all === */
+  .g-icon {
+    width: 40px; height: 40px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    background: #f3f4f6; color: #8B9CAE;
+  }
+
+  .g-icon svg { width: 18px; height: 18px; }
+
+  .g-info { flex: 1; min-width: 0; }
+
+  .g-name-row { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; min-width: 0; }
+
+  .g-name {
+    font-size: 14px; font-weight: 400; color: #37414B;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    min-width: 0; flex: 1;
+  }
+
+  .g-folder {
+    font-size: 11.5px; color: #999;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    cursor: pointer; transition: color 0.15s; border-radius: 3px;
+  }
+  .g-folder:hover { color: #2563eb; text-decoration: underline; }
+
+  .g-desc {
+    font-size: 12px; color: #8B9CAE; margin-bottom: 10px; font-style: italic;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  .g-desc.has-text { color: #5B6E82; font-style: normal; }
+
+  .g-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+  .g-status-text { font-size: 11.5px; font-weight: 500; color: #22c55e; }
+  .g-status-text.expired { color: #ef4444; }
+
+  .g-val-icon {
+    width: 20px; height: 20px; border-radius: 5px; display: inline-flex; flex-shrink: 0;
+    align-items: center; justify-content: center;
+  }
+  .g-val-icon svg { width: 11px; height: 11px; }
+  .g-val-icon.lock { background: #dbeafe; color: #3b82f6; }
+  .g-val-icon.clock { background: #fef3c7; color: #d97706; }
+
+
+  .g-validity {
+    font-size: 10.5px; color: #37414B; display: flex; align-items: center; gap: 4px;
+    margin-left: auto;
+  }
+  .g-validity svg { width: 11px; height: 11px; color: #37414B; }
+  .g-validity.expiring { color: #d97706; }
+  .g-validity.expiring svg { color: #d97706; }
+
+  /* Card footer */
+  .g-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 18px; border-top: 1px solid #f3f3f3; background: #fcfcfc;
+  }
+
+  .g-stat {
+    font-size: 11.5px; color: #999; display: flex; align-items: center; gap: 5px;
+  }
+
+  .g-stat svg { width: 13px; height: 13px; }
+
+  .g-actions {
+    display: flex; gap: 4px; align-items: center;
+  }
+
+  /* footer actions: dots always visible, email+copy on hover */
+  .g-foot-actions { display: flex; gap: 4px; align-items: center; flex-shrink: 0; }
+  .g-hover-actions { display: flex; gap: 4px; opacity: 0; transition: opacity 0.15s; }
+  .g-card:hover .g-hover-actions { opacity: 1; }
+
+  /* meta line in footer */
+  .g-meta-line { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #37414B; flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; }
+  .g-meta-line svg { width: 11px; height: 11px; flex-shrink: 0; color: #37414B; }
+  .g-meta-line .g-meta-sep { color: #37414B; }
+  .g-meta-line .g-meta-name { overflow: hidden; text-overflow: ellipsis; }
+  .g-meta-line .g-meta-date { flex-shrink: 0; }
+
+  /* dots in footer — always visible */
+  .g-foot-dots .dots-btn { background: transparent; }
+  .g-foot-dots .dots-btn:hover { background: #f3f4f6; }
+
+  /* checkbox inside folder icon — Variant A */
+  .g-icon { cursor: default; position: relative; }
+  .g-icon .fi { transition: opacity 0.15s; }
+  .g-icon .icon-cb {
+    position: absolute; inset: 0; display: flex;
+    align-items: center; justify-content: center;
+    opacity: 0; transition: opacity 0.15s;
+  }
+  .g-icon .icon-cb input[type="checkbox"] { width: 17px; height: 17px; }
+  /* on hover: folder fades, checkbox appears on round blue bg with shadow */
+  .g-card:hover .g-icon {
+    background: #dbeafe; border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(37,99,235,0.2);
+  }
+  .g-card:hover .g-icon .fi { opacity: 0; }
+  .g-card:hover .g-icon .icon-cb { opacity: 1; }
+  .g-card:hover .g-icon .icon-cb input[type="checkbox"] { border-color: #2563eb; width: 18px; height: 18px; }
+  /* selected state */
+  .g-card.selected .g-icon {
+    background: #dbeafe; border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(37,99,235,0.2);
+  }
+  .g-card.selected .g-icon .fi { opacity: 0; }
+  .g-card.selected .g-icon .icon-cb { opacity: 1; }
+  .g-card.selected { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+
+  /* table checkbox column */
+  .t-cb { width: 40px; padding-left: 20px !important; }
+  .t-cb input[type="checkbox"] { width: 15px; height: 15px; accent-color: #2563eb; cursor: pointer; display: block; }
+  th.t-cb { padding-left: 20px !important; }
+
+  /* bulk action bar */
+  .bulk-bar {
+    display: none; align-items: center; gap: 16px;
+    background: #2563eb; border: none; border-radius: 0;
+    padding: 10px 36px; animation: colPopIn 0.15s ease;
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  }
+  .bulk-bar.visible { display: flex; }
+  .bulk-bar-count { font-size: 13px; font-weight: 600; color: #fff; }
+  .bulk-bar-select-label { font-size: 13px; color: rgba(255,255,255,0.6); }
+  .bulk-bar-select-btn {
+    font-size: 13px; font-weight: 600; color: #fff; border: none;
+    background: none; cursor: pointer; font-family: inherit;
+    transition: opacity 0.15s;
+  }
+  .bulk-bar-select-btn:hover { opacity: 0.8; }
+  .bulk-bar-spacer { flex: 1; }
+  .bulk-bar-delete {
+    display: flex; align-items: center; gap: 6px;
+    padding: 7px 14px; background: rgba(255,255,255,0.15); color: #fff;
+    border: none; border-radius: 9px;
+    font-size: 13px; font-weight: 500; font-family: inherit; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .bulk-bar-delete:hover { background: rgba(255,255,255,0.25); }
+  .bulk-bar-delete svg { width: 14px; height: 14px; }
+  .bulk-bar-cancel {
+    font-size: 13px; color: rgba(255,255,255,0.8); border: none;
+    background: none; cursor: pointer; font-family: inherit;
+    display: flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border-radius: 6px;
+    transition: all 0.15s;
+  }
+  .bulk-bar-cancel:hover { background: rgba(255,255,255,0.15); color: #fff; }
+
+  .g-icon-btn {
+    width: 30px; height: 30px; border: none; background: #f3f4f6;
+    border-radius: 8px; cursor: pointer; display: flex;
+    align-items: center; justify-content: center;
+    color: #9ca3af; transition: all 0.15s;
+  }
+
+  .g-icon-btn:hover { background: #e5e7eb; color: #6b7280; }
+  .g-icon-btn.copied { background: #f0fdf4; color: #22c55e; }
+  .g-icon-btn svg { width: 14px; height: 14px; }
+
+  /* ============ TABLE VIEW ============ */
+  .table-view {
+    background: #fff; border-radius: 0; border: none; overflow: hidden;
+  }
+
+  .table-view.hidden { display: none; }
+
+  table { width: 100%; border-collapse: collapse; }
+
+  thead th {
+    padding: 12px 18px; font-size: 11px; font-weight: 400;
+    color: #37414B; text-align: left; border-bottom: 1px solid #f0f0f0;
+  }
+
+  thead th:first-child { padding-left: 20px; }
+
+  tbody tr { transition: background 0.1s; cursor: pointer; }
+  tbody tr:hover { background: #fafafa; }
+  tbody tr:not(:last-child) td { border-bottom: 1px solid #f5f5f5; }
+
+  td { padding: 12px 18px; vertical-align: middle; }
+  td:first-child { padding-left: 20px; }
+
+  .t-name-cell { display: flex; align-items: center; gap: 12px; }
+
+  .t-icon {
+    width: 34px; height: 34px; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    background: #f3f4f6; color: #8B9CAE;
+  }
+
+  .t-icon svg { width: 15px; height: 15px; }
+
+  .t-name { font-size: 13px; font-weight: 400; color: #37414B; }
+  .t-desc { font-size: 11px; color: #bbb; margin-top: 1px; }
+
+  .t-folder {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 12px; font-weight: 500; color: #37414B;
+    cursor: pointer; transition: color 0.15s; border-radius: 4px;
+  }
+  .t-folder:hover { color: #2563eb; }
+  .t-folder:hover svg { color: #2563eb; }
+
+  .t-folder svg { width: 13px; height: 13px; color: #8B9CAE; transition: color 0.15s; }
+
+  .t-desc-cell { font-size: 12px; color: #5B6E82; max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .t-desc-cell.empty { color: #8B9CAE; font-style: italic; }
+
+  .t-name-row { display: flex; align-items: center; gap: 5px; }
+
+  .t-validity {
+    font-size: 11.5px; color: #37414B; white-space: nowrap;
+  }
+  .t-validity .t-val-date { color: #37414B; font-weight: 500; }
+  .t-validity.empty { color: #ddd; }
+  .t-validity.expiring .t-val-date { color: #d97706; font-weight: 600; }
+
+  .t-val-icon {
+    width: 20px; height: 20px; border-radius: 5px; display: inline-flex;
+    align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .t-val-icon svg { width: 11px; height: 11px; }
+  .t-val-icon.lock { background: #dbeafe; color: #3b82f6; }
+  .t-val-icon.clock { background: #fef3c7; color: #d97706; }
+
+  .t-status-text { font-size: 12px; font-weight: 500; color: #22c55e; }
+  .t-status-text.expired { color: #ef4444; }
+
+  /* Expired card — dimmed */
+  .g-card.expired { opacity: 0.55; }
+  .g-card.expired:hover { opacity: 0.75; }
+  tr.expired { opacity: 0.55; }
+  tr.expired:hover { opacity: 0.75; }
+
+  .t-meta { font-size: 12px; color: #37414B; font-weight: 400; white-space: nowrap; }
+
+  .t-files {
+    font-size: 12px; font-weight: 500; color: #37414B;
+    display: flex; align-items: center; gap: 5px;
+  }
+
+  .t-files svg { width: 13px; height: 13px; color: #8B9CAE; }
+
+  .t-actions {
+    display: flex; gap: 4px; opacity: 0; transition: opacity 0.15s;
+  }
+
+  tr:hover .t-actions { opacity: 1; }
+
+  .t-icon-btn {
+    width: 30px; height: 30px; border: none; background: #f3f4f6;
+    border-radius: 8px; cursor: pointer; display: flex;
+    align-items: center; justify-content: center;
+    color: #9ca3af; transition: all 0.15s;
+  }
+
+  .t-icon-btn:hover { background: #e5e7eb; color: #6b7280; }
+  .t-icon-btn.copied { background: #f0fdf4; color: #22c55e; }
+  .t-icon-btn svg { width: 14px; height: 14px; }
+
+  /* ============ THREE-DOT MENU ============ */
+  .dots-btn {
+    width: 26px; height: 26px; border: none; background: transparent;
+    border-radius: 6px; cursor: pointer; display: flex;
+    align-items: center; justify-content: center;
+    color: #37414B; transition: all 0.15s;
+  }
+  .dots-btn:hover { background: #f3f4f6; color: #1a1a1a; }
+  .dots-btn svg { width: 16px; height: 16px; }
+
+  .dots-wrap { position: relative; }
+
+  .dots-popover {
+    display: none; position: absolute; right: 0; top: calc(100% + 6px);
+    background: #fff; border: 1px solid #e5e5e5; border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.1); min-width: 150px;
+    padding: 4px; z-index: 100;
+  }
+
+  .dots-popover.open { display: block; }
+
+  .dots-popover button {
+    display: flex; align-items: center; gap: 8px; width: 100%;
+    padding: 8px 12px; border: none; background: transparent;
+    font-size: 13px; font-family: inherit; color: #333;
+    border-radius: 7px; cursor: pointer; transition: background 0.1s;
+  }
+  .dots-popover button:hover { background: #f5f5f5; }
+  .dots-popover button svg { width: 15px; height: 15px; color: #888; }
+  .dots-popover button.delete { color: #dc2626; }
+  .dots-popover button.delete svg { color: #dc2626; }
+  .dots-popover .pop-divider { height: 1px; background: #f0f0f0; margin: 4px 0; }
+
+  /* Grid dots — in footer, always visible */
+  .g-dots { display: flex; }
+  .g-card { position: relative; }
+
+  /* Design label */
+  .design-label {
+    position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%);
+    color: #ccc; font-size: 11px; font-weight: 500;
+    letter-spacing: 1px; text-transform: uppercase;
+  }
+
+  /* ============ RESPONSIVE ============ */
+
+  /* Large desktop — 4 columns */
+  @media (max-width: 1280px) {
+    .grid-view { grid-template-columns: repeat(4, 1fr); }
+  }
+
+  /* Medium desktop / tablet landscape — 3 columns */
+  @media (max-width: 1024px) {
+    .grid-view { grid-template-columns: repeat(3, 1fr); }
+    body { padding: 24px 28px; }
+    .bulk-bar { padding: 10px 28px; }
+  }
+
+  /* Medium — stat cards wrap to own row */
+  @media (max-width: 1280px) {
+    .header-controls { flex-wrap: wrap; gap: 8px; }
+    .stat-cards-group { width: 100%; order: 2; }
+    .search-box { order: 1; flex: 1; width: auto; min-width: 140px; }
+    .header-spacer { order: 1; display: none; }
+    .col-btn-wrap { order: 1; }
+    .view-toggle { order: 1; }
+    .btn-add { order: 1; }
+    .stat-card { padding: 6px 12px; }
+    .stat-label { font-size: 11px; }
+  }
+
+  /* Tablet — 2 columns, header wraps */
+  @media (max-width: 768px) {
+    body { padding: 20px 20px; }
+    .grid-view { grid-template-columns: repeat(2, 1fr); }
+
+    /* Table horizontal scroll */
+    .table-view { overflow-x: auto; }
+    table { min-width: 700px; }
+
+    .stat-label { display: none; }
+    .stat-card { padding: 6px 10px; }
+    .bulk-bar { padding: 10px 20px; }
+  }
+
+  /* Mobile landscape / small tablet */
+  @media (max-width: 600px) {
+    body { padding: 16px 14px; }
+    .bulk-bar { padding: 10px 14px; }
+    .page-title { font-size: 19px; }
+
+    .header-controls { flex-wrap: wrap; }
+    .stat-cards-group { order: 2; width: 100%; }
+    .search-box { order: 1; width: auto; flex: 1; }
+    .header-spacer { display: none; }
+    .col-btn-wrap { order: 1; }
+    .view-toggle { order: 1; }
+    .btn-add { order: 1; }
+
+    .stat-card { padding: 6px 10px; gap: 6px; }
+    .stat-number { font-size: 13px; }
+    .stat-icon { width: 22px; height: 22px; border-radius: 6px; }
+    .stat-icon svg { width: 11px; height: 11px; }
+
+    .grid-view { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .g-body { padding: 14px 14px 10px; }
+    .g-icon { width: 34px; height: 34px; border-radius: 8px; }
+    .g-icon svg { width: 15px; height: 15px; }
+    .g-name { font-size: 13px; }
+    .g-footer { padding: 8px 14px; }
+
+    .btn-add { padding: 9px 14px; font-size: 12px; }
+    .btn-add svg { width: 12px; height: 12px; }
+  }
+
+  /* Mobile portrait — 1 column */
+  @media (max-width: 420px) {
+    body { padding: 14px 10px; }
+    .grid-view { grid-template-columns: 1fr; gap: 10px; }
+
+    .header-top { gap: 10px; margin-bottom: 10px; }
+    .header-controls { gap: 6px; margin-bottom: 14px; }
+
+    .stat-card { padding: 5px 8px; }
+    .stat-number { font-size: 12px; }
+
+    .t-actions { opacity: 1; }
+  }
+
+  /* ============ EDIT SIDE PANEL ============ */
+  .ep-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.3);
+    z-index: 900; opacity: 0; pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .ep-overlay.open { opacity: 1; pointer-events: all; }
+
+  .edit-panel {
+    position: fixed; top: 0; right: 0;
+    width: 480px; height: 100vh;
+    background: #fff; z-index: 901;
+    display: flex; flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 0.32s cubic-bezier(0.16,1,0.3,1);
+    box-shadow: -8px 0 48px rgba(0,0,0,0.12);
+  }
+  .edit-panel.open { transform: translateX(0); }
+
+  .ep-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0; gap: 16px;
+  }
+  .ep-title-wrap { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .ep-hdr-icon {
+    width: 40px; height: 40px; background: #EFF6FF; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    color: #2563eb;
+  }
+  .ep-hdr-icon svg { width: 20px; height: 20px; }
+  .ep-title { font-size: 12px; font-weight: 500; color: #999; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ep-subtitle { font-size: 15px; font-weight: 400; color: #37414B; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ep-subtitle-folder { font-size: 11px; color: #5B6E82; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ep-close {
+    width: 32px; height: 32px; border: none; background: #f5f5f5;
+    border-radius: 8px; cursor: pointer; display: flex;
+    align-items: center; justify-content: center;
+    color: #999; flex-shrink: 0; transition: all 0.15s; font-size: 16px;
+  }
+  .ep-close:hover { background: #ebebeb; color: #444; }
+
+  .ep-body { flex: 1; overflow-y: auto; padding: 24px; }
+
+  .ep-section-label {
+    font-size: 11px; font-weight: 400; color: #37414B;
+    letter-spacing: 0.3px;
+    margin-bottom: 16px;
+  }
+  .ep-section { margin-bottom: 8px; }
+  .ep-section + .ep-section-label { margin-top: 28px; }
+
+  .ep-footer {
+    padding: 14px 24px;
+    border-top: 1px solid #f0f0f0;
+    display: flex; align-items: center; gap: 8px;
+    flex-shrink: 0; background: #fff;
+  }
+  .ep-footer .ep-save { margin-left: auto; }
+
+  /* Reuse form styles inside panel */
+  .ep-body .form-group { margin-bottom: 18px; }
+  .ep-body .form-label { display: block; font-size: 13px; font-weight: 400; color: #37414B; margin-bottom: 7px; }
+  .ep-body .form-input {
+    width: 100%; padding: 11px 14px;
+    border: 1.5px solid #e8e8e8; border-radius: 10px;
+    font-size: 13px; font-family: inherit; color: #1a1a1a;
+    outline: none; transition: border-color 0.2s, box-shadow 0.2s; background: #fff;
+  }
+  .ep-body .form-input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.08); }
+  .ep-body .form-input::placeholder { color: #bbb; }
+  .ep-body textarea.form-input { resize: vertical; min-height: 72px; }
+  .ep-body input[type="number"].form-input { color: #bbb; }
+
+  /* Folder display */
+  .ep-folder-wrap { position: relative; }
+  .ep-folder-display {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 14px; border: 1.5px solid #e8e8e8; border-radius: 10px;
+    background: #fff; cursor: pointer; transition: border-color 0.2s;
+  }
+  .ep-folder-display:hover { border-color: #d0d0d0; }
+  .ep-folder-icon {
+    width: 36px; height: 36px; background: #f7f7f8; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .ep-folder-icon svg { width: 17px; height: 17px; color: #8B9CAE; }
+  .ep-folder-path { font-size: 13px; color: #444; font-weight: 500; flex: 1; }
+  .ep-folder-change {
+    margin-left: auto; font-size: 13px; font-weight: 500; color: #2563eb;
+    border: none; background: none; cursor: pointer; font-family: inherit;
+    flex-shrink: 0; transition: opacity 0.15s;
+  }
+  .ep-folder-change:hover { opacity: 0.7; }
+
+  /* Folder popover inside panel */
+  .ep-fp-popover {
+    position: absolute; left: 0; right: 0; top: calc(100% + 6px);
+    background: #fff; border: 1.5px solid #e8e8e8; border-radius: 12px;
+    box-shadow: 0 10px 36px rgba(0,0,0,0.13);
+    z-index: 1100; display: none; overflow: hidden;
+  }
+  .ep-fp-popover.open { display: block; animation: epFpFadeIn 0.16s ease; }
+  @keyframes epFpFadeIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
+  .ep-fp-search-wrap { padding: 12px 14px; border-bottom: 1px solid #f0f0f0; position: relative; }
+  .ep-fp-search-icon { position: absolute; left: 26px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: #bbb; pointer-events: none; }
+  .ep-fp-search {
+    width: 100%; padding: 9px 12px 9px 36px;
+    border: 1.5px solid #e8e8e8; border-radius: 9px;
+    font-size: 13px; font-family: inherit; color: #1a1a1a;
+    outline: none; transition: border-color 0.15s;
+  }
+  .ep-fp-search:focus { border-color: #2563eb; }
+  .ep-fp-tree { max-height: 220px; overflow-y: auto; padding: 6px 0; }
+  .ep-fp-row { display: flex; align-items: center; gap: 6px; padding: 7px 14px; cursor: pointer; transition: background 0.1s; user-select: none; }
+  .ep-fp-row:hover { background: #f7f7f8; }
+  .ep-fp-row.ep-fp-selected { background: #eff6ff; }
+  .ep-fp-row.ep-fp-selected .ep-fp-name { color: #2563eb; font-weight: 500; }
+  .ep-fp-row.ep-fp-selected .ep-fp-fi { color: #2563eb; }
+  .ep-fp-toggle { width: 14px; height: 14px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #ccc; }
+  .ep-fp-toggle svg { width: 10px; height: 10px; transition: transform 0.2s; }
+  .ep-fp-toggle.open svg { transform: rotate(90deg); }
+  .ep-fp-toggle.leaf { visibility: hidden; }
+  .ep-fp-fi { width: 16px; height: 16px; flex-shrink: 0; color: #adb5bd; }
+  .ep-fp-fi svg { width: 16px; height: 16px; }
+  .ep-fp-name { font-size: 13px; color: #1a1a1a; }
+  .ep-fp-children { display: none; }
+  .ep-fp-children.open { display: block; }
+  .ep-fp-children .ep-fp-row { padding-left: 34px; }
+  .ep-fp-children .ep-fp-children .ep-fp-row { padding-left: 54px; }
+
+  /* Setting rows inside panel */
+  .ep-setting-row {
+    display: flex; align-items: center;
+    padding: 13px 0; cursor: pointer; user-select: none;
+  }
+  .ep-sr-icon {
+    width: 34px; height: 34px; background: #f7f7f8; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-right: 12px;
+  }
+  .ep-sr-icon svg { width: 16px; height: 16px; color: #8B9CAE; }
+  .ep-sr-text { flex: 1; min-width: 0; }
+  .ep-sr-title { font-size: 13px; font-weight: 400; color: #37414B; }
+  .ep-sr-desc  { font-size: 11px; color: #5B6E82; margin-top: 1px; }
+  .ep-toggle-switch { position: relative; width: 40px; height: 22px; flex-shrink: 0; margin-left: 12px; }
+  .ep-toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .ep-toggle-slider {
+    position: absolute; inset: 0; background: #e0e0e0;
+    border-radius: 22px; cursor: pointer; transition: background 0.25s;
+  }
+  .ep-toggle-slider::before {
+    content: ''; position: absolute; width: 16px; height: 16px;
+    left: 3px; bottom: 3px; background: #fff; border-radius: 50%;
+    transition: transform 0.25s; box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  }
+  .ep-toggle-switch input:checked + .ep-toggle-slider { background: #2563eb; }
+  .ep-toggle-switch input:checked + .ep-toggle-slider::before { transform: translateX(18px); }
+
+  .ep-expand { max-height: 0; overflow: hidden; transition: max-height 0.35s cubic-bezier(0.16,1,0.3,1); }
+  .ep-expand.open { max-height: 500px; }
+  .ep-expand-content { padding: 4px 0 16px 46px; }
+
+  .ep-field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  /* Validity input icon wrapper */
+  .input-icon-wrap { position: relative; }
+  .input-icon-wrap .field-icon {
+    position: absolute; right: 11px; top: 50%; transform: translateY(-50%);
+    width: 15px; height: 15px; color: #ccc; pointer-events: none; flex-shrink: 0;
+  }
+  .input-icon-wrap input { padding-right: 36px !important; color: #bbb; }
+  .input-icon-wrap input.has-value { color: #1a1a1a; }
+  input[type="time"]::-webkit-calendar-picker-indicator { display: none; }
+  .time-tz {
+    position: absolute; right: 32px; top: 50%; transform: translateY(-50%);
+    font-size: 10px; color: #ccc; pointer-events: none; white-space: nowrap;
+  }
+  /* Starts at / Expires at as section header */
+  .ep-cb-row label, .cb-row label { font-size: 12px; font-weight: 500; color: #555; cursor: pointer; }
+  .ep-field-block, .field-block { margin-bottom: 8px; }
+  .ep-field-block:last-child, .field-block:last-child { margin-bottom: 0; }
+  .ep-field-label { font-size: 11px; font-weight: 500; color: #999; margin-bottom: 5px; }
+  .ep-field-block { margin-bottom: 10px; }
+  .ep-field-block:last-child { margin-bottom: 0; }
+  .ep-cb-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .ep-cb-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: #2563eb; cursor: pointer; }
+  .ep-cb-row label { font-size: 12px; font-weight: 500; color: #1a1a1a; cursor: pointer; }
+  .ep-input-with-suffix { position: relative; }
+  .ep-input-with-suffix .form-input { padding-right: 36px; }
+  .ep-input-suffix { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 12px; font-weight: 500; color: #999; pointer-events: none; }
+  .ep-input-with-icon { position: relative; }
+  .ep-input-with-icon .form-input { padding-right: 40px; }
+  .ep-input-icon-btn {
+    position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+    width: 26px; height: 26px; border: none; background: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: #bbb; border-radius: 6px; transition: color 0.15s;
+  }
+  .ep-input-icon-btn:hover { color: #666; }
+  .ep-input-icon-btn svg { width: 15px; height: 15px; }
+  .ep-section-sublabel { font-size: 11px; font-weight: 600; color: #999999; margin-bottom: 6px; margin-top: 10px; }
+  .ep-recipient-row { display: flex; align-items: center; gap: 8px; padding: 7px 0; }
+  .ep-recipient-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: #2563eb; cursor: pointer; }
+  .ep-recipient-row label { font-size: 13px; color: #1a1a1a; cursor: pointer; }
+
+  /* Metadata chips in panel */
+  .ep-chip-groups { display: flex; flex-direction: column; gap: 14px; }
+  .ep-chip-group-title { font-size: 11px; font-weight: 400; color: #37414B; margin-bottom: 7px; }
+  .ep-chip-row { display: flex; flex-wrap: wrap; column-gap: 5px; row-gap: 9px; }
+  .ep-meta-chip {
+    border: 1.5px solid #d8d8d8; background: #fff; color: #333;
+    border-radius: 20px; padding: 7px 16px;
+    font-size: 13px; font-weight: 400; font-family: inherit;
+    cursor: pointer; transition: all 0.15s; user-select: none;
+  }
+  .ep-meta-chip:hover { border-color: #b0b0b0; color: #111; }
+  .ep-meta-chip.selected { background: #eff6ff; border-color: #2563eb; color: #2563eb; }
+
+  /* Meta display row */
+  .ep-meta-display-row {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
+  }
+  .ep-meta-display-label { font-size: 13px; font-weight: 500; color: #1a1a1a; flex: 1; }
+  .ep-meta-select-btns { display: flex; align-items: center; gap: 0; flex-shrink: 0; }
+  .ep-meta-select-btns button {
+    font-size: 12px; font-weight: 500; color: #c0c0c0;
+    border: none; background: none; cursor: pointer; padding: 3px 0;
+    font-family: inherit; transition: color 0.15s;
+  }
+  .ep-meta-select-btns button:hover { color: #2563eb; }
+  .ep-meta-select-btns button:active { color: #1d4ed8; }
+  .ep-meta-select-btns .ep-divider { color: #d0d0d0; margin: 0 7px; font-size: 12px; }
+
+  /* Panel buttons */
+  .ep-btn {
+    padding: 9px 20px; border-radius: 10px;
+    font-size: 13px; font-weight: 500; font-family: inherit;
+    cursor: pointer; transition: all 0.15s; border: none;
+  }
+  .ep-btn-ghost { background: none; color: #999; }
+  .ep-btn-ghost:hover { color: #555; }
+  .ep-btn-danger {
+    background: none; color: #dc2626; border: 1.5px solid #fecaca;
+    border-radius: 10px; padding: 8px 16px;
+    font-size: 13px; font-weight: 500; font-family: inherit;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .ep-btn-danger:hover { background: #fef2f2; border-color: #fca5a5; }
+  .ep-btn-primary {
+    background: #2563eb; color: #fff; font-weight: 600;
+    box-shadow: 0 2px 8px rgba(37,99,235,0.25);
+    padding: 9px 20px; border-radius: 10px;
+    font-size: 13px; font-family: inherit;
+    cursor: pointer; border: none; transition: all 0.15s;
+  }
+  .ep-btn-primary:hover { background: #1d4ed8; box-shadow: 0 4px 14px rgba(37,99,235,0.3); }
+
+
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  #createPage {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: #ffffff;
+    min-height: 100vh;
+    padding: 40px;
+    color: #1a1a1a;
+  }
+
+  .page-wrapper { max-width: 640px; margin: 0 auto; }
+
+  .page-back {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 500; color: #999;
+    text-decoration: none; margin-bottom: 32px;
+    cursor: pointer; transition: color 0.15s;
+  }
+  .page-back:hover { color: #666; }
+  .page-back svg { width: 14px; height: 14px; }
+
+  .page-heading { font-size: 22px; font-weight: 700; color: #37414B; margin-bottom: 6px; }
+  .page-subheading { font-size: 15px; color: #5B6E82; margin-bottom: 24px; line-height: 1.5; }
+
+  /* Card */
+  .wizard-card {
+    background: #fff;
+    border-radius: 20px;
+    border: 1.5px solid #e8e8e8;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    max-height: 700px;
+  }
+
+  .wizard-header { flex-shrink: 0; }
+  .wizard-body { padding: 28px 32px; flex: 1; min-height: 0; overflow-y: auto; }
+
+  .wizard-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 32px; background: #fff;
+    border-top: 1px solid #f0f0f0; flex-shrink: 0;
+  }
+  .footer-right { display: flex; align-items: center; gap: 10px; }
+
+  /* Stepper */
+  .stepper {
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px 40px 20px; border-bottom: 1px solid #f0f0f0;
+  }
+  .step { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+  .step-circle {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600; flex-shrink: 0;
+    transition: all 0.3s; background: #f0f0f0; color: #999;
+  }
+  .step.active .step-circle { background: #3b82f6; color: #fff; }
+  .step.done .step-circle  { background: #3b82f6; color: #fff; }
+  .step-label { font-size: 14px; font-weight: 500; color: #bbb; transition: color 0.3s; }
+  .step.active .step-label { color: #37414B; font-weight: 400; }
+  .step.done .step-label   { color: #666; }
+  .step-line {
+    flex: 1; height: 2px; background: #e8e8e8;
+    margin: 0 16px; min-width: 40px; transition: background 0.3s;
+  }
+  .step-line.done { background: #3b82f6; }
+  .check-svg { display: none; }
+  .step.done .check-svg { display: block; }
+  .step.done .step-num  { display: none; }
+
+  /* Form */
+  .form-group { margin-bottom: 22px; }
+  .form-label { display: block; font-size: 14px; font-weight: 400; color: #37414B; margin-bottom: 8px; }
+  .form-input {
+    width: 100%; padding: 13px 16px;
+    border: 1.5px solid #e8e8e8; border-radius: 12px;
+    font-size: 14px; font-family: inherit; color: #1a1a1a;
+    outline: none; transition: border-color 0.2s, box-shadow 0.2s; background: #fff;
+  }
+  .form-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.08); }
+  .form-input::placeholder { color: #bbb; }
+  textarea.form-input { resize: vertical; min-height: 80px; }
+  input[type="number"].form-input { color: #bbb; }
+
+  .folder-picker {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 16px; border: 1.5px solid #e8e8e8; border-radius: 12px;
+    cursor: pointer; transition: border-color 0.2s;
+  }
+  .folder-picker:hover { border-color: #d0d0d0; }
+  .folder-icon {
+    width: 40px; height: 40px; background: #f7f7f8; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .folder-icon svg { width: 20px; height: 20px; color: #8B9CAE; }
+  .folder-info { flex: 1; min-width: 0; }
+  .folder-path { font-size: 14px; font-weight: 400; color: #37414B; }
+  .folder-hint { font-size: 12px; color: #5B6E82; margin-top: 2px; }
+  .folder-change { font-size: 14px; font-weight: 500; color: #3b82f6; flex-shrink: 0; }
+
+  .add-desc-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 500; color: #3b82f6;
+    cursor: pointer; padding: 4px 0; border: none;
+    background: none; font-family: inherit; transition: opacity 0.2s;
+  }
+  .add-desc-link:hover { opacity: 0.8; }
+  .add-desc-link svg { width: 16px; height: 16px; }
+  .desc-wrapper { display: none; }
+  .desc-wrapper.visible { display: block; animation: fadeIn 0.25s ease; }
+
+  /* Step panels */
+  .step-panel { display: none; }
+  .step-panel.active { display: block; animation: slideIn 0.3s ease; }
+
+  @keyframes fadeIn  { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes slideIn { from { opacity: 0; transform: translateX(16px); } to { opacity: 1; transform: translateX(0); } }
+  @keyframes slideBack { from { opacity: 0; transform: translateX(-16px); } to { opacity: 1; transform: translateX(0); } }
+
+  /* Sub-views within step 2 */
+  .subview { display: none; }
+  .subview.active { display: block; animation: slideIn 0.28s ease; }
+  .subview.slide-back { animation: slideBack 0.28s ease; }
+
+  /* Buttons */
+  .btn {
+    padding: 11px 24px; border-radius: 12px;
+    font-size: 14px; font-weight: 500; font-family: inherit;
+    cursor: pointer; transition: all 0.15s; border: none;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn-ghost  { background: none; color: #999; }
+  .btn-ghost:hover { color: #666; }
+  .btn-skip   { background: none; color: #3b82f6; }
+  .btn-skip:hover { background: #eff6ff; }
+  .btn-primary {
+    background: #3b82f6; color: #fff; font-weight: 600;
+    box-shadow: 0 2px 8px rgba(59,130,246,0.25);
+  }
+  .btn-primary:hover { background: #2563eb; box-shadow: 0 4px 14px rgba(59,130,246,0.3); }
+  .btn-primary svg { width: 14px; height: 14px; }
+  .btn-secondary { background: #f5f5f5; color: #666; }
+  .btn-secondary:hover { background: #ebebeb; color: #444; }
+  .btn-secondary svg { width: 14px; height: 14px; }
+
+  /* ============ SPLIT PUBLISH BUTTON ============ */
+  .split-btn-wrap {
+    position: relative;
+    display: inline-flex;
+  }
+  .split-btn-main {
+    padding: 11px 20px; border-radius: 12px 0 0 12px;
+    font-size: 14px; font-weight: 600; font-family: inherit;
+    cursor: pointer; border: none;
+    background: #3b82f6; color: #fff;
+    box-shadow: 0 2px 8px rgba(59,130,246,0.25);
+    transition: background 0.15s;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .split-btn-main:hover { background: #2563eb; }
+  .split-btn-chevron {
+    padding: 11px 10px; border-radius: 0 12px 12px 0;
+    font-size: 14px; font-family: inherit;
+    cursor: pointer; border: none;
+    background: #3b82f6; color: #fff;
+    border-left: 1px solid rgba(255,255,255,0.3);
+    box-shadow: 0 2px 8px rgba(59,130,246,0.25);
+    transition: background 0.15s;
+    display: inline-flex; align-items: center;
+  }
+  .split-btn-chevron:hover { background: #2563eb; }
+  .split-btn-chevron svg { width: 14px; height: 14px; }
+  .split-btn-menu {
+    display: none;
+    position: absolute; bottom: calc(100% + 6px); right: 0;
+    background: #fff; border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.08);
+    min-width: 230px; padding: 6px; z-index: 100;
+  }
+  .split-btn-menu.open { display: block; }
+  .split-btn-menu-item {
+    display: flex; align-items: center; gap: 10px;
+    width: 100%; padding: 10px 14px; border: none; background: none;
+    font-size: 14px; font-weight: 500; font-family: inherit;
+    color: #1a1a1a; cursor: pointer; border-radius: 8px;
+    transition: background 0.12s;
+  }
+  .split-btn-menu-item:hover { background: #f5f7fa; }
+  .split-btn-menu-item svg { width: 18px; height: 18px; color: #666; flex-shrink: 0; }
+
+  /* ============ NOTIFY MODAL ============ */
+  .notify-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.35); z-index: 600;
+    align-items: center; justify-content: center;
+  }
+  .notify-overlay.open { display: flex; }
+  .notify-modal {
+    background: #fff; border-radius: 16px;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.18);
+    width: 480px; max-width: 95vw;
+    max-height: 90vh; overflow-y: auto;
+  }
+  .notify-modal-header {
+    display: flex; align-items: flex-start; gap: 14px;
+    padding: 24px 24px 0;
+  }
+  .notify-modal-icon {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: #eff6ff; display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .notify-modal-icon svg { width: 22px; height: 22px; color: #3b82f6; }
+  .notify-modal-title { font-size: 18px; font-weight: 700; color: #1a1a1a; }
+  .notify-modal-desc { font-size: 13px; color: #888; margin-top: 2px; }
+  .notify-modal-close {
+    margin-left: auto; border: none; background: none; cursor: pointer;
+    color: #bbb; padding: 4px; border-radius: 6px; transition: color 0.15s;
+  }
+  .notify-modal-close:hover { color: #666; }
+  .notify-modal-close svg { width: 20px; height: 20px; }
+  .notify-modal-body { padding: 20px 24px; }
+  .notify-section-label {
+    font-size: 12px; font-weight: 600; color: #888;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    margin-bottom: 12px;
+  }
+  .notify-timing-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 0;
+  }
+  .notify-timing-row label { font-size: 14px; font-weight: 500; color: #1a1a1a; cursor: pointer; }
+  .notify-timing-hint { font-size: 12px; color: #999; margin-left: 26px; margin-top: -4px; margin-bottom: 6px; }
+  .notify-divider { border: none; border-top: 1px solid #f0f0f0; margin: 12px 0; }
+
+  .notify-recipients-input-wrap {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+    border: 1.5px solid #e5e5e5; border-radius: 10px;
+    padding: 8px 12px; min-height: 44px; cursor: text;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    margin-bottom: 8px;
+  }
+  .notify-recipients-input-wrap:focus-within {
+    border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.08);
+  }
+  .notify-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #eff6ff; color: #1a1a1a; border-radius: 6px;
+    padding: 4px 8px 4px 6px; font-size: 13px; font-weight: 500;
+  }
+  .notify-chip-avatar {
+    width: 22px; height: 22px; border-radius: 6px;
+    background: #3b82f6; color: #fff; font-size: 11px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .notify-chip-remove {
+    border: none; background: none; cursor: pointer; color: #999;
+    padding: 0; display: flex; transition: color 0.15s;
+  }
+  .notify-chip-remove:hover { color: #e53e3e; }
+  .notify-chip-remove svg { width: 14px; height: 14px; }
+  .notify-email-input {
+    border: none; outline: none; font-size: 13px; font-family: inherit;
+    color: #1a1a1a; flex: 1; min-width: 160px; background: transparent;
+  }
+  .notify-email-input::placeholder { color: #bbb; }
+  .notify-hint {
+    font-size: 12px; color: #999; line-height: 1.4;
+  }
+  .notify-hint a { color: #3b82f6; text-decoration: none; font-weight: 500; }
+  .notify-hint a:hover { text-decoration: underline; }
+  .notify-modal-footer {
+    display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+    padding: 16px 24px; border-top: 1px solid #f0f0f0;
+  }
+
+  /* ============================
+     SETTINGS TOGGLE ROWS
+     ============================ */
+
+  .settings-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 4px;
+  }
+  .settings-title { font-size: 15px; font-weight: 400; color: #37414B; }
+  .clear-all-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 13px; font-weight: 500; color: #999;
+    border: none; background: none; cursor: pointer;
+    font-family: inherit; transition: color 0.15s;
+  }
+  .clear-all-btn:hover { color: #3b82f6; }
+  .clear-all-btn svg { width: 14px; height: 14px; }
+
+  .setting-row {
+    display: flex; align-items: center;
+    padding: 16px 0; cursor: pointer; user-select: none;
+  }
+  .setting-row .sr-icon {
+    width: 38px; height: 38px; background: #f7f7f8; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-right: 14px; transition: all 0.25s;
+  }
+  .setting-row .sr-icon svg { width: 18px; height: 18px; color: #8B9CAE; }
+  .sr-text { flex: 1; min-width: 0; }
+  .sr-title { font-size: 14px; font-weight: 400; color: #37414B; }
+  .sr-desc  { font-size: 12px; color: #5B6E82; margin-top: 2px; }
+
+  /* Toggle switch */
+  .toggle-switch { position: relative; width: 44px; height: 24px; flex-shrink: 0; margin-left: 12px; }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider {
+    position: absolute; inset: 0; background: #e0e0e0;
+    border-radius: 24px; cursor: pointer; transition: background 0.25s;
+  }
+  .toggle-slider::before {
+    content: ''; position: absolute; width: 18px; height: 18px;
+    left: 3px; bottom: 3px; background: #fff; border-radius: 50%;
+    transition: transform 0.25s; box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  }
+  .toggle-switch input:checked + .toggle-slider { background: #3b82f6; }
+  .toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); }
+
+  /* Expand */
+  .sr-expand { max-height: 0; overflow: hidden; transition: max-height 0.35s cubic-bezier(0.16,1,0.3,1); }
+  .sr-expand.open { max-height: 600px; }
+  .sr-expand-content { padding: 0 0 20px 52px; }
+
+  .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .field-label { font-size: 12px; font-weight: 500; color: #999; margin-bottom: 6px; display: flex; align-items: center; gap: 4px; }
+  .field-block { margin-bottom: 12px; }
+  .field-block:last-child { margin-bottom: 0; }
+
+  .cb-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .cb-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: #3b82f6; cursor: pointer; }
+  .cb-row label { font-size: 13px; font-weight: 500; color: #1a1a1a; cursor: pointer; }
+
+  .input-with-suffix { position: relative; }
+  .input-with-suffix .form-input { padding-right: 40px; }
+  .input-suffix { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 13px; font-weight: 500; color: #999; pointer-events: none; }
+
+  .input-with-icon { position: relative; }
+  .input-with-icon .form-input { padding-right: 44px; }
+  .input-icon-btn {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    width: 28px; height: 28px; border: none; background: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: #bbb; border-radius: 6px; transition: color 0.15s;
+  }
+  .input-icon-btn:hover { color: #666; }
+  .input-icon-btn svg { width: 16px; height: 16px; }
+
+  .section-subtitle { font-size: 12px; font-weight: 600; color: #999; margin-bottom: 4px; margin-top: 12px; }
+  .recipients-list { display: flex; flex-direction: column; }
+  .recipient-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; }
+  .recipient-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: #3b82f6; cursor: pointer; }
+  .recipient-row label { font-size: 14px; color: #1a1a1a; cursor: pointer; }
+
+  /* Metadata row — arrow instead of toggle */
+  .setting-row.meta-row { border-top: none; }
+  .sr-arrow {
+    display: flex; align-items: center; justify-content: center;
+    width: 24px; height: 24px; margin-left: 8px; color: #ccc; flex-shrink: 0;
+    transition: color 0.2s, transform 0.2s;
+  }
+  .sr-arrow svg { width: 16px; height: 16px; }
+  .setting-row.meta-row:hover .sr-arrow { color: #3b82f6; transform: translateX(2px); }
+
+
+  /* ============================
+     METADATA SUB-VIEW
+     ============================ */
+
+  .meta-back-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 500; color: #666;
+    cursor: pointer; border: none; background: none;
+    font-family: inherit; margin-bottom: 20px; padding: 0;
+    transition: opacity 0.15s;
+  }
+  .meta-back-link:hover { opacity: 0.75; }
+  .meta-back-link svg { width: 14px; height: 14px; }
+
+  .meta-display-row {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 20px;
+  }
+  .meta-display-label { font-size: 14px; font-weight: 400; color: #37414B; flex: 1; }
+
+  .meta-select-btns { display: flex; align-items: center; gap: 0; flex-shrink: 0; }
+  .meta-select-btns button {
+    font-size: 13px; font-weight: 500; color: #999;
+    border: none; background: none; cursor: pointer; padding: 4px 0;
+    font-family: inherit; transition: color 0.15s;
+  }
+  .meta-select-btns button:hover { color: #3b82f6; }
+  .meta-select-btns .divider { color: #d0d0d0; margin: 0 8px; font-size: 13px; }
+
+  .chip-groups { display: flex; flex-direction: column; gap: 16px; }
+  .chip-group-title { font-size: 12px; font-weight: 400; color: #37414B; margin-bottom: 8px; }
+  .chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  .meta-chip {
+    border: 1.5px solid #e8e8e8; background: #fff; color: #555;
+    border-radius: 20px; padding: 6px 14px;
+    font-size: 13px; font-weight: 500; font-family: inherit;
+    cursor: pointer; transition: all 0.15s; user-select: none;
+  }
+  .meta-chip:hover { border-color: #c8c8c8; color: #333; }
+  .meta-chip.selected { background: #eff6ff; border-color: #3b82f6; color: #3b82f6; }
+
+  /* ============================
+     FOLDER PICKER POPOVER
+     ============================ */
+
+  .folder-picker-wrap { position: relative; }
+  .folder-popover {
+    position: fixed; background: #fff;
+    border: 1.5px solid #e8e8e8; border-radius: 14px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.12);
+    z-index: 1000; display: none; overflow: hidden;
+  }
+  .folder-popover.open { display: block; animation: fadeIn 0.18s ease; }
+  .fp-search-wrap { padding: 12px 14px; border-bottom: 1px solid #f0f0f0; position: relative; }
+  .fp-search-icon { position: absolute; left: 26px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: #bbb; pointer-events: none; }
+  .fp-search {
+    width: 100%; padding: 9px 12px 9px 36px;
+    border: 1.5px solid #e8e8e8; border-radius: 9px;
+    font-size: 13px; font-family: inherit; color: #1a1a1a;
+    outline: none; transition: border-color 0.15s;
+  }
+  .fp-search:focus { border-color: #2563eb; }
+  .fp-tree { max-height: 220px; overflow-y: auto; padding: 6px 0; }
+  .fp-row { display: flex; align-items: center; gap: 6px; padding: 7px 14px; cursor: pointer; transition: background 0.1s; user-select: none; }
+  .fp-row:hover { background: #f7f7f8; }
+  .fp-row.fp-selected { background: #eff6ff; }
+  .fp-row.fp-selected .fp-name { color: #2563eb; font-weight: 500; }
+  .fp-row.fp-selected .fp-fi  { color: #2563eb; }
+  .fp-toggle { width: 14px; height: 14px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #ccc; }
+  .fp-toggle svg { width: 10px; height: 10px; transition: transform 0.2s; }
+  .fp-toggle.open svg { transform: rotate(90deg); }
+  .fp-toggle.leaf { visibility: hidden; }
+  .fp-fi { width: 16px; height: 16px; flex-shrink: 0; color: #adb5bd; }
+  .fp-fi svg { width: 16px; height: 16px; }
+  .fp-name { font-size: 13px; color: #1a1a1a; }
+  .fp-children { display: none; }
+  .fp-children.open { display: block; }
+  .fp-children .fp-row { padding-left: 34px; }
+  .fp-children .fp-children .fp-row { padding-left: 54px; }
+
+  .design-label {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    color: #bbb; font-size: 12px; font-weight: 500; letter-spacing: 1px; text-transform: uppercase;
+  }
+
+  /* Validation error states */
+  .form-input.input-error { border-color: #ef4444; }
+  .form-input.input-error:focus { border-color: #ef4444; box-shadow: 0 0 0 3px rgba(239,68,68,0.08); }
+  .folder-picker.input-error { border-color: #ef4444; }
+  .field-error-msg {
+    font-size: 12px; color: #ef4444; margin-top: 6px;
+    animation: fadeIn 0.2s ease;
+  }
+
+</style>
+</head>
+<body>
+
+<!-- ============ LIST PAGE ============ -->
+<div id="listPage">
+<svg style="display:none">
+  <symbol id="ico-folder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></symbol>
+  <symbol id="ico-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><path d="M13 2v7h7"/></symbol>
+  <symbol id="ico-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></symbol>
+  <symbol id="ico-share" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98"/></symbol>
+  <symbol id="ico-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><path d="M9 12l2 2 4-4"/></symbol>
+  <symbol id="ico-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></symbol>
+  <symbol id="ico-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+  <symbol id="ico-dot-sm" viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="8" r="4"/></symbol>
+  <symbol id="ico-checkmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></symbol>
+  <symbol id="ico-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="M22 6l-10 7L2 6"/></symbol>
+  <symbol id="ico-dots" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></symbol>
+  <symbol id="ico-pencil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></symbol>
+  <symbol id="ico-hourglass" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 22h14M5 2h14"/><path d="M17 2v3.172a2 2 0 01-.586 1.414L12 11 7.586 6.586A2 2 0 017 5.172V2"/><path d="M7 22v-3.172a2 2 0 01.586-1.414L12 13l4.414 4.414A2 2 0 0117 18.828V22"/></symbol>
+  <symbol id="ico-x-circle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></symbol>
+  <symbol id="ico-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></symbol>
+  <symbol id="ico-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></symbol>
+</svg>
+
+<!-- ============ ROW 1 — Title / Bulk bar ============ -->
+<div class="header-top">
+  <h1 class="page-title" id="pageTitle">Airbox</h1>
+  <div class="bulk-bar" id="bulkBar">
+    <span class="bulk-bar-count" id="bulkCount">0 selected</span>
+    <span class="bulk-bar-select-label">Select:</span>
+    <button class="bulk-bar-select-btn" onclick="selectAllItems()">All airboxes</button>
+    <button class="bulk-bar-select-btn" onclick="clearSelection()">None</button>
+    <span class="bulk-bar-spacer"></span>
+    <button class="bulk-bar-delete" onclick="bulkDelete()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
+      Delete
+    </button>
+    <button class="bulk-bar-cancel" onclick="clearSelection()" title="Close">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ============ ROW 2 — Stats + Search left, Toggle + Add right ============ -->
+<div class="header-controls">
+  <div class="stat-cards-group">
+    <div class="stat-card filter-active" onclick="filterBy(this,'all')">
+      <div class="stat-icon total"><svg><use href="#ico-folder"/></svg></div>
+      <span class="stat-number">9</span><span class="stat-label">Total</span>
+    </div>
+    <div class="stat-card" onclick="filterBy(this,'active')">
+      <div class="stat-icon active"><svg><use href="#ico-check"/></svg></div>
+      <span class="stat-number">8</span><span class="stat-label">Active</span>
+    </div>
+    <div class="stat-card" onclick="filterBy(this,'protected')">
+      <div class="stat-icon protected"><svg><use href="#ico-lock"/></svg></div>
+      <span class="stat-number">2</span><span class="stat-label">Protected</span>
+    </div>
+    <div class="stat-card" onclick="filterBy(this,'expiring')">
+      <div class="stat-icon expiring"><svg><use href="#ico-hourglass"/></svg></div>
+      <span class="stat-number">1</span><span class="stat-label">Expiring</span>
+    </div>
+    <div class="stat-card" onclick="filterBy(this,'expired')">
+      <div class="stat-icon expired"><svg><use href="#ico-x-circle"/></svg></div>
+      <span class="stat-number">1</span><span class="stat-label">Expired</span>
+    </div>
+  </div>
+  <div class="search-box">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+    <input type="text" id="searchInput" placeholder="Search Airbox by name..." oninput="applyFilters()">
+  </div>
+  <div class="header-spacer"></div>
+  <div class="col-btn-wrap">
+    <button class="btn-columns" id="colsBtn" onclick="toggleColsPopover()">
+      <svg class="col-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="18" rx="1"/></svg>
+      Columns
+      <svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 6l5 5 5-5"/></svg>
+    </button>
+    <div class="col-popover" id="colsPopover" onclick="event.stopPropagation()">
+      <div class="col-pop-header"><span>Columns</span><button class="col-pop-reset" onclick="resetCols()">Reset</button></div>
+      <div class="col-pop-list" id="colsPopList">
+        <div class="col-pop-row fixed selected">
+          <span class="col-pop-name">Name</span>
+          <svg class="col-pop-check" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg>
+        </div>
+        <div class="col-pop-row selected" data-col="description" onclick="toggleColRow(this)">
+          <span class="col-pop-name">Description</span>
+          <svg class="col-pop-check" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg>
+        </div>
+        <div class="col-pop-row selected" data-col="folder" onclick="toggleColRow(this)">
+          <span class="col-pop-name">Folder</span>
+          <svg class="col-pop-check" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg>
+        </div>
+        <div class="col-pop-row selected" data-col="status" onclick="toggleColRow(this)">
+          <span class="col-pop-name">Status</span>
+          <svg class="col-pop-check" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg>
+        </div>
+        <div class="col-pop-row" data-col="validity" onclick="toggleColRow(this)">
+          <span class="col-pop-name">Validity</span>
+          <svg class="col-pop-check" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg>
+        </div>
+        <div class="col-pop-row selected" data-col="files" onclick="toggleColRow(this)">
+          <span class="col-pop-name">Files</span>
+          <svg class="col-pop-check" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg>
+        </div>
+        <div class="col-pop-row" data-col="createdAt" onclick="toggleColRow(this)">
+          <span class="col-pop-name">Created at</span>
+          <svg class="col-pop-check" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg>
+        </div>
+        <div class="col-pop-row selected" data-col="updatedAt" onclick="toggleColRow(this)">
+          <span class="col-pop-name">Updated at</span>
+          <svg class="col-pop-check" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg>
+        </div>
+        <div class="col-pop-row selected" data-col="createdBy" onclick="toggleColRow(this)">
+          <span class="col-pop-name">Created by</span>
+          <svg class="col-pop-check" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-btn-wrap">
+    <button class="btn-columns" id="userFilterBtn" onclick="toggleUserPopover()">
+      <svg class="col-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      Created by
+      <svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 6l5 5 5-5"/></svg>
+    </button>
+    <div class="col-popover" id="userPopover" onclick="event.stopPropagation()">
+      <div class="col-pop-header"><span>Created by</span><button class="col-pop-reset" onclick="clearUserFilter()">Clear</button></div>
+      <div class="col-pop-list" id="userPopList">
+        <div class="user-pop-row" onclick="toggleUserFilter('A. Beskov', this)">
+          <span class="user-ava" style="background:#dbeafe;color:#3b82f6">AB</span>
+          <span class="user-pop-name">A. Beskov</span>
+          <svg class="user-pop-check" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg>
+        </div>
+        <div class="user-pop-row" onclick="toggleUserFilter('M. Ivanov', this)">
+          <span class="user-ava" style="background:#dcfce7;color:#16a34a">MI</span>
+          <span class="user-pop-name">M. Ivanov</span>
+          <svg class="user-pop-check" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg>
+        </div>
+        <div class="user-pop-row" onclick="toggleUserFilter('S. Park', this)">
+          <span class="user-ava" style="background:#ede9fe;color:#7c3aed">SP</span>
+          <span class="user-pop-name">S. Park</span>
+          <svg class="user-pop-check" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg>
+        </div>
+        <div class="user-pop-row" onclick="toggleUserFilter('T. Blanc', this)">
+          <span class="user-ava" style="background:#fef3c7;color:#d97706">TB</span>
+          <span class="user-pop-name">T. Blanc</span>
+          <svg class="user-pop-check" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg>
+        </div>
+        <div class="user-pop-row" onclick="toggleUserFilter('V. Petrov', this)">
+          <span class="user-ava" style="background:#fce7f3;color:#db2777">VP</span>
+          <span class="user-pop-name">V. Petrov</span>
+          <svg class="user-pop-check" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 8 6 12 14 4"/></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="view-toggle">
+    <button class="view-btn active" id="gridBtn" onclick="switchView('grid')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+        <rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>
+      </svg>
+    </button>
+    <button class="view-btn" id="tableBtn" onclick="switchView('table')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+        <rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/><path d="M14 4h7"/><path d="M14 9h7"/><path d="M14 15h7"/><path d="M14 20h7"/>
+      </svg>
+    </button>
+  </div>
+  <button class="btn-add" onclick="openCreateWizard()">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 2v12M2 8h12"/></svg>
+    Create Airbox
+  </button>
+</div>
+
+
+<!-- ============ GRID ============ -->
+<div class="grid-view" id="gridView">
+
+  <div class="g-card" data-status="active" data-author="A. Beskov" data-updated="2025-03-10">
+    <div class="g-body"><div class="g-top"><div class="g-icon"><svg class="fi"><use href="#ico-folder"/></svg><div class="icon-cb"><input type="checkbox" onclick="event.stopPropagation(); toggleCardSelect(this)"></div></div><div class="g-info"><div class="g-name-row"><span class="g-name">Test airbox with . folder</span></div><div class="g-folder">/.briefbox/123</div></div></div><div class="g-desc">No description</div><div class="g-meta"><span class="g-status-text">Active</span></div></div>
+    <div class="g-footer"><div class="g-meta-line"><span class="g-meta-name">A. Beskov</span><span class="g-meta-sep">·</span><svg><use href="#ico-pencil"/></svg><span class="g-meta-date">Mar 10</span></div><div class="g-foot-actions"><div class="g-hover-actions"><button class="g-icon-btn" title="Email" onclick="event.stopPropagation(); emailLink()"><svg><use href="#ico-mail"/></svg></button><button class="g-icon-btn" title="Copy link" onclick="event.stopPropagation(); copyLink(this)"><svg><use href="#ico-copy"/></svg></button></div><div class="g-foot-dots"><button class="dots-btn" onclick="event.stopPropagation(); toggleDots(this)"><svg><use href="#ico-dots"/></svg></button></div></div></div>
+  </div>
+
+  <div class="g-card" data-status="active" data-author="M. Ivanov" data-updated="2025-02-28">
+    <div class="g-body"><div class="g-top"><div class="g-icon"><svg class="fi"><use href="#ico-folder"/></svg><div class="icon-cb"><input type="checkbox" onclick="event.stopPropagation(); toggleCardSelect(this)"></div></div><div class="g-info"><div class="g-name-row"><span class="g-name">Boom</span></div><div class="g-folder">/Airbox_Demo</div></div></div><div class="g-desc has-text">Marketing assets for Q1 campaign launch</div><div class="g-meta"><span class="g-status-text">Active</span><span class="g-validity">Jan 10 — Mar 10</span></div></div>
+    <div class="g-footer"><div class="g-meta-line"><span class="g-meta-name">M. Ivanov</span><span class="g-meta-sep">·</span><svg><use href="#ico-pencil"/></svg><span class="g-meta-date">Feb 28</span></div><div class="g-foot-actions"><div class="g-hover-actions"><button class="g-icon-btn" title="Email" onclick="event.stopPropagation(); emailLink()"><svg><use href="#ico-mail"/></svg></button><button class="g-icon-btn" title="Copy link" onclick="event.stopPropagation(); copyLink(this)"><svg><use href="#ico-copy"/></svg></button></div><div class="g-foot-dots"><button class="dots-btn" onclick="event.stopPropagation(); toggleDots(this)"><svg><use href="#ico-dots"/></svg></button></div></div></div>
+  </div>
+
+  <div class="g-card" data-status="active" data-author="A. Beskov" data-updated="2025-03-01">
+    <div class="g-body"><div class="g-top"><div class="g-icon"><svg class="fi"><use href="#ico-folder"/></svg><div class="icon-cb"><input type="checkbox" onclick="event.stopPropagation(); toggleCardSelect(this)"></div></div><div class="g-info"><div class="g-name-row"><span class="g-name">Demo airbox</span></div><div class="g-folder">/Other demos/Dmitry</div></div></div><div class="g-desc has-text">Product demo collection for internal team review and feedback</div><div class="g-meta"><span class="g-status-text">Active</span></div></div>
+    <div class="g-footer"><div class="g-meta-line"><span class="g-meta-name">A. Beskov</span><span class="g-meta-sep">·</span><svg><use href="#ico-pencil"/></svg><span class="g-meta-date">Mar 1</span></div><div class="g-foot-actions"><div class="g-hover-actions"><button class="g-icon-btn" title="Email" onclick="event.stopPropagation(); emailLink()"><svg><use href="#ico-mail"/></svg></button><button class="g-icon-btn" title="Copy link" onclick="event.stopPropagation(); copyLink(this)"><svg><use href="#ico-copy"/></svg></button></div><div class="g-foot-dots"><button class="dots-btn" onclick="event.stopPropagation(); toggleDots(this)"><svg><use href="#ico-dots"/></svg></button></div></div></div>
+  </div>
+
+  <div class="g-card" data-status="protected active" data-author="T. Blanc" data-updated="2025-03-05">
+    <div class="g-body"><div class="g-top"><div class="g-icon"><svg class="fi"><use href="#ico-folder"/></svg><div class="icon-cb"><input type="checkbox" onclick="event.stopPropagation(); toggleCardSelect(this)"></div></div><div class="g-info"><div class="g-name-row"><span class="g-name">Demo Quality Group</span><span class="g-val-icon lock"><svg><use href="#ico-lock"/></svg></span></div><div class="g-folder">/Demos/Quality Group</div></div></div><div class="g-desc">No description</div><div class="g-meta"><span class="g-status-text">Active</span><span class="g-validity">Dec 1 '25 — Apr 30</span></div></div>
+    <div class="g-footer"><div class="g-meta-line"><span class="g-meta-name">T. Blanc</span><span class="g-meta-sep">·</span><svg><use href="#ico-pencil"/></svg><span class="g-meta-date">Mar 5</span></div><div class="g-foot-actions"><div class="g-hover-actions"><button class="g-icon-btn" title="Email" onclick="event.stopPropagation(); emailLink()"><svg><use href="#ico-mail"/></svg></button><button class="g-icon-btn" title="Copy link" onclick="event.stopPropagation(); copyLink(this)"><svg><use href="#ico-copy"/></svg></button></div><div class="g-foot-dots"><button class="dots-btn" onclick="event.stopPropagation(); toggleDots(this)"><svg><use href="#ico-dots"/></svg></button></div></div></div>
+  </div>
+
+  <div class="g-card" data-status="active" data-author="S. Park" data-updated="2025-03-14">
+    <div class="g-body"><div class="g-top"><div class="g-icon"><svg class="fi"><use href="#ico-folder"/></svg><div class="icon-cb"><input type="checkbox" onclick="event.stopPropagation(); toggleCardSelect(this)"></div></div><div class="g-info"><div class="g-name-row"><span class="g-name">Food Lover</span></div><div class="g-folder">/</div></div></div><div class="g-desc">No description</div><div class="g-meta"><span class="g-status-text">Active</span><span class="g-validity">From Mar 1</span></div></div>
+    <div class="g-footer"><div class="g-meta-line"><span class="g-meta-name">S. Park</span><span class="g-meta-sep">·</span><svg><use href="#ico-pencil"/></svg><span class="g-meta-date">Mar 14</span></div><div class="g-foot-actions"><div class="g-hover-actions"><button class="g-icon-btn" title="Email" onclick="event.stopPropagation(); emailLink()"><svg><use href="#ico-mail"/></svg></button><button class="g-icon-btn" title="Copy link" onclick="event.stopPropagation(); copyLink(this)"><svg><use href="#ico-copy"/></svg></button></div><div class="g-foot-dots"><button class="dots-btn" onclick="event.stopPropagation(); toggleDots(this)"><svg><use href="#ico-dots"/></svg></button></div></div></div>
+  </div>
+
+  <div class="g-card" data-status="active" data-author="T. Blanc" data-updated="2025-03-08">
+    <div class="g-body"><div class="g-top"><div class="g-icon"><svg class="fi"><use href="#ico-folder"/></svg><div class="icon-cb"><input type="checkbox" onclick="event.stopPropagation(); toggleCardSelect(this)"></div></div><div class="g-info"><div class="g-name-row"><span class="g-name">Collectionist</span></div><div class="g-folder">/Demos/Thomas/Bien_1</div></div></div><div class="g-desc">No description</div><div class="g-meta"><span class="g-status-text">Active</span><span class="g-validity">Until Jun 30</span></div></div>
+    <div class="g-footer"><div class="g-meta-line"><span class="g-meta-name">T. Blanc</span><span class="g-meta-sep">·</span><svg><use href="#ico-pencil"/></svg><span class="g-meta-date">Mar 8</span></div><div class="g-foot-actions"><div class="g-hover-actions"><button class="g-icon-btn" title="Email" onclick="event.stopPropagation(); emailLink()"><svg><use href="#ico-mail"/></svg></button><button class="g-icon-btn" title="Copy link" onclick="event.stopPropagation(); copyLink(this)"><svg><use href="#ico-copy"/></svg></button></div><div class="g-foot-dots"><button class="dots-btn" onclick="event.stopPropagation(); toggleDots(this)"><svg><use href="#ico-dots"/></svg></button></div></div></div>
+  </div>
+
+  <div class="g-card" data-status="expiring active" data-author="V. Petrov" data-updated="2025-03-12">
+    <div class="g-body"><div class="g-top"><div class="g-icon"><svg class="fi"><use href="#ico-folder"/></svg><div class="icon-cb"><input type="checkbox" onclick="event.stopPropagation(); toggleCardSelect(this)"></div></div><div class="g-info"><div class="g-name-row"><span class="g-name">Workshop Sofia November</span><span class="g-val-icon clock"><svg><use href="#ico-hourglass"/></svg></span></div><div class="g-folder">/Other demos/Vitaly/Works...</div></div></div><div class="g-desc">No description</div><div class="g-meta"><span class="g-status-text">Active</span><span class="g-validity expiring">Nov 1 '25 — Mar 15</span></div></div>
+    <div class="g-footer"><div class="g-meta-line"><span class="g-meta-name">V. Petrov</span><span class="g-meta-sep">·</span><svg><use href="#ico-pencil"/></svg><span class="g-meta-date">Mar 12</span></div><div class="g-foot-actions"><div class="g-hover-actions"><button class="g-icon-btn" title="Email" onclick="event.stopPropagation(); emailLink()"><svg><use href="#ico-mail"/></svg></button><button class="g-icon-btn" title="Copy link" onclick="event.stopPropagation(); copyLink(this)"><svg><use href="#ico-copy"/></svg></button></div><div class="g-foot-dots"><button class="dots-btn" onclick="event.stopPropagation(); toggleDots(this)"><svg><use href="#ico-dots"/></svg></button></div></div></div>
+  </div>
+
+  <div class="g-card" data-status="protected active" data-author="M. Ivanov" data-updated="2025-03-09">
+    <div class="g-body"><div class="g-top"><div class="g-icon"><svg class="fi"><use href="#ico-folder"/></svg><div class="icon-cb"><input type="checkbox" onclick="event.stopPropagation(); toggleCardSelect(this)"></div></div><div class="g-info"><div class="g-name-row"><span class="g-name">Cap Gemini</span><span class="g-val-icon lock"><svg><use href="#ico-lock"/></svg></span></div><div class="g-folder">/Demos/Cap Gemini</div></div></div><div class="g-desc has-text">Brand guidelines and creative assets shared with Cap Gemini team</div><div class="g-meta"><span class="g-status-text">Active</span><span class="g-validity">Jan 15 — May 15</span></div></div>
+    <div class="g-footer"><div class="g-meta-line"><span class="g-meta-name">M. Ivanov</span><span class="g-meta-sep">·</span><svg><use href="#ico-pencil"/></svg><span class="g-meta-date">Mar 9</span></div><div class="g-foot-actions"><div class="g-hover-actions"><button class="g-icon-btn" title="Email" onclick="event.stopPropagation(); emailLink()"><svg><use href="#ico-mail"/></svg></button><button class="g-icon-btn" title="Copy link" onclick="event.stopPropagation(); copyLink(this)"><svg><use href="#ico-copy"/></svg></button></div><div class="g-foot-dots"><button class="dots-btn" onclick="event.stopPropagation(); toggleDots(this)"><svg><use href="#ico-dots"/></svg></button></div></div></div>
+  </div>
+
+  <div class="g-card expired" data-status="expired" data-author="A. Beskov" data-updated="2025-03-01">
+    <div class="g-body"><div class="g-top"><div class="g-icon"><svg class="fi"><use href="#ico-folder"/></svg><div class="icon-cb"><input type="checkbox" onclick="event.stopPropagation(); toggleCardSelect(this)"></div></div><div class="g-info"><div class="g-name-row"><span class="g-name">Photographes</span></div><div class="g-folder">/Documents</div></div></div><div class="g-desc">No description</div><div class="g-meta"><span class="g-status-text expired">Expired</span><span class="g-validity">Feb 1 — Mar 1 '25</span></div></div>
+    <div class="g-footer"><div class="g-meta-line"><span class="g-meta-name">A. Beskov</span><span class="g-meta-sep">·</span><svg><use href="#ico-pencil"/></svg><span class="g-meta-date">Mar 1</span></div><div class="g-foot-actions"><div class="g-hover-actions"><button class="g-icon-btn" title="Email" onclick="event.stopPropagation(); emailLink()"><svg><use href="#ico-mail"/></svg></button><button class="g-icon-btn" title="Copy link" onclick="event.stopPropagation(); copyLink(this)"><svg><use href="#ico-copy"/></svg></button></div><div class="g-foot-dots"><button class="dots-btn" onclick="event.stopPropagation(); toggleDots(this)"><svg><use href="#ico-dots"/></svg></button></div></div></div>
+  </div>
+
+</div>
+
+<!-- ============ TABLE ============ -->
+<div class="table-view hidden" id="tableView">
+  <table>
+    <thead><tr><th class="t-cb"><input type="checkbox" id="selectAllCb" onchange="toggleSelectAll(this)" title="Select all"></th><th>Name</th><th data-col="description">Description</th><th data-col="folder">Folder</th><th data-col="status">Status</th><th data-col="validity">Validity</th><th data-col="files">Files</th><th data-col="createdAt">Created at</th><th data-col="updatedAt">Updated at</th><th data-col="createdBy">Created by</th><th style="width:80px;"></th></tr></thead>
+    <tbody>
+      <tr data-status="active" data-author="A. Beskov" data-updated="2025-03-10">
+        <td class="t-cb"><input type="checkbox" onchange="toggleRowSelect(this)"></td>
+        <td><div class="t-name-cell"><div class="t-icon"><svg><use href="#ico-folder"/></svg></div><div><div class="t-name-row"><span class="t-name">Test airbox with . folder</span></div></div></div></td>
+        <td><span class="t-desc-cell empty">—</span></td>
+        <td><span class="t-folder"><svg><use href="#ico-folder"/></svg>/.briefbox/123</span></td>
+        <td><span class="t-status-text">Active</span></td>
+        <td><span class="t-validity empty">—</span></td>
+        <td><div class="t-files"><svg><use href="#ico-file"/></svg>8</div></td>
+        <td><span class="t-meta">Jan 5, 2025</span></td><td><span class="t-meta">Mar 10, 2025</span></td><td><span class="t-meta">A. Beskov</span></td>
+        <td><div class="t-actions"><button class="t-icon-btn" title="Email" onclick="event.stopPropagation(); emailLink()"><svg><use href="#ico-mail"/></svg></button><button class="t-icon-btn" title="Copy link" onclick="event.stopPropagation(); copyLink(this)"><svg><use href="#ico-copy"/></svg></button><div class="dots-wrap"><button class="dots-btn" onclick="event.stopPropagation(); toggleDots(this)"><svg><use href="#ico-dots"/></svg></button><div class="dots-popover"><button onclick="event.stopPropagation(); editAirbox(this)"><svg><use href="#ico-edit"/></svg>Edit</button><div class="pop-divider"></div><button class="delete" onclick="event.stopPropagation(); deleteAirbox(this)"><svg><use href="#ico-trash"/></svg>Delete</button></div></div></div></td>
+      </tr>
+      <tr data-status="active" data-author="M. Ivanov" data-updated="2025-02-28">
+        <td class="t-cb"><input type="checkbox" onchange="toggleRowSelect(this)"></td>
+        <td><div class="t-name-cell"><div class="t-icon"><svg><use href="#ico-folder"/></svg></div><div><div class="t-name-row"><span class="t-name">Boom</span></div></div></div></td>
+        <td><span class="t-desc-cell">Marketing assets for Q1 campaign launch</span></td>
+        <td><span class="t-folder"><svg><use href="#ico-folder"/></svg>/Airbox_Demo</span></td>
+        <td><span class="t-status-text">Active</span></td>
+        <td><span class="t-validity"><span class="t-val-date">Jan 10 — Mar 10</span></span></td>
+        <td><div class="t-files"><svg><use href="#ico-file"/></svg>23</div></td>
+        <td><span class="t-meta">Jan 10, 2025</span></td><td><span class="t-meta">Feb 28, 2025</span></td><td><span class="t-meta">M. Ivanov</span></td>
+        <td><div class="t-actions"><button class="t-icon-btn" title="Email" onclick="event.stopPropagation(); emailLink()"><svg><use href="#ico-mail"/></svg></button><button class="t-icon-btn" title="Copy link" onclick="event.stopPropagation(); copyLink(this)"><svg><use href="#ico-copy"/></svg></button><div class="dots-wrap"><button class="dots-btn" onclick="event.stopPropagation(); toggleDots(this)"><svg><use href="#ico-dots"/></svg></button><div class="dots-popover"><button onclick="event.stopPropagation(); editAirbox(this)"><svg><use href="#ico-edit"/></svg>Edit</button><div class="pop-divider"></div><button class="delete" onclick="event.stopPropagation(); deleteAirbox(this)"><svg><use href="#ico-trash"/></svg>Delete</button></div></div></div></td>
+      </tr>
+      <tr data-status="active" data-author="A. Beskov" data-updated="2025-03-01">
+        <td class="t-cb"><input type="checkbox" onchange="toggleRowSelect(this)"></td>
+        <td><div class="t-name-cell"><div class="t-icon"><svg><use href="#ico-folder"/></svg></div><div><div class="t-name-row"><span class="t-name">Demo airbox</span></div></div></div></td>
+        <td><span class="t-desc-cell">Product demo collection for internal team review and feedback</span></td>
+        <td><span class="t-folder"><svg><use href="#ico-folder"/></svg>/Other demos/Dmitry</span></td>
+        <td><span class="t-status-text">Active</span></td>
+        <td><span class="t-validity empty">—</span></td>
+        <td><div class="t-files"><svg><use href="#ico-file"/></svg>5</div></td>
+        <td><span class="t-meta">Nov 3, 2024</span></td><td><span class="t-meta">Mar 1, 2025</span></td><td><span class="t-meta">A. Beskov</span></td>
+        <td><div class="t-actions"><button class="t-icon-btn" title="Email" onclick="event.stopPropagation(); emailLink()"><svg><use href="#ico-mail"/></svg></button><button class="t-icon-btn" title="Copy link" onclick="event.stopPropagation(); copyLink(this)"><svg><use href="#ico-copy"/></svg></button><div class="dots-wrap"><button class="dots-btn" onclick="event.stopPropagation(); toggleDots(this)"><svg><use href="#ico-dots"/></svg></button><div class="dots-popover"><button onclick="event.stopPropagation(); editAirbox(this)"><svg><use href="#ico-edit"/></svg>Edit</button><div class="pop-divider"></div><button class="delete" onclick="event.stopPropagation(); deleteAirbox(this)"><svg><use href="#ico-trash"/></svg>Delete</button></div></div></div></td>
+      </tr>
+      <tr data-status="protected active" data-author="T. Blanc" data-updated="2025-03-05">
+        <td class="t-cb"><input type="checkbox" onchange="toggleRowSelect(this)"></td>
+        <td><div class="t-name-cell"><div class="t-icon"><svg><use href="#ico-folder"/></svg></div><div><div class="t-name-row"><span class="t-name">Demo Quality Group</span><span class="t-val-icon lock" title="Protected"><svg><use href="#ico-lock"/></svg></span></div></div></div></td>
+        <td><span class="t-desc-cell empty">—</span></td>
+        <td><span class="t-folder"><svg><use href="#ico-folder"/></svg>/Demos/Quality Group</span></td>
+        <td><span class="t-status-text">Active</span></td>
+        <td><span class="t-validity"><span class="t-val-date">Dec 1 '25 — Apr 30</span></span></td>
+        <td><div class="t-files"><svg><use href="#ico-file"/></svg>17</div></td>
+        <td><span class="t-meta">Dec 1, 2024</span></td><td><span class="t-meta">Mar 5, 2025</span></td><td><span class="t-meta">T. Blanc</span></td>
+        <td><div class="t-actions"><button class="t-icon-btn" title="Email" onclick="event.stopPropagation(); emailLink()"><svg><use href="#ico-mail"/></svg></button><button class="t-icon-btn" title="Copy link" onclick="event.stopPropagation(); copyLink(this)"><svg><use href="#ico-copy"/></svg></button><div class="dots-wrap"><button class="dots-btn" onclick="event.stopPropagation(); toggleDots(this)"><svg><use href="#ico-dots"/></svg></button><div class="dots-popover"><button onclick="event.stopPropagation(); editAirbox(this)"><svg><use href="#ico-edit"/></svg>Edit</button><div class="pop-divider"></div><button class="delete" onclick="event.stopPropagation(); deleteAirbox(this)"><svg><use href="#ico-trash"/></svg>Delete</button></div></div></div></td>
+      </tr>
+      <tr data-status="active" data-author="S. Park" data-updated="2025-03-14">
+        <td class="t-cb"><input type="checkbox" onchange="toggleRowSelect(this)"></td>
+        <td><div class="t-name-cell"><div class="t-icon"><svg><use href="#ico-folder"/></svg></div><div><div class="t-name-row"><span class="t-name">Food Lover</span></div></div></div></td>
+        <td><span class="t-desc-cell empty">—</span></td>
+        <td><span class="t-folder"><svg><use href="#ico-folder"/></svg>/</span></td>
+        <td><span class="t-status-text">Active</span></td>
+        <td><span class="t-validity"><span class="t-val-date">From Mar 1</span></span></td>
+        <td><div class="t-files"><svg><use href="#ico-file"/></svg>34</div></td>
+        <td><span class="t-meta">Mar 1, 2025</span></td><td><span class="t-meta">Mar 14, 2025</span></td><td><span class="t-meta">S. Park</span></td>
+        <td><div class="t-actions"><button class="t-icon-btn" title="Email" onclick="event.stopPropagation(); emailLink()"><svg><use href="#ico-mail"/></svg></button><button class="t-icon-btn" title="Copy link" onclick="event.stopPropagation(); copyLink(this)"><svg><use href="#ico-copy"/></svg></button><div class="dots-wrap"><button class="dots-btn" onclick="event.stopPropagation(); toggleDots(this)"><svg><use href="#ico-dots"/></svg></button><div class="dots-popover"><button onclick="event.stopPropagation(); editAirbox(this)"><svg><use href="#ico-edit"/></svg>Edit</button><div class="pop-divider"></div><button class="delete" onclick="event.stopPropagation(); deleteAirbox(this)"><svg><use href="#ico-trash"/></svg>Delete</button></div></div></div></td>
+      </tr>
+      <tr data-status="active" data-author="T. Blanc" data-updated="2025-03-08">
+        <td class="t-cb"><input type="checkbox" onchange="toggleRowSelect(this)"></td>
+        <td><div class="t-name-cell"><div class="t-icon"><svg><use href="#ico-folder"/></svg></div><div><div class="t-name-row"><span class="t-name">Collectionist</span></div></div></div></td>
+        <td><span class="t-desc-cell empty">—</span></td>
+        <td><span class="t-folder"><svg><use href="#ico-folder"/></svg>/Demos/Thomas/Bien_1</span></td>
+        <td><span class="t-status-text">Active</span></td>
+        <td><span class="t-validity"><span class="t-val-date">Until Jun 30</span></span></td>
+        <td><div class="t-files"><svg><use href="#ico-file"/></svg>12</div></td>
+        <td><span class="t-meta">Feb 15, 2025</span></td><td><span class="t-meta">Mar 8, 2025</span></td><td><span class="t-meta">T. Blanc</span></td>
+        <td><div class="t-actions"><button class="t-icon-btn" title="Email" onclick="event.stopPropagation(); emailLink()"><svg><use href="#ico-mail"/></svg></button><button class="t-icon-btn" title="Copy link" onclick="event.stopPropagation(); copyLink(this)"><svg><use href="#ico-copy"/></svg></button><div class="dots-wrap"><button class="dots-btn" onclick="event.stopPropagation(); toggleDots(this)"><svg><use href="#ico-dots"/></svg></button><div class="dots-popover"><button onclick="event.stopPropagation(); editAirbox(this)"><svg><use href="#ico-edit"/></svg>Edit</button><div class="pop-divider"></div><button class="delete" onclick="event.stopPropagation(); deleteAirbox(this)"><svg><use href="#ico-trash"/></svg>Delete</button></div></div></div></td>
+      </tr>
+      <tr data-status="expiring active" data-author="V. Petrov" data-updated="2025-03-12">
+        <td class="t-cb"><input type="checkbox" onchange="toggleRowSelect(this)"></td>
+        <td><div class="t-name-cell"><div class="t-icon"><svg><use href="#ico-folder"/></svg></div><div><div class="t-name-row"><span class="t-name">Workshop Sofia Nov 2024</span><span class="t-val-icon clock" title="Expiring"><svg><use href="#ico-hourglass"/></svg></span></div></div></div></td>
+        <td><span class="t-desc-cell empty">—</span></td>
+        <td><span class="t-folder"><svg><use href="#ico-folder"/></svg>/Other demos/Vitaly</span></td>
+        <td><span class="t-status-text">Active</span></td>
+        <td><span class="t-validity expiring"><span class="t-val-date">Nov 1 '25 — Mar 15</span></span></td>
+        <td><div class="t-files"><svg><use href="#ico-file"/></svg>3</div></td>
+        <td><span class="t-meta">Oct 28, 2024</span></td><td><span class="t-meta">Mar 12, 2025</span></td><td><span class="t-meta">V. Petrov</span></td>
+        <td><div class="t-actions"><button class="t-icon-btn" title="Email" onclick="event.stopPropagation(); emailLink()"><svg><use href="#ico-mail"/></svg></button><button class="t-icon-btn" title="Copy link" onclick="event.stopPropagation(); copyLink(this)"><svg><use href="#ico-copy"/></svg></button><div class="dots-wrap"><button class="dots-btn" onclick="event.stopPropagation(); toggleDots(this)"><svg><use href="#ico-dots"/></svg></button><div class="dots-popover"><button onclick="event.stopPropagation(); editAirbox(this)"><svg><use href="#ico-edit"/></svg>Edit</button><div class="pop-divider"></div><button class="delete" onclick="event.stopPropagation(); deleteAirbox(this)"><svg><use href="#ico-trash"/></svg>Delete</button></div></div></div></td>
+      </tr>
+      <tr data-status="protected active" data-author="M. Ivanov" data-updated="2025-03-09">
+        <td class="t-cb"><input type="checkbox" onchange="toggleRowSelect(this)"></td>
+        <td><div class="t-name-cell"><div class="t-icon"><svg><use href="#ico-folder"/></svg></div><div><div class="t-name-row"><span class="t-name">Cap Gemini</span><span class="t-val-icon lock" title="Protected"><svg><use href="#ico-lock"/></svg></span></div></div></div></td>
+        <td><span class="t-desc-cell">Brand guidelines and creative assets shared with Cap Gemini team</span></td>
+        <td><span class="t-folder"><svg><use href="#ico-folder"/></svg>/Demos/Cap Gemini</span></td>
+        <td><span class="t-status-text">Active</span></td>
+        <td><span class="t-validity"><span class="t-val-date">Jan 15 — May 15</span></span></td>
+        <td><div class="t-files"><svg><use href="#ico-file"/></svg>9</div></td>
+        <td><span class="t-meta">Jan 15, 2025</span></td><td><span class="t-meta">Mar 9, 2025</span></td><td><span class="t-meta">M. Ivanov</span></td>
+        <td><div class="t-actions"><button class="t-icon-btn" title="Email" onclick="event.stopPropagation(); emailLink()"><svg><use href="#ico-mail"/></svg></button><button class="t-icon-btn" title="Copy link" onclick="event.stopPropagation(); copyLink(this)"><svg><use href="#ico-copy"/></svg></button><div class="dots-wrap"><button class="dots-btn" onclick="event.stopPropagation(); toggleDots(this)"><svg><use href="#ico-dots"/></svg></button><div class="dots-popover"><button onclick="event.stopPropagation(); editAirbox(this)"><svg><use href="#ico-edit"/></svg>Edit</button><div class="pop-divider"></div><button class="delete" onclick="event.stopPropagation(); deleteAirbox(this)"><svg><use href="#ico-trash"/></svg>Delete</button></div></div></div></td>
+      </tr>
+      <tr class="expired" data-status="expired" data-author="A. Beskov" data-updated="2025-03-01">
+        <td class="t-cb"><input type="checkbox" onchange="toggleRowSelect(this)"></td>
+        <td><div class="t-name-cell"><div class="t-icon"><svg><use href="#ico-folder"/></svg></div><div><div class="t-name-row"><span class="t-name">Photographes</span></div></div></div></td>
+        <td><span class="t-desc-cell empty">—</span></td>
+        <td><span class="t-folder"><svg><use href="#ico-folder"/></svg>/Documents</span></td>
+        <td><span class="t-status-text expired">Expired</span></td>
+        <td><span class="t-validity"><span class="t-val-date">Feb 1 — Mar 1 '25</span></span></td>
+        <td><div class="t-files"><svg><use href="#ico-file"/></svg>41</div></td>
+        <td><span class="t-meta">Feb 1, 2025</span></td><td><span class="t-meta">Mar 1, 2025</span></td><td><span class="t-meta">A. Beskov</span></td>
+        <td><div class="t-actions"><button class="t-icon-btn" title="Email" onclick="event.stopPropagation(); emailLink()"><svg><use href="#ico-mail"/></svg></button><button class="t-icon-btn" title="Copy link" onclick="event.stopPropagation(); copyLink(this)"><svg><use href="#ico-copy"/></svg></button><div class="dots-wrap"><button class="dots-btn" onclick="event.stopPropagation(); toggleDots(this)"><svg><use href="#ico-dots"/></svg></button><div class="dots-popover"><button onclick="event.stopPropagation(); editAirbox(this)"><svg><use href="#ico-edit"/></svg>Edit</button><div class="pop-divider"></div><button class="delete" onclick="event.stopPropagation(); deleteAirbox(this)"><svg><use href="#ico-trash"/></svg>Delete</button></div></div></div></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+</div>
+
+<!-- ============ CREATE WIZARD PAGE ============ -->
+<div id="createPage">
+<div class="page-wrapper">
+
+  <a class="page-back" onclick="closeCreateWizard()">
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 3l-5 5 5 5"/></svg>
+    Back to Airbox list
+  </a>
+
+  <h1 class="page-heading" id="pageHeading">New Airbox: Basics</h1>
+  <p class="page-subheading" id="pageSubheading">Set up your Airbox name and target folder.</p>
+
+  <div class="wizard-card">
+    <div class="wizard-header">
+      <div class="stepper">
+        <div class="step active" id="step1-el" onclick="goToStep(1)">
+          <div class="step-circle">
+            <span class="step-num">1</span>
+            <svg class="check-svg" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5L6.5 11.5L12.5 5"/></svg>
+          </div>
+          <span class="step-label">Basics</span>
+        </div>
+        <div class="step-line" id="step-line-1"></div>
+        <div class="step" id="step2-el" onclick="goToStep(2)">
+          <div class="step-circle">
+            <span class="step-num">2</span>
+            <svg class="check-svg" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5L6.5 11.5L12.5 5"/></svg>
+          </div>
+          <span class="step-label">Settings</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="wizard-body">
+
+      <!-- STEP 1: Basics -->
+      <div class="step-panel active" id="panel1">
+        <div class="form-group">
+          <label class="form-label">Airbox name</label>
+          <input type="text" class="form-input" id="wizNameInput" placeholder="e.g. Q1 Marketing Assets" autofocus>
+        </div>
+
+        <div class="form-group" id="wizFolderGroup">
+          <label class="form-label">Target folder</label>
+          <div class="folder-picker-wrap">
+            <div class="folder-picker" onclick="toggleFolderPopover(event)">
+              <div class="folder-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
+                </svg>
+              </div>
+              <div class="folder-info">
+                <div class="folder-path">Select a folder</div>
+                <div class="folder-hint">Where uploaded files will be stored</div>
+              </div>
+              <span class="folder-change">Browse</span>
+            </div>
+            <div class="folder-popover" id="folderPopover" onclick="event.stopPropagation()">
+              <div class="fp-search-wrap">
+                <svg class="fp-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                <input id="fpSearch" type="text" class="fp-search" placeholder="Search folders...">
+              </div>
+              <div class="fp-tree" id="fpTree"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="descToggle">
+          <button class="add-desc-link" onclick="showDescription()">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 3v10M3 8h10"/></svg>
+            Add description
+          </button>
+        </div>
+        <div class="desc-wrapper" id="descWrapper">
+          <div class="form-group">
+            <label class="form-label">Description <span style="color:#bbb; font-weight:400;">(optional)</span></label>
+            <textarea class="form-input" placeholder="What is this Airbox for?" rows="3"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="step-panel" id="panel2">
+
+        <!-- Sub-view: Settings -->
+        <div class="subview active" id="view-settings">
+          <div class="settings-header">
+            <span class="settings-title">General settings</span>
+            <button class="clear-all-btn" onclick="clearAll()">Clear all</button>
+          </div>
+
+          <!-- Validity -->
+          <div class="setting-row" id="sr-validity" onclick="toggleSetting('validity')">
+            <div class="sr-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+            <div class="sr-text">
+              <div class="sr-title">Set validity</div>
+              <div class="sr-desc">Schedule when this Airbox is accessible</div>
+            </div>
+            <label class="toggle-switch" onclick="event.stopPropagation()">
+              <input type="checkbox" id="sw-validity" onchange="toggleSettingFromSw('validity')">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="sr-expand" id="expand-validity">
+            <div class="sr-expand-content">
+              <div class="field-grid">
+                <div>
+                  <div class="cb-row"><input type="checkbox" id="v1StartsAt" checked><label for="v1StartsAt">Starts at</label></div>
+                  <div class="field-block">
+                    <div class="input-icon-wrap">
+                      <input type="text" class="form-input" placeholder="MM / DD / YYYY" onchange="this.classList.toggle('has-value',!!this.value)">
+                      <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>
+                    </div>
+                  </div>
+                  <div class="field-block">
+                    <div class="input-icon-wrap">
+                      <input type="time" class="form-input" value="00:00" onchange="this.classList.toggle('has-value',!!this.value)">
+                      <span class="time-tz">UTC+1</span>
+                      <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                    </div>
+                  </div>
+                </div>
+                <div>
+                  <div class="cb-row"><input type="checkbox" id="v1ExpiresAt"><label for="v1ExpiresAt">Expires at</label></div>
+                  <div class="field-block">
+                    <div class="input-icon-wrap">
+                      <input type="text" class="form-input" placeholder="MM / DD / YYYY" onchange="this.classList.toggle('has-value',!!this.value)">
+                      <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>
+                    </div>
+                  </div>
+                  <div class="field-block">
+                    <div class="input-icon-wrap">
+                      <input type="time" class="form-input" value="00:00" onchange="this.classList.toggle('has-value',!!this.value)">
+                      <span class="time-tz">UTC+1</span>
+                      <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Password -->
+          <div class="setting-row" id="sr-password" onclick="toggleSetting('password')">
+            <div class="sr-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div>
+            <div class="sr-text">
+              <div class="sr-title">Require password</div>
+              <div class="sr-desc">Protect access with a password</div>
+            </div>
+            <label class="toggle-switch" onclick="event.stopPropagation()">
+              <input type="checkbox" id="sw-password" onchange="toggleSettingFromSw('password')">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="sr-expand" id="expand-password">
+            <div class="sr-expand-content">
+              <div class="field-block">
+                <div class="field-label">Password</div>
+                <div class="input-with-icon">
+                  <input type="password" class="form-input" id="pwdInput" placeholder="Enter password">
+                  <button class="input-icon-btn" onclick="togglePwd(event)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Limitations -->
+          <div class="setting-row" id="sr-limits" onclick="toggleSetting('limits')">
+            <div class="sr-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg></div>
+            <div class="sr-text">
+              <div class="sr-title">Set limitations</div>
+              <div class="sr-desc">Control file count and size limits</div>
+            </div>
+            <label class="toggle-switch" onclick="event.stopPropagation()">
+              <input type="checkbox" id="sw-limits" onchange="toggleSettingFromSw('limits')">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="sr-expand" id="expand-limits">
+            <div class="sr-expand-content">
+              <div class="field-grid">
+                <div class="field-block">
+                  <div class="field-label">Max number of uploaded assets</div>
+                  <input type="number" class="form-input" value="100">
+                </div>
+                <div class="field-block">
+                  <div class="field-label">Max size of all uploaded assets</div>
+                  <div class="input-with-suffix"><input type="number" class="form-input" value="5"><span class="input-suffix">GB</span></div>
+                </div>
+              </div>
+              <div style="max-width:calc(50% - 6px);">
+                <div class="field-block">
+                  <div class="field-label">Max size per asset</div>
+                  <div class="input-with-suffix"><input type="number" class="form-input" value="200"><span class="input-suffix">MB</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Notifications -->
+          <div class="setting-row" id="sr-notif" onclick="toggleSetting('notif')">
+            <div class="sr-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 106 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></div>
+            <div class="sr-text">
+              <div class="sr-title">Set notifications</div>
+              <div class="sr-desc">Get alerted on uploads and access</div>
+            </div>
+            <label class="toggle-switch" onclick="event.stopPropagation()">
+              <input type="checkbox" id="sw-notif" onchange="toggleSettingFromSw('notif')">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="sr-expand" id="expand-notif">
+            <div class="sr-expand-content">
+              <div class="section-subtitle">Recipients</div>
+              <div class="recipients-list">
+                <div class="recipient-row"><input type="checkbox" id="notifOwner"><label for="notifOwner">Airbox owner</label></div>
+                <div class="recipient-row"><input type="checkbox" id="notifUsers"><label for="notifUsers">Users</label></div>
+                <div class="recipient-row"><input type="checkbox" id="notifTeams"><label for="notifTeams">Teams</label></div>
+              </div>
+              <div class="section-subtitle" style="margin-top:16px;">Notifications schedule</div>
+              <div class="recipient-row"><input type="checkbox" id="notifDaily" checked><label for="notifDaily">Once a day</label></div>
+            </div>
+          </div>
+
+          <!-- Advanced settings section label -->
+          <div class="settings-header" style="margin-top: 24px; margin-bottom: 4px;">
+            <span class="settings-title">Advanced settings</span>
+          </div>
+
+          <!-- Metadata — drill-down row -->
+          <div class="setting-row meta-row" onclick="openMetadata()">
+            <div class="sr-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/>
+              </svg>
+            </div>
+            <div class="sr-text">
+              <div class="sr-title">Metadata</div>
+              <div class="sr-desc">Choose fields to display for each asset</div>
+            </div>
+            <span class="sr-arrow">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3l5 5-5 5"/></svg>
+            </span>
+          </div>
+        </div>
+
+        <!-- Sub-view: Metadata -->
+        <div class="subview" id="view-metadata">
+          <button class="meta-back-link" onclick="backToSettings()">
+            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M10 3l-5 5 5 5"/></svg>
+            Back to General settings
+          </button>
+
+          <div class="meta-display-row">
+            <label class="toggle-switch" style="margin-left:0;">
+              <input type="checkbox" checked>
+              <span class="toggle-slider"></span>
+            </label>
+            <span class="meta-display-label">Display metadata</span>
+            <div class="meta-select-btns">
+              <button onclick="selectAllChips()">Select all</button>
+              <span class="divider">|</span>
+              <button onclick="deselectAllChips()">Deselect all</button>
+            </div>
+          </div>
+
+          <div class="chip-groups">
+            <div class="chip-group">
+              <div class="chip-group-title">Product fields</div>
+              <div class="chip-row">
+                <button class="meta-chip selected" onclick="toggleChip(this)">ID</button>
+                <button class="meta-chip selected" onclick="toggleChip(this)">text</button>
+                <button class="meta-chip selected" onclick="toggleChip(this)">Type</button>
+                <button class="meta-chip selected" onclick="toggleChip(this)">Color</button>
+                <button class="meta-chip selected" onclick="toggleChip(this)">Details</button>
+                <button class="meta-chip" onclick="toggleChip(this)">Year</button>
+                <button class="meta-chip" onclick="toggleChip(this)">Internal</button>
+                <button class="meta-chip" onclick="toggleChip(this)">Seasons</button>
+              </div>
+            </div>
+            <div class="chip-group">
+              <div class="chip-group-title">DRM</div>
+              <div class="chip-row">
+                <button class="meta-chip selected" onclick="toggleChip(this)">Copyright</button>
+                <button class="meta-chip" onclick="toggleChip(this)">Photographer</button>
+                <button class="meta-chip" onclick="toggleChip(this)">Season</button>
+                <button class="meta-chip" onclick="toggleChip(this)">Culture</button>
+                <button class="meta-chip" onclick="toggleChip(this)">Super tags</button>
+              </div>
+            </div>
+            <div class="chip-group">
+              <div class="chip-group-title">Campaign</div>
+              <div class="chip-row">
+                <button class="meta-chip" onclick="toggleChip(this)">territories</button>
+                <button class="meta-chip" onclick="toggleChip(this)">Countries</button>
+              </div>
+            </div>
+            <div class="chip-group">
+              <div class="chip-group-title">System generated</div>
+              <div class="chip-row">
+                <button class="meta-chip" onclick="toggleChip(this)">asset_expiration</button>
+              </div>
+            </div>
+            <div class="chip-group">
+              <div class="chip-group-title">Icons</div>
+              <div class="chip-row">
+                <button class="meta-chip" onclick="toggleChip(this)">Icon shape</button>
+                <button class="meta-chip" onclick="toggleChip(this)">Icon color type</button>
+              </div>
+            </div>
+            <div class="chip-group">
+              <div class="chip-group-title">Team skills</div>
+              <div class="chip-row">
+                <button class="meta-chip" onclick="toggleChip(this)">Skills</button>
+                <button class="meta-chip" onclick="toggleChip(this)">Department</button>
+                <button class="meta-chip" onclick="toggleChip(this)">Personal link</button>
+                <button class="meta-chip" onclick="toggleChip(this)">Floor</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Footer: Step 1 -->
+    <div class="wizard-footer" id="footer1">
+      <button class="btn btn-ghost" onclick="closeWizard()" style="padding-left: 0;">Cancel</button>
+      <div class="footer-right">
+        <button class="btn btn-primary" onclick="nextStep()">
+          Next
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 3l5 5-5 5"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Footer: Step 2 -->
+    <div class="wizard-footer" id="footer2" style="display:none;">
+      <button class="btn btn-secondary" onclick="goToStep(1)">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M10 3l-5 5 5 5"/></svg>
+        Back
+      </button>
+      <div class="footer-right">
+        <button class="btn btn-ghost" onclick="closeWizard()">Cancel</button>
+        <button class="btn btn-primary" onclick="publish()">Publish Airbox</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</div>
+
+<!-- ============ EDIT PANEL OVERLAY ============ --><div class="ep-overlay" id="epOverlay" onclick="closeEditPanel()"></div>
+
+<!-- ============ EDIT SIDE PANEL ============ -->
+<div class="edit-panel" id="editPanel">
+
+  <!-- Header -->
+  <div class="ep-header">
+    <div class="ep-title-wrap">
+      <div class="ep-hdr-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
+        </svg>
+      </div>
+      <div style="min-width:0;">
+        <div class="ep-title" id="epTitle">Edit Airbox</div>
+        <div class="ep-subtitle" id="epSubtitle"></div>
+        <div class="ep-subtitle-folder" id="epSubtitleFolder"></div>
+      </div>
+    </div>
+    <button class="ep-close" onclick="closeEditPanel()" title="Close">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 3l10 10M13 3L3 13"/></svg>
+    </button>
+  </div>
+
+  <!-- Body -->
+  <div class="ep-body">
+
+    <!-- BASICS -->
+    <div class="ep-section-label">Basics</div>
+
+    <div class="form-group">
+      <label class="form-label">Airbox name</label>
+      <input type="text" class="form-input" id="epNameInput" placeholder="Airbox name">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Target folder</label>
+      <div class="ep-folder-wrap" id="epFolderWrap">
+        <div class="ep-folder-display" onclick="epToggleFolderPopover(event)">
+          <div class="ep-folder-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
+            </svg>
+          </div>
+          <span class="ep-folder-path" id="epFolderPath">—</span>
+          <button class="ep-folder-change" onclick="epToggleFolderPopover(event)">Change</button>
+        </div>
+        <div class="ep-fp-popover" id="epFpPopover" onclick="event.stopPropagation()">
+          <div class="ep-fp-search-wrap">
+            <svg class="ep-fp-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            <input id="epFpSearch" type="text" class="ep-fp-search" placeholder="Search folders...">
+          </div>
+          <div class="ep-fp-tree" id="epFpTree"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Description <span style="color:#bbb;font-weight:400;">(optional)</span></label>
+      <textarea class="form-input" id="epDescInput" placeholder="What is this Airbox for?" rows="3"></textarea>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="ep-section-label" style="margin-top:28px;">Settings</div>
+
+    <!-- Validity -->
+    <div class="ep-setting-row" onclick="epToggleSetting('validity')">
+      <div class="ep-sr-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+      <div class="ep-sr-text"><div class="ep-sr-title">Set validity</div><div class="ep-sr-desc">Schedule when this Airbox is accessible</div></div>
+      <label class="ep-toggle-switch" onclick="event.stopPropagation()">
+        <input type="checkbox" id="ep-sw-validity" onchange="epToggleSettingFromSw('validity')">
+        <span class="ep-toggle-slider"></span>
+      </label>
+    </div>
+    <div class="ep-expand" id="ep-expand-validity">
+      <div class="ep-expand-content">
+        <div class="ep-field-grid">
+          <div>
+            <div class="ep-cb-row"><input type="checkbox" id="epV1StartsAt" checked><label for="epV1StartsAt">Starts at</label></div>
+            <div class="ep-field-block">
+              <div class="input-icon-wrap">
+                <input type="text" class="form-input" placeholder="MM / DD / YYYY" onchange="this.classList.toggle('has-value',!!this.value)">
+                <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>
+              </div>
+            </div>
+            <div class="ep-field-block">
+              <div class="input-icon-wrap">
+                <input type="time" class="form-input" value="00:00" onchange="this.classList.toggle('has-value',!!this.value)">
+                <span class="time-tz">UTC+1</span>
+                <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="ep-cb-row"><input type="checkbox" id="epV1ExpiresAt"><label for="epV1ExpiresAt">Expires at</label></div>
+            <div class="ep-field-block">
+              <div class="input-icon-wrap">
+                <input type="text" class="form-input" placeholder="MM / DD / YYYY" onchange="this.classList.toggle('has-value',!!this.value)">
+                <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>
+              </div>
+            </div>
+            <div class="ep-field-block">
+              <div class="input-icon-wrap">
+                <input type="time" class="form-input" value="00:00" onchange="this.classList.toggle('has-value',!!this.value)">
+                <span class="time-tz">UTC+1</span>
+                <svg class="field-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Password -->
+    <div class="ep-setting-row" onclick="epToggleSetting('password')">
+      <div class="ep-sr-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div>
+      <div class="ep-sr-text"><div class="ep-sr-title">Require password</div><div class="ep-sr-desc">Protect access with a password</div></div>
+      <label class="ep-toggle-switch" onclick="event.stopPropagation()">
+        <input type="checkbox" id="ep-sw-password" onchange="epToggleSettingFromSw('password')">
+        <span class="ep-toggle-slider"></span>
+      </label>
+    </div>
+    <div class="ep-expand" id="ep-expand-password">
+      <div class="ep-expand-content">
+        <div class="ep-field-block">
+          <div class="ep-field-label">Password</div>
+          <div class="ep-input-with-icon">
+            <input type="password" class="form-input" id="epPwdInput" placeholder="Enter password">
+            <button class="ep-input-icon-btn" onclick="epTogglePwd(event)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Limits -->
+    <div class="ep-setting-row" onclick="epToggleSetting('limits')">
+      <div class="ep-sr-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg></div>
+      <div class="ep-sr-text"><div class="ep-sr-title">Set limitations</div><div class="ep-sr-desc">Control file count and size limits</div></div>
+      <label class="ep-toggle-switch" onclick="event.stopPropagation()">
+        <input type="checkbox" id="ep-sw-limits" onchange="epToggleSettingFromSw('limits')">
+        <span class="ep-toggle-slider"></span>
+      </label>
+    </div>
+    <div class="ep-expand" id="ep-expand-limits">
+      <div class="ep-expand-content">
+        <div class="ep-field-grid">
+          <div class="ep-field-block">
+            <div class="ep-field-label">Max number of uploaded assets</div>
+            <input type="number" class="form-input" value="100">
+          </div>
+          <div class="ep-field-block">
+            <div class="ep-field-label">Max size of all uploaded assets</div>
+            <div class="ep-input-with-suffix"><input type="number" class="form-input" value="5"><span class="ep-input-suffix">GB</span></div>
+          </div>
+        </div>
+        <div style="max-width:calc(50% - 5px);">
+          <div class="ep-field-block">
+            <div class="ep-field-label">Max size per asset</div>
+            <div class="ep-input-with-suffix"><input type="number" class="form-input" value="200"><span class="ep-input-suffix">MB</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notifications -->
+    <div class="ep-setting-row" onclick="epToggleSetting('notif')">
+      <div class="ep-sr-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 106 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></div>
+      <div class="ep-sr-text"><div class="ep-sr-title">Set notifications</div><div class="ep-sr-desc">Get alerted on uploads and access</div></div>
+      <label class="ep-toggle-switch" onclick="event.stopPropagation()">
+        <input type="checkbox" id="ep-sw-notif" onchange="epToggleSettingFromSw('notif')">
+        <span class="ep-toggle-slider"></span>
+      </label>
+    </div>
+    <div class="ep-expand" id="ep-expand-notif">
+      <div class="ep-expand-content">
+        <div class="ep-section-sublabel">Recipients</div>
+        <div class="ep-recipient-row"><input type="checkbox" id="epNotifOwner"><label for="epNotifOwner">Airbox owner</label></div>
+        <div class="ep-recipient-row"><input type="checkbox" id="epNotifUsers"><label for="epNotifUsers">Users</label></div>
+        <div class="ep-recipient-row"><input type="checkbox" id="epNotifTeams"><label for="epNotifTeams">Teams</label></div>
+        <div class="ep-section-sublabel" style="margin-top:12px;">Notifications schedule</div>
+        <div class="ep-recipient-row"><input type="checkbox" id="epNotifDaily" checked><label for="epNotifDaily">Once a day</label></div>
+      </div>
+    </div>
+
+    <!-- ADVANCED / METADATA -->
+    <div class="ep-section-label" style="margin-top:28px;">Advanced — Metadata</div>
+
+    <div class="ep-setting-row" style="cursor:default;">
+      <div class="ep-sr-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div>
+      <div class="ep-sr-text"><div class="ep-sr-title">Display metadata</div><div class="ep-sr-desc">Choose fields to display for each asset</div></div>
+      <label class="ep-toggle-switch">
+        <input type="checkbox" id="epMetaDisplay">
+        <span class="ep-toggle-slider"></span>
+      </label>
+    </div>
+    <div id="epMetaFields">
+    <div class="ep-meta-select-btns" style="margin-bottom:12px; justify-content:flex-end;">
+      <button id="epBtnSelectAll" onclick="epSelectAllChips()">Select all</button>
+      <span class="ep-divider">|</span>
+      <button id="epBtnDeselectAll" onclick="epDeselectAllChips()">Deselect all</button>
+    </div>
+
+    <div class="ep-chip-groups">
+      <div>
+        <div class="ep-chip-group-title">Product fields</div>
+        <div class="ep-chip-row">
+          <button class="ep-meta-chip" onclick="epToggleChip(this)">ID</button>
+          <button class="ep-meta-chip" onclick="epToggleChip(this)">text</button>
+          <button class="ep-meta-chip" onclick="epToggleChip(this)">Type</button>
+          <button class="ep-meta-chip" onclick="epToggleChip(this)">Color</button>
+          <button class="ep-meta-chip" onclick="epToggleChip(this)">Details</button>
+          <button class="ep-meta-chip" onclick="epToggleChip(this)">Year</button>
+          <button class="ep-meta-chip" onclick="epToggleChip(this)">Internal</button>
+          <button class="ep-meta-chip" onclick="epToggleChip(this)">Seasons</button>
+        </div>
+      </div>
+      <div>
+        <div class="ep-chip-group-title">DRM</div>
+        <div class="ep-chip-row">
+          <button class="ep-meta-chip" onclick="epToggleChip(this)">Copyright</button>
+          <button class="ep-meta-chip" onclick="epToggleChip(this)">Photographer</button>
+          <button class="ep-meta-chip" onclick="epToggleChip(this)">Season</button>
+          <button class="ep-meta-chip" onclick="epToggleChip(this)">Culture</button>
+          <button class="ep-meta-chip" onclick="epToggleChip(this)">Super tags</button>
+        </div>
+      </div>
+      <div>
+        <div class="ep-chip-group-title">Campaign</div>
+        <div class="ep-chip-row">
+          <button class="ep-meta-chip" onclick="epToggleChip(this)">territories</button>
+          <button class="ep-meta-chip" onclick="epToggleChip(this)">Countries</button>
+        </div>
+      </div>
+      <div>
+        <div class="ep-chip-group-title">System generated</div>
+        <div class="ep-chip-row">
+          <button class="ep-meta-chip" onclick="epToggleChip(this)">asset_expiration</button>
+        </div>
+      </div>
+      <div>
+        <div class="ep-chip-group-title">Icons</div>
+        <div class="ep-chip-row">
+          <button class="ep-meta-chip" onclick="epToggleChip(this)">Icon shape</button>
+          <button class="ep-meta-chip" onclick="epToggleChip(this)">Icon color type</button>
+        </div>
+      </div>
+      <div>
+        <div class="ep-chip-group-title">Team skills</div>
+        <div class="ep-chip-row">
+          <button class="ep-meta-chip" onclick="epToggleChip(this)">Skills</button>
+          <button class="ep-meta-chip" onclick="epToggleChip(this)">Department</button>
+          <button class="ep-meta-chip" onclick="epToggleChip(this)">Personal link</button>
+          <button class="ep-meta-chip" onclick="epToggleChip(this)">Floor</button>
+        </div>
+      </div>
+    </div>
+    </div><!-- /epMetaFields -->
+
+    <div style="height:32px;"></div>
+  </div>
+
+  <!-- Footer -->
+  <div class="ep-footer">
+    <button class="ep-btn ep-btn-ghost" onclick="closeEditPanel()">Cancel</button>
+    <button class="ep-btn-primary ep-save" onclick="saveEdit()">Save changes</button>
+  </div>
+
+</div>
+
+<script>
+  /* ============ SELECTION JS ============ */
+  function updateBulkBar() {
+    var cards = document.querySelectorAll('.g-card.selected').length;
+    var rows = document.querySelectorAll('#tableView tr.row-selected').length;
+    var total = cards + rows;
+    var bar = document.getElementById('bulkBar');
+    var count = document.getElementById('bulkCount');
+    var title = document.getElementById('pageTitle');
+    var visible = total > 0;
+    bar.classList.toggle('visible', visible);
+    title.style.display = visible ? 'none' : '';
+    count.textContent = total + ' selected';
+  }
+
+  function toggleCardSelect(cb) {
+    var card = cb.closest('.g-card');
+    card.classList.toggle('selected', cb.checked);
+    updateBulkBar();
+  }
+
+  function toggleRowSelect(cb) {
+    var row = cb.closest('tr');
+    row.classList.toggle('row-selected', cb.checked);
+    // update select-all state
+    var all = document.querySelectorAll('#tableView tbody .t-cb input');
+    var checked = document.querySelectorAll('#tableView tbody .t-cb input:checked');
+    var selAll = document.getElementById('selectAllCb');
+    if (selAll) selAll.indeterminate = checked.length > 0 && checked.length < all.length;
+    if (selAll) selAll.checked = checked.length === all.length && all.length > 0;
+    updateBulkBar();
+  }
+
+  function toggleSelectAll(cb) {
+    document.querySelectorAll('#tableView tbody .t-cb input').forEach(function(inp) {
+      inp.checked = cb.checked;
+      inp.closest('tr').classList.toggle('row-selected', cb.checked);
+    });
+    updateBulkBar();
+  }
+
+  function clearSelection() {
+    document.querySelectorAll('.g-card.selected').forEach(function(c) {
+      c.classList.remove('selected');
+      var cb = c.querySelector('.icon-cb input');
+      if (cb) cb.checked = false;
+    });
+    document.querySelectorAll('#tableView tr.row-selected').forEach(function(r) {
+      r.classList.remove('row-selected');
+      var cb = r.querySelector('.t-cb input');
+      if (cb) cb.checked = false;
+    });
+    var selAll = document.getElementById('selectAllCb');
+    if (selAll) { selAll.checked = false; selAll.indeterminate = false; }
+    updateBulkBar();
+  }
+
+  function selectAllItems() {
+    document.querySelectorAll('.g-card').forEach(function(c) {
+      if (c.style.display === 'none') return;
+      c.classList.add('selected');
+      var cb = c.querySelector('.icon-cb input');
+      if (cb) cb.checked = true;
+    });
+    document.querySelectorAll('#tableView tbody tr').forEach(function(r) {
+      if (r.style.display === 'none') return;
+      r.classList.add('row-selected');
+      var cb = r.querySelector('.t-cb input');
+      if (cb) cb.checked = true;
+    });
+    var selAll = document.getElementById('selectAllCb');
+    if (selAll) selAll.checked = true;
+    updateBulkBar();
+  }
+
+  function bulkDelete() {
+    var n = document.querySelectorAll('.g-card.selected').length + document.querySelectorAll('#tableView tr.row-selected').length;
+    alert('Delete ' + n + ' item(s)? (demo)');
+    clearSelection();
+  }
+
+  /* ============ LIST JS ============ */
+// View toggle
+  function switchView(view) {
+    document.getElementById('gridView').classList.toggle('hidden', view !== 'grid');
+    document.getElementById('tableView').classList.toggle('hidden', view !== 'table');
+    document.getElementById('gridBtn').classList.toggle('active', view === 'grid');
+    document.getElementById('tableBtn').classList.toggle('active', view === 'table');
+  }
+
+  // Stat + user filters
+  let currentFilter = 'all';
+  const activeUsers = new Set();
+
+  function applyFilters() {
+    const query = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+    document.querySelectorAll('[data-status]').forEach(el => {
+      const statusOk = currentFilter === 'all' || (el.dataset.status || '').includes(currentFilter);
+      const userOk = activeUsers.size === 0 || activeUsers.has(el.dataset.author);
+      const nameEl = el.querySelector('.g-name') || el.querySelector('.t-name');
+      const name = nameEl ? nameEl.textContent.toLowerCase() : '';
+      const searchOk = !query || name.includes(query);
+      el.style.display = (statusOk && userOk && searchOk) ? '' : 'none';
+    });
+  }
+
+  function filterBy(card, filter) {
+    if (currentFilter === filter && filter !== 'all') filter = 'all';
+    currentFilter = filter;
+    document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('filter-active'));
+    if (filter === 'all') {
+      document.querySelector('.stat-card').classList.add('filter-active');
+    } else {
+      card.classList.add('filter-active');
+    }
+    applyFilters();
+  }
+
+  function toggleUserPopover() {
+    var pop = document.getElementById('userPopover');
+    var btn = document.getElementById('userFilterBtn');
+    var isOpen = pop.classList.contains('open');
+    document.querySelectorAll('.col-popover').forEach(p => p.classList.remove('open'));
+    document.querySelectorAll('.btn-columns').forEach(b => b.classList.remove('open'));
+    if (!isOpen) { pop.classList.add('open'); btn.classList.add('open'); }
+  }
+
+  function toggleUserFilter(user, row) {
+    if (activeUsers.has(user)) {
+      activeUsers.delete(user);
+      row.classList.remove('selected');
+    } else {
+      activeUsers.add(user);
+      row.classList.add('selected');
+    }
+    var btn = document.getElementById('userFilterBtn');
+    var badge = btn.querySelector('.filter-badge');
+    if (activeUsers.size > 0) {
+      btn.classList.add('has-filter');
+      if (!badge) { badge = document.createElement('span'); badge.className = 'filter-badge'; btn.insertBefore(badge, btn.querySelector('.chev')); }
+      badge.textContent = activeUsers.size;
+    } else {
+      btn.classList.remove('has-filter');
+      if (badge) badge.remove();
+    }
+    applyFilters();
+  }
+
+  function clearUserFilter() {
+    activeUsers.clear();
+    document.querySelectorAll('#userPopList .user-pop-row').forEach(r => r.classList.remove('selected'));
+    var btn = document.getElementById('userFilterBtn');
+    btn.classList.remove('has-filter');
+    var badge = btn.querySelector('.filter-badge');
+    if (badge) badge.remove();
+    applyFilters();
+  }
+
+  // Copy link
+  function copyLink(btn) {
+    navigator.clipboard.writeText('https://airbox.scaleflex.com/s/abc123');
+    btn.classList.add('copied');
+    const orig = btn.innerHTML;
+    btn.innerHTML = `<svg><use href="#ico-checkmark"/></svg>`;
+    setTimeout(() => { btn.classList.remove('copied'); btn.innerHTML = orig; }, 1800);
+  }
+
+  // Go to folder
+  function goToFolder(el, e) {
+    e.stopPropagation();
+    const path = el.textContent.trim();
+    alert('Navigate to folder: ' + path);
+    // In real app: window.location.href = '/files' + path;
+  }
+
+  // Make all folder elements clickable
+  document.querySelectorAll('.g-folder, .t-folder').forEach(el => {
+    el.setAttribute('title', 'Open folder');
+    el.addEventListener('click', function(e) { goToFolder(this, e); });
+  });
+
+  // Global floating menu for grid cards (overflow:hidden cards clip inline popovers)
+  const _floatMenu = document.createElement('div');
+  _floatMenu.className = 'dots-popover';
+  _floatMenu.style.cssText = 'position:fixed;z-index:9999';
+  _floatMenu.innerHTML = `<button onclick="event.stopPropagation();editAirbox(this)"><svg><use href="#ico-edit"/></svg>Edit</button><div class="pop-divider"></div><button class="delete" onclick="event.stopPropagation();deleteAirbox(this)"><svg><use href="#ico-trash"/></svg>Delete</button>`;
+  document.body.appendChild(_floatMenu);
+  let _floatBtn = null;
+
+  // Columns popover
+  function toggleColsPopover() {
+    var pop = document.getElementById('colsPopover');
+    var btn = document.getElementById('colsBtn');
+    var isOpen = pop.classList.contains('open');
+    // close user popover first
+    document.getElementById('userPopover').classList.remove('open');
+    document.getElementById('userFilterBtn').classList.remove('open');
+    pop.classList.toggle('open', !isOpen);
+    btn.classList.toggle('open', !isOpen);
+  }
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.col-btn-wrap')) {
+      document.querySelectorAll('.col-popover').forEach(p => p.classList.remove('open'));
+      document.querySelectorAll('.btn-columns').forEach(b => { b.classList.remove('open'); });
+    }
+  });
+  function applyColVisibility(col, show) {
+    var th = document.querySelector('th[data-col="' + col + '"]');
+    if (!th) return;
+    th.style.display = show ? '' : 'none';
+    var idx = Array.from(th.parentElement.children).indexOf(th);
+    document.querySelectorAll('#tableView tbody tr').forEach(function(row) {
+      if (row.children[idx]) row.children[idx].style.display = show ? '' : 'none';
+    });
+  }
+  function updateColsBadge() {
+    // No visual changes to the Columns button — it always stays in default state
+  }
+  function toggleColRow(row) {
+    var col = row.dataset.col;
+    var show = !row.classList.contains('selected');
+    row.classList.toggle('selected', show);
+    applyColVisibility(col, show);
+    updateColsBadge();
+  }
+  function resetCols() {
+    var defaults = ['description','folder','status','files','updatedAt','createdBy'];
+    document.querySelectorAll('#colsPopList .col-pop-row[data-col]').forEach(function(row) {
+      var col = row.dataset.col;
+      var on = defaults.includes(col);
+      row.classList.toggle('selected', on);
+      applyColVisibility(col, on);
+    });
+    updateColsBadge();
+  }
+  // Hide new cols on load
+  ['createdAt','validity'].forEach(function(col) {
+    applyColVisibility(col, false);
+  });
+
+  // Toggle dots popover
+  function toggleDots(btn) {
+    const nextPop = btn.nextElementSibling;
+    if (nextPop && nextPop.classList.contains('dots-popover')) {
+      // Table row: use fixed-position popover to avoid overflow clipping
+      const wasOpen = nextPop.classList.contains('open');
+      closeAllPopovers();
+      if (!wasOpen) {
+        const r = btn.getBoundingClientRect();
+        const spaceBelow = window.innerHeight - r.bottom;
+        nextPop.style.position = 'fixed';
+        nextPop.style.right = (window.innerWidth - r.right) + 'px';
+        nextPop.style.left = 'auto';
+        if (spaceBelow < 120) {
+          nextPop.style.top = 'auto';
+          nextPop.style.bottom = (window.innerHeight - r.top + 6) + 'px';
+        } else {
+          nextPop.style.top = (r.bottom + 6) + 'px';
+          nextPop.style.bottom = 'auto';
+        }
+        nextPop.classList.add('open');
+      }
+    } else {
+      // Grid card: use global fixed-position menu
+      const wasOpen = _floatBtn === btn && _floatMenu.classList.contains('open');
+      closeAllPopovers();
+      if (!wasOpen) {
+        const r = btn.getBoundingClientRect();
+        const spaceBelow = window.innerHeight - r.bottom;
+        if (spaceBelow < 120) {
+          _floatMenu.style.top = 'auto';
+          _floatMenu.style.bottom = (window.innerHeight - r.top + 6) + 'px';
+        } else {
+          _floatMenu.style.top = (r.bottom + 6) + 'px';
+          _floatMenu.style.bottom = 'auto';
+        }
+        _floatMenu.style.right = (window.innerWidth - r.right) + 'px';
+        _floatMenu.style.left = 'auto';
+        _floatMenu.classList.add('open');
+        _floatBtn = btn;
+      }
+    }
+  }
+
+  function closeAllPopovers() {
+    document.querySelectorAll('.dots-popover.open').forEach(p => p.classList.remove('open'));
+    _floatMenu.classList.remove('open');
+    _floatBtn = null;
+  }
+
+  document.addEventListener('click', closeAllPopovers);
+
+  // Edit / Delete actions
+  function editAirbox(btn) {
+    var card = btn.closest('.g-card') || btn.closest('tr');
+    // Floating menu is detached from DOM — use stored _floatBtn reference before closeAllPopovers resets it
+    if (!card && _floatBtn) card = _floatBtn.closest('.g-card') || _floatBtn.closest('tr');
+    closeAllPopovers();
+    var name = '';
+    var folder = '';
+    if (card) {
+      var nameEl = card.querySelector('.g-name') || card.querySelector('.t-name');
+      var folderEl = card.querySelector('.g-folder');
+      if (nameEl) name = nameEl.textContent.trim();
+      if (folderEl) folder = folderEl.textContent.trim();
+    }
+    document.getElementById('epTitle').textContent = 'Edit Airbox';
+    document.getElementById('epSubtitle').textContent = name || 'Untitled';
+    document.getElementById('epSubtitleFolder').textContent = folder || '';
+    document.getElementById('epNameInput').value = name;
+    document.getElementById('epFolderPath').textContent = folder || '—';
+    document.getElementById('epOverlay').classList.add('open');
+    document.getElementById('editPanel').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function deleteAirbox(btn) {
+    closeAllPopovers();
+    alert('Delete airbox');
+  }
+
+  function epToggleDotsMenu(e) {
+    e.stopPropagation();
+    document.getElementById('epDotsMenu').classList.toggle('open');
+  }
+
+  document.addEventListener('click', function() {
+    var m = document.getElementById('epDotsMenu');
+    if (m) m.classList.remove('open');
+  });
+
+  function deleteAirboxFromPanel() {
+    document.getElementById('epDotsMenu').classList.remove('open');
+    closeEditPanel();
+    alert('Delete Airbox');
+  }
+
+  // Email link
+  function emailLink() {
+    window.location.href = 'mailto:?subject=Airbox%20Link&body=https://airbox.scaleflex.com/s/abc123';
+  }
+
+  function closeEditPanel() {
+    document.getElementById('epOverlay').classList.remove('open');
+    document.getElementById('editPanel').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function saveEdit() {
+    closeEditPanel();
+  }
+
+  function epToggleSetting(key) {
+    var sw = document.getElementById('ep-sw-' + key);
+    sw.checked = !sw.checked;
+    epApplyToggle(key, sw.checked);
+  }
+
+  function epToggleSettingFromSw(key) {
+    epApplyToggle(key, document.getElementById('ep-sw-' + key).checked);
+  }
+
+  function epApplyToggle(key, isOpen) {
+    document.getElementById('ep-expand-' + key).classList.toggle('open', isOpen);
+  }
+
+  function epTogglePwd(e) {
+    e.preventDefault(); e.stopPropagation();
+    var inp = document.getElementById('epPwdInput');
+    var btn = e.currentTarget;
+    if (inp.type === 'password') {
+      inp.type = 'text';
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+    } else {
+      inp.type = 'password';
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+    }
+  }
+
+  function epUpdateMetaVisibility() {
+    var on = document.getElementById('epMetaDisplay').checked;
+    document.getElementById('epMetaFields').style.display = on ? '' : 'none';
+  }
+
+  document.getElementById('epMetaDisplay').addEventListener('change', epUpdateMetaVisibility);
+  epUpdateMetaVisibility();
+
+  function epToggleChip(chip) {
+    chip.classList.toggle('selected');
+  }
+
+  function epSelectAllChips() {
+    document.querySelectorAll('#editPanel .ep-meta-chip').forEach(function(c) { c.classList.add('selected'); });
+  }
+
+  function epDeselectAllChips() {
+    document.querySelectorAll('#editPanel .ep-meta-chip').forEach(function(c) { c.classList.remove('selected'); });
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      document.getElementById('epFpPopover').classList.remove('open');
+      closeEditPanel();
+    }
+  });
+
+  /* ---- Edit Panel Folder Picker ---- */
+  var epFolderData = [
+    {name:'Assets', children:[
+      {name:'Marketing', children:[{name:'Q1 2025'},{name:'Q2 2025'},{name:'Campaigns'}]},
+      {name:'Product', children:[{name:'Images'},{name:'Videos'},{name:'Packshots'}]},
+      {name:'Brand guidelines'}
+    ]},
+    {name:'Archive', children:[{name:'2024'},{name:'2023'}]},
+    {name:'Projects', children:[{name:'Spring collection'},{name:'Summer lookbook'},{name:'Templates'}]},
+    {name:'Shared', children:[{name:'External'},{name:'Partners'}]}
+  ];
+
+  function epRenderFolderTree(nodes, parentPath) {
+    var html = '';
+    var f = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>';
+    var c = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4l4 4-4 4"/></svg>';
+    nodes.forEach(function(node) {
+      var path = parentPath ? parentPath + ' / ' + node.name : node.name;
+      var hasKids = node.children && node.children.length;
+      var p = path.replace(/'/g, "\\'");
+      html += '<div>';
+      html += '<div class="ep-fp-row" onclick="epFpSelect(event,this,\'' + p + '\')">';
+      html += hasKids ? '<span class="ep-fp-toggle" onclick="epFpToggle(event,this)">' + c + '</span>' : '<span class="ep-fp-toggle leaf"></span>';
+      html += '<span class="ep-fp-fi">' + f + '</span>';
+      html += '<span class="ep-fp-name">' + node.name + '</span>';
+      html += '</div>';
+      if (hasKids) html += '<div class="ep-fp-children">' + epRenderFolderTree(node.children, path) + '</div>';
+      html += '</div>';
+    });
+    return html;
+  }
+
+  document.getElementById('epFpTree').innerHTML = epRenderFolderTree(epFolderData, '');
+
+  function epToggleFolderPopover(e) {
+    e.stopPropagation();
+    var pop = document.getElementById('epFpPopover');
+    var isOpen = pop.classList.contains('open');
+    pop.classList.toggle('open');
+    if (!isOpen) setTimeout(function() { document.getElementById('epFpSearch').focus(); }, 30);
+  }
+
+  document.addEventListener('click', function(e) {
+    var wrap = document.getElementById('epFolderWrap');
+    if (wrap && !wrap.contains(e.target)) {
+      document.getElementById('epFpPopover').classList.remove('open');
+    }
+  });
+
+  function epFpToggle(e, btn) {
+    e.stopPropagation();
+    btn.classList.toggle('open');
+    var children = btn.closest('.ep-fp-row').nextElementSibling;
+    if (children) children.classList.toggle('open');
+  }
+
+  function epFpSelect(e, row, path) {
+    e.stopPropagation();
+    document.querySelectorAll('#epFpPopover .ep-fp-row').forEach(function(r) { r.classList.remove('ep-fp-selected'); });
+    row.classList.add('ep-fp-selected');
+    document.getElementById('epFolderPath').textContent = path;
+    setTimeout(function() { document.getElementById('epFpPopover').classList.remove('open'); }, 120);
+  }
+
+  document.getElementById('epFpSearch').addEventListener('input', function() {
+    var q = this.value.toLowerCase().trim();
+    document.querySelectorAll('#epFpTree .ep-fp-name').forEach(function(el) {
+      var node = el.closest('.ep-fp-row').parentElement;
+      var match = el.textContent.toLowerCase().includes(q);
+      node.style.display = (!q || match) ? '' : 'none';
+      if (q && match) {
+        var parent = node.parentElement.closest('.ep-fp-children');
+        while (parent) { parent.classList.add('open'); parent = parent.parentElement.closest('.ep-fp-children'); }
+      }
+    });
+  });
+
+  /* ============ WIZARD JS ============ */
+let currentStep = 1;
+
+  function goToStep(step) {
+    document.getElementById('panel1').classList.remove('active');
+    document.getElementById('panel2').classList.remove('active');
+    document.getElementById('footer1').style.display = 'none';
+    document.getElementById('footer2').style.display = 'none';
+
+    var heading = document.getElementById('pageHeading');
+    var sub     = document.getElementById('pageSubheading');
+
+    if (step === 1) {
+      document.getElementById('panel1').classList.add('active');
+      document.getElementById('footer1').style.display = 'flex';
+      heading.textContent = 'New Airbox: Basics';
+      sub.textContent = 'Set up your Airbox name and target folder.';
+    } else {
+      document.getElementById('panel2').classList.add('active');
+      document.getElementById('footer2').style.display = 'flex';
+      heading.textContent = 'New Airbox: Settings';
+      sub.textContent = 'Configure optional settings for your Airbox.';
+      // always return to settings view when navigating to step 2
+      document.getElementById('view-metadata').classList.remove('active', 'slide-back');
+      document.getElementById('view-settings').classList.add('active');
+    }
+
+    currentStep = step;
+    updateStepper();
+  }
+
+  function updateStepper() {
+    document.getElementById('step1-el').className = currentStep === 1 ? 'step active' : 'step done';
+    document.getElementById('step2-el').className = currentStep === 2 ? 'step active' : 'step';
+    document.getElementById('step-line-1').className = currentStep >= 2 ? 'step-line done' : 'step-line';
+  }
+
+  function openMetadata() {
+    var vs = document.getElementById('view-settings');
+    var vm = document.getElementById('view-metadata');
+    vs.classList.remove('active');
+    vm.classList.remove('slide-back');
+    vm.classList.add('active');
+    document.getElementById('pageHeading').textContent = 'New Airbox: Metadata';
+    document.getElementById('pageSubheading').textContent = 'Choose which metadata fields to display for each asset.';
+  }
+
+  function backToSettings() {
+    var vs = document.getElementById('view-settings');
+    var vm = document.getElementById('view-metadata');
+    vm.classList.remove('active');
+    vs.classList.add('active', 'slide-back');
+    document.getElementById('pageHeading').textContent = 'New Airbox: Settings';
+    document.getElementById('pageSubheading').textContent = 'Configure optional settings for your Airbox.';
+  }
+
+  function showDescription() {
+    document.getElementById('descToggle').style.display = 'none';
+    document.getElementById('descWrapper').classList.add('visible');
+    document.getElementById('descWrapper').querySelector('textarea').focus();
+  }
+
+  function toggleSetting(key) {
+    var sw = document.getElementById('sw-' + key);
+    sw.checked = !sw.checked;
+    applyToggle(key, sw.checked);
+  }
+
+  function toggleSettingFromSw(key) {
+    applyToggle(key, document.getElementById('sw-' + key).checked);
+  }
+
+  function applyToggle(key, isOpen) {
+    document.getElementById('sr-' + key).classList.toggle('open', isOpen);
+    document.getElementById('expand-' + key).classList.toggle('open', isOpen);
+  }
+
+  function clearAll() {
+    ['validity', 'password', 'limits', 'notif'].forEach(function(key) {
+      document.getElementById('sw-' + key).checked = false;
+      applyToggle(key, false);
+    });
+  }
+
+  function togglePwd(e) {
+    e.preventDefault(); e.stopPropagation();
+    var inp = document.getElementById('pwdInput');
+    var btn = e.currentTarget;
+    if (inp.type === 'password') {
+      inp.type = 'text';
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+    } else {
+      inp.type = 'password';
+      btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+    }
+  }
+
+  function selectAllChips() {
+    document.querySelectorAll('.meta-chip').forEach(function(c) { c.classList.add('selected'); });
+  }
+
+  function deselectAllChips() {
+    document.querySelectorAll('.meta-chip').forEach(function(c) { c.classList.remove('selected'); });
+  }
+
+  function toggleChip(chip) { chip.classList.toggle('selected'); }
+
+  function publish()     { alert('Airbox published! (demo)'); }
+  function closeWizard() { alert('Wizard closed (demo)'); }
+
+  /* ---- Folder Popover ---- */
+  var folderData = [
+    {name:'Assets', children:[
+      {name:'Marketing', children:[{name:'Q1 2025'},{name:'Q2 2025'},{name:'Campaigns'}]},
+      {name:'Product', children:[{name:'Images'},{name:'Videos'},{name:'Packshots'}]},
+      {name:'Brand guidelines'}
+    ]},
+    {name:'Archive', children:[{name:'2024'},{name:'2023'}]},
+    {name:'Projects', children:[{name:'Spring collection'},{name:'Summer lookbook'},{name:'Templates'}]},
+    {name:'Shared', children:[{name:'External'},{name:'Partners'}]}
+  ];
+
+  function renderFolderTree(nodes, parentPath) {
+    var html = '';
+    var f = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>';
+    var c = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4l4 4-4 4"/></svg>';
+    nodes.forEach(function(node) {
+      var path = parentPath ? parentPath + ' / ' + node.name : node.name;
+      var hasKids = node.children && node.children.length;
+      var p = path.replace(/'/g, "\\'");
+      html += '<div>';
+      html += '<div class="fp-row" onclick="fpSelect(event,this,\'' + p + '\')">';
+      html += hasKids ? '<span class="fp-toggle" onclick="fpToggle(event,this)">' + c + '</span>' : '<span class="fp-toggle leaf"></span>';
+      html += '<span class="fp-fi">' + f + '</span>';
+      html += '<span class="fp-name">' + node.name + '</span>';
+      html += '</div>';
+      if (hasKids) html += '<div class="fp-children">' + renderFolderTree(node.children, path) + '</div>';
+      html += '</div>';
+    });
+    return html;
+  }
+
+  document.getElementById('fpTree').innerHTML = renderFolderTree(folderData, '');
+
+  function toggleFolderPopover(e) {
+    e.stopPropagation();
+    var pop = document.getElementById('folderPopover');
+    var isOpen = pop.classList.contains('open');
+    if (!isOpen) {
+      var wrap = document.querySelector('.folder-picker-wrap');
+      var rect = wrap.getBoundingClientRect();
+      pop.style.top   = (rect.bottom + 8) + 'px';
+      pop.style.left  = rect.left + 'px';
+      pop.style.width = rect.width + 'px';
+    }
+    pop.classList.toggle('open');
+    if (!isOpen) setTimeout(function() { document.getElementById('fpSearch').focus(); }, 30);
+  }
+
+  document.addEventListener('click', function(e) {
+    var wrap = document.querySelector('.folder-picker-wrap');
+    if (wrap && !wrap.contains(e.target)) {
+      document.getElementById('folderPopover').classList.remove('open');
+    }
+  });
+
+  function fpToggle(e, btn) {
+    e.stopPropagation();
+    btn.classList.toggle('open');
+    var children = btn.closest('.fp-row').nextElementSibling;
+    if (children) children.classList.toggle('open');
+  }
+
+  function fpSelect(e, row, path) {
+    e.stopPropagation();
+    document.querySelectorAll('#folderPopover .fp-row').forEach(function(r) { r.classList.remove('fp-selected'); });
+    row.classList.add('fp-selected');
+    document.querySelector('.folder-path').textContent = path;
+    document.querySelector('.folder-hint').textContent = 'Target folder selected';
+    setTimeout(function() { document.getElementById('folderPopover').classList.remove('open'); }, 120);
+  }
+
+  document.getElementById('fpSearch').addEventListener('input', function() {
+    var q = this.value.toLowerCase().trim();
+    document.querySelectorAll('#fpTree .fp-name').forEach(function(el) {
+      var node = el.closest('.fp-row').parentElement;
+      var match = el.textContent.toLowerCase().includes(q);
+      node.style.display = (!q || match) ? '' : 'none';
+      if (q && match) {
+        var parent = node.parentElement.closest('.fp-children');
+        while (parent) { parent.classList.add('open'); parent = parent.parentElement.closest('.fp-children'); }
+      }
+    });
+  });
+
+  /* ============ NAVIGATION ============ */
+  function openCreateWizard() {
+    document.getElementById('listPage').style.display = 'none';
+    document.getElementById('createPage').style.display = 'block';
+    // Reset form
+    document.getElementById('wizNameInput').value = '';
+    document.querySelector('.folder-path').textContent = 'Select a folder';
+    document.querySelector('.folder-hint').textContent = 'Where uploaded files will be stored';
+    folderSelected = false;
+    goToStep(1);
+    document.getElementById('view-settings').classList.add('active');
+    document.getElementById('view-metadata').classList.remove('active');
+  }
+
+  function closeCreateWizard() {
+    document.getElementById('createPage').style.display = 'none';
+    document.getElementById('listPage').style.display = '';
+  }
+
+  // Override wizard close/publish to return to list
+  function closeWizard() { closeCreateWizard(); }
+  function publish() { closeCreateWizard(); }
+
+  /* ============ STEP 1 VALIDATION ============ */
+  var folderSelected = false;
+
+  function clearFieldError(el) {
+    el.classList.remove('input-error');
+    var msg = el.parentElement.querySelector('.field-error-msg');
+    if (!msg) msg = el.closest('.form-group').querySelector('.field-error-msg');
+    if (msg) msg.remove();
+  }
+
+  function showFieldError(el, message) {
+    el.classList.add('input-error');
+    if (!el.parentElement.querySelector('.field-error-msg') && !el.closest('.form-group').querySelector('.field-error-msg')) {
+      var msg = document.createElement('div');
+      msg.className = 'field-error-msg';
+      msg.textContent = message;
+      el.parentElement.appendChild(msg);
+    }
+  }
+
+  function validateStep1() {
+    var nameInput = document.getElementById('wizNameInput');
+    var folderPicker = document.querySelector('#wizFolderGroup .folder-picker');
+    var valid = true;
+
+    // Clear previous errors
+    clearFieldError(nameInput);
+    clearFieldError(folderPicker);
+
+    if (!nameInput.value.trim()) {
+      showFieldError(nameInput, 'Airbox name is required');
+      valid = false;
+    }
+
+    if (!folderSelected) {
+      showFieldError(folderPicker, 'Please select a target folder');
+      valid = false;
+    }
+
+    return valid;
+  }
+
+  // Clear error on input
+  document.getElementById('wizNameInput').addEventListener('input', function() {
+    if (this.value.trim()) clearFieldError(this);
+  });
+
+  function nextStep() {
+    if (validateStep1()) goToStep(2);
+  }
+
+  // Patch fpSelect to track folder selection
+  var _origFpSelect = fpSelect;
+  fpSelect = function(e, row, path) {
+    folderSelected = true;
+    var folderPicker = document.querySelector('#wizFolderGroup .folder-picker');
+    if (folderPicker) clearFieldError(folderPicker);
+    _origFpSelect(e, row, path);
+  };
+
+  /* ============ SORT BY UPDATED AT (DESC) ============ */
+  (function sortByUpdated() {
+    // Sort grid cards
+    var grid = document.getElementById('gridView');
+    var cards = Array.from(grid.querySelectorAll('.g-card'));
+    cards.sort(function(a, b) { return (b.dataset.updated || '').localeCompare(a.dataset.updated || ''); });
+    cards.forEach(function(c) { grid.appendChild(c); });
+
+    // Sort table rows
+    var tbody = document.querySelector('#tableView tbody');
+    var rows = Array.from(tbody.querySelectorAll('tr'));
+    rows.sort(function(a, b) { return (b.dataset.updated || '').localeCompare(a.dataset.updated || ''); });
+    rows.forEach(function(r) { tbody.appendChild(r); });
+  })();
+</script>
+
+</body>
+</html>

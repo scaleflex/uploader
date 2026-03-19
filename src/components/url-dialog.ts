@@ -18,7 +18,7 @@ export class SfxUrlDialog extends LitElement {
       position: fixed;
       inset: 0;
       z-index: 1000;
-      background: rgba(0, 0, 0, 0.4);
+      background: oklch(0 0 0 / 0.4);
       backdrop-filter: blur(6px);
       display: flex;
       align-items: center;
@@ -30,7 +30,7 @@ export class SfxUrlDialog extends LitElement {
     .card {
       background: var(--sfx-up-bg, #fff);
       border-radius: 20px;
-      box-shadow: 0 28px 80px rgba(0, 0, 0, 0.18), 0 4px 16px rgba(0, 0, 0, 0.06);
+      box-shadow: 0 28px 80px var(--sfx-up-shadow, rgba(0, 0, 0, 0.18)), 0 4px 16px oklch(0 0 0 / 0.06);
       width: 100%;
       max-width: 480px;
       overflow: hidden;
@@ -80,8 +80,8 @@ export class SfxUrlDialog extends LitElement {
       height: 28px;
       border-radius: 8px;
       border: none;
-      background: #f0f0f0;
-      color: #888;
+      background: var(--sfx-up-border-light, #f0f0f0);
+      color: var(--sfx-up-text-muted, #888);
       font-size: 14px;
       cursor: pointer;
       display: flex;
@@ -93,8 +93,8 @@ export class SfxUrlDialog extends LitElement {
     }
 
     .close-btn:hover {
-      background: #e4e4e4;
-      color: #333;
+      background: var(--sfx-up-border, #e4e4e4);
+      color: var(--sfx-up-text, #333);
     }
 
     .body {
@@ -109,14 +109,14 @@ export class SfxUrlDialog extends LitElement {
       display: block;
       font-size: 11px;
       font-weight: 600;
-      color: #aaa;
+      color: var(--sfx-up-text-muted, #aaa);
       margin-bottom: 5px;
       text-transform: uppercase;
       letter-spacing: 0.7px;
     }
 
     label .optional {
-      color: #ccc;
+      color: var(--sfx-up-border, #ccc);
       font-weight: 400;
       text-transform: none;
       letter-spacing: 0;
@@ -125,13 +125,13 @@ export class SfxUrlDialog extends LitElement {
     input {
       width: 100%;
       height: 42px;
-      border: 1.5px solid #ebebeb;
+      border: 1.5px solid var(--sfx-up-border, #ebebeb);
       border-radius: 10px;
       padding: 0 14px;
       font-size: 14px;
       font-family: inherit;
-      color: #1a1a1a;
-      background: #fafafa;
+      color: var(--sfx-up-text, #1a1a1a);
+      background: var(--sfx-up-border-light, #fafafa);
       transition: border-color 0.15s, background 0.15s;
       outline: none;
       box-sizing: border-box;
@@ -139,16 +139,16 @@ export class SfxUrlDialog extends LitElement {
 
     input:focus {
       border-color: var(--sfx-up-primary, #2563eb);
-      background: #fff;
+      background: var(--sfx-up-bg, #fff);
     }
 
     input::placeholder {
-      color: #ccc;
+      color: var(--sfx-up-text-muted, #ccc);
     }
 
     .error {
       font-size: 12px;
-      color: #dc2626;
+      color: var(--sfx-up-error, #dc2626);
       margin-top: -6px;
       margin-bottom: 8px;
     }
@@ -179,27 +179,27 @@ export class SfxUrlDialog extends LitElement {
 
     .btn-ghost {
       background: none;
-      color: #94a3b8;
-      border: 1.5px solid #e8edf5;
+      color: var(--sfx-up-text-muted, #94a3b8);
+      border: 1.5px solid var(--sfx-up-border, #e8edf5);
     }
 
     .btn-ghost:hover {
-      background: #f8faff;
-      color: #64748b;
-      border-color: #d1dff0;
+      background: var(--sfx-up-border-light, #f8faff);
+      color: var(--sfx-up-text-secondary, #64748b);
+      border-color: var(--sfx-up-border, #d1dff0);
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, var(--sfx-up-primary, #2563eb), #3b82f6);
-      color: #fff;
-      box-shadow: 0 2px 10px rgba(37, 99, 235, 0.28);
+      background: linear-gradient(135deg, var(--sfx-up-primary, #2563eb), var(--sfx-up-primary-mid, #3b82f6));
+      color: var(--primary-foreground, #fff);
+      box-shadow: 0 2px 10px var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.28));
       position: relative;
       overflow: hidden;
     }
 
     .btn-primary:hover:not(:disabled) {
-      background: linear-gradient(135deg, #1d4ed8, var(--sfx-up-primary, #2563eb));
-      box-shadow: 0 4px 16px rgba(37, 99, 235, 0.38);
+      background: linear-gradient(135deg, var(--sfx-up-primary-hover, #1d4ed8), var(--sfx-up-primary, #2563eb));
+      box-shadow: 0 4px 16px var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.38));
       transform: translateY(-1px);
     }
 

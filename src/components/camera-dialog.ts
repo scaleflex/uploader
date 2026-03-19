@@ -49,11 +49,11 @@ export class SfxCameraDialog extends LitElement {
 
     .close-btn {
       width: 28px; height: 28px; border-radius: 8px; border: none;
-      background: #f0f0f0; color: #888; font-size: 14px; cursor: pointer;
+      background: var(--sfx-up-border-light, #f0f0f0); color: var(--sfx-up-text-muted, #888); font-size: 14px; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       transition: background 0.15s, color 0.15s; flex-shrink: 0; line-height: 1;
     }
-    .close-btn:hover { background: #e4e4e4; color: #333; }
+    .close-btn:hover { background: var(--sfx-up-border, #e4e4e4); color: var(--sfx-up-text, #333); }
 
     .body { padding: 18px 20px 20px; display: flex; flex-direction: column; align-items: center; gap: 16px; flex: 1; min-height: 0; justify-content: center; }
 
@@ -69,7 +69,7 @@ export class SfxCameraDialog extends LitElement {
       object-fit: contain; background: #000;
     }
 
-    .error { font-size: 13px; color: #dc2626; text-align: center; padding: 40px 20px; }
+    .error { font-size: 13px; color: var(--sfx-up-error, #dc2626); text-align: center; padding: 40px 20px; }
 
     .actions { display: flex; gap: 9px; justify-content: center; width: 100%; }
 
@@ -80,22 +80,22 @@ export class SfxCameraDialog extends LitElement {
       transition: all 0.18s ease; white-space: nowrap;
     }
 
-    .btn-ghost { background: none; color: #94a3b8; border: 1.5px solid #e8edf5; }
-    .btn-ghost:hover { background: #f8faff; color: #64748b; border-color: #d1dff0; }
+    .btn-ghost { background: none; color: var(--sfx-up-text-muted, #94a3b8); border: 1.5px solid var(--sfx-up-border, #e8edf5); }
+    .btn-ghost:hover { background: var(--sfx-up-border-light, #f8faff); color: var(--sfx-up-text-secondary, #64748b); border-color: var(--sfx-up-border, #d1dff0); }
 
     .btn-primary {
-      background: linear-gradient(135deg, var(--sfx-up-primary, #2563eb), #3b82f6);
-      color: #fff; box-shadow: 0 2px 10px rgba(37, 99, 235, 0.28);
+      background: linear-gradient(135deg, var(--sfx-up-primary, #2563eb), var(--sfx-up-primary-mid, #3b82f6));
+      color: var(--primary-foreground, #fff); box-shadow: 0 2px 10px var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.28));
     }
-    .btn-primary:hover { background: linear-gradient(135deg, #1d4ed8, var(--sfx-up-primary, #2563eb)); box-shadow: 0 4px 16px rgba(37, 99, 235, 0.38); transform: translateY(-1px); }
+    .btn-primary:hover { background: linear-gradient(135deg, var(--sfx-up-primary-hover, #1d4ed8), var(--sfx-up-primary, #2563eb)); box-shadow: 0 4px 16px var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.38)); transform: translateY(-1px); }
 
     .btn-capture {
       width: 52px; height: 52px; border-radius: 50%; padding: 0;
-      background: #dc2626; border: 4px solid #fff;
-      box-shadow: 0 0 0 2px #dc2626, 0 4px 12px rgba(220, 38, 38, 0.3);
+      background: var(--sfx-up-error, #dc2626); border: 4px solid var(--sfx-up-bg, #fff);
+      box-shadow: 0 0 0 2px var(--sfx-up-error, #dc2626), 0 4px 12px var(--sfx-up-shadow, rgba(220, 38, 38, 0.3));
       cursor: pointer; transition: all 0.15s;
     }
-    .btn-capture:hover { background: #b91c1c; transform: scale(1.05); }
+    .btn-capture:hover { background: var(--destructive-foreground, #b91c1c); transform: scale(1.05); }
 
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes slideUp { from { transform: translateY(18px) scale(0.97); } to { transform: translateY(0) scale(1); } }

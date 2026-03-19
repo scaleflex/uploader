@@ -13,8 +13,8 @@ export class SfxFileItem extends LitElement {
       border-radius: 6px;
       overflow: hidden;
       background: var(--sfx-up-bg, #fff);
-      border: 1px solid #e8eaed;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+      border: 1px solid var(--sfx-up-border, #e8eaed);
+      box-shadow: 0 1px 4px var(--sfx-up-shadow, rgba(0, 0, 0, 0.06));
       animation: tileIn 0.6s cubic-bezier(0.34, 1.2, 0.64, 1) both;
       transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s;
       cursor: default;
@@ -24,9 +24,9 @@ export class SfxFileItem extends LitElement {
     }
 
     .tile:hover {
-      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.11);
+      box-shadow: 0 6px 24px var(--sfx-up-shadow, rgba(0, 0, 0, 0.11));
       transform: translateY(-2px);
-      border-color: #d1d5db;
+      border-color: var(--sfx-up-text-muted, #d1d5db);
     }
 
     /* --- Preview area --- */
@@ -35,7 +35,7 @@ export class SfxFileItem extends LitElement {
       aspect-ratio: 16 / 10;
       overflow: hidden;
       flex-shrink: 0;
-      background: #f3f4f6;
+      background: var(--sfx-up-border-light, #f3f4f6);
     }
 
     .preview-bg {
@@ -50,11 +50,11 @@ export class SfxFileItem extends LitElement {
       transform: scale(1.03);
     }
 
-    .preview-bg.pdf { background: linear-gradient(135deg, #fef2f2, #fee2e2); }
-    .preview-bg.doc { background: linear-gradient(135deg, #eff6ff, #dbeafe); }
+    .preview-bg.pdf { background: linear-gradient(135deg, var(--destructive-10, #fef2f2), var(--destructive-10, #fee2e2)); }
+    .preview-bg.doc { background: linear-gradient(135deg, var(--sfx-up-primary-bg, #eff6ff), var(--sfx-up-primary-bg, #dbeafe)); }
     .preview-bg.vid { background: linear-gradient(135deg, #f5f3ff, #ede9fe); }
-    .preview-bg.zip { background: linear-gradient(135deg, #fffbeb, #fef3c7); }
-    .preview-bg.gen { background: linear-gradient(135deg, #f8fafc, #f1f5f9); }
+    .preview-bg.zip { background: linear-gradient(135deg, var(--warning-10, #fffbeb), var(--warning-10, #fef3c7)); }
+    .preview-bg.gen { background: linear-gradient(135deg, var(--sfx-up-border-light, #f8fafc), var(--sfx-up-border-light, #f1f5f9)); }
 
     /* --- File type icon --- */
     .type-icon {
@@ -74,7 +74,7 @@ export class SfxFileItem extends LitElement {
       align-items: center;
       justify-content: center;
       background: rgba(255, 255, 255, 0.9);
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 2px 10px var(--sfx-up-shadow, rgba(0, 0, 0, 0.08));
     }
 
     .type-icon-inner svg {
@@ -82,11 +82,11 @@ export class SfxFileItem extends LitElement {
       height: 22px;
     }
 
-    .type-icon-inner.pdf { color: #dc2626; }
-    .type-icon-inner.doc { color: #1d4ed8; }
+    .type-icon-inner.pdf { color: var(--sfx-up-error, #dc2626); }
+    .type-icon-inner.doc { color: var(--sfx-up-primary, #1d4ed8); }
     .type-icon-inner.vid { color: #7c3aed; }
-    .type-icon-inner.zip { color: #b45309; }
-    .type-icon-inner.gen { color: #64748b; }
+    .type-icon-inner.zip { color: var(--warning-foreground, #b45309); }
+    .type-icon-inner.gen { color: var(--sfx-up-text-muted, #64748b); }
 
     .ext-label {
       font-size: 9px;
@@ -105,7 +105,7 @@ export class SfxFileItem extends LitElement {
     .name {
       font-size: 12.5px;
       font-weight: 600;
-      color: #111827;
+      color: var(--sfx-up-text, #111827);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -115,7 +115,7 @@ export class SfxFileItem extends LitElement {
     .meta {
       font-size: 11px;
       font-weight: 400;
-      color: #9ca3af;
+      color: var(--sfx-up-text-muted, #9ca3af);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -146,29 +146,29 @@ export class SfxFileItem extends LitElement {
       height: 26px;
       border-radius: 6px;
       border: none;
-      background: #fff;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+      background: var(--sfx-up-bg, #fff);
+      box-shadow: 0 1px 4px var(--sfx-up-shadow, rgba(0, 0, 0, 0.15));
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: background 0.15s, transform 0.12s;
-      color: #374151;
+      color: var(--sfx-up-text, #374151);
       padding: 0;
     }
 
     .act-btn:hover {
-      background: #f3f4f6;
+      background: var(--sfx-up-border-light, #f3f4f6);
       transform: scale(1.08);
     }
 
     .act-btn.del:hover {
-      background: #fee2e2;
-      color: #dc2626;
+      background: var(--destructive-10, #fee2e2);
+      color: var(--sfx-up-error, #dc2626);
     }
 
     .act-btn.retry:hover {
-      background: #eff6ff;
+      background: var(--sfx-up-primary-bg, #eff6ff);
       color: var(--sfx-up-primary, #2563eb);
     }
 
@@ -186,7 +186,7 @@ export class SfxFileItem extends LitElement {
       padding: 6px 16px;
       border-radius: 6px;
       border: 1.5px solid var(--sfx-up-primary, #2563eb);
-      background: #fff;
+      background: var(--sfx-up-bg, #fff);
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -207,11 +207,11 @@ export class SfxFileItem extends LitElement {
 
     .preview-btn:hover {
       background: var(--sfx-up-primary, #2563eb);
-      color: #fff;
+      color: var(--sfx-up-bg, #fff);
     }
 
     .preview-btn:hover svg {
-      stroke: #fff;
+      stroke: var(--sfx-up-bg, #fff);
     }
 
     .preview-btn svg {
@@ -303,7 +303,7 @@ export class SfxFileItem extends LitElement {
       font-size: 10px;
       font-weight: 600;
       color: #fff;
-      background: rgba(220, 38, 38, 0.88);
+      background: var(--sfx-up-error, #dc2626);
       border-radius: 4px;
       padding: 3px 6px;
       text-align: center;

@@ -40,7 +40,7 @@ export class SfxSearchProviderBrowser extends LitElement {
     }
 
     .back-btn:hover {
-      background: #f1f5f9;
+      background: var(--sfx-up-border-light, #f1f5f9);
       color: var(--sfx-up-text, #1e293b);
     }
 
@@ -74,7 +74,7 @@ export class SfxSearchProviderBrowser extends LitElement {
       font-family: inherit;
       font-size: 13px;
       color: var(--sfx-up-text, #1e293b);
-      background: #fff;
+      background: var(--sfx-up-bg, #fff);
       outline: none;
       transition: border-color 0.15s;
     }
@@ -93,7 +93,7 @@ export class SfxSearchProviderBrowser extends LitElement {
       border: none;
       border-radius: 9px;
       background: linear-gradient(135deg, var(--sfx-up-primary, #2563eb), var(--sfx-up-primary-mid, #3b82f6));
-      color: #fff;
+      color: var(--primary-foreground, #fff);
       font-family: inherit;
       font-size: 13px;
       font-weight: 600;
@@ -168,7 +168,7 @@ export class SfxSearchProviderBrowser extends LitElement {
 
     .result-item.selected .check {
       background: var(--sfx-up-primary, #2563eb);
-      color: #fff;
+      color: var(--sfx-up-bg, #fff);
     }
 
     .check svg {
@@ -218,18 +218,18 @@ export class SfxSearchProviderBrowser extends LitElement {
       border: none;
       border-radius: 9px;
       background: linear-gradient(135deg, var(--sfx-up-primary, #2563eb), var(--sfx-up-primary-mid, #3b82f6));
-      color: #fff;
+      color: var(--primary-foreground, #fff);
       font-family: inherit;
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.18s;
-      box-shadow: 0 2px 10px rgba(37, 99, 235, 0.28);
+      box-shadow: 0 2px 10px var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.28));
     }
 
     .add-btn:hover:not(:disabled) {
       transform: translateY(-1px);
-      box-shadow: 0 4px 16px rgba(37, 99, 235, 0.38);
+      box-shadow: 0 4px 16px var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.38));
     }
 
     .add-btn:disabled {
@@ -278,8 +278,8 @@ export class SfxSearchProviderBrowser extends LitElement {
     }
 
     .retry-btn:hover {
-      background: #f8faff;
-      border-color: #d1dff0;
+      background: var(--sfx-up-border-light, #f8faff);
+      border-color: var(--sfx-up-border, #d1dff0);
     }
 
     .empty-text {

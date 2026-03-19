@@ -13,13 +13,13 @@ export class SfxSuccessCard extends LitElement {
     .card {
       background: var(--sfx-up-bg, #fff);
       border-radius: 20px;
-      border: 1.5px solid #bbf7d0;
+      border: 1.5px solid var(--success-10, #bbf7d0);
       padding: 64px 48px;
       display: flex;
       flex-direction: column;
       align-items: center;
       text-align: center;
-      box-shadow: 0 8px 40px rgba(34, 197, 94, 0.08);
+      box-shadow: 0 8px 40px var(--sfx-up-shadow, rgba(34, 197, 94, 0.08));
       animation: fadeUp 0.4s ease both;
     }
 
@@ -27,7 +27,7 @@ export class SfxSuccessCard extends LitElement {
       width: 64px;
       height: 64px;
       border-radius: 50%;
-      background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+      background: var(--success-10, #dcfce7);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -45,7 +45,7 @@ export class SfxSuccessCard extends LitElement {
     .title {
       font-size: 21px;
       font-weight: 800;
-      color: #0f172a;
+      color: var(--sfx-up-text, #0f172a);
       letter-spacing: -0.4px;
       margin-bottom: 7px;
     }
@@ -87,20 +87,20 @@ export class SfxSuccessCard extends LitElement {
     }
 
     .btn-ghost:hover {
-      background: #f8faff;
-      color: #64748b;
-      border-color: #d1dff0;
+      background: var(--sfx-up-border-light, #f8faff);
+      color: var(--sfx-up-text-secondary, #64748b);
+      border-color: var(--sfx-up-border, #d1dff0);
     }
 
     .btn-primary {
       background: linear-gradient(135deg, var(--sfx-up-primary, #2563eb), var(--sfx-up-primary-mid, #3b82f6));
-      color: #fff;
-      box-shadow: 0 2px 10px rgba(37, 99, 235, 0.28);
+      color: var(--primary-foreground, #fff);
+      box-shadow: 0 2px 10px var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.28));
     }
 
     .btn-primary:hover {
       background: linear-gradient(135deg, var(--sfx-up-primary-hover, #1d4ed8), var(--sfx-up-primary, #2563eb));
-      box-shadow: 0 4px 16px rgba(37, 99, 235, 0.38);
+      box-shadow: 0 4px 16px var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.38));
       transform: translateY(-1px);
     }
 

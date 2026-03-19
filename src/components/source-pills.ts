@@ -12,10 +12,10 @@ const CAMERA_ICON = `<path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4
 const SCREEN_CAST_ICON = `<rect x="2" y="3" width="20" height="14" rx="2"/><circle cx="12" cy="10" r="3"/><path d="M7 21h10"/>`;
 
 export const CORE_SOURCES: SourceDef[] = [
-  { id: 'device', label: 'My Device', icon: DEVICE_ICON },
-  { id: 'url', label: 'URL link', icon: URL_ICON },
-  { id: 'camera', label: 'Camera', icon: CAMERA_ICON },
-  { id: 'screen-cast', label: 'Screen cast', icon: SCREEN_CAST_ICON },
+  { id: 'device', label: 'My Device', icon: DEVICE_ICON, iconColor: '#2563eb' },
+  { id: 'url', label: 'URL link', icon: URL_ICON, iconColor: '#16a34a' },
+  { id: 'camera', label: 'Camera', icon: CAMERA_ICON, iconColor: '#7c3aed' },
+  { id: 'screen-cast', label: 'Screen cast', icon: SCREEN_CAST_ICON, iconColor: '#7c3aed' },
 ];
 
 export class SfxSourcePills extends LitElement {

@@ -1,0 +1,2764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Uploader Plugin — Scaleflex</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --blue:       #2563eb;
+  --blue-dark:  #1d4ed8;
+  --blue-mid:   #3b82f6;
+  --blue-light: #eff6ff;
+  --blue-glow:  rgba(37,99,235,0.18);
+  --green:      #16a34a;
+  --amber:      #d97706;
+  --red:        #dc2626;
+  --t: 0.18s ease;
+}
+
+html, body {
+  height: 100%;
+  font-family: 'Inter', -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ══════════════════════════════════════════
+   DEMO PAGE
+══════════════════════════════════════════ */
+.demo-page {
+  min-height: 100vh;
+  background: #fafafa;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+.demo-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #09090b;
+  margin-bottom: 6px;
+}
+.demo-desc {
+  color: #71717a;
+  font-size: 0.95rem;
+  margin-bottom: 28px;
+}
+.demo-controls {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 32px;
+}
+.demo-btn {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 150ms;
+  font-family: inherit;
+}
+.demo-btn-primary {
+  background: var(--blue);
+  color: #fff;
+}
+.demo-btn-primary:hover { opacity: 0.9; }
+.demo-btn-secondary {
+  background: #f4f4f5;
+  color: #09090b;
+  border: 1px solid #e4e4e7;
+}
+.demo-btn-secondary:hover { background: #e4e4e7; }
+.demo-config {
+  padding: 20px;
+  background: #fff;
+  border: 1px solid #e4e4e7;
+  border-radius: 12px;
+  max-width: 560px;
+  width: 100%;
+}
+.demo-config h2 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #09090b;
+  margin-bottom: 14px;
+}
+.demo-form-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.demo-form-group {
+  flex: 1;
+}
+.demo-form-group label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #71717a;
+  margin-bottom: 4px;
+}
+.demo-form-group input, .demo-form-group select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #e4e4e7;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  background: #fff;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.demo-form-group select {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%239ca3af' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px;
+  padding-right: 32px;
+}
+#demoOutput {
+  margin-top: 16px;
+  padding: 12px;
+  background: #f4f4f5;
+  border-radius: 8px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 0.8125rem;
+  color: #09090b;
+  white-space: pre-wrap;
+  max-height: 200px;
+  overflow-y: auto;
+  line-height: 1.6;
+}
+
+/* ══════════════════════════════════════════
+   UPLOADER MODAL OVERLAY
+══════════════════════════════════════════ */
+.uploader-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+.uploader-overlay.open {
+  opacity: 1;
+  pointer-events: all;
+}
+.uploader-modal {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 28px 80px rgba(0,0,0,0.2), 0 4px 16px rgba(0,0,0,0.06);
+  width: 100%;
+  max-width: 1198px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  transform: translateY(16px) scale(0.97);
+  transition: transform 0.3s cubic-bezier(0.34,1.2,0.64,1);
+}
+.uploader-overlay.open .uploader-modal {
+  transform: translateY(0) scale(1);
+}
+
+/* modal header */
+.um-header {
+  display: flex;
+  align-items: center;
+  padding: 16px 24px;
+  background: #fff;
+  border-bottom: 1px solid #f0f0f0;
+  flex-shrink: 0;
+}
+.um-header-icon {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  background: var(--blue-light);
+  color: var(--blue);
+  display: flex; align-items: center; justify-content: center;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+.um-header-icon svg { width: 16px; height: 16px; }
+.um-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
+  flex: 1;
+}
+.um-close {
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  border: none;
+  background: #f0f0f0;
+  color: #888;
+  font-size: 15px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.um-close:hover { background: #e4e4e4; color: #333; }
+
+/* modal body */
+.um-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  gap: 16px;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ══════════════════════════════════════════
+   DROP ZONE
+══════════════════════════════════════════ */
+.drop-zone {
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  padding: 56px 40px 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.22s, background 0.22s, padding 0.35s ease, flex-direction 0s;
+  user-select: none;
+  flex-shrink: 0;
+}
+.drop-zone:hover {
+  background: transparent;
+}
+.drop-zone.drag-over {
+  background: var(--blue-light);
+}
+.drop-zone.drag-over .dz-ring { border-color: var(--blue); animation-duration: 3s; }
+.drop-zone.drag-over .dz-ring:nth-child(2) { border-color: rgba(37,99,235,0.4); animation-duration: 2s; }
+.drop-zone.drag-over .dz-core {
+  background: var(--blue); color: #fff;
+  transform: scale(1.12);
+  box-shadow: 0 8px 24px rgba(37,99,235,0.38);
+}
+.drop-zone.has-files {
+  padding: 14px 24px;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  justify-content: flex-start;
+  overflow: visible;
+  border-bottom: 1px solid #f0f0f0;
+  border-radius: 0;
+}
+
+/* orbit rings */
+.dz-rings {
+  width: 120px; height: 120px;
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 22px;
+  flex-shrink: 0;
+}
+.dz-ring {
+  position: absolute; inset: 0;
+  border-radius: 50%;
+  border: 1.5px dashed #c4d5ef;
+  animation: slowSpin 20s linear infinite;
+  transition: border-color 0.3s;
+}
+.dz-ring:nth-child(2) {
+  inset: 13px;
+  border-color: #d8e5f5;
+  border-style: dotted;
+  animation-direction: reverse;
+  animation-duration: 14s;
+}
+
+.dz-core {
+  width: 58px; height: 58px;
+  border-radius: 50%;
+  background: var(--blue-light);
+  color: var(--blue);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1;
+  transition: all 0.28s cubic-bezier(0.34,1.4,0.64,1);
+  box-shadow: 0 3px 12px rgba(37,99,235,0.15);
+}
+.dz-core svg { width: 26px; height: 26px; }
+.drop-zone:hover .dz-core { transform: translateY(-2px); box-shadow: 0 5px 18px rgba(37,99,235,0.22); }
+
+.dz-title {
+  font-size: 19px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 6px;
+  transition: font-size 0.3s, margin 0.3s;
+}
+.dz-title span { color: var(--blue); }
+.dz-sub { font-size: 13.5px; color: #94a3b8; transition: opacity 0.2s; margin-bottom: 24px; }
+
+/* Divider inside drop zone — hidden */
+.dz-divider { display: none; }
+.dz-divider-line { display: none; }
+.dz-divider-label { display: none; }
+
+/* Radial glow behind orbit rings */
+.dz-glow {
+  position: absolute;
+  width: 260px; height: 260px;
+  top: 20px; left: 50%;
+  transform: translateX(-50%);
+  background: radial-gradient(circle at center, rgba(37,99,235,0.04) 0%, rgba(37,99,235,0.02) 40%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Pill sources inside drop zone */
+.dz-sources-grid {
+  display: flex; justify-content: center; gap: 8px; flex-wrap: nowrap;
+}
+.src-pill-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 9px 18px; border-radius: 50px;
+  border: 1.5px solid rgba(226,232,240,0.6);
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  font-size: 13px; font-weight: 500; color: #475569;
+  cursor: pointer; transition: all 0.18s ease;
+  white-space: nowrap; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  font-family: inherit;
+}
+.src-pill-btn:hover {
+  border-color: var(--blue); color: var(--blue);
+  background: rgba(239,246,255,0.85);
+  box-shadow: 0 2px 10px var(--blue-glow);
+  transform: translateY(-1px);
+}
+.src-pill-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+.src-pill-btn .pill-ico { display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.src-pill-btn .pill-ico.c1 { color: #2563eb; }
+.src-pill-btn .pill-ico.c2 { color: #7c3aed; }
+.src-pill-btn .pill-ico.c3 { color: #16a34a; }
+.src-pill-btn .bi { width: 20px; height: 20px; border-radius: 5px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.src-pill-btn .bi.db { background:#0061ff; }
+.src-pill-btn .bi.bx { background:#0e50a0; font-size:9px; font-weight:800; color:#fff; }
+.src-pill-btn .bi.od { background:#0078d4; }
+
+/* "More" pill + dropdown — hidden on desktop, visible on small screens */
+.dz-more-wrap { display: none; position: relative; }
+.dz-more-dropdown {
+  position: absolute; top: calc(100% + 8px); right: 0;
+  background: #fff; border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+  border: 1px solid #e8edf5;
+  padding: 6px; min-width: 200px; z-index: 9999;
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transform: translateY(6px);
+  transition: opacity 0.18s ease, visibility 0.18s ease, transform 0.18s ease;
+}
+.dz-more-wrap.open .dz-more-dropdown {
+  opacity: 1; visibility: visible; pointer-events: all;
+  transform: translateY(0);
+}
+.dz-more-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-radius: 10px;
+  border: none; background: none; width: 100%;
+  font-size: 13px; font-weight: 500; color: #374151;
+  cursor: pointer; transition: background 0.12s;
+  font-family: inherit; white-space: nowrap;
+}
+.dz-more-item:hover { background: #f5f7fa; }
+.dz-more-item .dmi-ico {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: #f5f5f7; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.dz-more-item .dmi-ico svg { width: 16px; height: 16px; }
+.dz-more-item .bi { width: 20px; height: 20px; border-radius: 5px; display:flex; align-items:center; justify-content:center; }
+.dz-more-item .bi.db { background:#0061ff; }
+.dz-more-item .bi.bx { background:#0e50a0; font-size:8px; font-weight:800; color:#fff; }
+.dz-more-item .bi.od { background:#0078d4; }
+
+/* Extra pills: visible by default, hidden on small screens */
+.src-pill-extra { }
+
+/* compact state when files added */
+.drop-zone.has-files .dz-glow { display: none; }
+.drop-zone.has-files .dz-rings { display: none; }
+.drop-zone.has-files .dz-title { font-size: 14px; font-weight: 600; margin-bottom: 0; }
+.drop-zone.has-files .dz-sub { display: none; }
+.drop-zone.has-files .dz-divider { display: none; }
+.drop-zone.has-files .dz-sources-grid { display: none; }
+
+/* import icons in collapsed dropzone — grid squares */
+.dz-sources-row { display: none; }
+.drop-zone.has-files .dz-sources-row {
+  display: flex; align-items: center; gap: 6px;
+  margin-left: auto; flex-shrink: 0;
+}
+.dz-src-divider { width: 1px; height: 24px; background: #e5e7eb; margin-right: 4px; flex-shrink: 0; }
+.dz-src-ico {
+  width: 36px; height: 36px; border-radius: 8px;
+  border: 1.5px solid #f0f0f0; background: #fafafa; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s ease;
+  position: relative; flex-shrink: 0; color: #6b7280;
+  font-family: inherit;
+}
+.dz-src-ico svg { width: 15px; height: 15px; }
+.dz-src-ico:hover {
+  border-color: var(--blue); background: var(--blue-light);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px var(--blue-glow);
+  color: var(--blue);
+}
+.dz-src-ico::after {
+  content: attr(data-tip);
+  position: absolute; bottom: -28px; left: 50%; transform: translateX(-50%);
+  background: #fff; color: #374151; font-size: 10px; font-weight: 500;
+  border: 1px solid #e5e7eb; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  padding: 3px 8px; border-radius: 5px; white-space: nowrap;
+  opacity: 0; visibility: hidden; transition: opacity 0.15s, visibility 0.15s;
+  pointer-events: none; z-index: 50; font-family: 'Inter', sans-serif;
+}
+.dz-src-ico:hover::after { opacity: 1; visibility: visible; }
+.dz-src-ico:nth-child(2) { color: #2563eb; }
+.dz-src-ico:nth-child(3) { color: #7c3aed; }
+.dz-src-ico:nth-child(4) { color: #16a34a; }
+.dz-src-ico .bi { width: 20px; height: 20px; border-radius: 5px; display:flex; align-items:center; justify-content:center; }
+.dz-src-ico .bi.db { background:#0061ff; }
+.dz-src-ico .bi.bx { background:#0e50a0; font-size:7px; font-weight:700; color:#fff; }
+.dz-src-ico .bi.od { background:#0078d4; }
+
+/* ripple */
+.dz-ripple {
+  position: absolute;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--blue);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%,-50%) scale(0);
+}
+.dz-ripple.go { animation: ripple 0.55s ease-out forwards; }
+
+/* ══ DIVIDER ══ */
+.import-divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.import-line { flex: 1; height: 1px; background: #e2e5ea; }
+.import-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #cbd5e1;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+/* ══ SOURCES ══ */
+.sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+.src-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 12px 22px;
+  border-radius: 50px;
+  border: 1.5px solid #e8edf5;
+  background: #fff;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  transition: all var(--t);
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  font-family: inherit;
+}
+.src-pill:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+  background: var(--blue-light);
+  box-shadow: 0 2px 10px var(--blue-glow);
+  transform: translateY(-1px);
+}
+.src-pill svg { width: 17px; height: 17px; flex-shrink: 0; color: #6b7280; }
+.src-pill:nth-child(1) svg { color: #2563eb; }
+.src-pill:nth-child(2) svg { color: #7c3aed; }
+.src-pill:nth-child(3) svg { color: #16a34a; }
+.src-pill .bi { width: 20px; height: 20px; border-radius: 5px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.src-pill .bi.db { background:#0061ff; }
+.src-pill .bi.bx { background:#0e50a0; font-size:9px; font-weight:800; color:#fff; }
+.src-pill .bi.od { background:#0078d4; }
+
+/* ══ FILE GRID ══ */
+.file-stack {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  align-content: start;
+}
+
+/* ══ FILE TILE ══ */
+.tile {
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+  border: none;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  animation: tileIn 0.6s cubic-bezier(0.34,1.2,0.64,1) both;
+  will-change: transform, opacity, filter;
+  transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s;
+  cursor: pointer;
+  display: flex; flex-direction: column;
+  position: relative;
+}
+.tile:hover {
+  box-shadow: 0 6px 24px rgba(0,0,0,0.11);
+  transform: translateY(-2px);
+}
+
+/* No accent bar on tiles */
+
+.tile-preview {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #f3f4f6;
+  border-radius: 10px 10px 0 0;
+}
+.tile-bg {
+  position: absolute; inset: 0;
+  background-size: cover; background-position: center;
+  transition: transform 0.4s ease;
+}
+.tile:hover .tile-bg { transform: scale(1.03); }
+.tile-bg.pdf { background: linear-gradient(135deg,#fef2f2,#fee2e2); }
+.tile-bg.doc { background: linear-gradient(135deg,#eff6ff,#dbeafe); }
+.tile-bg.vid { background: linear-gradient(135deg,#f5f3ff,#ede9fe); }
+.tile-bg.zip { background: linear-gradient(135deg,#fffbeb,#fef3c7); }
+.tile-bg.gen { background: linear-gradient(135deg,#f8fafc,#f1f5f9); }
+
+.tile-icon {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none;
+}
+.tile-icon-inner {
+  width: 52px; height: 52px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.9);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+.tile-icon-inner svg { width: 24px; height: 24px; }
+.tile-icon-inner.pdf { color:#dc2626; }
+.tile-icon-inner.doc { color:#1d4ed8; }
+.tile-icon-inner.vid { color:#7c3aed; }
+.tile-icon-inner.zip { color:#b45309; }
+.tile-icon-inner.gen { color:#64748b; }
+
+.tile-info {
+  padding: 12px 14px 13px;
+  background: #fff;
+  min-width: 0;
+}
+.tile-name {
+  font-size: 13px; font-weight: 500; color: #111827;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-bottom: 3px; cursor: default;
+}
+.tile-name-input {
+  font-size: 12.5px; font-weight: 600; color: #111827;
+  width: 100%; border: 1px solid #2563eb; border-radius: 4px;
+  padding: 1px 4px; margin-bottom: 2px; outline: none;
+  font-family: 'Inter', sans-serif; background: #fff;
+}
+.tile-meta {
+  font-size: 11px; font-weight: 400; color: #9ca3af;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* done state — blue border + check badge top-left */
+.tile.done {
+  box-shadow: 0 0 0 2px #2563eb;
+}
+.tile-done-overlay {
+  position: absolute; inset: 0;
+  opacity: 0; pointer-events: none;
+}
+.tile.done .tile-done-overlay { opacity: 1; pointer-events: auto; }
+.tile-check {
+  position: absolute; top: 6px; left: 6px;
+  width: 22px; height: 22px; border-radius: 6px;
+  background: #2563eb; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 6px rgba(37,99,235,0.3);
+  animation: popBounce 0.55s cubic-bezier(0.34,1.56,0.64,1) 0.15s both;
+}
+.tile-check svg { width: 13px; height: 13px; filter: none; }
+.tile-undo { display: none; }
+.tile.done .tile-info { opacity: 1; }
+
+/* uploading spinner */
+.tile-spinner {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.22);
+  opacity: 0; transition: opacity 0.2s; pointer-events: none;
+}
+.tile.uploading .tile-spinner { opacity: 1; }
+.fp-spin { width:28px; height:28px; border:2.5px solid rgba(255,255,255,0.22); border-top-color:#fff; border-radius:50%; animation:spinRing 0.7s linear infinite; }
+
+/* progress bar */
+.tile-prog { position:absolute; bottom:0; left:0; right:0; height:2px; background:rgba(255,255,255,0.15); }
+.tile-prog-fill { height:100%; background:#fff; transform-origin:left; transform:scaleX(0); transition:transform 0.32s ease; }
+.tile.done .tile-prog-fill { transform:scaleX(1); background:rgba(255,255,255,0.6); }
+
+/* tile hover overlay */
+.tile-actions {
+  position: absolute; inset: 0;
+  background: rgba(255,255,255,0.75);
+  backdrop-filter: blur(1.5px);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 0.2s ease; z-index: 10;
+}
+.tile:hover .tile-actions { opacity: 1; }
+.tile-btn-preview {
+  padding: 5px 12px; border-radius: 6px;
+  border: 1px solid #2563eb;
+  background: #fff;
+  cursor: pointer; display: flex; align-items: center; gap: 4px;
+  transition: all 0.15s ease; color: #2563eb;
+  font-family: 'Inter', sans-serif; font-size: 10.5px; font-weight: 600;
+}
+.tile-btn-preview:hover { background: #2563eb; color: #fff; }
+.tile-btn-preview:hover svg { stroke: #fff; }
+.tile-btn-preview svg { width: 13px; height: 13px; }
+.tile-meta-row {
+  display: flex; align-items: center;
+}
+.tile-btn-del {
+  position: absolute; top: 6px; right: 6px; z-index: 11;
+  width: 26px; height: 26px; border-radius: 6px;
+  border: none; background: rgba(255,255,255,0.9);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s ease; color: #9ca3af; flex-shrink: 0;
+  opacity: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.tile:hover .tile-btn-del { opacity: 1; }
+.tile-btn-del:hover { color: #ef4444; background: #fee2e2; }
+.tile-btn-del svg { width: 12px; height: 12px; }
+/* checkbox — hidden */
+.tile-check-box { display: none; }
+.tile-checkbox { display: none; }
+
+/* rename overlay */
+.tile-rename {
+  position: absolute; inset: 0; z-index: 20;
+  background: rgba(0,0,0,0.55); backdrop-filter: blur(2px);
+  border-radius: 6px; display: none;
+  align-items: center; justify-content: center; padding: 14px;
+}
+.tile-rename.active { display: flex; }
+.tile-rename-inner { width: 100%; }
+.tile-rename-label { font-size: 10.5px; font-weight: 600; color: rgba(255,255,255,0.5); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.6px; }
+.tile-rename-input {
+  width: 100%; background: rgba(255,255,255,0.12);
+  border: 1.5px solid rgba(255,255,255,0.45);
+  border-radius: 8px; padding: 7px 10px;
+  font-size: 12px; font-weight: 600; color: #fff;
+  font-family: inherit; outline: none; transition: border-color 0.15s;
+}
+.tile-rename-input:focus { border-color: rgba(255,255,255,0.85); }
+.tile-rename-hint { font-size: 10px; color: rgba(255,255,255,0.35); margin-top: 6px; text-align: center; }
+
+/* ══ ACTIONS BAR ══ */
+.actions-bar {
+  display: none;
+  background: #fff;
+  border-top: 1px solid #ebebeb;
+  padding: 16px 24px;
+  flex-shrink: 0;
+  border-radius: 0 0 16px 16px;
+}
+.actions-bar-inner {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 9px;
+}
+.actions-bar.visible { display:block; }
+.a-count { font-size:13px; font-weight:600; color:#1e293b; margin-right: auto; }
+.a-count span { font-weight:400; color:#94a3b8; }
+.a-right { display:flex; align-items:center; gap:9px; }
+
+/* ══ BUTTONS ══ */
+.btn { height:36px; padding:0 17px; border-radius:9px; border:none; font-family:'Inter',sans-serif; font-size:13px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; transition:all var(--t); white-space:nowrap; }
+.btn svg { width:14px; height:14px; }
+.btn-ghost { background:none; color:#94a3b8; border:1.5px solid #e8edf5; }
+.btn-ghost:hover { background:#f8faff; color:#64748b; border-color:#d1dff0; }
+.btn-sec { background:#eff6ff; color:var(--blue); border:1.5px solid rgba(37,99,235,0.15); }
+.btn-sec:hover { background:#dbeafe; }
+.btn-primary { background:linear-gradient(135deg,var(--blue),var(--blue-mid)); color:#fff; box-shadow:0 2px 10px rgba(37,99,235,0.28); min-width:110px; position:relative; overflow:hidden; }
+.btn-primary:hover:not(:disabled) { background:linear-gradient(135deg,var(--blue-dark),var(--blue)); box-shadow:0 4px 16px rgba(37,99,235,0.38); transform:translateY(-1px); }
+.btn-primary:active { transform:translateY(0); }
+.btn-primary:disabled { opacity:0.55; cursor:not-allowed; }
+.btn-primary.done-state { background:linear-gradient(135deg,var(--blue),var(--blue-mid)); box-shadow:0 2px 10px rgba(37,99,235,0.28); }
+.btn-spin { width:14px; height:14px; border:2px solid rgba(255,255,255,0.3); border-top-color:#fff; border-radius:50%; animation:spinRing 0.7s linear infinite; }
+
+/* ══ SUCCESS ══ */
+.success-card {
+  background:#fff;
+  border-radius:12px;
+  padding:40px 32px 36px;
+  display:none;
+  flex-direction:column;
+  align-items:center;
+  text-align:center;
+  flex:1;
+  justify-content:center;
+}
+.success-card.visible { display:flex; animation:fadeUp 0.4s ease both; }
+.s-icon { width:64px; height:64px; border-radius:50%; background:linear-gradient(135deg,#eff6ff,#dbeafe); display:flex; align-items:center; justify-content:center; margin-bottom:18px; color:var(--blue); box-shadow:0 4px 18px rgba(37,99,235,0.12); animation:popBounce 0.6s cubic-bezier(0.34,1.56,0.64,1) 0.1s both; }
+.s-icon svg { width:28px; height:28px; }
+.s-title { font-size:20px; font-weight:800; color:#0f172a; margin-bottom:6px; }
+.s-sub { font-size:13px; color:#94a3b8; line-height:1.6; margin-bottom:24px; }
+.s-thumbs { display:flex; gap:8px; margin-bottom:20px; justify-content:center; align-items:center; }
+.s-thumb {
+  width:56px; height:56px; border-radius:10px; overflow:hidden;
+  box-shadow:0 2px 10px rgba(0,0,0,0.1); flex-shrink:0;
+}
+.s-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
+.s-thumb-file {
+  width:56px; height:56px; border-radius:10px; overflow:hidden;
+  box-shadow:0 2px 8px rgba(0,0,0,0.08); border:2px solid #fff;
+  position:relative; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  font-size:18px;
+}
+.s-thumb-file.pdf { background:linear-gradient(135deg,#fef2f2,#fee2e2); }
+.s-thumb-file.doc { background:linear-gradient(135deg,#eff6ff,#dbeafe); }
+.s-thumb-file.vid { background:linear-gradient(135deg,#f5f3ff,#ede9fe); }
+.s-thumb-file.zip { background:linear-gradient(135deg,#fffbeb,#fef3c7); }
+.s-thumb-file.gen { background:linear-gradient(135deg,#f8fafc,#f1f5f9); }
+.s-more-badge {
+  width:56px; height:56px; border-radius:10px;
+  background:#f3f4f6; display:flex; align-items:center; justify-content:center;
+  font-size:13px; font-weight:700; color:#6b7280; flex-shrink:0;
+  border:2px solid #fff; box-shadow:0 2px 8px rgba(0,0,0,0.08);
+}
+.s-count-badge {
+  font-size:12.5px; font-weight:600; color:#374151;
+  background:#f3f4f6; padding:5px 14px; border-radius:20px;
+  margin-bottom:24px;
+}
+.s-actions { display:flex; gap:10px; }
+
+/* ══ KEYFRAMES ══ */
+@keyframes fadeUp { from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)} }
+@keyframes tileIn {
+  0%   { opacity:0; transform:scale(0.8) translateY(22px); filter:blur(10px); }
+  55%  { opacity:1; filter:blur(0); }
+  80%  { transform:scale(1.03) translateY(-3px); }
+  100% { opacity:1; transform:scale(1) translateY(0); filter:blur(0); }
+}
+@keyframes popBounce { 0%{transform:scale(0);opacity:0} 55%{transform:scale(1.2);opacity:1} 75%{transform:scale(0.94)} 100%{transform:scale(1)} }
+@keyframes slowSpin { to{transform:rotate(360deg)} }
+@keyframes spinRing { to{transform:rotate(360deg)} }
+@keyframes ripple { from{transform:translate(-50%,-50%) scale(0);opacity:0.18} to{transform:translate(-50%,-50%) scale(12);opacity:0} }
+
+/* ══════════════════════════════════════════
+   INNER MODALS (URL, Camera, Cloud, etc.)
+══════════════════════════════════════════ */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal {
+  background: #fff; border-radius: 20px;
+  box-shadow: 0 28px 80px rgba(0,0,0,0.18), 0 4px 16px rgba(0,0,0,0.06);
+  width: 100%; max-width: 480px; max-height: 88vh;
+  overflow: hidden; display: flex; flex-direction: column;
+  transform: translateY(18px) scale(0.97);
+  transition: transform 0.28s cubic-bezier(0.34,1.2,0.64,1);
+}
+.modal-overlay.open .modal { transform: translateY(0) scale(1); }
+.modal-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 18px 20px 0; flex-shrink: 0;
+}
+.modal-head-icon {
+  width: 34px; height: 34px; border-radius: 10px;
+  background: #f5f5f7; display: flex; align-items: center;
+  justify-content: center; flex-shrink: 0;
+}
+.modal-title { font-size: 15px; font-weight: 700; color: #1a1a1a; flex: 1; }
+.modal-close {
+  width: 28px; height: 28px; border-radius: 8px; border: none;
+  background: #f0f0f0; color: #888; font-size: 14px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s, color 0.15s; flex-shrink: 0; line-height: 1;
+}
+.modal-close:hover { background: #e4e4e4; color: #333; }
+.modal-body { padding: 18px 20px 20px; overflow-y: auto; flex: 1; }
+
+/* URL modal */
+.m-field { margin-bottom: 14px; }
+.m-label { font-size: 11px; font-weight: 600; color: #aaa; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.7px; }
+.m-input {
+  width: 100%; height: 42px; border: 1.5px solid #ebebeb;
+  border-radius: 10px; padding: 0 14px; font-size: 14px;
+  font-family: inherit; color: #1a1a1a; background: #fafafa;
+  transition: border-color 0.15s, background 0.15s; outline: none;
+}
+.m-input:focus { border-color: #2563eb; background: #fff; }
+.m-input::placeholder { color: #ccc; }
+.m-actions { display: flex; gap: 9px; justify-content: flex-end; margin-top: 18px; }
+
+/* Camera modal */
+.cam-wrap {
+  border-radius: 12px; overflow: hidden;
+  background: #111; aspect-ratio: 4/3; width: 100%;
+  position: relative;
+}
+.cam-video, .cam-canvas { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cam-canvas { display: none; }
+.cam-capture-row {
+  display: flex; align-items: center; justify-content: center;
+  gap: 14px; padding: 14px 0 2px;
+}
+.cam-btn-capture {
+  width: 54px; height: 54px; border-radius: 50%;
+  border: 3px solid #2563eb; background: #fff; cursor: pointer;
+  position: relative; transition: transform 0.15s; flex-shrink: 0;
+}
+.cam-btn-capture::after {
+  content: ''; position: absolute; inset: 5px;
+  border-radius: 50%; background: #2563eb; transition: transform 0.15s;
+}
+.cam-btn-capture:hover { transform: scale(1.07); }
+.cam-btn-retake {
+  height: 36px; padding: 0 16px; border-radius: 10px;
+  border: 1.5px solid #e8e8e8; background: #fff;
+  font-size: 13px; font-weight: 600; color: #555;
+  cursor: pointer; transition: border-color 0.15s; font-family: inherit;
+}
+.cam-btn-retake:hover { border-color: #bbb; }
+.cam-msg { font-size: 11.5px; color: #bbb; text-align: center; margin-top: 6px; }
+.cam-error {
+  font-size: 13px; color: #dc2626; text-align: center;
+  padding: 36px 0; line-height: 1.7;
+}
+
+/* Cloud connect */
+.cloud-connect {
+  display: flex; flex-direction: column; align-items: center;
+  text-align: center; padding: 8px 0 4px; gap: 0;
+}
+.cloud-connect-icon {
+  width: 60px; height: 60px; border-radius: 16px;
+  display: flex; align-items: center; justify-content: center; margin-bottom: 14px;
+}
+.cloud-connect-title { font-size: 16px; font-weight: 700; color: #1a1a1a; margin-bottom: 7px; }
+.cloud-connect-desc { font-size: 13px; color: #999; line-height: 1.6; margin-bottom: 22px; max-width: 290px; }
+.cloud-connect-btn {
+  display: flex; align-items: center; gap: 9px;
+  padding: 11px 22px; border-radius: 12px; border: 1.5px solid #e0e0e0;
+  background: #fff; font-size: 14px; font-weight: 600; color: #1a1a1a;
+  cursor: pointer; transition: border-color 0.15s, background 0.15s;
+  width: 100%; max-width: 270px; justify-content: center; font-family: inherit;
+}
+.cloud-connect-btn:hover { border-color: #2563eb; background: #f6f9ff; }
+.cloud-divider {
+  display: flex; align-items: center; gap: 10px; margin: 18px 0 0;
+  width: 100%; max-width: 270px;
+}
+.cloud-divider-line { flex: 1; height: 1px; background: #f0f0f0; }
+.cloud-divider-text { font-size: 11px; color: #ccc; font-weight: 500; }
+
+/* Cloud browser */
+.cloud-search { position: relative; margin-bottom: 12px; }
+.cloud-search input {
+  width: 100%; height: 36px; border: 1.5px solid #ebebeb;
+  border-radius: 9px; padding: 0 12px 0 34px;
+  font-size: 13px; font-family: inherit; color: #1a1a1a;
+  background: #fafafa; outline: none; transition: border-color 0.15s;
+}
+.cloud-search input:focus { border-color: #2563eb; background: #fff; }
+.cloud-search-ico { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #ccc; width: 14px; height: 14px; }
+.cloud-path { display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: #ccc; margin-bottom: 10px; font-weight: 500; }
+.cloud-path span { color: #555; }
+.cloud-files { display: flex; flex-direction: column; gap: 1px; }
+.cf-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 8px; border-radius: 9px; cursor: pointer;
+  transition: background 0.12s; user-select: none;
+}
+.cf-row:hover { background: #f7f7f8; }
+.cf-row.selected { background: #eff6ff; }
+.cf-check {
+  width: 17px; height: 17px; border-radius: 5px;
+  border: 1.5px solid #d8d8d8; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: border-color 0.12s, background 0.12s; font-size: 10px; color: transparent;
+}
+.cf-row.selected .cf-check { border-color: #2563eb; background: #2563eb; color: #fff; }
+.cf-icon {
+  width: 30px; height: 30px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; font-size: 15px;
+}
+.cf-icon.img { background: #fef9c3; }
+.cf-icon.pdf { background: #fee2e2; }
+.cf-icon.doc { background: #dbeafe; }
+.cf-icon.vid { background: #ede9fe; }
+.cf-icon.zip { background: #fef3c7; }
+.cf-icon.folder { background: #f5f5f7; }
+.cf-info { flex: 1; min-width: 0; }
+.cf-name { font-size: 13px; font-weight: 500; color: #1a1a1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cf-meta { font-size: 11px; color: #bbb; margin-top: 1px; }
+.cloud-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-top: 14px; margin-top: 6px; border-top: 1px solid #f2f2f2;
+}
+.cloud-sel-count { font-size: 12px; color: #aaa; font-weight: 500; }
+.cloud-loading {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 44px 0; gap: 14px;
+  color: #bbb; font-size: 13px;
+}
+.cloud-spinner {
+  width: 26px; height: 26px; border: 2.5px solid #f0f0f0;
+  border-top-color: #2563eb; border-radius: 50%;
+  animation: spin 0.65s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ══ INLINE PREVIEW PANEL ══ */
+.assets-area {
+  display: flex; background: transparent; border-radius: 0;
+  border: none; overflow: hidden;
+  flex: 1; min-height: 0;
+}
+.assets-area .file-stack {
+  flex: 1; min-width: 0; padding: 0 2px 4px; overflow-y: auto;
+}
+/* ══ INLINE PREVIEW — Card style ══ */
+.inline-preview {
+  width: 0; flex-shrink: 0; overflow: hidden;
+  border-left: none;
+  display: flex; flex-direction: column;
+  min-height: 0;
+  transition: width 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  background: #fff;
+  position: relative;
+}
+.inline-preview.open { width: min(460px, 46%); box-shadow: -1px 0 0 0 #e5e7eb; }
+.ip-header { display: none; }
+.ip-filename { display: none; }
+.ip-close { display: none; }
+.ip-body {
+  flex: 1; overflow-y: auto; position: relative;
+  padding: 0 20px 20px;
+}
+/* Assets subheader — spans full width above file grid + preview */
+.assets-subheader {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+  min-height: 28px;
+}
+.assets-subheader-left { display: flex; align-items: center; gap: 8px; }
+.assets-count { font-size: 13px; font-weight: 500; color: #6b7280; }
+.assets-subheader-right { display: flex; align-items: center; gap: 2px; }
+.ip-toolbar-btn {
+  width: 28px; height: 28px; border-radius: 6px; border: none;
+  background: transparent; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: #9ca3af; transition: all 0.15s;
+}
+.ip-toolbar-btn:hover { background: #f3f4f6; color: #374151; }
+.ip-toolbar-btn.ip-tb-delete:hover { background: #fef2f2; color: #dc2626; }
+.ip-toolbar-btn svg { width: 15px; height: 15px; }
+/* Image card */
+.ip-preview-area {
+  background: #f8f9fb; display: flex; align-items: center; justify-content: center;
+  padding: 0; position: relative; flex-shrink: 0;
+  border-radius: 12px; overflow: hidden;
+  aspect-ratio: 4/3; width: 100%;
+  border: none; height: auto;
+}
+.ip-preview-img {
+  width: 100%; height: 100%; object-fit: cover;
+  border-radius: 0; box-shadow: none;
+}
+.ip-preview-file {
+  display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 24px 0;
+}
+.ip-preview-file-icon {
+  width: 56px; height: 56px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center; font-size: 24px;
+}
+.ip-preview-file-name { font-size: 12px; font-weight: 600; color: #666; text-align: center; word-break: break-word; }
+/* Nav arrows on sides of image */
+.ip-nav {
+  position: absolute; top: 50%; left: 0; right: 0;
+  display: flex; justify-content: space-between; padding: 0 10px;
+  transform: translateY(-50%); pointer-events: none;
+  z-index: 5;
+}
+.ip-nav-btn {
+  width: 32px; height: 32px; border-radius: 50%; border: none;
+  background: rgba(255,255,255,0.85); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: #374151; transition: all 0.15s; pointer-events: auto;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+}
+.ip-nav-btn:hover { background: #fff; color: #111; transform: scale(1.05); }
+.ip-nav-btn svg { width: 14px; height: 14px; }
+/* Info below image */
+.ip-section { border-bottom: none; }
+.ip-sec-header { display: none; }
+.ip-sec-chevron { display: none; }
+.ip-sec-body { overflow: visible; max-height: none; }
+.ip-section.collapsed .ip-sec-body { max-height: none; }
+.ip-sec-inner { padding: 0; }
+.ip-info-row { display: flex; align-items: baseline; padding: 4px 0; gap: 12px; }
+.ip-info-lbl { font-size: 11px; font-weight: 600; color: #9ca3af; width: 50%; flex-shrink: 0; text-transform: uppercase; letter-spacing: 0.5px; }
+.ip-info-val { font-size: 13px; color: #374151; font-weight: 500; flex: 1; text-align: left; }
+/* Info as 2-col grid */
+.ip-info-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 2px 24px;
+  margin-top: 16px;
+}
+.ip-info-grid .ip-info-cell { padding: 6px 0; }
+.ip-info-grid .ip-info-cell-lbl { font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+.ip-info-grid .ip-info-cell-val { font-size: 13px; color: #374151; font-weight: 500; }
+/* Hide old metadata/custom fields sections */
+.ip-meta-row { display: none; }
+.ip-meta-lbl { display: none; }
+.ip-meta-input { display: none; }
+.ip-meta-textarea { display: none; }
+.ip-cf-row { display: none; }
+/* Delete button — ghost, red on hover */
+.ip-footer {
+  flex-shrink: 0; padding: 16px 0 0; display: flex; gap: 8px;
+  border-top: none;
+}
+.ip-footer .btn { display: none; }
+.ip-footer .ip-btn-delete {
+  padding: 8px 16px; border: 1.5px solid #e5e7eb; border-radius: 9px;
+  background: none; font-size: 12px; font-weight: 500; font-family: inherit;
+  color: #6b7280; cursor: pointer; transition: all 0.15s;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.ip-footer .ip-btn-delete:hover { border-color: #fca5a5; color: #dc2626; background: #fef2f2; }
+.ip-footer .ip-btn-delete svg { width: 14px; height: 14px; }
+
+/* ══ DELETE CONFIRM ══ */
+.del-confirm-overlay { position: fixed; inset: 0; background: rgba(17,24,39,0.4); display: flex; align-items: center; justify-content: center; z-index: 1100; backdrop-filter: blur(2px); }
+.del-confirm-overlay.hidden { display: none; }
+.del-confirm-box { background: #fff; border-radius: 20px; padding: 36px 32px 32px; width: 530px; box-shadow: 0 24px 60px rgba(0,0,0,0.16); position: relative; }
+.del-confirm-close { position: absolute; top: 16px; right: 16px; width: 32px; height: 32px; border: none; background: none; color: #9ca3af; cursor: pointer; border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: background 0.15s; font-size: 18px; }
+.del-confirm-close:hover { background: #f3f4f6; }
+.del-confirm-icon { width: 64px; height: 64px; border-radius: 50%; background: #fee2e2; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
+.del-confirm-title { font-size: 20px; font-weight: 700; color: #111827; text-align: center; margin-bottom: 16px; }
+.del-confirm-msg { font-size: 15px; color: #374151; text-align: center; line-height: 1.6; margin-bottom: 32px; }
+.del-confirm-actions { display: flex; gap: 12px; }
+.del-confirm-cancel { flex: 1; height: 52px; border: 1.5px solid #d1d5db; background: #fff; border-radius: 12px; font-size: 15px; font-weight: 500; font-family: inherit; color: #374151; cursor: pointer; transition: background 0.15s; }
+.del-confirm-cancel:hover { background: #f9fafb; }
+.del-confirm-ok { flex: 1; height: 52px; border: none; background: #dc2626; color: #fff; border-radius: 12px; font-size: 15px; font-weight: 600; font-family: inherit; cursor: pointer; transition: background 0.15s; }
+.del-confirm-ok:hover { background: #b91c1c; }
+
+/* ══ FILL METADATA MODAL ══ */
+.fm-overlay { position: fixed; inset: 0; background: rgba(17,24,39,0.45); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; z-index: 500; }
+.fm-overlay.hidden { display: none; }
+.fm-modal { width: 980px; height: 82vh; background: #fff; border-radius: 14px; box-shadow: 0 24px 80px rgba(0,0,0,0.18); display: flex; flex-direction: column; overflow: hidden; }
+.fm-topbar { height: 48px; border-bottom: 1px solid #f0f0f0; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+.fm-topbar-title { font-size: 14px; font-weight: 600; color: #111827; }
+.fm-close-btn { width: 32px; height: 32px; border: none; background: transparent; border-radius: 6px; cursor: pointer; color: #9ca3af; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
+.fm-close-btn:hover { background: #f5f5f7; }
+.fm-modal-body { flex: 1; display: flex; overflow: hidden; }
+.fm-sidebar { width: 220px; border-right: 1px solid #f0f0f0; padding: 8px 0 20px; display: flex; flex-direction: column; overflow-y: auto; flex-shrink: 0; }
+.fm-sidebar-group-label { font-size: 12px; font-weight: 600; color: #9ca3af; padding: 6px 16px; }
+.fm-sidebar-item { height: 36px; padding: 0 16px; display: flex; align-items: center; font-size: 13px; color: #374151; cursor: pointer; border-left: 2px solid transparent; transition: background 0.12s, color 0.12s; gap: 8px; }
+.fm-sidebar-item:hover { background: #f5f5f7; }
+.fm-sidebar-item.active { background: #eff6ff; color: #2563eb; border-left-color: transparent; }
+.fm-sidebar-item .fm-filled-dot { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; flex-shrink: 0; display: none; margin-left: auto; }
+.fm-main-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.fm-op-bar { padding: 14px 24px; border-bottom: 1px solid #f0f0f0; display: flex; gap: 12px; align-items: flex-start; flex-shrink: 0; overflow: visible; position: relative; z-index: 10; }
+.fm-op-field { display: flex; flex-direction: column; gap: 5px; }
+.fm-op-label { font-size: 11px; font-weight: 500; color: #9ca3af; letter-spacing: 0.4px; }
+.fm-op-value { flex: 1; }
+.fm-op-value-label { font-size: 11px; font-weight: 500; color: #9ca3af; letter-spacing: 0.4px; margin-bottom: 5px; }
+.fm-op-value input[type="text"] { width: 100%; height: 38px; border: 1.5px solid #e5e7eb; border-radius: 8px; padding: 0 12px; font-size: 13px; font-family: 'Inter', sans-serif; color: #374151; outline: none; transition: border-color 0.15s; background: #fff; }
+.fm-op-value input[type="text"]:focus { border-color: #2563eb; }
+.fm-op-value input[type="text"]::placeholder { color: #d1d5db; }
+.fm-apply-btn { height: 38px; padding: 0 16px; background: #eff6ff; color: #2563eb; border: none; border-radius: 8px; font-size: 13px; font-weight: 500; font-family: 'Inter', sans-serif; cursor: pointer; white-space: nowrap; transition: background 0.15s; }
+.fm-apply-btn:hover { background: #dbeafe; }
+.fm-confirm-overlay { position: fixed; inset: 0; background: rgba(17,24,39,0.4); display: flex; align-items: center; justify-content: center; z-index: 600; backdrop-filter: blur(2px); }
+.fm-confirm-overlay.hidden { display: none; }
+.fm-confirm-box { background: #fff; border-radius: 16px; padding: 32px 32px 28px; width: 480px; box-shadow: 0 24px 60px rgba(0,0,0,0.16); position: relative; }
+.fm-confirm-close { position: absolute; top: 16px; right: 16px; width: 32px; height: 32px; border: none; background: none; color: #9ca3af; cursor: pointer; border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
+.fm-confirm-close:hover { background: #f3f4f6; }
+.fm-confirm-icon { width: 56px; height: 56px; border-radius: 50%; background: #fff7ed; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+.fm-confirm-title { font-size: 17px; font-weight: 600; color: #111827; text-align: center; margin-bottom: 12px; }
+.fm-confirm-msg { font-size: 14px; color: #374151; text-align: center; line-height: 1.55; margin-bottom: 28px; }
+.fm-confirm-actions { display: flex; gap: 12px; }
+.fm-confirm-cancel { flex: 1; height: 44px; border: 1.5px solid #d1d5db; background: #fff; border-radius: 10px; font-size: 14px; font-weight: 500; font-family: 'Inter', sans-serif; color: #374151; cursor: pointer; transition: background 0.15s; }
+.fm-confirm-cancel:hover { background: #f9fafb; }
+.fm-confirm-ok { flex: 1; height: 44px; border: none; background: #f59e0b; color: #fff; border-radius: 10px; font-size: 14px; font-weight: 600; font-family: 'Inter', sans-serif; cursor: pointer; transition: background 0.15s; }
+.fm-confirm-ok:hover { background: #d97706; }
+.fm-table-header { padding: 10px 24px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; background: #fafafa; gap: 12px; flex-shrink: 0; }
+.fm-th-check { width: 18px; flex-shrink: 0; }
+.fm-th-cell { font-size: 11px; font-weight: 600; color: #9ca3af; letter-spacing: 0.5px; }
+.fm-th-thumb { width: 52px; flex-shrink: 0; }
+.fm-th-name { flex: 1.5; cursor: pointer; user-select: none; transition: color 0.15s; }
+.fm-th-name:hover { color: #6b7280; }
+.fm-th-name.sort-active { color: #2563eb; }
+.fm-th-size { width: 100px; flex-shrink: 0; }
+.fm-th-field { flex: 2; }
+.fm-table-body { flex: 1; overflow-y: auto; }
+.fm-file-row { padding: 10px 24px; border-bottom: 1px solid #f9fafb; display: flex; align-items: flex-start; gap: 12px; }
+.fm-file-row:hover { background: #fafafa; }
+.fm-file-row > input[type="checkbox"] { margin-top: 10px; accent-color: #2563eb; width: 18px; height: 18px; cursor: pointer; flex-shrink: 0; }
+.fm-file-thumb { width: 52px; height: 38px; border-radius: 6px; flex-shrink: 0; object-fit: cover; background: #f3f4f6; display: block; margin-top: 3px; }
+.fm-file-info { flex: 1.5; display: flex; flex-direction: column; gap: 2px; min-width: 0; padding-top: 6px; }
+.fm-file-name { font-size: 13px; font-weight: 500; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fm-file-meta { font-size: 11px; color: #9ca3af; }
+.fm-file-size-col { width: 100px; flex-shrink: 0; font-size: 12px; color: #9ca3af; padding-top: 10px; }
+.fm-file-input { flex: 2; }
+.fm-file-input input[type="text"] { width: 100%; height: 34px; border: 1.5px solid #e5e7eb; border-radius: 8px; padding: 0 10px; font-size: 13px; font-family: 'Inter', sans-serif; color: #374151; outline: none; transition: border-color 0.15s; background: #fff; }
+.fm-file-input input[type="text"]:focus { border-color: #2563eb; }
+.fm-file-input input[type="text"]::placeholder { color: #d1d5db; }
+/* Custom field dropdowns */
+.cfd-wrap { position: relative; width: 100%; }
+.cfd-box { border: 1.5px solid #e5e7eb; border-radius: 10px; background: #fff; cursor: pointer; transition: border-color 0.15s; user-select: none; }
+.cfd-box.open { border-color: #2563eb; }
+.cfd-box.has-value { border-color: #93c5fd; }
+.cfd-single-box { display: flex; align-items: center; justify-content: space-between; padding: 0 12px; height: 34px; }
+.cfd-single-box.cfd-lg { height: 38px; }
+.cfd-single-lbl { font-size: 13px; color: #9ca3af; }
+.cfd-single-lbl.picked { color: #111827; }
+.cfd-tags-area { display: flex; flex-wrap: wrap; gap: 5px; padding: 8px 12px 4px; min-height: 38px; align-items: center; }
+.cfd-search { border: none; outline: none; min-width: 80px; flex: 1; font-size: 13px; font-family: inherit; color: #374151; background: transparent; cursor: text; padding: 0; }
+.cfd-search::placeholder { color: #9ca3af; }
+.cfd-tag { display: inline-flex; align-items: center; gap: 4px; background: #f3f4f6; border-radius: 6px; padding: 3px 6px 3px 10px; font-size: 12px; color: #374151; white-space: nowrap; }
+.cfd-tag-x { border: none; background: none; cursor: pointer; color: #9ca3af; font-size: 15px; line-height: 1; padding: 0; display: flex; align-items: center; }
+.cfd-tag-x:hover { color: #374151; }
+.cfd-multi-footer { display: flex; align-items: center; gap: 8px; padding: 2px 12px 8px; }
+.cfd-select-all-lbl { font-size: 12px; color: #2563eb; font-weight: 500; cursor: pointer; }
+.cfd-deselect-all-lbl { font-size: 12px; color: #6b7280; font-weight: 500; cursor: pointer; }
+.cfd-deselect-all-lbl:hover { color: #dc2626; }
+.cfd-clear-lbl { display: none; }
+.cfd-footer-chevron { margin-left: auto; }
+.cfd-chevron { flex-shrink: 0; transition: transform 0.18s ease; color: #374151; }
+.cfd-box.open .cfd-chevron { transform: rotate(180deg); }
+.cfd-chevron svg { width: 13px; height: 13px; display: block; }
+.cfd-panel { display: none; background: #fff; border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); position: absolute; top: calc(100% + 4px); left: 0; width: 100%; z-index: 300; }
+.cfd-box.open + .cfd-panel { display: block; }
+.cfd-opt { padding: 10px 14px; font-size: 13px; color: #111827; cursor: pointer; transition: background 0.1s; }
+.cfd-opt:hover { background: #eff6ff; }
+.cfd-opt.selected { color: #2563eb; font-weight: 500; background: #eff6ff; }
+.cfd-applied-wrap { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px 0; align-items: center; min-height: 34px; }
+.cfd-applied-badge { display: inline-flex; align-items: center; background: #dcfce7; color: #166534; border-radius: 6px; padding: 3px 10px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+.fm-modal-footer { padding: 14px 24px; border-top: 1px solid #f0f0f0; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+.fm-back-btn { background: none; border: none; color: #6b7280; font-size: 13px; font-family: 'Inter', sans-serif; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: color 0.15s; padding: 0; }
+.fm-back-btn:hover { color: #374151; }
+.fm-footer-right { display: flex; gap: 8px; }
+.fm-cancel-btn { height: 36px; padding: 0 20px; border: 1.5px solid #e5e7eb; background: #fff; color: #374151; border-radius: 8px; font-size: 13px; font-family: 'Inter', sans-serif; cursor: pointer; transition: background 0.15s; }
+.fm-cancel-btn:hover { background: #f9fafb; }
+.fm-upload-btn { height: 36px; padding: 0 20px; background: #2563eb; color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; font-family: 'Inter', sans-serif; cursor: pointer; display: flex; align-items: center; gap: 7px; transition: background 0.15s; }
+.fm-upload-btn:hover { background: #1d4ed8; }
+#fmSelectAll { accent-color: #2563eb; width: 18px; height: 18px; cursor: pointer; flex-shrink: 0; margin-top: 0; }
+
+/* ══ VALIDATION TOAST ══ */
+.upload-toast {
+  position: fixed; top: 24px; left: 50%; transform: translateX(-50%) translateY(-80px);
+  background: #fff; border: 1px solid #fca5a5; border-radius: 12px;
+  padding: 12px 20px; display: flex; align-items: center; gap: 10px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.12); z-index: 2000;
+  transition: transform 0.3s cubic-bezier(0.34,1.2,0.64,1);
+  max-width: 420px;
+}
+.upload-toast.show { transform: translateX(-50%) translateY(0); }
+.upload-toast-icon {
+  width: 28px; height: 28px; border-radius: 50%; background: #fee2e2;
+  color: #dc2626; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.upload-toast-icon svg { width: 14px; height: 14px; }
+.upload-toast-msg { font-size: 13px; color: #374151; line-height: 1.4; }
+.upload-toast-msg strong { color: #dc2626; font-weight: 600; }
+
+/* ══ DRAG OVERLAY ON MODAL ══ */
+.um-drag-overlay {
+  position: absolute; inset: 0; z-index: 50;
+  background: rgba(37,99,235,0.06);
+  border: 2.5px dashed var(--blue);
+  border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+.um-drag-overlay.active { opacity: 1; }
+.um-drag-label {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  color: var(--blue);
+}
+.um-drag-label svg { width: 36px; height: 36px; }
+.um-drag-label span { font-size: 15px; font-weight: 700; }
+
+/* ══ UPLOAD PROGRESS BAR ══ */
+.a-progress {
+  display: none; align-items: center; gap: 10px; flex: 1;
+}
+.a-progress.active { display: flex; }
+.a-prog-bar {
+  flex: 1; height: 4px; background: #e5e7eb; border-radius: 4px; overflow: hidden;
+}
+.a-prog-fill {
+  height: 100%; background: var(--blue); border-radius: 4px;
+  transition: width 0.3s ease; width: 0%;
+}
+.a-prog-text { font-size: 12px; font-weight: 600; color: #6b7280; white-space: nowrap; }
+
+/* ══ MOBILE ══ */
+@media (max-width: 768px) {
+  .demo-page { padding: 24px 16px; }
+  .uploader-modal { max-width: 100%; border-radius: 12px; }
+  .um-body { padding: 16px 16px 0; }
+  .inline-preview.open { width: min(260px, 45%); }
+  .src-pill-extra { display: none !important; }
+  .dz-more-wrap { display: block; }
+  .dz-sources-grid { flex-wrap: wrap; }
+  .drop-zone { overflow: visible; }
+}
+@media (max-width: 480px) {
+  .assets-area { flex-direction: column; }
+  .inline-preview.open { width: 100%; border-left: none; border-top: 1px solid #e5e7eb; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     DEMO PAGE
+══════════════════════════════════════════ -->
+<div class="demo-page">
+  <h1 class="demo-title">@scaleflex/uploader</h1>
+  <p class="demo-desc">Standalone upload widget for testing the Uploader Plugin component</p>
+
+  <div class="demo-controls">
+    <button class="demo-btn demo-btn-primary" onclick="openUploader()">Open Uploader</button>
+  </div>
+
+  <div class="demo-config">
+    <h2>Configuration</h2>
+    <div class="demo-form-row">
+      <div class="demo-form-group">
+        <label>Allowed Formats</label>
+        <input type="text" id="cfgFormats" placeholder="jpg, png, pdf, svg" value="" />
+      </div>
+      <div class="demo-form-group">
+        <label>Max File Size (MB)</label>
+        <input type="number" id="cfgMaxSize" placeholder="100" value="100" />
+      </div>
+    </div>
+    <div class="demo-form-row">
+      <div class="demo-form-group">
+        <label>Upload Destination</label>
+        <input type="text" id="cfgDest" placeholder="Folder name" value="My Uploads" />
+      </div>
+    </div>
+    <div id="demoOutput">Ready. Click "Open Uploader" to launch the widget.</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     UPLOADER MODAL
+══════════════════════════════════════════ -->
+<div class="uploader-overlay" id="uploaderOverlay">
+  <div class="uploader-modal">
+
+    <!-- Modal header -->
+    <div class="um-header">
+      <div class="um-header-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <polyline points="16 16 12 12 8 16"/>
+          <line x1="12" y1="12" x2="12" y2="21"/>
+          <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/>
+        </svg>
+      </div>
+      <div class="um-title">Upload Files</div>
+      <button class="um-close" onclick="closeUploader()">&#x2715;</button>
+    </div>
+
+    <!-- Drag overlay -->
+    <div class="um-drag-overlay" id="umDragOverlay">
+      <div class="um-drag-label">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>
+        <span>Drop files to upload</span>
+      </div>
+    </div>
+
+    <!-- Modal body -->
+    <div class="um-body">
+
+      <!-- Drop zone -->
+      <div class="drop-zone" id="dropZone">
+        <div class="dz-glow"></div>
+        <div class="dz-rings">
+          <div class="dz-ring"></div>
+          <div class="dz-ring"></div>
+          <div class="dz-core">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+              <polyline points="16 16 12 12 8 16"/>
+              <line x1="12" y1="12" x2="12" y2="21"/>
+              <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/>
+            </svg>
+          </div>
+        </div>
+        <div class="dz-title">Drag &amp; Drop or click to <span>browse</span></div>
+        <div class="dz-sub">Drop files anywhere on this page</div>
+
+        <!-- Divider inside drop zone -->
+        <div class="dz-divider">
+          <div class="dz-divider-line"></div>
+          <div class="dz-divider-label">or import from</div>
+          <div class="dz-divider-line"></div>
+        </div>
+
+        <!-- Pill sources inside drop zone -->
+        <div class="dz-sources-grid">
+          <button class="src-pill-btn" onclick="event.stopPropagation(); document.getElementById('fileInput').click()">
+            <span class="pill-ico c1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></span>
+            My Device
+          </button>
+          <button class="src-pill-btn" onclick="event.stopPropagation(); openUrlModal()">
+            <span class="pill-ico c3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg></span>
+            URL link
+          </button>
+          <button class="src-pill-btn" onclick="event.stopPropagation(); openCloud('gdrive')">
+            <span class="pill-ico"><svg width="16" height="16" viewBox="0 0 87.3 78"><path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3L27.5 53H0c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/><path d="M43.65 25L29.9 1.2C28.55 2 27.4 3.1 26.6 4.5L1.2 48.5C.4 49.9 0 51.45 0 53h27.5z" fill="#00ac47"/><path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5H59.8l5.65 10.85z" fill="#ea4335"/><path d="M43.65 25L57.4 1.2C56.05.4 54.5 0 52.9 0H34.4c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d"/><path d="M59.8 53H27.5L13.75 76.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc"/><path d="M73.4 26.5l-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25 59.8 53h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00"/></svg></span>
+            Google Drive
+          </button>
+          <button class="src-pill-btn src-pill-extra" onclick="event.stopPropagation(); openCloud('dropbox')">
+            <span class="pill-ico"><span class="bi db"><svg width="11" height="11" viewBox="0 0 528 512" fill="white"><path d="M264.4 116.3l-132 84.3 132 84.3-132 84.3L0 284.1l132.3-84.3L0 116.3 132.3 32l132.1 84.3zm-132 284.5l132-84.3 132 84.3-132 84.4-132-84.4zm132-116.6l132.3-84.3-132.3-83.9 131.6-84.3L528 116.3l-132.3 84.1L528 284.7l-132.4 83.9-131.2-84.4z"/></svg></span></span>
+            Dropbox
+          </button>
+          <button class="src-pill-btn src-pill-extra" onclick="event.stopPropagation(); openCamera()">
+            <span class="pill-ico c2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></span>
+            Camera
+          </button>
+          <button class="src-pill-btn src-pill-extra" onclick="event.stopPropagation(); openCloud('box')">
+            <span class="pill-ico"><span class="bi bx">box</span></span>
+            Box
+          </button>
+          <button class="src-pill-btn src-pill-extra" onclick="event.stopPropagation(); openCloud('onedrive')">
+            <span class="pill-ico"><span class="bi od"><svg width="11" height="11" viewBox="0 0 24 24" fill="white"><path d="M10.5 13.5C10.5 11.57 12.07 10 14 10h6.5c.17 0 .34.01.5.02A6 6 0 009.01 11.6 4 4 0 0010.5 13.5zM12 14.5a5 5 0 00-5-5 5 5 0 00-5 5 3 3 0 003 3h9.5A3.5 3.5 0 0018 14c0-.18-.01-.35-.03-.52A5.48 5.48 0 0112 14.5z"/></svg></span></span>
+            OneDrive
+          </button>
+          <!-- More pill — visible only on small screens -->
+          <div class="dz-more-wrap" id="dzMoreWrap">
+            <button class="src-pill-btn" onclick="event.stopPropagation(); toggleMoreDropdown()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="color:#6b7280"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
+              More
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="width:12px;height:12px;color:#9ca3af"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="dz-more-dropdown" id="dzMoreDropdown">
+              <button class="dz-more-item" onclick="event.stopPropagation(); closeMoreDropdown(); openCloud('dropbox')">
+                <div class="dmi-ico"><span class="bi db"><svg width="12" height="12" viewBox="0 0 528 512" fill="white"><path d="M264.4 116.3l-132 84.3 132 84.3-132 84.3L0 284.1l132.3-84.3L0 116.3 132.3 32l132.1 84.3zm-132 284.5l132-84.3 132 84.3-132 84.4-132-84.4zm132-116.6l132.3-84.3-132.3-83.9 131.6-84.3L528 116.3l-132.3 84.1L528 284.7l-132.4 83.9-131.2-84.4z"/></svg></span></div>
+                Dropbox
+              </button>
+              <button class="dz-more-item" onclick="event.stopPropagation(); closeMoreDropdown(); openCamera()">
+                <div class="dmi-ico" style="color:#7c3aed"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="16" height="16"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
+                Camera
+              </button>
+              <button class="dz-more-item" onclick="event.stopPropagation(); closeMoreDropdown(); openCloud('box')">
+                <div class="dmi-ico"><span class="bi bx">box</span></div>
+                Box
+              </button>
+              <button class="dz-more-item" onclick="event.stopPropagation(); closeMoreDropdown(); openCloud('onedrive')">
+                <div class="dmi-ico"><span class="bi od"><svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M10.5 13.5C10.5 11.57 12.07 10 14 10h6.5c.17 0 .34.01.5.02A6 6 0 009.01 11.6 4 4 0 0010.5 13.5zM12 14.5a5 5 0 00-5-5 5 5 0 00-5 5 3 3 0 003 3h9.5A3.5 3.5 0 0018 14c0-.18-.01-.35-.03-.52A5.48 5.48 0 0112 14.5z"/></svg></span></div>
+                OneDrive
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Collapsed state sources (when files added) -->
+        <div class="dz-sources-row">
+          <span class="dz-src-divider"></span>
+          <button class="dz-src-ico" data-tip="My Device" onclick="event.stopPropagation(); document.getElementById('fileInput').click()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          </button>
+          <button class="dz-src-ico" data-tip="Camera" onclick="event.stopPropagation(); openCamera()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          </button>
+          <button class="dz-src-ico" data-tip="URL link" onclick="event.stopPropagation(); openUrlModal()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+          </button>
+          <button class="dz-src-ico" data-tip="Google Drive" onclick="event.stopPropagation(); openCloud('gdrive')">
+            <svg width="16" height="16" viewBox="0 0 87.3 78"><path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3L27.5 53H0c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/><path d="M43.65 25L29.9 1.2C28.55 2 27.4 3.1 26.6 4.5L1.2 48.5C.4 49.9 0 51.45 0 53h27.5z" fill="#00ac47"/><path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5H59.8l5.65 10.85z" fill="#ea4335"/><path d="M43.65 25L57.4 1.2C56.05.4 54.5 0 52.9 0H34.4c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d"/><path d="M59.8 53H27.5L13.75 76.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc"/><path d="M73.4 26.5l-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25 59.8 53h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00"/></svg>
+          </button>
+          <button class="dz-src-ico" data-tip="Dropbox" onclick="event.stopPropagation(); openCloud('dropbox')">
+            <span class="bi db"><svg width="10" height="10" viewBox="0 0 528 512" fill="white"><path d="M264.4 116.3l-132 84.3 132 84.3-132 84.3L0 284.1l132.3-84.3L0 116.3 132.3 32l132.1 84.3zm-132 284.5l132-84.3 132 84.3-132 84.4-132-84.4zm132-116.6l132.3-84.3-132.3-83.9 131.6-84.3L528 116.3l-132.3 84.1L528 284.7l-132.4 83.9-131.2-84.4z"/></svg></span>
+          </button>
+          <button class="dz-src-ico" data-tip="Box" onclick="event.stopPropagation(); openCloud('box')">
+            <span class="bi bx">box</span>
+          </button>
+          <button class="dz-src-ico" data-tip="OneDrive" onclick="event.stopPropagation(); openCloud('onedrive')">
+            <span class="bi od"><svg width="10" height="10" viewBox="0 0 24 24" fill="white"><path d="M10.5 13.5C10.5 11.57 12.07 10 14 10h6.5c.17 0 .34.01.5.02A6 6 0 009.01 11.6 4 4 0 0010.5 13.5zM12 14.5a5 5 0 00-5-5 5 5 0 00-5 5 3 3 0 003 3h9.5A3.5 3.5 0 0018 14c0-.18-.01-.35-.03-.52A5.48 5.48 0 0112 14.5z"/></svg></span>
+          </button>
+        </div>
+
+        <div class="dz-ripple" id="dzRipple"></div>
+        <input type="file" id="fileInput" multiple style="display:none">
+      </div>
+
+      <!-- Subheader bar -->
+      <div class="assets-subheader" id="assetsSubheader" style="display:none">
+        <div class="assets-subheader-left">
+          <span class="assets-count" id="assetsCount"></span>
+        </div>
+        <div class="assets-subheader-right" id="ipToolbar"></div>
+      </div>
+
+      <!-- File stack + inline preview -->
+      <div class="assets-area" id="assetsArea" style="display:none">
+        <div class="file-stack" id="fileStack"></div>
+        <div class="inline-preview" id="inlinePreview">
+          <div class="ip-body" id="ipBody"></div>
+          <div id="ipFilename" style="display:none"></div>
+        </div>
+      </div>
+
+      <!-- Success -->
+      <div class="success-card" id="successCard">
+        <div class="s-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div class="s-title">Uploaded successfully!</div>
+        <div class="s-sub">All files are ready for use</div>
+        <div class="s-thumbs" id="sThumbs"></div>
+        <div class="s-count-badge" id="sCountBadge"></div>
+        <div class="s-actions">
+          <button class="btn btn-ghost" onclick="resetUploader()">Upload more</button>
+          <button class="btn btn-primary" onclick="closeUploader()">Done</button>
+        </div>
+      </div>
+
+    </div><!-- /um-body -->
+
+    <!-- Actions bar -->
+    <div class="actions-bar" id="actionsBar">
+      <div class="actions-bar-inner">
+        <div class="a-count" id="aCount"></div>
+        <div class="a-progress" id="aProgress">
+          <div class="a-prog-bar"><div class="a-prog-fill" id="aProgFill"></div></div>
+          <div class="a-prog-text" id="aProgText"></div>
+        </div>
+        <div class="a-right">
+          <button class="btn btn-ghost" onclick="clearAll()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+            Clear
+          </button>
+          <button class="btn btn-sec" onclick="document.getElementById('fileInput').click()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add more
+          </button>
+          <button class="btn btn-primary" id="uploadBtn" onclick="startUpload()">
+            <span id="bIdle" style="display:flex;align-items:center;gap:6px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>
+              Upload
+            </span>
+            <span id="bUpl" style="display:none;align-items:center;gap:6px"><span class="btn-spin"></span>Uploading&hellip;</span>
+            <span id="bDone" style="display:none;align-items:center;gap:6px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Done!
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /uploader-modal -->
+</div><!-- /uploader-overlay -->
+
+<!-- ══ VALIDATION TOAST ══ -->
+<div class="upload-toast" id="uploadToast">
+  <div class="upload-toast-icon">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+  </div>
+  <div class="upload-toast-msg" id="toastMsg"></div>
+</div>
+
+<!-- ══ DELETE CONFIRM ══ -->
+<div class="del-confirm-overlay hidden" id="delConfirmOverlay">
+  <div class="del-confirm-box">
+    <button class="del-confirm-close" onclick="hideDeleteConfirm()">&#x2715;</button>
+    <div class="del-confirm-icon">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
+      </svg>
+    </div>
+    <div class="del-confirm-title">Delete asset</div>
+    <div class="del-confirm-msg" id="delConfirmMsg"></div>
+    <div class="del-confirm-actions">
+      <button class="del-confirm-cancel" onclick="hideDeleteConfirm()">Cancel</button>
+      <button class="del-confirm-ok" onclick="confirmDelete()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ INNER MODAL OVERLAY (URL, Camera, Cloud) ══ -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-head-icon" id="modalIcon"></div>
+      <div class="modal-title" id="modalTitle"></div>
+      <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+    </div>
+    <div class="modal-body">
+      <div id="modalContent"></div>
+    </div>
+  </div>
+</div>
+
+
+<script>
+/* ══════════════════════════════════════════
+   UPLOADER / CLOSE
+══════════════════════════════════════════ */
+function openUploader() {
+  const out = document.getElementById('demoOutput');
+  out.textContent = 'Uploader opened. Waiting for files\u2026';
+  document.getElementById('uploaderOverlay').classList.add('open');
+}
+function closeUploader() {
+  document.getElementById('uploaderOverlay').classList.remove('open');
+  // Log results to demo output
+  if (files.length) {
+    const out = document.getElementById('demoOutput');
+    const lines = files.map(f => `  \u2713 ${f.file.name} (${fmtSize(f.file.size)})`);
+    out.textContent = `Upload complete \u2014 ${files.length} file${files.length>1?'s':''}:\n${lines.join('\n')}`;
+  }
+  // Reset after close
+  setTimeout(() => resetUploader(), 300);
+}
+
+function resetUploader() {
+  uploading = false; files = [];
+  document.getElementById('fileStack').innerHTML = '';
+  ['fileStack','dropZone'].forEach(id => document.getElementById(id).style.display = '');
+  document.getElementById('successCard').classList.remove('visible');
+  document.getElementById('actionsBar').classList.remove('visible');
+  document.getElementById('bIdle').style.display = 'flex';
+  document.getElementById('bUpl').style.display = 'none';
+  document.getElementById('bDone').style.display = 'none';
+  document.getElementById('uploadBtn').classList.remove('done-state');
+  dropZone.classList.remove('has-files');
+  document.getElementById('assetsArea').style.display = 'none';
+  document.getElementById('assetsSubheader').style.display = 'none';
+  document.getElementById('ipToolbar').innerHTML = '';
+  // Reset progress
+  document.getElementById('aProgress').classList.remove('active');
+  document.getElementById('aProgFill').style.width = '0%';
+  document.getElementById('aCount').style.display = '';
+  // Restore header
+  document.querySelector('.um-header-icon').style.background = '';
+  document.querySelector('.um-header-icon').style.color = '';
+  document.querySelector('.um-header-icon').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>';
+  document.querySelector('.um-title').textContent = 'Upload Files';
+}
+
+/* ══════════════════════════════════════════
+   CORE ENGINE (from Upload New Version)
+══════════════════════════════════════════ */
+const EXT = {jpg:'img',jpeg:'img',png:'img',gif:'img',webp:'img',svg:'img',heic:'img',pdf:'pdf',doc:'doc',docx:'doc',xls:'doc',xlsx:'doc',ppt:'doc',pptx:'doc',mp4:'vid',mov:'vid',avi:'vid',webm:'vid',zip:'zip',rar:'zip',gz:'zip','7z':'zip'};
+const ICONS = {
+  img:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`,
+  pdf:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`,
+  doc:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>`,
+  vid:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="2" y="7" width="15" height="10" rx="2"/><polygon points="17 9 22 7 22 17 17 15 17 9"/></svg>`,
+  zip:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>`,
+  gen:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>`
+};
+
+let files = [], uploading = false;
+
+function getType(name){ return EXT[name.split('.').pop().toLowerCase()] || 'gen'; }
+function fmtSize(b){ return b<1024?b+' B':b<1048576?(b/1024).toFixed(1)+' KB':(b/1048576).toFixed(1)+' MB'; }
+
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+const dzRipple  = document.getElementById('dzRipple');
+
+dropZone.addEventListener('click', e=>{
+  const r = dropZone.getBoundingClientRect();
+  dzRipple.style.left=(e.clientX-r.left)+'px'; dzRipple.style.top=(e.clientY-r.top)+'px';
+  dzRipple.classList.remove('go'); void dzRipple.offsetWidth; dzRipple.classList.add('go');
+  fileInput.click();
+});
+/* ══ VALIDATION ══ */
+function showToast(html) {
+  const t = document.getElementById('uploadToast');
+  document.getElementById('toastMsg').innerHTML = html;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 4000);
+}
+
+function validateFile(f) {
+  const cfgFormats = document.getElementById('cfgFormats')?.value.trim();
+  const cfgMaxSize = parseFloat(document.getElementById('cfgMaxSize')?.value) || 0;
+  // Check format
+  if (cfgFormats) {
+    const allowed = cfgFormats.split(',').map(s => s.trim().toLowerCase().replace(/^\./,''));
+    const ext = f.name.split('.').pop().toLowerCase();
+    if (!allowed.includes(ext)) {
+      showToast(`<strong>${f.name}</strong> rejected \u2014 format .${ext} not allowed. Allowed: ${allowed.join(', ')}`);
+      return false;
+    }
+  }
+  // Check size
+  if (cfgMaxSize > 0) {
+    const maxBytes = cfgMaxSize * 1048576;
+    if (f.size > maxBytes) {
+      showToast(`<strong>${f.name}</strong> rejected \u2014 ${fmtSize(f.size)} exceeds max ${cfgMaxSize} MB`);
+      return false;
+    }
+  }
+  return true;
+}
+
+/* ══ DRAG OVERLAY ON MODAL ══ */
+const uploaderModal = document.querySelector('.uploader-modal');
+let dragCounter = 0;
+uploaderModal.addEventListener('dragenter', e => {
+  e.preventDefault(); dragCounter++;
+  // Only show overlay when files already added (collapsed drop zone)
+  if (files.length > 0) {
+    document.getElementById('umDragOverlay').classList.add('active');
+  }
+});
+uploaderModal.addEventListener('dragleave', e => {
+  dragCounter--;
+  if (dragCounter <= 0) { dragCounter = 0; document.getElementById('umDragOverlay').classList.remove('active'); }
+});
+uploaderModal.addEventListener('dragover', e => e.preventDefault());
+uploaderModal.addEventListener('drop', e => {
+  e.preventDefault(); dragCounter = 0;
+  document.getElementById('umDragOverlay').classList.remove('active');
+  dropZone.classList.remove('drag-over');
+  handleFiles(Array.from(e.dataTransfer.files));
+});
+
+document.addEventListener('dragover', e=>e.preventDefault());
+document.addEventListener('drop', e=>{ e.preventDefault(); });
+// Drop zone drag-over only when empty (no files yet)
+dropZone.addEventListener('dragenter', () => { if (!files.length) dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', e => { if (!dropZone.contains(e.relatedTarget)) dropZone.classList.remove('drag-over'); });
+fileInput.addEventListener('change', ()=>{ handleFiles(Array.from(fileInput.files)); fileInput.value=''; });
+
+function handleFiles(newFiles){
+  let added = 0;
+  newFiles.forEach((f,i)=>{
+    if (!validateFile(f)) return;
+    const id=Date.now()+i, type=getType(f.name);
+    const item={id,file:f,type,state:'pending'};
+    files.push(item);
+    renderCard(item,added*55);
+    added++;
+  });
+  if(files.length) { dropZone.classList.add('has-files'); document.getElementById('assetsArea').style.display=''; }
+  updateActions();
+}
+
+
+function renderCard(item,delay){
+  const stack=document.getElementById('fileStack');
+  const tile=document.createElement('div');
+  tile.className='tile pending'; tile.id='card-'+item.id;
+  tile.style.animationDelay=delay+'ms';
+  const accentColors={img:'#16a34a',pdf:'#dc2626',doc:'#1d4ed8',vid:'#7c3aed',zip:'#b45309',gen:'#94a3b8'};
+  tile.style.setProperty('--accent', accentColors[item.type]||'#e5e7eb');
+  tile.onclick=function(e){if(!e.target.closest('.tile-btn-del,.tile-check-box,.tile-undo,.tile-rename'))viewFile(item.id)};
+  const isImg=item.type==='img';
+  const bgAttr=isImg?`style="background-image:url('${URL.createObjectURL(item.file)}')"`:'';;
+  const bgClass=isImg?'':item.type;
+  const iconHtml=isImg?'':`<div class="tile-icon"><div class="tile-icon-inner ${item.type}">${ICONS[item.type]}</div></div>`;
+  const ext=(item.file.name.split('.').pop()||'file').toUpperCase();
+  tile.innerHTML=`
+    <div class="tile-preview">
+      <div class="tile-bg ${bgClass}" ${bgAttr}></div>
+      ${iconHtml}
+      <button class="tile-btn-del" onclick="event.stopPropagation(); removeCard(${item.id})">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+      </button>
+      <div class="tile-done-overlay">
+        <div class="tile-check"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+      </div>
+      <div class="tile-spinner"><div class="fp-spin"></div></div>
+      <div class="tile-prog"><div class="tile-prog-fill" id="pr-${item.id}"></div></div>
+      <div class="tile-actions">
+        <button class="tile-btn-preview" onclick="viewFile(${item.id})">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          Preview
+        </button>
+      </div>
+    </div>
+    <div class="tile-info">
+      <div class="tile-name" id="tname-${item.id}" ondblclick="inlineRename(${item.id}, this)">${item.file.name}</div>
+      <div class="tile-meta">${ext} &middot; ${fmtSize(item.file.size)}</div>
+    </div>
+    <div class="tile-rename" id="rename-${item.id}">
+      <div class="tile-rename-inner">
+        <div class="tile-rename-label">Rename file</div>
+        <input class="tile-rename-input" id="rname-${item.id}"
+          onkeydown="renameDone(event,${item.id})"
+          onblur="cancelRename(${item.id})" />
+        <div class="tile-rename-hint">Enter to save &middot; Esc to cancel</div>
+      </div>
+    </div>`;
+  stack.appendChild(tile);
+}
+
+function inlineRename(id, el){
+  const item = files.find(f=>f.id===id);
+  if(!item) return;
+  const name = item.file.name;
+  const dot = name.lastIndexOf('.');
+  const base = dot > 0 ? name.substring(0, dot) : name;
+  const ext = dot > 0 ? name.substring(dot) : '';
+  const input = document.createElement('input');
+  input.className = 'tile-name-input';
+  input.value = base;
+  el.replaceWith(input);
+  input.focus();
+  input.select();
+  function save(){
+    const newBase = input.value.trim() || base;
+    const newName = newBase + ext;
+    item.file = new File([item.file], newName, {type: item.file.type});
+    const div = document.createElement('div');
+    div.className = 'tile-name';
+    div.id = 'tname-' + id;
+    div.textContent = newName;
+    div.ondblclick = () => inlineRename(id, div);
+    input.replaceWith(div);
+    if (_ipCurrentId === id) {
+      document.getElementById('ipFilename').textContent = newName;
+    }
+  }
+  input.addEventListener('blur', save);
+  input.addEventListener('keydown', e => {
+    if(e.key === 'Enter'){ e.preventDefault(); input.blur(); }
+    if(e.key === 'Escape'){ input.value = base; input.blur(); }
+  });
+}
+
+function toggleTileSelect(id, cb){
+  const card = document.getElementById('card-'+id);
+  if(!card) return;
+  if(cb.checked) card.classList.add('selected');
+  else card.classList.remove('selected');
+}
+function removeCard(id){
+  files=files.filter(f=>f.id!==id);
+  const c=document.getElementById('card-'+id);
+  if(c){c.style.cssText='opacity:0;transform:scale(0.96);transition:0.2s;'; setTimeout(()=>c.remove(),200);}
+  if(!files.length) { dropZone.classList.remove('has-files'); document.getElementById('assetsArea').style.display='none'; }
+  updateActions();
+}
+function undoFile(id){
+  const item=files.find(f=>f.id===id); if(!item) return;
+  item.state='pending';
+  const c=document.getElementById('card-'+id);
+  if(c){c.className='tile pending'; document.getElementById('pr-'+id).style.transform='scaleX(0)';}
+}
+function clearAll(){
+  files=[]; document.getElementById('fileStack').innerHTML='';
+  dropZone.classList.remove('has-files'); document.getElementById('assetsArea').style.display='none'; updateActions();
+}
+function updateActions(){
+  const bar=document.getElementById('actionsBar');
+  const subheader=document.getElementById('assetsSubheader');
+  if(files.length) {
+    bar.classList.add('visible');
+    const totalBytes = files.reduce((s,f) => s + f.file.size, 0);
+    document.getElementById('aCount').innerHTML = files.length + ' file' + (files.length>1?'s':'') + ' <span>\u00b7 ' + fmtSize(totalBytes) + '</span>';
+    // Subheader count
+    if(subheader) { subheader.style.display='flex'; document.getElementById('assetsCount').textContent = files.length + ' asset' + (files.length>1?'s':''); }
+  } else {
+    bar.classList.remove('visible');
+    if(subheader) subheader.style.display='none';
+  }
+}
+
+function startUpload(){
+  if(uploading||!files.length) return; uploading=true;
+  document.getElementById('bIdle').style.display='none';
+  document.getElementById('bUpl').style.display='flex';
+  // Show progress bar, hide count & sort
+  document.getElementById('aCount').style.display='none';
+  document.getElementById('aProgress').classList.add('active');
+
+  files.forEach(item=>{
+    item.state='uploading';
+    const c=document.getElementById('card-'+item.id);
+    if(c) c.className='tile uploading';
+  });
+  let done=0;
+  const total=files.length;
+  files.forEach((item,idx)=>{
+    const pr=document.getElementById('pr-'+item.id); let pct=0;
+    const iv=setInterval(()=>{
+      pct+=Math.random()*9+3;
+      if(pct>=100){
+        pct=100; clearInterval(iv); item.state='done'; done++;
+        const c=document.getElementById('card-'+item.id);
+        if(c) c.className='tile done';
+        // Update global progress
+        document.getElementById('aProgFill').style.width=(done/total*100)+'%';
+        document.getElementById('aProgText').textContent=done+'/'+total+' files';
+        if(done===total) finish();
+      }
+      if(pr) pr.style.transform=`scaleX(${pct/100})`;
+    },110+idx*35);
+  });
+}
+
+function finish(){
+  document.getElementById('bUpl').style.display='none';
+  document.getElementById('bDone').style.display='flex';
+  document.getElementById('uploadBtn').classList.add('done-state');
+  setTimeout(()=>{
+    document.getElementById('dropZone').style.display='none';
+    document.getElementById('fileStack').style.display='none';
+    document.getElementById('assetsArea').style.display='none';
+    closeInlinePreview();
+    document.getElementById('actionsBar').classList.remove('visible');
+
+    // Change header to "Upload Complete" with blue icon
+    document.querySelector('.um-header-icon').style.background = '#eff6ff';
+    document.querySelector('.um-header-icon').style.color = '#2563eb';
+    document.querySelector('.um-header-icon').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>';
+    document.querySelector('.um-title').textContent = 'Upload Complete';
+
+    // Build thumbnails — clean, no overlay
+    const maxThumbs = 7;
+    const typeEmoji = { pdf:'\ud83d\udcc4', doc:'\ud83d\udcdd', vid:'\ud83c\udfac', zip:'\ud83d\udddc\ufe0f', gen:'\ud83d\udcc1' };
+    let thumbsHtml = '';
+    const showFiles = files.slice(0, maxThumbs);
+    showFiles.forEach((item, i) => {
+      if (item.type === 'img') {
+        const url = URL.createObjectURL(item.file);
+        thumbsHtml += `<div class="s-thumb"><img src="${url}" /></div>`;
+      } else {
+        thumbsHtml += `<div class="s-thumb-file ${item.type}">${typeEmoji[item.type]||'\ud83d\udcc1'}</div>`;
+      }
+    });
+    if (files.length > maxThumbs) {
+      thumbsHtml += `<div class="s-more-badge">+${files.length - maxThumbs}</div>`;
+    }
+    document.getElementById('sThumbs').innerHTML = thumbsHtml;
+
+    // Count badge
+    const totalBytes = files.reduce((s,f) => s + f.file.size, 0);
+    document.getElementById('sCountBadge').textContent = files.length + ' file' + (files.length>1?'s':'') + ' \u00b7 ' + fmtSize(totalBytes) + ' uploaded';
+
+    document.getElementById('successCard').classList.add('visible');
+  },1100);
+}
+
+/* ══ INLINE PREVIEW ══ */
+let _ipCurrentId = null;
+if (!window._ipMeta) window._ipMeta = {};
+
+const FM_CHEVRON = `<span class="cfd-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>`;
+
+function ipBuildSingle(opts, placeholder, wrapId) {
+  const options = opts.map(o => `<div class="cfd-opt" onclick="cfdPick(this)">${o}</div>`).join('');
+  return `<div class="cfd-wrap" id="${wrapId}"><div class="cfd-box cfd-single-box" onclick="cfdToggle(this)"><span class="cfd-single-lbl">${placeholder}</span>${FM_CHEVRON}</div><div class="cfd-panel">${options}</div></div>`;
+}
+function ipBuildMulti(opts, placeholder, wrapId) {
+  const options = opts.map(o => `<div class="cfd-opt" onclick="cfdMultiPick(this)">${o}</div>`).join('');
+  return `<div class="cfd-wrap" id="${wrapId}"><div class="cfd-box cfd-multi-box" onclick="cfdToggle(this)"><div class="cfd-tags-area" data-placeholder="${placeholder}"><input class="cfd-search" placeholder="${placeholder}" onclick="event.stopPropagation()" /></div><div class="cfd-multi-footer"><span class="cfd-select-all-lbl" onclick="event.stopPropagation();cfdSelectAll(this.closest('.cfd-wrap'))">Select all</span><span class="cfd-deselect-all-lbl" onclick="event.stopPropagation();cfdClearAll(this.closest('.cfd-wrap'))">Deselect all</span><span class="cfd-footer-chevron">${FM_CHEVRON}</span></div></div><div class="cfd-panel">${options}</div></div>`;
+}
+
+function ipAutoSaveCf(el) {
+  const wrap = el.closest('.cfd-wrap');
+  if (!wrap || !wrap.id || !wrap.id.startsWith('ipCf')) return;
+  if (_ipCurrentId === null) return;
+  const fieldMap = { ipCfColor:'Color', ipCfYear:'Year', ipCfSeasons:'Seasons', ipCfMaterials:'Materials' };
+  const field = fieldMap[wrap.id];
+  if (!field) return;
+  if (!window._ipMeta[_ipCurrentId]) window._ipMeta[_ipCurrentId] = {};
+  const panel = wrap.querySelector('.cfd-panel');
+  const selected = Array.from(panel.querySelectorAll('.cfd-opt.selected')).map(o => o.textContent);
+  const lbl = wrap.querySelector('.cfd-single-lbl');
+  if (lbl && lbl.classList.contains('picked')) {
+    window._ipMeta[_ipCurrentId][field] = [lbl.textContent];
+  } else if (selected.length) {
+    window._ipMeta[_ipCurrentId][field] = selected;
+  } else {
+    delete window._ipMeta[_ipCurrentId][field];
+  }
+}
+
+function ipLoadSavedMeta(fileId) {
+  const saved = window._ipMeta[fileId] || {};
+  if (saved.Color) {
+    const wrap = document.getElementById('ipCfColor');
+    if (wrap) {
+      const panel = wrap.querySelector('.cfd-panel');
+      saved.Color.forEach(v => { const o = Array.from(panel.querySelectorAll('.cfd-opt')).find(o => o.textContent === v); if (o) o.classList.add('selected'); });
+      cfdUpdateMultiTags(wrap.querySelector('.cfd-box'), panel);
+    }
+  }
+  if (saved.Year) {
+    const wrap = document.getElementById('ipCfYear');
+    if (wrap) {
+      const lbl = wrap.querySelector('.cfd-single-lbl');
+      lbl.textContent = saved.Year[0]; lbl.classList.add('picked');
+      wrap.querySelector('.cfd-box').classList.add('has-value');
+    }
+  }
+  if (saved.Seasons) {
+    const wrap = document.getElementById('ipCfSeasons');
+    if (wrap) {
+      const panel = wrap.querySelector('.cfd-panel');
+      saved.Seasons.forEach(v => { const o = Array.from(panel.querySelectorAll('.cfd-opt')).find(o => o.textContent === v); if (o) o.classList.add('selected'); });
+      cfdUpdateMultiTags(wrap.querySelector('.cfd-box'), panel);
+    }
+  }
+  if (saved.Materials) {
+    const wrap = document.getElementById('ipCfMaterials');
+    if (wrap) {
+      const lbl = wrap.querySelector('.cfd-single-lbl');
+      lbl.textContent = saved.Materials[0]; lbl.classList.add('picked');
+      wrap.querySelector('.cfd-box').classList.add('has-value');
+    }
+  }
+}
+
+function viewFile(id) {
+  const item = files.find(f => f.id === id); if (!item) return;
+  _ipCurrentId = id;
+  const isImg = item.type === 'img';
+  const imgUrl = isImg ? URL.createObjectURL(item.file) : null;
+  const ext = item.file.name.split('.').pop().toUpperCase();
+  const typeBg  = { pdf:'#fee2e2', doc:'#dbeafe', vid:'#ede9fe', zip:'#fef3c7', gen:'#f5f5f7' };
+  const typeEmj = { pdf:'\ud83d\udcc4', doc:'\ud83d\udcdd', vid:'\ud83c\udfac', zip:'\ud83d\udddc\ufe0f', gen:'\ud83d\udcc1' };
+  const today   = new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+  const mimeLabel = isImg ? (ext || 'Image') : (ext || 'File');
+  const dest = document.getElementById('cfgDest')?.value || 'My Uploads';
+
+  const previewArea = isImg
+    ? `<img id="ipImg" class="ip-preview-img" src="${imgUrl}" />`
+    : `<div class="ip-preview-file">
+        <div class="ip-preview-file-icon" style="background:${typeBg[item.type]||'#f5f5f7'}">${typeEmj[item.type]||'\ud83d\udcc1'}</div>
+        <div class="ip-preview-file-name">${item.file.name}</div>
+       </div>`;
+
+  // Set toolbar
+  const tbEl = document.getElementById('ipToolbar');
+  if (tbEl) tbEl.innerHTML = `
+    <button class="ip-toolbar-btn ip-tb-delete" onclick="showDeleteConfirm(${item.id})" title="Delete">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+    </button>
+    <button class="ip-toolbar-btn" onclick="ipFullscreen()" title="Full screen">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+    </button>
+    <button class="ip-toolbar-btn" onclick="closeInlinePreview()" title="Close">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+  `;
+
+  const bodyHTML = `
+    <div class="ip-preview-area">
+      ${previewArea}
+      ${files.length > 1 ? `<div class="ip-nav">
+        <button class="ip-nav-btn" onclick="ipNav(-1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></button>
+        <button class="ip-nav-btn" onclick="ipNav(1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></button>
+      </div>` : ''}
+    </div>
+    <div style="font-size:15px;font-weight:600;color:#111827;margin-top:16px;word-break:break-word">${item.file.name}</div>
+    <div class="ip-info-grid">
+      <div class="ip-info-cell"><div class="ip-info-cell-lbl">Type</div><div class="ip-info-cell-val">${mimeLabel}</div></div>
+      ${isImg ? `<div class="ip-info-cell"><div class="ip-info-cell-lbl">Dimensions</div><div class="ip-info-cell-val" id="ipDims">\u2014</div></div>` : `<div class="ip-info-cell"><div class="ip-info-cell-lbl">Added</div><div class="ip-info-cell-val">${today}</div></div>`}
+      <div class="ip-info-cell"><div class="ip-info-cell-lbl">Size</div><div class="ip-info-cell-val">${fmtSize(item.file.size)}</div></div>
+      <div class="ip-info-cell"><div class="ip-info-cell-lbl">Added</div><div class="ip-info-cell-val">${today}</div></div>
+    </div>
+  `;
+
+  document.getElementById('ipFilename').textContent = item.file.name;
+  document.getElementById('ipBody').innerHTML = bodyHTML;
+  document.getElementById('inlinePreview').classList.add('open');
+  document.getElementById('fileStack').style.gridTemplateColumns = 'repeat(2, 1fr)';
+  ipLoadMeta(id);
+  ipLoadSavedMeta(id);
+
+  if (isImg) {
+    setTimeout(() => {
+      const img = document.getElementById('ipImg');
+      if (img && img.complete) {
+        const d = document.getElementById('ipDims');
+        if (d && img.naturalWidth) d.textContent = img.naturalWidth + ' \u00d7 ' + img.naturalHeight;
+      } else if (img) {
+        img.onload = () => {
+          const d = document.getElementById('ipDims');
+          if (d) d.textContent = img.naturalWidth + ' \u00d7 ' + img.naturalHeight;
+        };
+      }
+    }, 50);
+  }
+}
+
+if (!window._fileMeta) window._fileMeta = {};
+function ipSaveMeta(el) {
+  const id = el.dataset.fileid;
+  const field = el.dataset.field;
+  if (!id) return;
+  if (!window._fileMeta[id]) window._fileMeta[id] = {};
+  window._fileMeta[id][field] = el.value;
+}
+function ipLoadMeta(id) {
+  const saved = window._fileMeta[id] || {};
+  if (saved.title) { const el = document.querySelector(`[data-field="title"][data-fileid="${id}"]`); if (el) el.value = saved.title; }
+  if (saved.description) { const el = document.querySelector(`[data-field="description"][data-fileid="${id}"]`); if (el) el.value = saved.description; }
+  if (saved.tags) { const el = document.querySelector(`[data-field="tags"][data-fileid="${id}"]`); if (el) el.value = saved.tags; }
+}
+
+function ipFullscreen() {
+  const img = document.getElementById('ipImg');
+  if (img) window.open(img.src, '_blank');
+}
+
+function closeInlinePreview() {
+  document.getElementById('inlinePreview').classList.remove('open');
+  document.getElementById('ipToolbar').innerHTML = '';
+  document.getElementById('fileStack').style.gridTemplateColumns = '';
+  _ipCurrentId = null;
+}
+
+function ipNav(dir) {
+  if (_ipCurrentId === null) return;
+  const idx = files.findIndex(f => f.id === _ipCurrentId);
+  if (idx < 0) return;
+  let next = idx + dir;
+  if (next < 0) next = files.length - 1;
+  if (next >= files.length) next = 0;
+  viewFile(files[next].id);
+}
+
+function ipToggleSec(secId) {
+  const sec = document.getElementById(secId);
+  if (!sec) return;
+  sec.classList.toggle('collapsed');
+}
+
+/* ══ DELETE CONFIRM ══ */
+let _pendingDeleteId = null;
+function showDeleteConfirm(id) {
+  _pendingDeleteId = id;
+  const item = files.find(f => f.id === id);
+  const name = item ? item.file.name : 'this asset';
+  document.getElementById('delConfirmMsg').innerHTML = `Are you sure you want to delete asset<br><strong>"${name}"</strong> ?`;
+  document.getElementById('delConfirmOverlay').classList.remove('hidden');
+}
+function hideDeleteConfirm() {
+  document.getElementById('delConfirmOverlay').classList.add('hidden');
+  _pendingDeleteId = null;
+}
+function confirmDelete() {
+  if (_pendingDeleteId !== null) { removeCard(_pendingDeleteId); closeInlinePreview(); }
+  hideDeleteConfirm();
+}
+
+/* ══ RENAME ══ */
+function renameDone(e, id) {
+  if (e.key === 'Enter') {
+    const input = document.getElementById('rname-' + id);
+    const newName = input?.value.trim();
+    if (newName) applyRename(id, newName);
+    else cancelRename(id);
+  } else if (e.key === 'Escape') {
+    cancelRename(id);
+  }
+}
+function cancelRename(id) {
+  const overlay = document.getElementById('rename-' + id);
+  if (overlay) overlay.classList.remove('active');
+}
+function applyRename(id, newName) {
+  const item = files.find(f => f.id === id); if (!item) return;
+  const oldExt = item.file.name.includes('.') ? '.' + item.file.name.split('.').pop() : '';
+  const hasExt = newName.includes('.');
+  const finalName = hasExt ? newName : newName + oldExt;
+  const renamed = new File([item.file], finalName, { type: item.file.type });
+  item.file = renamed;
+  const tile = document.getElementById('card-' + id);
+  if (tile) { const nameEl = tile.querySelector('.tile-name'); if (nameEl) nameEl.textContent = finalName; }
+  cancelRename(id);
+}
+
+/* ══ MODAL SYSTEM ══ */
+let cameraStream = null;
+
+function openModal(html, title, iconHtml) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalIcon').innerHTML = iconHtml || '';
+  document.getElementById('modalContent').innerHTML = html;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  if (cameraStream) { cameraStream.getTracks().forEach(t => t.stop()); cameraStream = null; }
+}
+
+document.getElementById('modalOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+});
+
+/* ══ MORE DROPDOWN (small screens) ══ */
+function toggleMoreDropdown() {
+  document.getElementById('dzMoreWrap').classList.toggle('open');
+}
+function closeMoreDropdown() {
+  document.getElementById('dzMoreWrap').classList.remove('open');
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('.dz-more-wrap')) closeMoreDropdown();
+});
+
+/* ══ CAMERA ══ */
+function openCamera() {
+  const icon = `<svg viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" width="18" height="18"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>`;
+  openModal(`
+    <div class="cam-wrap">
+      <video id="camVideo" class="cam-video" autoplay playsinline muted></video>
+      <canvas id="camCanvas" class="cam-canvas"></canvas>
+    </div>
+    <div class="cam-capture-row" id="camControls">
+      <button class="cam-btn-capture" onclick="capturePhoto()" title="Take photo"></button>
+    </div>
+    <div class="cam-msg" id="camMsg">Point the camera and press the button to capture</div>
+  `, 'Take a photo', icon);
+
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+    .then(stream => {
+      cameraStream = stream;
+      const v = document.getElementById('camVideo');
+      if (v) v.srcObject = stream;
+    })
+    .catch(() => {
+      document.getElementById('modalContent').innerHTML = `
+        <div class="cam-error">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2" width="36" height="36" style="margin-bottom:12px;display:block;margin-left:auto;margin-right:auto"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Camera access was denied.<br>Please allow camera access in your browser settings.
+        </div>`;
+    });
+}
+
+function capturePhoto() {
+  const v = document.getElementById('camVideo'), c = document.getElementById('camCanvas');
+  if (!v || !c) return;
+  c.width = v.videoWidth; c.height = v.videoHeight;
+  c.getContext('2d').drawImage(v, 0, 0);
+  v.style.display = 'none'; c.style.display = 'block';
+  document.getElementById('camControls').innerHTML = `
+    <button class="cam-btn-retake" onclick="retakePhoto()">Retake</button>
+    <button class="btn btn-primary" onclick="usePhoto()" style="height:36px;font-size:13px;padding:0 18px">Use photo</button>`;
+  document.getElementById('camMsg').textContent = '';
+}
+
+function retakePhoto() {
+  const v = document.getElementById('camVideo'), c = document.getElementById('camCanvas');
+  if (!v || !c) return;
+  v.style.display = 'block'; c.style.display = 'none';
+  document.getElementById('camControls').innerHTML = `<button class="cam-btn-capture" onclick="capturePhoto()" title="Take photo"></button>`;
+  document.getElementById('camMsg').textContent = 'Point the camera and press the button to capture';
+}
+
+function usePhoto() {
+  const c = document.getElementById('camCanvas'); if (!c) return;
+  c.toBlob(blob => {
+    if (!blob) return;
+    const ts = new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+    handleFiles([new File([blob], `photo_${ts}.jpg`, { type:'image/jpeg' })]);
+    closeModal();
+  }, 'image/jpeg', 0.92);
+}
+
+/* ══ URL IMPORT ══ */
+function openUrlModal() {
+  const icon = `<svg viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" width="18" height="18"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>`;
+  openModal(`
+    <div class="m-field">
+      <div class="m-label">File URL</div>
+      <input class="m-input" id="urlInput" type="url" placeholder="https://example.com/file.pdf" oninput="urlAutoName()" />
+    </div>
+    <div class="m-field">
+      <div class="m-label">File name <span style="color:#ccc;font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></div>
+      <input class="m-input" id="urlName" type="text" placeholder="document.pdf" />
+    </div>
+    <div id="urlError" style="font-size:12px;color:#dc2626;margin-top:-6px;margin-bottom:8px;display:none"></div>
+    <div class="m-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="urlImportBtn" onclick="importFromUrl()" style="height:36px;font-size:13px">Import file</button>
+    </div>
+  `, 'Import from URL', icon);
+  setTimeout(() => document.getElementById('urlInput')?.focus(), 80);
+}
+
+function urlAutoName() {
+  const u = document.getElementById('urlInput').value.trim();
+  const n = document.getElementById('urlName');
+  if (u && !n.value) {
+    try { const p = new URL(u).pathname.split('/'); n.placeholder = p[p.length-1] || 'file'; } catch(e) {}
+  }
+}
+
+function importFromUrl() {
+  const u = document.getElementById('urlInput').value.trim();
+  const n = document.getElementById('urlName').value.trim();
+  const err = document.getElementById('urlError');
+  if (!u) { err.textContent='Please enter a URL'; err.style.display='block'; return; }
+  try { new URL(u); } catch(e) { err.textContent='Please enter a valid URL'; err.style.display='block'; return; }
+  err.style.display = 'none';
+  let fname = n;
+  if (!fname) { try { const p=new URL(u).pathname.split('/'); fname=p[p.length-1]||'imported-file'; } catch(e) { fname='imported-file'; } }
+  if (!fname.includes('.')) fname += '.file';
+  const btn = document.getElementById('urlImportBtn');
+  btn.innerHTML = '<span class="btn-spin"></span>'; btn.disabled = true;
+  setTimeout(() => {
+    const blob = new Blob([`Imported from: ${u}`], { type: guessType(fname) });
+    handleFiles([new File([blob], fname, { type: guessType(fname) })]);
+    closeModal();
+  }, 800);
+}
+
+function guessType(name) {
+  const m = {jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',gif:'image/gif',webp:'image/webp',pdf:'application/pdf',mp4:'video/mp4',zip:'application/zip',doc:'application/msword',docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'};
+  return m[name.split('.').pop().toLowerCase()] || 'application/octet-stream';
+}
+
+/* ══ CLOUD STORAGE ══ */
+const CLOUD_FILES = {
+  gdrive:   [
+    { name:'Q1_Campaign_Brief.pdf',      type:'pdf', size:'245 KB',  date:'Mar 3' },
+    { name:'Hero_Banner_Final.png',      type:'img', size:'1.2 MB',  date:'Mar 5' },
+    { name:'Product_Shoot_01.jpg',       type:'img', size:'3.4 MB',  date:'Mar 6' },
+    { name:'Brand_Guidelines_2024.pdf',  type:'pdf', size:'8.1 MB',  date:'Feb 28' },
+    { name:'Social_Assets_Pack.zip',     type:'zip', size:'12.3 MB', date:'Mar 1' },
+    { name:'Video_Ad_15sec.mp4',         type:'vid', size:'24.8 MB', date:'Mar 4' },
+    { name:'Copy_Deck_v3.docx',          type:'doc', size:'87 KB',   date:'Mar 7' },
+  ],
+  dropbox:  [
+    { name:'Creative_Concepts.pdf',      type:'pdf', size:'3.2 MB',  date:'Mar 2' },
+    { name:'Photography_Finals',         type:'folder', size:'\u2014',    date:'Mar 5' },
+    { name:'Logo_Pack_2024.zip',         type:'zip', size:'5.7 MB',  date:'Feb 20' },
+    { name:'Campaign_Video_Draft.mp4',   type:'vid', size:'41.2 MB', date:'Mar 6' },
+    { name:'Presentation_Final.pptx',   type:'doc', size:'18.4 MB', date:'Mar 3' },
+  ],
+  box:      [
+    { name:'Marketing_Strategy_Q1.pdf', type:'pdf', size:'1.8 MB',  date:'Mar 1' },
+    { name:'Asset_Library',             type:'folder', size:'\u2014',    date:'Feb 15' },
+    { name:'Approved_Creatives.zip',    type:'zip', size:'22.1 MB', date:'Mar 4' },
+    { name:'Testimonial_Video.mp4',     type:'vid', size:'67.3 MB', date:'Mar 5' },
+  ],
+  onedrive: [
+    { name:'Q1_Report_Draft.docx',      type:'doc', size:'234 KB',  date:'Mar 6' },
+    { name:'Budget_Tracker.xlsx',       type:'doc', size:'45 KB',   date:'Mar 3' },
+    { name:'Event_Photos',              type:'folder', size:'\u2014',    date:'Mar 1' },
+    { name:'Brand_Video_Final.mp4',     type:'vid', size:'88.5 MB', date:'Feb 25' },
+    { name:'Press_Kit.pdf',             type:'pdf', size:'4.2 MB',  date:'Feb 28' },
+  ]
+};
+const CLOUD_META = {
+  gdrive:   { name:'Google Drive', email:'user@example.com',     path:'My Drive'  },
+  dropbox:  { name:'Dropbox',      email:'user@dropbox.com',     path:'Dropbox'   },
+  box:      { name:'Box',          email:'user@boxuser.com',     path:'All Files' },
+  onedrive: { name:'OneDrive',     email:'user@outlook.com',     path:'OneDrive'  },
+};
+const cloudConnected = {}, cloudSelected = {};
+
+function getCloudIconHtml(service, size=18) {
+  const s = size;
+  if (service==='gdrive') return `<svg width="${s}" height="${s}" viewBox="0 0 87.3 78"><path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3L27.5 53H0c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/><path d="M43.65 25L29.9 1.2C28.55 2 27.4 3.1 26.6 4.5L1.2 48.5C.4 49.9 0 51.45 0 53h27.5z" fill="#00ac47"/><path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5H59.8l5.65 10.85z" fill="#ea4335"/><path d="M43.65 25L57.4 1.2C56.05.4 54.5 0 52.9 0H34.4c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d"/><path d="M59.8 53H27.5L13.75 76.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc"/><path d="M73.4 26.5l-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25 59.8 53h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00"/></svg>`;
+  if (service==='dropbox') return `<svg width="${s}" height="${s}" viewBox="0 0 528 512" fill="#0061ff"><path d="M264.4 116.3l-132 84.3 132 84.3-132 84.3L0 284.1l132.3-84.3L0 116.3 132.3 32l132.1 84.3zm-132 284.5l132-84.3 132 84.3-132 84.4-132-84.4zm132-116.6l132.3-84.3-132.3-83.9 131.6-84.3L528 116.3l-132.3 84.1L528 284.7l-132.4 83.9-131.2-84.4z"/></svg>`;
+  if (service==='box') return `<span style="font-size:${s*0.72}px;font-weight:900;color:#0e50a0;line-height:1">box</span>`;
+  if (service==='onedrive') return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="#0078d4"><path d="M10.5 13.5C10.5 11.57 12.07 10 14 10h6.5c.17 0 .34.01.5.02A6 6 0 009.01 11.6 4 4 0 0010.5 13.5zM12 14.5a5 5 0 00-5-5 5 5 0 00-5 5 3 3 0 003 3h9.5A3.5 3.5 0 0018 14c0-.18-.01-.35-.03-.52A5.48 5.48 0 0112 14.5z"/></svg>`;
+  return '';
+}
+const CLOUD_BG = { gdrive:'#e8f0fe', dropbox:'#e5efff', box:'#e6eef8', onedrive:'#e4f0fb' };
+const FILE_EMOJI = { img:'\ud83d\uddbc\ufe0f', pdf:'\ud83d\udcc4', doc:'\ud83d\udcdd', vid:'\ud83c\udfac', zip:'\ud83d\udddc\ufe0f', folder:'\ud83d\udcc2' };
+
+function openCloud(service) {
+  cloudSelected[service] = cloudSelected[service] || new Set();
+  if (cloudConnected[service]) openCloudBrowser(service);
+  else openCloudConnect(service);
+}
+
+function openCloudConnect(service) {
+  const meta = CLOUD_META[service];
+  const iconHtml = getCloudIconHtml(service, 24);
+  openModal(`
+    <div class="cloud-connect">
+      <div class="cloud-connect-icon" style="background:${CLOUD_BG[service]}">${iconHtml}</div>
+      <div class="cloud-connect-title">Connect ${meta.name}</div>
+      <div class="cloud-connect-desc">Sign in to your ${meta.name} account to browse and import files directly.</div>
+      <button class="cloud-connect-btn" onclick="connectCloud('${service}')">
+        ${getCloudIconHtml(service, 18)} Sign in with ${meta.name}
+      </button>
+      <div class="cloud-divider"><div class="cloud-divider-line"></div><div class="cloud-divider-text">OR</div><div class="cloud-divider-line"></div></div>
+      <div style="width:100%;max-width:270px;margin-top:16px">
+        <div class="m-label" style="text-align:left">Paste a shared link</div>
+        <div style="display:flex;gap:8px;margin-top:6px">
+          <input class="m-input" id="cloudLinkInput" placeholder="Paste link here\u2026" style="flex:1;height:38px" />
+          <button class="btn btn-primary" onclick="importCloudLink('${service}')" style="height:38px;flex-shrink:0;font-size:13px;padding:0 14px">Import</button>
+        </div>
+      </div>
+    </div>
+  `, meta.name, getCloudIconHtml(service, 18));
+}
+
+function connectCloud(service) {
+  const meta = CLOUD_META[service];
+  document.getElementById('modalContent').innerHTML = `
+    <div class="cloud-loading">
+      <div class="cloud-spinner"></div>
+      Connecting to ${meta.name}\u2026
+    </div>`;
+  setTimeout(() => {
+    cloudConnected[service] = true;
+    cloudSelected[service] = new Set();
+    openCloudBrowser(service);
+  }, 1100);
+}
+
+function openCloudBrowser(service) {
+  const meta = CLOUD_META[service];
+  const cFiles = CLOUD_FILES[service];
+  const sel = cloudSelected[service];
+  const rows = cFiles.map((f, i) => `
+    <div class="cf-row ${sel.has(i)?'selected':''}" onclick="toggleCloudFile('${service}',${i},this)">
+      <div class="cf-check">${sel.has(i)?'\u2713':''}</div>
+      <div class="cf-icon ${f.type}">${FILE_EMOJI[f.type]||'\ud83d\udcc1'}</div>
+      <div class="cf-info">
+        <div class="cf-name">${f.name}</div>
+        <div class="cf-meta">${f.size} &middot; ${f.date}</div>
+      </div>
+    </div>`).join('');
+  const cnt = sel.size;
+  document.getElementById('modalContent').innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+      <div style="width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0">${getCloudIconHtml(service,16)}</div>
+      <span style="font-size:11.5px;font-weight:500;color:#aaa">${meta.email}</span>
+      <button onclick="disconnectCloud('${service}')" style="margin-left:auto;font-size:11px;color:#ccc;background:none;border:none;cursor:pointer;padding:2px 6px;border-radius:6px;font-family:inherit" onmouseover="this.style.color='#555'" onmouseout="this.style.color='#ccc'">Disconnect</button>
+    </div>
+    <div class="cloud-search">
+      <svg class="cloud-search-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" placeholder="Search files\u2026" />
+    </div>
+    <div class="cloud-path">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="11" height="11"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+      / <span>${meta.path}</span>
+    </div>
+    <div class="cloud-files" id="cloudFileList">${rows}</div>
+    <div class="cloud-footer">
+      <span class="cloud-sel-count" id="cloudSelCount">${cnt>0?cnt+' selected':'No files selected'}</span>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost" onclick="closeModal()" style="height:32px;font-size:12px;padding:0 12px">Cancel</button>
+        <button class="btn btn-primary" id="cloudImportBtn" onclick="importCloudFiles('${service}')" style="height:32px;font-size:12px;padding:0 14px"${cnt===0?' disabled':''}>
+          Import${cnt>0?' '+cnt+' file'+(cnt>1?'s':''):''}
+        </button>
+      </div>
+    </div>`;
+}
+
+function toggleCloudFile(service, idx, el) {
+  const sel = cloudSelected[service];
+  sel.has(idx) ? sel.delete(idx) : sel.add(idx);
+  el.classList.toggle('selected');
+  const check = el.querySelector('.cf-check');
+  if (check) check.textContent = sel.has(idx) ? '\u2713' : '';
+  const cnt = sel.size;
+  const countEl = document.getElementById('cloudSelCount');
+  const importBtn = document.getElementById('cloudImportBtn');
+  if (countEl) countEl.textContent = cnt>0 ? cnt+' selected' : 'No files selected';
+  if (importBtn) { importBtn.disabled = cnt===0; importBtn.textContent = 'Import'+(cnt>0?' '+cnt+' file'+(cnt>1?'s':''):''); }
+}
+
+function importCloudFiles(service) {
+  const sel = cloudSelected[service]; if (!sel||!sel.size) return;
+  const mockFiles = Array.from(sel).map(i => {
+    const f = CLOUD_FILES[service][i]; if (f.type==='folder') return null;
+    const blob = new Blob([`Cloud import: ${f.name}`], { type: guessType(f.name) });
+    return new File([blob], f.name, { type: guessType(f.name) });
+  }).filter(Boolean);
+  if (mockFiles.length) { handleFiles(mockFiles); cloudSelected[service] = new Set(); }
+  closeModal();
+}
+
+function importCloudLink(service) {
+  const v = document.getElementById('cloudLinkInput')?.value.trim(); if (!v) return;
+  let fname = 'cloud-import';
+  try { const p=new URL(v).pathname.split('/'); const l=p[p.length-1]; if(l&&l.includes('.')) fname=l; else fname=`import_${service}.file`; } catch(e) {}
+  const blob = new Blob([`Imported from: ${v}`], { type: guessType(fname) });
+  handleFiles([new File([blob], fname, { type: guessType(fname) })]);
+  closeModal();
+}
+
+function disconnectCloud(service) {
+  cloudConnected[service] = false; cloudSelected[service] = new Set();
+  openCloudConnect(service);
+}
+
+/* ══ FILL METADATA ══ */
+const FM_FIELDS = {
+  'Title':       { type: 'text',   placeholder: 'Type title\u2026' },
+  'Description': { type: 'text',   placeholder: 'Type description\u2026' },
+  'Alt Text':    { type: 'text',   placeholder: 'Describe image for accessibility\u2026' },
+  'Tags':        { type: 'text',   placeholder: 'q1, marketing, campaign\u2026' },
+  'Color':       { type: 'multi',  placeholder: 'Enter colors',           options: ['Beige','Black','Black and white','Blue','Brown','Colorful','Green','Red','White','Yellow'] },
+  'Year':        { type: 'single', placeholder: 'Select year',            options: ['2023','2024','2025','2026'] },
+  'Seasons':     { type: 'multi',  placeholder: 'Select product seasons', options: ['Spring','Summer','Autumn','Winter'] },
+  'Materials':   { type: 'single', placeholder: 'Select product material',options: ['Cotton','Polyester','Wool','Leather','Denim','Silk','Linen'] },
+};
+
+function openFillMetadata() {
+  document.getElementById('fillMetaOverlay').classList.remove('hidden');
+  fmBuildRows();
+  fmActivateField(document.querySelector('#fillMetaOverlay .fm-sidebar-item.active'));
+}
+function closeFillMetadata() {
+  document.getElementById('fillMetaOverlay').classList.add('hidden');
+}
+
+function fmBuildRows() {
+  const tbody = document.getElementById('fmTableBody');
+  const items = files.length ? files : [];
+  tbody.innerHTML = items.map((item, i) => {
+    const src = item.type === 'img' ? URL.createObjectURL(item.file) : '';
+    const size = fmtSize(item.file.size);
+    const thumb = src ? `<img class="fm-file-thumb" src="${src}" alt="" />` : `<div class="fm-file-thumb"></div>`;
+    return `<div class="fm-file-row" id="fmRow-${item.id}">
+      <input type="checkbox" class="fm-row-check" onchange="fmUpdateSelectAll()" />
+      ${thumb}
+      <div class="fm-file-info">
+        <span class="fm-file-name">${item.file.name}</span>
+        <span class="fm-file-meta"></span>
+      </div>
+      <div class="fm-file-size-col">${size}</div>
+      <div class="fm-file-input" id="fmRowInput-${item.id}"></div>
+    </div>`;
+  }).join('');
+  window._fmItems = items;
+  fmUpdateSelectAll();
+}
+
+function fmBuildSingle(opts, wrapId, lg) {
+  const options = opts.map(o => `<div class="cfd-opt" onclick="cfdPick(this)">${o}</div>`).join('');
+  return `<div class="cfd-wrap" id="${wrapId}"><div class="cfd-box cfd-single-box${lg?' cfd-lg':''}" onclick="cfdToggle(this)"><span class="cfd-single-lbl">Select value</span>${FM_CHEVRON}</div><div class="cfd-panel">${options}</div></div>`;
+}
+function fmBuildMulti(opts, placeholder, wrapId) {
+  const options = opts.map(o => `<div class="cfd-opt" onclick="cfdMultiPick(this)">${o}</div>`).join('');
+  return `<div class="cfd-wrap" id="${wrapId}"><div class="cfd-box cfd-multi-box" onclick="cfdToggle(this)"><div class="cfd-tags-area" data-placeholder="${placeholder}"><input class="cfd-search" placeholder="${placeholder}" onclick="event.stopPropagation()" /></div><div class="cfd-multi-footer"><span class="cfd-select-all-lbl" onclick="event.stopPropagation();cfdSelectAll(this.closest('.cfd-wrap'))">Select all</span><span class="cfd-deselect-all-lbl" onclick="event.stopPropagation();cfdClearAll(this.closest('.cfd-wrap'))">Deselect all</span><span class="cfd-footer-chevron">${FM_CHEVRON}</span></div></div><div class="cfd-panel">${options}</div></div>`;
+}
+function fmBuildInput(field, itemId) {
+  const cfg = FM_FIELDS[field] || { type: 'text', placeholder: 'Type value\u2026' };
+  const id = 'fmRi-' + itemId;
+  if (cfg.type === 'single') return fmBuildSingle(cfg.options, id, false);
+  if (cfg.type === 'multi')  return fmBuildMulti(cfg.options, cfg.placeholder, id);
+  return `<input type="text" placeholder="${cfg.placeholder}" id="${id}" onblur="fmAutoSaveText(this,'${itemId}')" onkeydown="if(event.key==='Enter'){this.blur()}" />`;
+}
+function fmBuildBulkInput(field) {
+  const cfg = FM_FIELDS[field] || { type: 'text', placeholder: 'Type value\u2026' };
+  if (cfg.type === 'single') return fmBuildSingle(cfg.options, 'fmBulk', true);
+  if (cfg.type === 'multi')  return fmBuildMulti(cfg.options, cfg.placeholder, 'fmBulk');
+  return `<input id="fmBulkVal" type="text" placeholder="${cfg.placeholder}" />`;
+}
+
+/* ══ CUSTOM FIELD DROPDOWN SHARED ══ */
+function cfdToggle(box) {
+  const isOpen = box.classList.contains('open');
+  document.querySelectorAll('.cfd-box.open').forEach(b => b.classList.remove('open'));
+  if (!isOpen) {
+    box.classList.add('open');
+    const panel = box.nextElementSibling;
+    if (panel && getComputedStyle(panel).position === 'fixed') {
+      const r = box.getBoundingClientRect();
+      panel.style.top = (r.bottom + 4) + 'px';
+      panel.style.left = r.left + 'px';
+      panel.style.width = r.width + 'px';
+    }
+  }
+}
+function cfdPick(opt) {
+  const panel = opt.closest('.cfd-panel');
+  const box = panel.previousElementSibling;
+  panel.querySelectorAll('.cfd-opt').forEach(o => o.classList.remove('selected'));
+  opt.classList.add('selected');
+  const lbl = box.querySelector('.cfd-single-lbl');
+  lbl.textContent = opt.textContent; lbl.classList.add('picked');
+  box.classList.remove('open'); box.classList.add('has-value');
+  fmAutoSaveRow(opt);
+  ipAutoSaveCf(opt);
+}
+function cfdMultiPick(opt) {
+  opt.classList.toggle('selected');
+  const panel = opt.closest('.cfd-panel');
+  const box = panel.previousElementSibling;
+  cfdUpdateMultiTags(box, panel);
+  if (opt.closest('.ip-cf-row')) box.classList.remove('open');
+  fmAutoSaveRow(opt);
+  ipAutoSaveCf(opt);
+}
+function cfdUpdateMultiTags(box, panel) {
+  const tagsArea = box.querySelector('.cfd-tags-area');
+  const placeholder = tagsArea.dataset.placeholder;
+  const selected = Array.from(panel.querySelectorAll('.cfd-opt.selected')).map(o => o.textContent);
+  const clearLbl = box.querySelector('.cfd-clear-lbl');
+  if (selected.length === 0) {
+    tagsArea.innerHTML = `<input class="cfd-search" placeholder="${placeholder}" onclick="event.stopPropagation()" />`;
+    box.classList.remove('has-value');
+  } else {
+    tagsArea.innerHTML = selected.map(v => `<span class="cfd-tag">${v}<button class="cfd-tag-x" onclick="event.stopPropagation();cfdRemoveTag(this,'${v.replace(/'/g,"\\'")}')">&times;</button></span>`).join('') + `<input class="cfd-search" placeholder="" onclick="event.stopPropagation()" style="min-width:4px;flex:0 1 4px;" />`;
+    box.classList.add('has-value');
+  }
+}
+function cfdRemoveTag(btn, val) {
+  const wrap = btn.closest('.cfd-wrap');
+  const panel = wrap.querySelector('.cfd-panel');
+  const opt = Array.from(panel.querySelectorAll('.cfd-opt')).find(o => o.textContent === val);
+  if (opt) opt.classList.remove('selected');
+  cfdUpdateMultiTags(wrap.querySelector('.cfd-box'), panel);
+}
+function cfdSelectAll(wrap) {
+  const panel = wrap.querySelector('.cfd-panel');
+  panel.querySelectorAll('.cfd-opt').forEach(o => o.classList.add('selected'));
+  cfdUpdateMultiTags(wrap.querySelector('.cfd-box'), panel);
+}
+function cfdClearAll(wrap) {
+  const panel = wrap.querySelector('.cfd-panel');
+  panel.querySelectorAll('.cfd-opt').forEach(o => o.classList.remove('selected'));
+  cfdUpdateMultiTags(wrap.querySelector('.cfd-box'), panel);
+}
+
+if (!window._fmApplied) window._fmApplied = {};
+
+function fmAutoSaveText(inp, itemId) {
+  const field = document.querySelector('.fm-sidebar-item.active')?.dataset.field;
+  if (!field) return;
+  if (!window._fmApplied[field]) window._fmApplied[field] = {};
+  if (inp.value.trim()) {
+    window._fmApplied[field][itemId] = [inp.value.trim()];
+  } else {
+    delete window._fmApplied[field][itemId];
+  }
+  fmUpdateSidebarIndicators();
+}
+function fmAutoSaveRow(el) {
+  const wrap = el.closest('.cfd-wrap');
+  if (!wrap || !wrap.id || !wrap.id.startsWith('fmRi-')) return;
+  const itemId = wrap.id.replace('fmRi-', '');
+  const field = document.querySelector('.fm-sidebar-item.active')?.dataset.field;
+  if (!field) return;
+  if (!window._fmApplied[field]) window._fmApplied[field] = {};
+  const panel = wrap.querySelector('.cfd-panel');
+  const selected = Array.from(panel.querySelectorAll('.cfd-opt.selected')).map(o => o.textContent);
+  if (selected.length) {
+    window._fmApplied[field][itemId] = selected;
+  } else {
+    delete window._fmApplied[field][itemId];
+  }
+  fmUpdateSidebarIndicators();
+}
+
+function fmRenderBadges(containerId, values) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = `<div class="cfd-applied-wrap">${values.map(v=>`<span class="cfd-applied-badge">${v}</span>`).join('')}</div>`;
+}
+
+function fmActivateField(el) {
+  if (!el) return;
+  document.querySelectorAll('.fm-sidebar-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+  const field = el.dataset.field;
+  document.getElementById('fmOpFieldLabel').textContent = field;
+  document.getElementById('fmThFieldLabel').textContent = field;
+  document.getElementById('fmOpValueWrap').innerHTML = fmBuildBulkInput(field);
+  (window._fmItems || []).forEach(item => {
+    const saved = (window._fmApplied[field] || {})[item.id];
+    if (saved) {
+      fmRenderBadges('fmRowInput-' + item.id, saved);
+    } else {
+      const el = document.getElementById('fmRowInput-' + item.id);
+      if (el) el.innerHTML = fmBuildInput(field, item.id);
+    }
+  });
+}
+
+function fmApplyToAll() {
+  const field = document.querySelector('.fm-sidebar-item.active').dataset.field;
+  const cfg = FM_FIELDS[field] || { type: 'text' };
+  const operation = document.querySelector('.fm-op-bar .cfd-single-lbl.picked')?.textContent || 'Overwrite';
+  const items = window._fmItems || [];
+  if (!window._fmApplied[field]) window._fmApplied[field] = {};
+
+  if (operation === 'Clear') {
+    items.forEach(item => {
+      delete window._fmApplied[field][item.id];
+      const el = document.getElementById('fmRowInput-' + item.id);
+      if (el) el.innerHTML = fmBuildInput(field, item.id);
+    });
+    fmUpdateSidebarIndicators();
+    return;
+  }
+  if (cfg.type === 'text') {
+    const inp = document.getElementById('fmBulkVal');
+    if (!inp || !inp.value) return;
+    items.forEach(item => {
+      window._fmApplied[field][item.id] = [inp.value];
+      fmRenderBadges('fmRowInput-' + item.id, [inp.value]);
+    });
+  } else if (cfg.type === 'single') {
+    const selOpt = document.querySelector('#fmBulk .cfd-opt.selected');
+    if (!selOpt) return;
+    items.forEach(item => {
+      window._fmApplied[field][item.id] = [selOpt.textContent];
+      fmRenderBadges('fmRowInput-' + item.id, [selOpt.textContent]);
+    });
+  } else if (cfg.type === 'multi') {
+    const selected = Array.from(document.querySelectorAll('#fmBulk .cfd-opt.selected')).map(o => o.textContent);
+    if (!selected.length) return;
+    items.forEach(item => {
+      window._fmApplied[field][item.id] = selected;
+      fmRenderBadges('fmRowInput-' + item.id, selected);
+    });
+  }
+  fmUpdateSidebarIndicators();
+}
+
+function fmUpdateSidebarIndicators() {
+  const applied = window._fmApplied || {};
+  document.querySelectorAll('.fm-sidebar-item').forEach(item => {
+    const field = item.dataset.field;
+    const data = applied[field] || {};
+    const hasData = Object.values(data).some(v => v && v.length > 0);
+    const dot = item.querySelector('.fm-filled-dot');
+    if (dot) dot.style.display = hasData ? 'block' : 'none';
+  });
+}
+
+let fmSortAsc = true;
+function fmToggleSort() {
+  fmSortAsc = !fmSortAsc;
+  const el = document.getElementById('fmThName');
+  el.textContent = 'Name ' + (fmSortAsc ? '\u2193' : '\u2191');
+  el.classList.add('sort-active');
+  const tbody = document.getElementById('fmTableBody');
+  const rows = Array.from(tbody.querySelectorAll('.fm-file-row'));
+  rows.sort((a, b) => {
+    const na = a.querySelector('.fm-file-name').textContent.toLowerCase();
+    const nb = b.querySelector('.fm-file-name').textContent.toLowerCase();
+    return fmSortAsc ? na.localeCompare(nb) : nb.localeCompare(na);
+  });
+  rows.forEach(r => tbody.appendChild(r));
+}
+
+function fmToggleAll(el) {
+  el.checked = false; el.indeterminate = false;
+  const anyChecked = document.querySelectorAll('.fm-row-check:checked').length > 0;
+  document.querySelectorAll('.fm-row-check').forEach(cb => cb.checked = !anyChecked);
+  fmUpdateSelectAll();
+}
+function fmUpdateSelectAll() {
+  const checked = document.querySelectorAll('.fm-row-check:checked').length;
+  const master = document.getElementById('fmSelectAll');
+  if (master) { master.checked = false; master.indeterminate = checked > 0; }
+}
+
+function fmShowConfirm() {
+  const operation = document.querySelector('.fm-op-bar .cfd-single-lbl.picked')?.textContent || 'Overwrite';
+  if (operation === 'Clear') {
+    const field = document.querySelector('.fm-sidebar-item.active')?.textContent?.trim() || 'this field';
+    document.getElementById('fmConfirmMsg').textContent = 'This will clear "' + field + '" for all files. Are you sure?';
+    document.getElementById('fmConfirmOverlay').classList.remove('hidden');
+  } else {
+    fmApplyToAll();
+  }
+}
+function fmHideConfirm() { document.getElementById('fmConfirmOverlay').classList.add('hidden'); }
+function fmConfirmApply() { fmHideConfirm(); fmApplyToAll(); }
+
+/* ══ GLOBAL CLICK HANDLERS ══ */
+document.addEventListener('click', e => {
+  if (!e.target.closest('.cfd-wrap')) {
+    document.querySelectorAll('.cfd-box.open').forEach(b => b.classList.remove('open'));
+  }
+});
+window.addEventListener('resize', () => {
+  document.querySelectorAll('.cfd-box.open').forEach(b => b.classList.remove('open'));
+});
+
+// Close uploader on overlay click
+document.getElementById('uploaderOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('uploaderOverlay')) closeUploader();
+});
+// ESC key
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (document.getElementById('fillMetaOverlay') && !document.getElementById('fillMetaOverlay').classList.contains('hidden')) { closeFillMetadata(); return; }
+    if (document.getElementById('modalOverlay').classList.contains('open')) { closeModal(); return; }
+    if (document.getElementById('uploaderOverlay').classList.contains('open')) closeUploader();
+  }
+});
+</script>
+</body>
+</html>

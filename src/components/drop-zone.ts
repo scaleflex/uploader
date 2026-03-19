@@ -29,15 +29,15 @@ export class SfxDropZone extends LitElement {
     }
 
     .drop-zone:hover {
-      border-color: #bbb;
-      background: #fafafa;
+      border-color: var(--sfx-up-text-muted, #94a3b8);
+      background: var(--sfx-up-border-light, #fafafa);
     }
 
     /* Drag over state */
     .drop-zone.drag-over {
       border: 2px solid var(--sfx-up-primary, #2563eb);
       background: var(--sfx-up-primary-bg, #eff6ff);
-      box-shadow: 0 0 0 5px rgba(37, 99, 235, 0.06);
+      box-shadow: 0 0 0 5px var(--sfx-up-primary-bg, rgba(37, 99, 235, 0.06));
     }
 
     /* Compact state when files exist */
@@ -66,14 +66,14 @@ export class SfxDropZone extends LitElement {
       position: absolute;
       inset: 0;
       border-radius: 50%;
-      border: 1.5px dashed #c4d5ef;
+      border: 1.5px dashed var(--sfx-up-border, #c4d5ef);
       animation: slowSpin 20s linear infinite;
       transition: border-color 0.3s;
     }
 
     .ring:nth-child(2) {
       inset: 13px;
-      border-color: #d8e5f5;
+      border-color: var(--sfx-up-border, #d8e5f5);
       border-style: dotted;
       animation-direction: reverse;
       animation-duration: 14s;
@@ -85,7 +85,7 @@ export class SfxDropZone extends LitElement {
     }
 
     .drag-over .ring:nth-child(2) {
-      border-color: rgba(37, 99, 235, 0.4);
+      border-color: var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.4));
       animation-duration: 2s;
     }
 
@@ -111,7 +111,7 @@ export class SfxDropZone extends LitElement {
       justify-content: center;
       z-index: 1;
       transition: all 0.28s cubic-bezier(0.34, 1.4, 0.64, 1);
-      box-shadow: 0 3px 12px rgba(37, 99, 235, 0.15);
+      box-shadow: 0 3px 12px var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.15));
     }
 
     .core svg {
@@ -121,14 +121,14 @@ export class SfxDropZone extends LitElement {
 
     .drop-zone:hover .core {
       transform: translateY(-2px);
-      box-shadow: 0 5px 18px rgba(37, 99, 235, 0.22);
+      box-shadow: 0 5px 18px var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.22));
     }
 
     .drag-over .core {
       background: var(--sfx-up-primary, #2563eb);
-      color: #fff;
+      color: var(--sfx-up-bg, #fff);
       transform: scale(1.12);
-      box-shadow: 0 8px 24px rgba(37, 99, 235, 0.38);
+      box-shadow: 0 8px 24px var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.38));
     }
 
     .compact .core {
@@ -175,6 +175,101 @@ export class SfxDropZone extends LitElement {
       display: none;
     }
 
+    /* --- Divider inside drop zone --- */
+    .dz-divider {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 20px 0 16px;
+      width: 100%;
+    }
+
+    .dz-divider-line {
+      flex: 1;
+      height: 1px;
+      background: var(--sfx-up-border-light, #f1f5f9);
+    }
+
+    .dz-divider-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--sfx-up-text-muted, #cbd5e1);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      white-space: nowrap;
+    }
+
+    .compact .dz-divider {
+      display: none;
+    }
+
+    /* --- Source pills grid (expanded mode) --- */
+    .sources-grid {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .compact .sources-grid {
+      display: none;
+    }
+
+    .src-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 18px;
+      border-radius: 50px;
+      border: 1.5px solid var(--sfx-up-border, rgba(226, 232, 240, 0.6));
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--sfx-up-text-secondary, #475569);
+      cursor: pointer;
+      transition: all 0.18s ease;
+      white-space: nowrap;
+      box-shadow: 0 1px 3px var(--sfx-up-shadow, rgba(0, 0, 0, 0.04));
+      font-family: inherit;
+    }
+
+    .src-pill:hover {
+      border-color: var(--sfx-up-primary, #2563eb);
+      color: var(--sfx-up-primary, #2563eb);
+      background: var(--sfx-up-primary-bg, rgba(239, 246, 255, 0.85));
+      box-shadow: 0 2px 10px var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.18));
+      transform: translateY(-1px);
+    }
+
+    .src-pill:active {
+      transform: translateY(0) scale(0.98);
+    }
+
+    .src-pill .pill-ico {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .src-pill svg {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+    }
+
+    .src-pill svg.fill-icon {
+      fill: currentColor;
+      stroke: none;
+      stroke-width: 0;
+    }
+
     /* --- Source icons row (compact mode) --- */
     .sources-row {
       display: none;
@@ -193,7 +288,7 @@ export class SfxDropZone extends LitElement {
     .src-divider {
       width: 1px;
       height: 20px;
-      background: #e5e7eb;
+      background: var(--sfx-up-border, #e5e7eb);
       margin-right: 2px;
       flex-shrink: 0;
     }
@@ -203,7 +298,7 @@ export class SfxDropZone extends LitElement {
       height: 28px;
       border-radius: 50%;
       border: none;
-      background: #f3f4f6;
+      background: var(--sfx-up-border-light, #f3f4f6);
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -211,7 +306,7 @@ export class SfxDropZone extends LitElement {
       transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.15s;
       position: relative;
       flex-shrink: 0;
-      color: #6b7280;
+      color: var(--sfx-up-text-muted, #6b7280);
       padding: 0;
       font-family: inherit;
     }
@@ -233,9 +328,9 @@ export class SfxDropZone extends LitElement {
 
     .src-ico:hover {
       transform: scale(1.18);
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
-      background: #fff;
-      color: #374151;
+      box-shadow: 0 2px 10px var(--sfx-up-shadow, rgba(0, 0, 0, 0.12));
+      background: var(--sfx-up-bg, #fff);
+      color: var(--sfx-up-text, #374151);
     }
 
     .src-ico::after {
@@ -244,12 +339,12 @@ export class SfxDropZone extends LitElement {
       bottom: -28px;
       left: 50%;
       transform: translateX(-50%);
-      background: #fff;
-      color: #374151;
+      background: var(--sfx-up-bg, #fff);
+      color: var(--sfx-up-text, #374151);
       font-size: 10px;
       font-weight: 500;
-      border: 1px solid #e5e7eb;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      border: 1px solid var(--sfx-up-border, #e5e7eb);
+      box-shadow: 0 2px 8px var(--sfx-up-shadow, rgba(0, 0, 0, 0.08));
       padding: 3px 8px;
       border-radius: 5px;
       white-space: nowrap;
@@ -489,6 +584,34 @@ export class SfxDropZone extends LitElement {
         </div>
         ${!this.compact
           ? html`<div class="subtitle">Drop files anywhere on this page</div>`
+          : nothing}
+
+        ${!this.compact && this.sources.length > 0
+          ? html`
+              <div class="dz-divider">
+                <div class="dz-divider-line"></div>
+                <div class="dz-divider-label">or import from</div>
+                <div class="dz-divider-line"></div>
+              </div>
+              <div class="sources-grid">
+                ${this.sources.map(
+                  (s) => html`
+                    <button
+                      class="src-pill"
+                      @click=${(e: MouseEvent) => {
+                        e.stopPropagation();
+                        this._onSourceIconClick(s);
+                      }}
+                    >
+                      <span class="pill-ico" style=${s.iconColor ? `color:${s.iconColor}` : ''}>
+                        ${svgTag`<svg viewBox="0 0 24 24" class=${s.fillIcon ? 'fill-icon' : ''}>${unsafeSVG(s.icon)}</svg>`}
+                      </span>
+                      ${s.label}
+                    </button>
+                  `,
+                )}
+              </div>
+            `
           : nothing}
 
         ${this.compact && this.sources.length > 0
