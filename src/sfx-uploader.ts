@@ -95,64 +95,85 @@ export class SfxUploader extends LitElement {
     .modal-backdrop {
       position: fixed;
       inset: 0;
-      background: oklch(0 0 0 / 0.45);
+      background: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(6px);
       display: flex;
       align-items: center;
       justify-content: center;
       z-index: 9999;
+      padding: 24px;
       animation: fadeIn 0.2s ease;
     }
 
     .modal-card {
       background: var(--sfx-up-bg, #fff);
-      border-radius: 20px;
-      box-shadow: 0 25px 60px var(--sfx-up-shadow, rgba(0, 0, 0, 0.2));
-      width: 90vw;
-      max-width: 680px;
-      max-height: 85vh;
+      border-radius: 16px;
+      box-shadow: 0 28px 80px rgba(0, 0, 0, 0.2), 0 4px 16px rgba(0, 0, 0, 0.06);
+      width: 100%;
+      max-width: 1198px;
+      max-height: 88vh;
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      animation: modalIn 0.25s cubic-bezier(0.34, 1.2, 0.64, 1);
+      position: relative;
+      animation: modalIn 0.3s cubic-bezier(0.34, 1.2, 0.64, 1);
     }
 
     /* --- Header --- */
     .header {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      padding: 18px 24px;
-      border-bottom: 1px solid var(--sfx-up-border-light, #f1f5f9);
+      padding: 16px 24px;
+      background: var(--sfx-up-bg, #fff);
+      border-bottom: 1px solid #f0f0f0;
+      flex-shrink: 0;
     }
 
-    .header-title {
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--sfx-up-text, #1e293b);
-    }
-
-    .close-btn {
+    .header-icon {
       width: 32px;
       height: 32px;
       border-radius: 8px;
+      background: var(--sfx-up-primary-bg, #eff6ff);
+      color: var(--sfx-up-primary, #2563eb);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 12px;
+      flex-shrink: 0;
+    }
+
+    .header-icon svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .header-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--sfx-up-text, #111827);
+      flex: 1;
+    }
+
+    .close-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
       border: none;
-      background: none;
+      background: #f0f0f0;
+      color: #888;
+      font-size: 15px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--sfx-up-text-muted, #94a3b8);
-      transition: all 0.15s;
+      transition: background 0.15s, color 0.15s;
+      flex-shrink: 0;
+      line-height: 1;
     }
 
     .close-btn:hover {
-      background: var(--sfx-up-border-light, #f1f5f9);
-      color: var(--sfx-up-text, #1e293b);
-    }
-
-    .close-btn svg {
-      width: 18px;
-      height: 18px;
+      background: #e4e4e4;
+      color: #333;
     }
 
     /* --- Content wrapper (holds body + actions bar) --- */
@@ -614,10 +635,13 @@ export class SfxUploader extends LitElement {
       : [];
     const custom = connectors.customSources ?? [];
 
-    // Deduplicate while preserving order: core → providers → custom
+    // Order: device, url → providers → remaining core (camera, screen-cast) → custom
+    const priorityCore = CORE_SOURCES.filter(s => s.id === 'device' || s.id === 'url');
+    const remainingCore = CORE_SOURCES.filter(s => s.id !== 'device' && s.id !== 'url');
+
     const seen = new Set<string>();
     const merged: SourceDef[] = [];
-    for (const s of [...CORE_SOURCES, ...providerSources, ...custom]) {
+    for (const s of [...priorityCore, ...providerSources, ...remainingCore, ...custom]) {
       if (seen.has(s.id)) continue;
       if (SfxUploader._RESERVED_IDS.has(s.id) && s.onActivate) {
         console.warn(`[sfx-uploader] Custom source id "${s.id}" conflicts with a built-in source and was skipped.`);
@@ -1019,13 +1043,15 @@ export class SfxUploader extends LitElement {
   private _renderHeader() {
     return html`
       <div class="header">
-        <div class="header-title">Upload files</div>
-        <button class="close-btn" @click=${this._onModalDismiss}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
+        <div class="header-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <polyline points="16 16 12 12 8 16" />
+            <line x1="12" y1="12" x2="12" y2="21" />
+            <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
           </svg>
-        </button>
+        </div>
+        <div class="header-title">Upload Files</div>
+        <button class="close-btn" @click=${this._onModalDismiss}>&#x2715;</button>
       </div>
     `;
   }
