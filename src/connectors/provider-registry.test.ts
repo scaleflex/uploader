@@ -28,10 +28,10 @@ describe('getProviderSources', () => {
     expect(getProviderSources([])).toEqual([]);
   });
 
-  it('each source has icon and fillIcon=true', () => {
+  it('each source has icon or brandHtml, and fillIcon=true', () => {
     const sources = getProviderSources(['google-drive', 'dropbox']);
     for (const source of sources) {
-      expect(source.icon).toBeTruthy();
+      expect(source.icon || source.brandHtml).toBeTruthy();
       expect(source.fillIcon).toBe(true);
     }
   });

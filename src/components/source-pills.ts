@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { property } from 'lit/decorators.js';
 import { unsafeSVG } from 'lit/directives/unsafe-svg.js';
+import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { svg as svgTag } from 'lit';
 
 export type { SourceDef, UploaderHandle } from '../types/source.types';
@@ -72,6 +73,17 @@ export class SfxSourcePills extends LitElement {
       stroke: none;
       stroke-width: 0;
     }
+
+    .brand-ico {
+      width: 20px;
+      height: 20px;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      line-height: 1;
+    }
   `;
 
   @property({ type: Array }) sources: SourceDef[] = CORE_SOURCES;
@@ -91,7 +103,9 @@ export class SfxSourcePills extends LitElement {
       ${this.sources.map(
         (s) => html`
           <button @click=${() => this._handleClick(s)}>
-            ${svgTag`<svg viewBox="0 0 24 24" class=${s.fillIcon ? 'fill-icon' : ''}>${unsafeSVG(s.icon)}</svg>`}
+            ${s.brandHtml
+              ? unsafeHTML(s.brandHtml)
+              : svgTag`<svg viewBox="0 0 24 24" class=${s.fillIcon ? 'fill-icon' : ''}>${unsafeSVG(s.icon)}</svg>`}
             ${s.label}
           </button>
         `,

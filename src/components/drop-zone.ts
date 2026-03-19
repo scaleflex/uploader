@@ -1,6 +1,7 @@
 import { LitElement, html, css, nothing } from 'lit';
 import { property, state, query } from 'lit/decorators.js';
 import { unsafeSVG } from 'lit/directives/unsafe-svg.js';
+import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { svg as svgTag } from 'lit';
 import type { SourceDef } from './source-pills';
 
@@ -268,6 +269,29 @@ export class SfxDropZone extends LitElement {
       fill: currentColor;
       stroke: none;
       stroke-width: 0;
+    }
+
+    /* --- Brand icon container (for provider logos) --- */
+    .brand-ico {
+      width: 20px;
+      height: 20px;
+      border-radius: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+
+    .src-ico .brand-ico {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+    }
+
+    .src-ico .brand-ico svg {
+      width: 9px;
+      height: 9px;
     }
 
     /* --- Source icons row (compact mode) --- */
@@ -604,7 +628,9 @@ export class SfxDropZone extends LitElement {
                       }}
                     >
                       <span class="pill-ico" style=${s.iconColor ? `color:${s.iconColor}` : ''}>
-                        ${svgTag`<svg viewBox="0 0 24 24" class=${s.fillIcon ? 'fill-icon' : ''}>${unsafeSVG(s.icon)}</svg>`}
+                        ${s.brandHtml
+                          ? unsafeHTML(s.brandHtml)
+                          : svgTag`<svg viewBox="0 0 24 24" class=${s.fillIcon ? 'fill-icon' : ''}>${unsafeSVG(s.icon)}</svg>`}
                       </span>
                       ${s.label}
                     </button>
@@ -628,7 +654,9 @@ export class SfxDropZone extends LitElement {
                         this._onSourceIconClick(s);
                       }}
                     >
-                      ${svgTag`<svg viewBox="0 0 24 24" class=${s.fillIcon ? 'fill-icon' : ''}>${unsafeSVG(s.icon)}</svg>`}
+                      ${s.brandHtml
+                        ? unsafeHTML(s.brandHtml)
+                        : svgTag`<svg viewBox="0 0 24 24" class=${s.fillIcon ? 'fill-icon' : ''}>${unsafeSVG(s.icon)}</svg>`}
                     </button>
                   `,
                 )}
