@@ -53,6 +53,20 @@ const PROVIDER_DEFS: Record<ProviderId, SourceDef> = {
     icon: '',
     brandHtml: `<span class="brand-ico" style="background:#111"><svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M8.5 11.5v5h7v-5h5.5V21h-18v-9.5h5.5zm7-8v5h-7v-5h7z"/></svg></span>`,
   },
+  canva: {
+    id: 'canva',
+    label: 'Canva',
+    fillIcon: true,
+    icon: '',
+    brandHtml: `<span class="brand-ico" style="background:linear-gradient(135deg,#7b2ff7,#00c4cc)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M12 3.5a8.5 8.5 0 106.36 14.15" stroke="white" stroke-width="3.5" stroke-linecap="round"/></svg></span>`,
+  },
+  camera: {
+    id: 'camera',
+    label: 'Camera',
+    fillIcon: false,
+    icon: `<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>`,
+    brandHtml: `<span class="brand-ico" style="background:#6366f1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span>`,
+  },
 };
 
 /**

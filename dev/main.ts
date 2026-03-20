@@ -41,19 +41,8 @@ function applyConfig() {
     mode: 'inline',
     connectors: {
       companionUrl: 'https://eu-on-24001.connector.filerobot.com',
-      providers: ['google-drive', 'dropbox', 'onedrive', 'box', 'unsplash'],
-      customSources: [
-        {
-          id: 'canva-test',
-          label: 'Canva (Custom)',
-          fillIcon: true,
-          icon: '<circle cx="12" cy="12" r="10" fill="#24BECA" stroke="none"/><path d="M15.5 10.5c-.3-1.2-1.4-2-2.7-2-1.8 0-3.3 1.7-3.3 3.8 0 1.5.8 2.5 1.9 2.5.8 0 1.4-.6 1.6-1.4.1-.2 0-.4-.2-.4h-.3c-.2 0-.3-.1-.3-.3 0-.5.4-1 1-1 .8 0 1.3.6 1.3 1.5 0 1.6-1.2 2.8-2.8 2.8-2 0-3.4-1.6-3.4-3.8 0-2.8 1.9-5 4.5-5 2 0 3.4 1.2 3.6 2.8 0 .2-.1.4-.3.4h-.3c-.2 0-.3-.2-.3-.4z" fill="#fff"/>',
-          onActivate(uploader) {
-            alert('Custom source clicked!');
-            console.log('Uploader handle:', uploader, 'addFiles:', typeof uploader.addFiles);
-          },
-        },
-      ],
+      providers: ['google-drive', 'dropbox', 'onedrive', 'box', 'unsplash', 'canva', 'camera'],
+      customSources: [],
     },
   };
 

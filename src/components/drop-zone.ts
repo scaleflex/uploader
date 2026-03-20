@@ -344,18 +344,22 @@ export class SfxDropZone extends LitElement {
     }
 
     .more-dropdown {
-      position: fixed;
+      position: absolute;
+      bottom: calc(100% + 8px);
+      right: 0;
       background: #fff;
       border-radius: 14px;
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
       border: 1px solid #e8edf5;
       padding: 6px;
       min-width: 200px;
+      max-height: 340px;
+      overflow-y: auto;
       z-index: 99999;
       opacity: 0;
       visibility: hidden;
       pointer-events: none;
-      transform: translateY(6px);
+      transform: translateY(-6px);
       transition: opacity 0.18s ease, visibility 0.18s ease, transform 0.18s ease;
     }
 
@@ -717,18 +721,6 @@ export class SfxDropZone extends LitElement {
   private _toggleMore(e: MouseEvent) {
     e.stopPropagation();
     this._moreOpen = !this._moreOpen;
-
-    if (this._moreOpen) {
-      // Position the fixed dropdown below the button
-      requestAnimationFrame(() => {
-        const btn = (e.currentTarget as HTMLElement);
-        const dropdown = this.shadowRoot!.querySelector('.more-dropdown') as HTMLElement;
-        if (!btn || !dropdown) return;
-        const rect = btn.getBoundingClientRect();
-        dropdown.style.top = `${rect.bottom + 8}px`;
-        dropdown.style.right = `${window.innerWidth - rect.right}px`;
-      });
-    }
   }
 
   private _onMoreItemClick(source: SourceDef, e: MouseEvent) {

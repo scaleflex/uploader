@@ -114,7 +114,7 @@ export class SfxUploader extends LitElement {
       max-height: 88vh;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
+      overflow: visible;
       position: relative;
       animation: modalIn 0.3s cubic-bezier(0.34, 1.2, 0.64, 1);
     }
@@ -187,7 +187,7 @@ export class SfxUploader extends LitElement {
     /* --- Body --- */
     .body {
       flex: 1;
-      overflow-y: auto;
+      overflow: visible;
       padding: 24px;
       display: flex;
       flex-direction: column;
@@ -201,6 +201,7 @@ export class SfxUploader extends LitElement {
     .body sfx-drop-zone {
       position: relative;
       z-index: 1;
+      overflow: visible;
     }
 
     /* --- Inline mode --- */
@@ -210,7 +211,7 @@ export class SfxUploader extends LitElement {
       background: #fff;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
+      overflow: visible;
     }
 
     /* --- Connector modal overlay --- */
@@ -232,8 +233,10 @@ export class SfxUploader extends LitElement {
       border-radius: 20px;
       box-shadow: 0 28px 80px var(--sfx-up-shadow, rgba(0, 0, 0, 0.18)), 0 4px 16px oklch(0 0 0 / 0.06);
       width: 100%;
-      max-width: 540px;
-      height: 80vh;
+      max-width: 520px;
+      height: 75vh;
+      max-height: 640px;
+      min-height: 400px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
@@ -269,6 +272,7 @@ export class SfxUploader extends LitElement {
   @state() private _showUrlDialog = false;
   @state() private _showCameraDialog = false;
   @state() private _showScreenCastDialog = false;
+  @state() private _showCanvaDialog = false;
 
   private _store!: Store<UploaderState>;
   private _storeCtrl!: StoreController;
