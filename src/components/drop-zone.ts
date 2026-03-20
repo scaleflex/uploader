@@ -632,6 +632,7 @@ export class SfxDropZone extends LitElement {
   `;
 
   @property({ type: Boolean }) compact = false;
+  @property({ type: Boolean, attribute: 'external-drag-over' }) externalDragOver = false;
   @property({ type: String }) accept = '';
   @property({ type: Array }) sources: SourceDef[] = [];
 
@@ -883,7 +884,7 @@ export class SfxDropZone extends LitElement {
   render() {
     const classes = [
       'drop-zone',
-      this._dragOver ? 'drag-over' : '',
+      (this._dragOver || this.externalDragOver) ? 'drag-over' : '',
       this.compact ? 'compact' : '',
     ]
       .filter(Boolean)

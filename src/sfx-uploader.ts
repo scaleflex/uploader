@@ -356,7 +356,6 @@ export class SfxUploader extends LitElement {
       object-fit: contain;
       min-height: 0;
       flex: 1;
-      background: #f9fafb;
     }
 
     .preview-filename {
@@ -440,6 +439,73 @@ export class SfxUploader extends LitElement {
     @media (prefers-reduced-motion: reduce) {
       .modal-backdrop { animation: none; }
       .modal-card { animation: none; }
+    }
+
+    /* --- Responsive: Tablet (≤ 768px) --- */
+    @media (max-width: 768px) {
+      .modal-backdrop { padding: 12px; }
+      .modal-card { border-radius: 12px; max-height: 92vh; }
+      .header { padding: 12px 16px; }
+      .header-icon { width: 28px; height: 28px; margin-right: 10px; }
+      .header-icon svg { width: 14px; height: 14px; }
+      .header-title { font-size: 14px; }
+      .body { padding: 16px; }
+      .body.has-files { padding: 16px; padding-bottom: 12px; }
+      .asset-count { padding: 12px 0 6px; font-size: 12px; }
+
+      .preview-layout { flex-direction: column; }
+      .preview-layout .file-grid-side {
+        width: 100%;
+        max-height: 140px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        flex-shrink: 0;
+      }
+      .preview-panel { padding: 0 0 16px; }
+
+      .preview-topbar { padding: 8px 0; }
+
+      .connector-modal-backdrop { padding: 8px; }
+      .connector-modal {
+        max-width: 100%;
+        height: 85vh;
+        max-height: none;
+        border-radius: 14px;
+      }
+    }
+
+    /* --- Responsive: Mobile (≤ 480px) --- */
+    @media (max-width: 480px) {
+      .modal-backdrop { padding: 0; }
+      .modal-card {
+        border-radius: 0;
+        max-height: 100vh;
+        max-width: 100%;
+        height: 100%;
+      }
+      .header { padding: 10px 14px; }
+      .header-icon { width: 26px; height: 26px; margin-right: 8px; }
+      .header-title { font-size: 13px; }
+      .body { padding: 12px; }
+      .body.has-files { padding: 12px; padding-bottom: 8px; }
+      .asset-count { padding: 8px 0 4px; font-size: 11px; }
+
+      .preview-layout .file-grid-side { max-height: 100px; }
+      .preview-panel { padding: 0 0 12px; }
+      .preview-filename { font-size: 14px; margin-top: 8px; }
+      .preview-meta { gap: 8px; margin-top: 8px; }
+      .preview-meta dt { font-size: 10px; }
+      .preview-meta dd { font-size: 12px; }
+
+      .inline { max-height: 100vh; border-radius: 0; border: none; }
+
+      .connector-modal-backdrop { padding: 0; }
+      .connector-modal {
+        border-radius: 0;
+        height: 100vh;
+        max-height: none;
+        min-height: auto;
+      }
     }
   `;
 
@@ -1442,6 +1508,7 @@ export class SfxUploader extends LitElement {
               : html`
                   <sfx-drop-zone
                     .compact=${hasFiles}
+                    .externalDragOver=${this._bodyDragOver}
                     .accept=${accept}
                     .sources=${this._mergedSources}
                   ></sfx-drop-zone>
