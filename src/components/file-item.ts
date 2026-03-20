@@ -273,14 +273,8 @@ export class SfxFileItem extends LitElement {
       display: flex;
       align-items: center;
       justify-content: center;
-      opacity: 0;
       pointer-events: none;
       z-index: 10;
-      animation: popBounce 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s both;
-    }
-
-    .tile.done .done-badge {
-      opacity: 1;
     }
 
     .done-badge svg {
@@ -429,11 +423,13 @@ export class SfxFileItem extends LitElement {
           </div>
 
           <!-- Done badge -->
-          <div class="done-badge">
-            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-          </div>
+          ${isDone
+            ? html`<div class="done-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </div>`
+            : nothing}
 
           <!-- Progress bar -->
           ${f.status === 'uploading' || isDone
