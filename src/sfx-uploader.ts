@@ -198,10 +198,25 @@ export class SfxUploader extends LitElement {
       background: #fff;
     }
 
+    .body.has-files {
+      justify-content: flex-start;
+      align-items: stretch;
+      overflow-y: auto;
+      gap: 0;
+    }
+
     .body sfx-drop-zone {
       position: relative;
       z-index: 1;
       overflow: visible;
+    }
+
+    .asset-count {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--sfx-up-text-secondary, #64748b);
+      padding: 16px 0 8px;
+      flex-shrink: 0;
     }
 
     /* --- Inline mode --- */
@@ -1124,7 +1139,7 @@ export class SfxUploader extends LitElement {
         @canva-file-ready=${this._onCanvaFileReady}
         @canva-cancel=${this._onCanvaCancel}
       >
-        <div class="body">
+        <div class="body ${hasFiles ? 'has-files' : ''}">
           ${phase === 'complete'
               ? html`
                   <sfx-success-card
@@ -1140,6 +1155,7 @@ export class SfxUploader extends LitElement {
 
                   ${hasFiles
                     ? html`
+                        <div class="asset-count">${files.length} ${files.length === 1 ? 'asset' : 'assets'}</div>
                         <sfx-file-list .files=${files}></sfx-file-list>
                       `
                     : nothing}
@@ -1151,6 +1167,7 @@ export class SfxUploader extends LitElement {
               <sfx-actions-bar
                 .uploadState=${phase === 'complete' ? 'done' : phase === 'uploading' ? 'uploading' : 'idle'}
                 .fileCount=${files.length}
+                .totalSize=${files.reduce((sum, f) => sum + (f.size || 0), 0)}
                 .failedCount=${files.filter((f) => f.status === 'failed' || f.status === 'error').length}
                 .showFillMetadata=${!!this.config?.showFillMetadata}
               ></sfx-actions-bar>

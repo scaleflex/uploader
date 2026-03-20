@@ -147,6 +147,7 @@ export class SfxActionsBar extends LitElement {
 
   @property({ type: String }) uploadState: UploadButtonState = 'idle';
   @property({ type: Number }) fileCount = 0;
+  @property({ type: Number }) totalSize = 0;
   @property({ type: Number }) failedCount = 0;
   @property({ type: Boolean }) showFillMetadata = false;
 
@@ -170,6 +171,13 @@ export class SfxActionsBar extends LitElement {
     this.dispatchEvent(new CustomEvent('retry-all', { bubbles: true, composed: true }));
   }
 
+  private _formatSize(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+  }
+
   render() {
     return html`
       <div class="left">
@@ -188,7 +196,7 @@ export class SfxActionsBar extends LitElement {
             `
           : nothing}
         <div class="count">
-          ${this.fileCount} <span>${this.fileCount === 1 ? 'file' : 'files'}</span>
+          ${this.fileCount} <span>${this.fileCount === 1 ? 'file' : 'files'}</span>${this.totalSize > 0 ? html` <span>· ${this._formatSize(this.totalSize)}</span>` : nothing}
         </div>
       </div>
       <div class="right">
