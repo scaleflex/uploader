@@ -78,7 +78,7 @@
         transition: background 0.15s;
       }
       .apply-btn:hover {
-        background: #1d4ed8;
+        filter: brightness(0.88);
       }
       sfx-uploader {
         width: 100%;
@@ -108,7 +108,11 @@
           <input id="cfg-airbox-puid" type="text" value="unhxiA0WHiB0SFhHGL8DVr1SbS" placeholder="optional" />
         </label>
       </div>
-      <button class="apply-btn" id="cfg-apply">Apply & Connect</button>
+      <div style="display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap;">
+        <button class="apply-btn" id="cfg-apply" style="margin-top: 0;">Show Inline</button>
+        <button class="apply-btn" id="cfg-modal" style="margin-top: 0; background: #6366f1;">Open in Modal</button>
+        <button class="apply-btn" id="cfg-step" style="margin-top: 0; background: #8b5cf6;">Open in Modal as Step</button>
+      </div>
     </div>
     <sfx-uploader id="uploader"></sfx-uploader>
   </body>

@@ -35,7 +35,7 @@
 - **Concurrent uploads** — configurable concurrency with retry and exponential backoff
 - **Real-time progress** — per-file and aggregate progress with speed and ETA
 - **File restrictions** — type, size, and count limits with clear rejection reasons
-- **Modal or inline** — use as a modal overlay or embed directly in your page
+- **Modal or inline** — use as a modal overlay or embed directly in your page, with configurable header buttons (`close`, `back`, or `none`) for wizard and step flows
 - **Fully themeable** — CSS custom properties with `--sfx-up-*` prefix
 - **React wrapper** — controlled `open` prop and imperative ref via `@scaleflex/uploader/react`
 - **Lit 3** — lightweight Web Component with Shadow DOM encapsulation

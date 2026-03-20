@@ -9,7 +9,7 @@ import type { UploaderState, UploadFile, UploadRestrictions, UploadResponse } fr
 import type { AuthConfig, AuthHeaders } from './auth/auth.types';
 import { resolveAuth, getApiBase, buildAuthHeaders } from './auth/auth.service';
 import { PublicEvents } from './events/public-events';
-import { generateFileId, guessMimeType } from './utils/file-utils';
+import { generateFileId, guessMimeType, formatFileSize } from './utils/file-utils';
 import { validateFile, buildAcceptString } from './utils/validate';
 import type { ProviderId, ConnectorConfig, RemoteFileInfo } from './connectors/connector.types';
 import { getProviderSources } from './connectors/provider-registry';
@@ -55,6 +55,13 @@ export interface UploaderConfig {
   auth: AuthConfig;
   targetFolder?: string;
   mode?: 'modal' | 'inline';
+  /**
+   * Controls the header navigation button.
+   * - `'none'`  — no button (default for inline)
+   * - `'close'` — X icon on the right (default for modal)
+   * - `'back'`  — back arrow on the left (use with modal for step/wizard flows)
+   */
+  headerButton?: 'none' | 'close' | 'back';
   restrictions?: Partial<UploadRestrictions>;
   concurrency?: number;
   autoProceed?: boolean;
@@ -159,7 +166,7 @@ export class SfxUploader extends LitElement {
       flex: 1;
     }
 
-    .back-btn {
+    .header-btn {
       width: 30px;
       height: 30px;
       border-radius: 8px;
@@ -172,34 +179,33 @@ export class SfxUploader extends LitElement {
       justify-content: center;
       transition: background 0.15s, color 0.15s;
       flex-shrink: 0;
-      position: relative;
     }
 
-    .back-btn svg {
+    .header-btn svg {
       width: 16px;
       height: 16px;
     }
 
-    .back-btn:hover {
+    .header-btn:hover {
       background: #e4e4e4;
       color: #333;
     }
 
-    .back-btn:hover::after {
-      content: 'Back to Asset Picker';
-      position: absolute;
-      bottom: -30px;
-      right: 0;
-      background: #fff;
-      color: #333;
-      font-size: 11px;
-      font-weight: 500;
-      padding: 4px 10px;
-      border-radius: 6px;
-      white-space: nowrap;
-      pointer-events: none;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-      z-index: 10;
+    .header-btn-back {
+      margin-right: 12px;
+    }
+
+    .header-btn-close {
+      margin-left: auto;
+    }
+
+    /* --- Responsive header buttons --- */
+    @media (max-width: 768px) {
+      .header-btn { width: 28px; height: 28px; }
+      .header-btn svg { width: 14px; height: 14px; }
+    }
+    @media (max-width: 480px) {
+      .header-btn { width: 26px; height: 26px; }
     }
 
     /* --- Content wrapper (holds body + actions bar) --- */
@@ -645,7 +651,6 @@ export class SfxUploader extends LitElement {
   @state() private _showUrlDialog = false;
   @state() private _showCameraDialog = false;
   @state() private _showScreenCastDialog = false;
-  @state() private _showCanvaDialog = false;
   @state() private _previewFileId: string | null = null;
   @state() private _fullscreenPreviewUrl: string | null = null;
   @state() private _fullscreenZoomed = false;
@@ -1171,16 +1176,6 @@ export class SfxUploader extends LitElement {
       return; // Screen cast removed from UI
     }
 
-    // Canva uses its own SDK, not Companion OAuth
-    if (source === 'canva') {
-      if (!customElements.get('sfx-canva-dialog')) {
-        const { SfxCanvaDialog } = await import('./components/canva-dialog');
-        customElements.define('sfx-canva-dialog', SfxCanvaDialog);
-      }
-      this._showCanvaDialog = true;
-      return;
-    }
-
     // Check if this is a connector source
     const providers = this.config?.connectors?.providers ?? [];
     if (providers.includes(source as ProviderId)) {
@@ -1260,19 +1255,25 @@ export class SfxUploader extends LitElement {
     this._showScreenCastDialog = false;
   };
 
-  private _onFileRemove = (e: CustomEvent<{ fileId: string }>) => {
-    const file = this._store.getState().files.get(e.detail.fileId);
+  private _removeFile(fileId: string) {
+    const file = this._store.getState().files.get(fileId);
     // Revoke objectURL to free memory
     if (file?.previewUrl) URL.revokeObjectURL(file.previewUrl);
     // Cancel if active
     if (file && (file.status === 'uploading' || file.status === 'queued')) {
-      this._engine?.cancelFile(e.detail.fileId);
+      this._engine?.cancelFile(fileId);
     }
-    removeFile(this._store, e.detail.fileId);
+    removeFile(this._store, fileId);
+    // Clear dimension cache
+    this._dimCache.delete(fileId);
     if (file) {
       this._dispatchPublic(PublicEvents.FILE_REMOVED, { file });
       this.config?.callbacks?.onFileRemoved?.(file);
     }
+  }
+
+  private _onFileRemove = (e: CustomEvent<{ fileId: string }>) => {
+    this._removeFile(e.detail.fileId);
   };
 
   private _onFilePreview = (e: CustomEvent<{ fileId: string }>) => {
@@ -1383,15 +1384,6 @@ export class SfxUploader extends LitElement {
     }
   };
 
-  private _onCanvaFileReady = (e: CustomEvent<{ file: File }>) => {
-    this._showCanvaDialog = false;
-    this._processIncomingFiles([e.detail.file]);
-  };
-
-  private _onCanvaCancel = () => {
-    this._showCanvaDialog = false;
-  };
-
   private _onPrimaryAction = () => {
     // Dispatch public event so consumers can handle "Done"/"View in DAM"/etc.
     this._dispatchPublic(PublicEvents.COMPLETE_ACTION, {});
@@ -1461,7 +1453,8 @@ export class SfxUploader extends LitElement {
         return;
       }
       if (this._isOpen && this.config?.mode === 'modal') {
-        this._onModalDismiss();
+        const hb = this.config?.headerButton ?? 'close';
+        if (hb !== 'none') this._onModalDismiss();
       }
     }
   };
@@ -1494,9 +1487,31 @@ export class SfxUploader extends LitElement {
 
   private _renderHeader() {
     const mode = this.config?.mode ?? 'modal';
+    const headerButton = this.config?.headerButton ?? (mode === 'modal' ? 'close' : 'none');
     const isComplete = this._phase === 'complete';
+    const dismiss = mode === 'modal' ? this._onModalDismiss : this._onInlineDismiss;
+
+    const backBtn = headerButton === 'back'
+      ? html`<button class="header-btn header-btn-back" aria-label="Go back" @click=${dismiss}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"/>
+            <polyline points="12 19 5 12 12 5"/>
+          </svg>
+        </button>`
+      : nothing;
+
+    const closeBtn = headerButton === 'close'
+      ? html`<button class="header-btn header-btn-close" aria-label="Close" @click=${dismiss}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>`
+      : nothing;
+
     return html`
       <div class="header">
+        ${backBtn}
         <div class="header-icon ${isComplete ? 'header-icon-done' : ''}">
           ${isComplete
             ? html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
@@ -1509,29 +1524,20 @@ export class SfxUploader extends LitElement {
               </svg>`}
         </div>
         <div class="header-title">${isComplete ? 'Upload Complete' : 'Upload Files'}</div>
-        <button class="back-btn" @click=${mode === 'modal' ? this._onModalDismiss : this._onInlineDismiss}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="19" y1="12" x2="5" y2="12"/>
-            <polyline points="12 19 5 12 12 5"/>
-          </svg>
-        </button>
+        ${closeBtn}
       </div>
     `;
   }
 
-  private _formatSize(bytes: number): string {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-    return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
-  }
+  private _dimCache = new Map<string, { w: number; h: number } | null>();
 
   private _getImageDimensions(file: UploadFile): Promise<{ w: number; h: number } | null> {
     if (!file.previewUrl) return Promise.resolve(null);
+    if (this._dimCache.has(file.id)) return Promise.resolve(this._dimCache.get(file.id)!);
     return new Promise((resolve) => {
       const img = new Image();
-      img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight });
-      img.onerror = () => resolve(null);
+      img.onload = () => { const dims = { w: img.naturalWidth, h: img.naturalHeight }; this._dimCache.set(file.id, dims); resolve(dims); };
+      img.onerror = () => { this._dimCache.set(file.id, null); resolve(null); };
       img.src = file.previewUrl!;
     });
   }
@@ -1599,7 +1605,7 @@ export class SfxUploader extends LitElement {
             </div>
             <div class="preview-meta-row">
               <span class="preview-meta-label">Size</span>
-              <span class="preview-meta-value">${this._formatSize(previewFile.size)}</span>
+              <span class="preview-meta-value">${formatFileSize(previewFile.size)}</span>
             </div>
             <div class="preview-meta-row">
               <span class="preview-meta-label">Dimensions</span>
@@ -1628,12 +1634,7 @@ export class SfxUploader extends LitElement {
   }
 
   private _onFileRemoveById(fileId: string) {
-    const file = this._store.getState().files.get(fileId);
-    if (file?.previewUrl) URL.revokeObjectURL(file.previewUrl);
-    if (file && (file.status === 'uploading' || file.status === 'queued')) {
-      this._engine?.cancelFile(fileId);
-    }
-    removeFile(this._store, fileId);
+    this._removeFile(fileId);
     const files = [...this._store.getState().files.values()];
     if (files.length === 0) this._previewFileId = null;
     else if (this._previewFileId === fileId) this._previewFileId = files[0].id;
@@ -1668,8 +1669,6 @@ export class SfxUploader extends LitElement {
         @camera-cancel=${this._onCameraCancel}
         @screencast-capture=${this._onScreenCastCapture}
         @screencast-cancel=${this._onScreenCastCancel}
-        @canva-file-ready=${this._onCanvaFileReady}
-        @canva-cancel=${this._onCanvaCancel}
       >
         <div
           class="body ${hasFiles ? 'has-files' : ''} ${this._bodyDragOver ? 'body-drag-over' : ''}"
@@ -1698,7 +1697,7 @@ export class SfxUploader extends LitElement {
                     ? this._previewFileId
                       ? this._renderPreviewLayout(files)
                       : html`
-                          <div class="asset-count">${files.length} ${files.length === 1 ? 'file' : 'files'} · ${this._formatSize(files.reduce((sum, f) => sum + (f.size || 0), 0))}</div>
+                          <div class="asset-count">${files.length} ${files.length === 1 ? 'file' : 'files'} · ${formatFileSize(files.reduce((sum, f) => sum + (f.size || 0), 0))}</div>
                           <sfx-file-list .files=${files}></sfx-file-list>
                         `
                     : nothing}
@@ -1722,10 +1721,6 @@ export class SfxUploader extends LitElement {
         ${this._showUrlDialog ? html`<sfx-url-dialog></sfx-url-dialog>` : nothing}
         ${this._showCameraDialog ? html`<sfx-camera-dialog></sfx-camera-dialog>` : nothing}
         ${this._showScreenCastDialog ? html`<sfx-screen-cast-dialog></sfx-screen-cast-dialog>` : nothing}
-        ${this._showCanvaDialog
-          ? html`<sfx-canva-dialog .apiKey=${this.config?.connectors?.canvaApiKey ?? ''}></sfx-canva-dialog>`
-          : nothing}
-
         ${this._activeConnector && this.config?.connectors
           ? html`
               <div class="connector-modal-backdrop" @click=${this._onConnectorBackdropClick}>

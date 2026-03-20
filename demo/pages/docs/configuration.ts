@@ -59,6 +59,7 @@ const page: Page = {
             <tr><td><code>auth</code></td><td><code>AuthConfig</code></td><td><strong>required</strong></td><td>Authentication credentials (see above)</td></tr>
             <tr><td><code>targetFolder</code></td><td><code>string</code></td><td><code>'/'</code></td><td>Destination folder path in Scaleflex</td></tr>
             <tr><td><code>mode</code></td><td><code>'modal' | 'inline'</code></td><td><code>'modal'</code></td><td>Display mode</td></tr>
+            <tr><td><code>headerButton</code></td><td><code>'none' | 'close' | 'back'</code></td><td><code>auto</code></td><td>Header navigation button. Defaults to <code>'close'</code> for modal, <code>'none'</code> for inline. Use <code>'back'</code> with modal for step/wizard flows.</td></tr>
             <tr><td><code>concurrency</code></td><td><code>number</code></td><td><code>3</code></td><td>Maximum concurrent uploads</td></tr>
             <tr><td><code>autoProceed</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Start uploading immediately after files are added</td></tr>
             <tr><td><code>showFillMetadata</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Show "Fill Metadata" button in the actions bar</td></tr>
@@ -67,6 +68,44 @@ const page: Page = {
             <tr><td><code>callbacks</code></td><td><code>UploaderCallbacks</code></td><td><code>undefined</code></td><td>Lifecycle callbacks (see <a href="#/docs/api">API</a>)</td></tr>
           </tbody>
         </table>
+
+        <h2>Display modes</h2>
+        <p>The uploader supports two display modes (<code>mode</code>) and three header button styles (<code>headerButton</code>).</p>
+
+        <h3>Modal (default)</h3>
+        <p>Opens as a centered overlay with a backdrop. The header shows a close (X) button by default.</p>
+        ${code(
+          'typescript',
+          `uploader.config = {
+  auth: { /* ... */ },
+  mode: 'modal',           // default
+  // headerButton: 'close' // default for modal
+};
+uploader.open();`,
+        )}
+
+        <h3>Inline</h3>
+        <p>Embeds directly into the page. No header button is shown by default.</p>
+        ${code(
+          'typescript',
+          `uploader.config = {
+  auth: { /* ... */ },
+  mode: 'inline',
+  // headerButton: 'none' // default for inline
+};`,
+        )}
+
+        <h3>Step mode (modal + back button)</h3>
+        <p>Use the modal with a back arrow instead of a close icon — ideal for multi-step wizard flows where the uploader is one step in a larger process.</p>
+        ${code(
+          'typescript',
+          `uploader.config = {
+  auth: { /* ... */ },
+  mode: 'modal',
+  headerButton: 'back',
+};
+uploader.open();`,
+        )}
 
         <h2>Upload restrictions</h2>
         <p>Restrict which files users can add via the <code>restrictions</code> config option.</p>
