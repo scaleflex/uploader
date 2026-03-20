@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Preview Meta — UI/UX Variants</title>
+<style>
+  :root {
+    --text: #1e293b;
+    --text-muted: #9ca3af;
+    --primary: #2563eb;
+    --primary-bg: #eff6ff;
+    --border: #f0f0f0;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f5f5f5;
+    padding: 40px 24px;
+    color: #333;
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #111;
+  }
+
+  .subtitle {
+    text-align: center;
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 40px;
+  }
+
+  .variant {
+    max-width: 420px;
+    margin: 0 auto 48px;
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    overflow: hidden;
+  }
+
+  .variant-label {
+    padding: 14px 20px 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #2563eb;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border);
+    background: #fafafa;
+  }
+
+  .variant-label span {
+    display: block;
+    font-size: 12px;
+    font-weight: 400;
+    color: #888;
+    text-transform: none;
+    letter-spacing: 0;
+    margin-top: 3px;
+  }
+
+  .preview-area {
+    padding: 20px;
+  }
+
+  /* Fake image placeholder */
+  .fake-img {
+    width: 100%;
+    height: 180px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #e0e7ff 0%, #f0f4ff 50%, #dbeafe 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #93a3b8;
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+
+  /* ============================================================
+     Variant 1 — Current (2×2 grid, uppercase labels)
+     Reference baseline
+     ============================================================ */
+  .v1-filename {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+    word-break: break-all;
+  }
+
+  .v1-meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .v1-meta dt {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .v1-meta dd {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    margin: 2px 0 0;
+  }
+
+  /* ============================================================
+     Variant 2 — Inline Tags
+     Horizontal chip/tag row — compact, scannable
+     ============================================================ */
+  .v2-filename {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    word-break: break-all;
+  }
+
+  .v2-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+  }
+
+  .v2-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #f5f7fa;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 500;
+  }
+
+  .v2-tag strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  /* ============================================================
+     Variant 3 — Single-Line Summary
+     Filename on top, all meta collapsed into one readable line
+     ============================================================ */
+  .v3-filename {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    word-break: break-all;
+  }
+
+  .v3-summary {
+    margin-top: 6px;
+    font-size: 13px;
+    color: #64748b;
+    line-height: 1.5;
+  }
+
+  .v3-summary .dot {
+    margin: 0 6px;
+    color: #d1d5db;
+  }
+
+  /* ============================================================
+     Variant 4 — Compact Table Rows
+     Key-value pairs as horizontal rows with subtle dividers
+     ============================================================ */
+  .v4-filename {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    word-break: break-all;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .v4-rows {
+    margin-top: 0;
+  }
+
+  .v4-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #f8f8f8;
+  }
+
+  .v4-row:last-child {
+    border-bottom: none;
+  }
+
+  .v4-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  .v4-value {
+    font-size: 13px;
+    color: var(--text);
+    font-weight: 500;
+    text-align: right;
+  }
+
+  /* ============================================================
+     Variant 5 — Card Badge Style
+     Filename + colored icon badges for each property
+     ============================================================ */
+  .v5-filename {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    word-break: break-all;
+  }
+
+  .v5-badges {
+    display: flex;
+    gap: 12px;
+    margin-top: 12px;
+  }
+
+  .v5-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    padding: 10px;
+    background: #f9fafb;
+    border-radius: 10px;
+  }
+
+  .v5-badge-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .v5-badge-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .v5-badge-icon.type { background: #eff6ff; color: #2563eb; }
+  .v5-badge-icon.size { background: #f0fdf4; color: #16a34a; }
+  .v5-badge-icon.date { background: #fef3c7; color: #d97706; }
+  .v5-badge-icon.dims { background: #fdf2f8; color: #db2777; }
+
+  .v5-badge-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .v5-badge-label {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  .v5-badge-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ============================================================
+     Variant 6 — Minimal Footer
+     Filename is part of the meta — no visual separation,
+     everything in one subtle footer strip below the image
+     ============================================================ */
+  .v6-footer {
+    background: #f9fafb;
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .v6-ext {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: var(--primary-bg);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+
+  .v6-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .v6-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .v6-details {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 2px;
+  }
+
+  .v6-details .dot {
+    margin: 0 5px;
+    color: #d1d5db;
+  }
+</style>
+</head>
+<body>
+
+<h1>Preview Meta — UI/UX Variants</h1>
+<p class="subtitle">6 вариантов отображения информации о файле под превью</p>
+
+<!-- ====== Variant 1 — Current ====== -->
+<div class="variant">
+  <div class="variant-label">
+    Variant 1 — Current (2×2 Grid)
+    <span>Текущая реализация. Uppercase лейблы, 2-колоночная сетка. Занимает много вертикального пространства.</span>
+  </div>
+  <div class="preview-area">
+    <div class="fake-img">preview</div>
+    <div class="v1-filename">running_shoes_006.jpg</div>
+    <dl class="v1-meta">
+      <div><dt>TYPE</dt><dd>JPG</dd></div>
+      <div><dt>DIMENSIONS</dt><dd>1920 × 1080</dd></div>
+      <div><dt>SIZE</dt><dd>314.5 KB</dd></div>
+      <div><dt>ADDED</dt><dd>Mar 20, 2026</dd></div>
+    </dl>
+  </div>
+</div>
+
+<!-- ====== Variant 2 — Inline Tags ====== -->
+<div class="variant">
+  <div class="variant-label">
+    Variant 2 — Inline Tags
+    <span>Горизонтальные чипсы. Компактно, всё на одном уровне. Хорошо для быстрого сканирования.</span>
+  </div>
+  <div class="preview-area">
+    <div class="fake-img">preview</div>
+    <div class="v2-filename">running_shoes_006.jpg</div>
+    <div class="v2-tags">
+      <span class="v2-tag"><strong>JPG</strong></span>
+      <span class="v2-tag">314.5 KB</span>
+      <span class="v2-tag">1920 × 1080</span>
+      <span class="v2-tag">Mar 20, 2026</span>
+    </div>
+  </div>
+</div>
+
+<!-- ====== Variant 3 — Single-Line Summary ====== -->
+<div class="variant">
+  <div class="variant-label">
+    Variant 3 — Single-Line Summary
+    <span>Самый минимальный. Вся мета в одну строку под названием. Идеально для экономии места.</span>
+  </div>
+  <div class="preview-area">
+    <div class="fake-img">preview</div>
+    <div class="v3-filename">running_shoes_006.jpg</div>
+    <div class="v3-summary">
+      JPG<span class="dot">·</span>314.5 KB<span class="dot">·</span>1920 × 1080<span class="dot">·</span>Mar 20, 2026
+    </div>
+  </div>
+</div>
+
+<!-- ====== Variant 4 — Compact Table Rows ====== -->
+<div class="variant">
+  <div class="variant-label">
+    Variant 4 — Compact Key-Value Rows
+    <span>Строки «ключ: значение» с выравниванием. Чётко, формально, привычно для properties panels.</span>
+  </div>
+  <div class="preview-area">
+    <div class="fake-img">preview</div>
+    <div class="v4-filename">running_shoes_006.jpg</div>
+    <div class="v4-rows">
+      <div class="v4-row"><span class="v4-label">Type</span><span class="v4-value">JPG</span></div>
+      <div class="v4-row"><span class="v4-label">Size</span><span class="v4-value">314.5 KB</span></div>
+      <div class="v4-row"><span class="v4-label">Dimensions</span><span class="v4-value">1920 × 1080</span></div>
+      <div class="v4-row"><span class="v4-label">Added</span><span class="v4-value">Mar 20, 2026</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== Variant 5 — Card Badges ====== -->
+<div class="variant">
+  <div class="variant-label">
+    Variant 5 — Icon Badge Cards
+    <span>Цветные иконки + значения в мини-карточках. Визуально насыщенный, хорош для DAM-интерфейсов.</span>
+  </div>
+  <div class="preview-area">
+    <div class="fake-img">preview</div>
+    <div class="v5-filename">running_shoes_006.jpg</div>
+    <div class="v5-badges">
+      <div class="v5-badge">
+        <div class="v5-badge-icon type">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+        </div>
+        <div class="v5-badge-text">
+          <span class="v5-badge-label">Type</span>
+          <span class="v5-badge-value">JPG</span>
+        </div>
+      </div>
+      <div class="v5-badge">
+        <div class="v5-badge-icon size">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+        </div>
+        <div class="v5-badge-text">
+          <span class="v5-badge-label">Size</span>
+          <span class="v5-badge-value">314.5 KB</span>
+        </div>
+      </div>
+      <div class="v5-badge">
+        <div class="v5-badge-icon dims">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <line x1="3" y1="9" x2="21" y2="9"/>
+            <line x1="9" y1="3" x2="9" y2="21"/>
+          </svg>
+        </div>
+        <div class="v5-badge-text">
+          <span class="v5-badge-label">Dims</span>
+          <span class="v5-badge-value">1920×1080</span>
+        </div>
+      </div>
+      <div class="v5-badge">
+        <div class="v5-badge-icon date">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+        </div>
+        <div class="v5-badge-text">
+          <span class="v5-badge-label">Added</span>
+          <span class="v5-badge-value">Mar 20</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== Variant 6 — Minimal Footer Strip ====== -->
+<div class="variant">
+  <div class="variant-label">
+    Variant 6 — Footer Strip
+    <span>Имя файла + мета объединены в один компактный блок. Иконка расширения слева. Как в файловых менеджерах.</span>
+  </div>
+  <div class="preview-area">
+    <div class="fake-img">preview</div>
+    <div class="v6-footer">
+      <div class="v6-ext">JPG</div>
+      <div class="v6-info">
+        <div class="v6-name">running_shoes_006.jpg</div>
+        <div class="v6-details">
+          314.5 KB<span class="dot">·</span>1920 × 1080<span class="dot">·</span>Mar 20, 2026
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
