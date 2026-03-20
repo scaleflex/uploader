@@ -358,10 +358,10 @@ export class SfxUploader extends LitElement {
 
     .preview-image {
       width: 100%;
+      height: 320px;
       border-radius: 6px;
       object-fit: contain;
       flex-shrink: 0;
-      max-height: 50vh;
       border: 1px solid var(--sfx-up-border, #e8eaed);
     }
 
@@ -1630,10 +1630,10 @@ export class SfxUploader extends LitElement {
                 `}
         </div>
 
-        ${hasFiles
+        ${hasFiles && phase !== 'complete'
           ? html`
               <sfx-actions-bar
-                .uploadState=${phase === 'complete' ? 'done' : phase === 'uploading' ? 'uploading' : 'idle'}
+                .uploadState=${phase === 'uploading' ? 'uploading' : 'idle'}
                 .fileCount=${files.length}
                 .totalSize=${files.reduce((sum, f) => sum + (f.size || 0), 0)}
                 .failedCount=${files.filter((f) => f.status === 'failed' || f.status === 'error').length}

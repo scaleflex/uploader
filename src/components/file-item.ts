@@ -119,8 +119,9 @@ export class SfxFileItem extends LitElement {
       text-overflow: ellipsis;
     }
 
-    .tile.done .info {
-      opacity: 0.5;
+    .tile.done {
+      border-color: var(--sfx-up-primary, #2563eb);
+      border-width: 2px;
     }
 
     /* --- Action buttons --- */
@@ -234,10 +235,6 @@ export class SfxFileItem extends LitElement {
       transition: transform 0.32s ease;
     }
 
-    .tile.done .progress-fill {
-      background: var(--sfx-up-success, #16a34a);
-    }
-
     /* --- Uploading spinner overlay --- */
     .spinner-overlay {
       position: absolute;
@@ -264,32 +261,31 @@ export class SfxFileItem extends LitElement {
       animation: spinRing 0.7s linear infinite;
     }
 
-    /* --- Done overlay --- */
-    .done-overlay {
+    /* --- Done badge --- */
+    .done-badge {
       position: absolute;
-      inset: 0;
-      background: rgba(5, 150, 105, 0.72);
-      opacity: 0;
-      transition: opacity 0.45s cubic-bezier(0.4, 0, 0.2, 1);
-      pointer-events: none;
+      top: 8px;
+      left: 8px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--sfx-up-primary, #2563eb);
       display: flex;
       align-items: center;
       justify-content: center;
-    }
-
-    .tile.done .done-overlay {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .done-check {
+      opacity: 0;
+      pointer-events: none;
+      z-index: 10;
       animation: popBounce 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s both;
     }
 
-    .done-check svg {
-      width: 28px;
-      height: 28px;
-      filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.2));
+    .tile.done .done-badge {
+      opacity: 1;
+    }
+
+    .done-badge svg {
+      width: 14px;
+      height: 14px;
     }
 
     /* --- Error state --- */
@@ -432,13 +428,11 @@ export class SfxFileItem extends LitElement {
             <div class="spin-ring"></div>
           </div>
 
-          <!-- Done overlay -->
-          <div class="done-overlay">
-            <div class="done-check">
-              <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-            </div>
+          <!-- Done badge -->
+          <div class="done-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
           </div>
 
           <!-- Progress bar -->
