@@ -227,6 +227,111 @@ export class SfxUploader extends LitElement {
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      max-height: 88vh;
+    }
+
+    /* --- Preview split layout --- */
+    .preview-layout {
+      display: flex;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .preview-layout .file-grid-side {
+      flex: 1;
+      overflow-y: auto;
+      min-width: 0;
+    }
+
+    .preview-topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      padding: 12px 0;
+    }
+
+    .preview-panel {
+      width: 380px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 0 0 24px 24px;
+    }
+
+    .preview-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 12px 0;
+      flex-shrink: 0;
+    }
+
+    .preview-panel-header button {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--sfx-up-text-muted, #9ca3af);
+      transition: background 0.15s, color 0.15s;
+      padding: 0;
+    }
+
+    .preview-panel-header button:hover {
+      background: #f3f4f6;
+      color: var(--sfx-up-text, #374151);
+    }
+
+    .preview-panel-header button svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .preview-image {
+      width: 100%;
+      border-radius: 8px;
+      object-fit: contain;
+      max-height: 50vh;
+      background: #f9fafb;
+    }
+
+    .preview-filename {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--sfx-up-text, #1e293b);
+      margin-top: 16px;
+      word-break: break-all;
+    }
+
+    .preview-meta {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 16px;
+    }
+
+    .preview-meta dt {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--sfx-up-text-muted, #9ca3af);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin: 0;
+    }
+
+    .preview-meta dd {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--sfx-up-text, #1e293b);
+      margin: 2px 0 0;
     }
 
     /* --- Connector modal overlay --- */
@@ -288,6 +393,7 @@ export class SfxUploader extends LitElement {
   @state() private _showCameraDialog = false;
   @state() private _showScreenCastDialog = false;
   @state() private _showCanvaDialog = false;
+  @state() private _previewFileId: string | null = null;
 
   private _store!: Store<UploaderState>;
   private _storeCtrl!: StoreController;
@@ -915,6 +1021,7 @@ export class SfxUploader extends LitElement {
   private _onFilePreview = (e: CustomEvent<{ fileId: string }>) => {
     const file = this._store.getState().files.get(e.detail.fileId);
     if (!file) return;
+    this._previewFileId = file.id;
     this._dispatchPublic(PublicEvents.FILE_PREVIEW, { file });
     this.config?.callbacks?.onFilePreview?.(file);
   };
@@ -1114,6 +1221,82 @@ export class SfxUploader extends LitElement {
     return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
   }
 
+  private _getImageDimensions(file: UploadFile): Promise<{ w: number; h: number } | null> {
+    if (!file.previewUrl) return Promise.resolve(null);
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight });
+      img.onerror = () => resolve(null);
+      img.src = file.previewUrl!;
+    });
+  }
+
+  private _renderPreviewLayout(files: UploadFile[]) {
+    const previewFile = files.find((f) => f.id === this._previewFileId) ?? files[0];
+    const ext = previewFile.name.split('.').pop()?.toUpperCase() || '';
+    const addedDate = new Date(previewFile.addedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+    return html`
+      <div class="preview-topbar">
+        <div class="asset-count" style="padding:0">${files.length} ${files.length === 1 ? 'asset' : 'assets'}</div>
+        <div class="preview-panel-header">
+          <button @click=${() => this._onFileRemoveById(previewFile.id)} title="Delete">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="3 6 5 6 21 6" />
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+              <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              <line x1="10" y1="11" x2="10" y2="17" />
+              <line x1="14" y1="11" x2="14" y2="17" />
+            </svg>
+          </button>
+          <button @click=${() => { if (previewFile.previewUrl) window.open(previewFile.previewUrl, '_blank'); }} title="Expand">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 3 21 3 21 9" />
+              <polyline points="9 21 3 21 3 15" />
+              <line x1="21" y1="3" x2="14" y2="10" />
+              <line x1="3" y1="21" x2="10" y2="14" />
+            </svg>
+          </button>
+          <button @click=${() => { this._previewFileId = null; }} title="Close">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="preview-layout">
+        <div class="file-grid-side">
+          <sfx-file-list .files=${files}></sfx-file-list>
+        </div>
+        <div class="preview-panel">
+          ${previewFile.previewUrl
+            ? html`<img class="preview-image" src=${previewFile.previewUrl} alt=${previewFile.name} />`
+            : nothing}
+          <div class="preview-filename">${previewFile.name}</div>
+          <dl class="preview-meta">
+            <div><dt>TYPE</dt><dd>${ext}</dd></div>
+            <div><dt>DIMENSIONS</dt><dd id="preview-dims">—</dd></div>
+            <div><dt>SIZE</dt><dd>${this._formatSize(previewFile.size)}</dd></div>
+            <div><dt>ADDED</dt><dd>${addedDate}</dd></div>
+          </dl>
+        </div>
+      </div>
+    `;
+  }
+
+  private _onFileRemoveById(fileId: string) {
+    const file = this._store.getState().files.get(fileId);
+    if (file?.previewUrl) URL.revokeObjectURL(file.previewUrl);
+    if (file && (file.status === 'uploading' || file.status === 'queued')) {
+      this._engine?.cancelFile(fileId);
+    }
+    removeFile(this._store, fileId);
+    const files = [...this._store.getState().files.values()];
+    if (files.length === 0) this._previewFileId = null;
+    else if (this._previewFileId === fileId) this._previewFileId = files[0].id;
+  }
+
   private _renderBody() {
     const s = this._storeCtrl.state;
     const files = [...s.files.values()];
@@ -1161,10 +1344,12 @@ export class SfxUploader extends LitElement {
                   ></sfx-drop-zone>
 
                   ${hasFiles
-                    ? html`
-                        <div class="asset-count">${files.length} ${files.length === 1 ? 'file' : 'files'} · ${this._formatSize(files.reduce((sum, f) => sum + (f.size || 0), 0))}</div>
-                        <sfx-file-list .files=${files}></sfx-file-list>
-                      `
+                    ? this._previewFileId
+                      ? this._renderPreviewLayout(files)
+                      : html`
+                          <div class="asset-count">${files.length} ${files.length === 1 ? 'file' : 'files'} · ${this._formatSize(files.reduce((sum, f) => sum + (f.size || 0), 0))}</div>
+                          <sfx-file-list .files=${files}></sfx-file-list>
+                        `
                     : nothing}
                 `}
         </div>
