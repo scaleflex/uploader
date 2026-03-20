@@ -737,6 +737,44 @@ export class SfxDropZone extends LitElement {
   private _toggleMore(e: MouseEvent) {
     e.stopPropagation();
     this._moreOpen = !this._moreOpen;
+    if (this._moreOpen) {
+      requestAnimationFrame(() => this._positionDropdown());
+    }
+  }
+
+  /** Position the fixed dropdown, choosing above or below based on available space. */
+  private _positionDropdown() {
+    const pill = this.shadowRoot?.querySelector('.more-pill') as HTMLElement;
+    const dropdown = this.shadowRoot?.querySelector('.more-dropdown') as HTMLElement;
+    if (!pill || !dropdown) return;
+
+    const pillRect = pill.getBoundingClientRect();
+    const gap = 8;
+
+    // Measure dropdown height
+    const ddHeight = dropdown.scrollHeight;
+    const ddWidth = dropdown.offsetWidth;
+
+    const spaceAbove = pillRect.top;
+    const spaceBelow = window.innerHeight - pillRect.bottom;
+
+    // Prefer above, fall back to below if not enough room
+    const openAbove = spaceAbove >= ddHeight + gap || spaceAbove > spaceBelow;
+
+    if (openAbove) {
+      dropdown.classList.add('above');
+      dropdown.classList.remove('below');
+      dropdown.style.top = `${pillRect.top - ddHeight - gap}px`;
+    } else {
+      dropdown.classList.add('below');
+      dropdown.classList.remove('above');
+      dropdown.style.top = `${pillRect.bottom + gap}px`;
+    }
+
+    // Horizontal: align right edge with pill, clamp to viewport
+    let left = pillRect.right - ddWidth;
+    left = Math.max(8, Math.min(left, window.innerWidth - ddWidth - 8));
+    dropdown.style.left = `${left}px`;
   }
 
   private _onMoreItemClick(source: SourceDef, e: MouseEvent) {
@@ -749,16 +787,26 @@ export class SfxDropZone extends LitElement {
     if (this._moreOpen) this._moreOpen = false;
   };
 
+  private _onScrollOrResize = () => {
+    if (this._moreOpen) {
+      this._positionDropdown();
+    }
+  };
+
   connectedCallback() {
     super.connectedCallback();
     document.addEventListener('paste', this._onPaste);
     document.addEventListener('click', this._onDocClick);
+    window.addEventListener('scroll', this._onScrollOrResize, true);
+    window.addEventListener('resize', this._onScrollOrResize);
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
     document.removeEventListener('paste', this._onPaste);
     document.removeEventListener('click', this._onDocClick);
+    window.removeEventListener('scroll', this._onScrollOrResize, true);
+    window.removeEventListener('resize', this._onScrollOrResize);
   }
 
   private _renderPill(s: SourceDef) {
