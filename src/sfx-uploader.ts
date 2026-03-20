@@ -356,14 +356,56 @@ export class SfxUploader extends LitElement {
       height: 18px;
     }
 
+    .preview-img-wrap {
+      position: relative;
+      flex-shrink: 0;
+    }
+
     .preview-image {
       width: 100%;
       height: 320px;
       border-radius: 6px;
       object-fit: contain;
-      flex-shrink: 0;
+      display: block;
       border: 1px solid var(--sfx-up-border, #e8eaed);
     }
+
+    .preview-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: none;
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--sfx-up-text, #1e293b);
+      transition: all 0.15s;
+      z-index: 2;
+      padding: 0;
+    }
+
+    .preview-nav:hover {
+      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.18);
+      transform: translateY(-50%) scale(1.06);
+    }
+
+    .preview-nav:active {
+      transform: translateY(-50%) scale(0.96);
+    }
+
+    .preview-nav svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .preview-nav.prev { left: 10px; }
+    .preview-nav.next { right: 10px; }
 
     .preview-filename {
       font-size: 15px;
@@ -1538,7 +1580,21 @@ export class SfxUploader extends LitElement {
         </div>
         <div class="preview-panel">
           ${previewFile.previewUrl
-            ? html`<img class="preview-image" src=${previewFile.previewUrl} alt=${previewFile.name} />`
+            ? html`
+                <div class="preview-img-wrap">
+                  <img class="preview-image" src=${previewFile.previewUrl} alt=${previewFile.name} />
+                  ${files.indexOf(previewFile) > 0
+                    ? html`<button class="preview-nav prev" @click=${() => this._navigatePreview(files, -1)}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                      </button>`
+                    : nothing}
+                  ${files.indexOf(previewFile) < files.length - 1
+                    ? html`<button class="preview-nav next" @click=${() => this._navigatePreview(files, 1)}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 6 15 12 9 18"/></svg>
+                      </button>`
+                    : nothing}
+                </div>
+              `
             : nothing}
           <div class="preview-filename">${previewFile.name}</div>
           <div class="preview-tags">
@@ -1550,6 +1606,14 @@ export class SfxUploader extends LitElement {
         </div>
       </div>
     `;
+  }
+
+  private _navigatePreview(files: UploadFile[], direction: -1 | 1) {
+    const idx = files.findIndex((f) => f.id === this._previewFileId);
+    const next = idx + direction;
+    if (next >= 0 && next < files.length) {
+      this._previewFileId = files[next].id;
+    }
   }
 
   private _onFileRemoveById(fileId: string) {

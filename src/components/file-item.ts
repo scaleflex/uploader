@@ -383,7 +383,7 @@ export class SfxFileItem extends LitElement {
 
     const category = getFileCategory(f);
     const isImage = category === 'image';
-    const isDone = f.status === 'complete';
+    const isDone = f.status === 'complete' && f.progress > 0;
     const isUploading = f.status === 'uploading';
     const isError = f.status === 'error' || f.status === 'failed';
     const ext = getFileExtension(f.name);
