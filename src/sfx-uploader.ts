@@ -293,8 +293,8 @@ export class SfxUploader extends LitElement {
     }
 
     .preview-layout .file-grid-side {
-      width: 440px;
-      flex-shrink: 0;
+      flex: 54;
+      min-width: 0;
       overflow-y: auto;
       padding-right: 12px;
       scrollbar-width: thin;
@@ -314,12 +314,12 @@ export class SfxUploader extends LitElement {
     }
 
     .preview-panel {
-      flex: 1;
+      flex: 46;
       min-width: 0;
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      padding: 0 24px;
+      padding: 0 20px 20px;
     }
 
     .preview-panel-header {
