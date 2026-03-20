@@ -9,7 +9,7 @@ const PROVIDER_DEFS: Record<ProviderId, SourceDef> = {
     label: 'Google Drive',
     fillIcon: true,
     icon: '',
-    brandHtml: `<svg width="16" height="16" viewBox="0 0 87.3 78"><path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3L27.5 53H0c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/><path d="M43.65 25L29.9 1.2C28.55 2 27.4 3.1 26.6 4.5L1.2 48.5C.4 49.9 0 51.45 0 53h27.5z" fill="#00ac47"/><path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5H59.8l5.65 10.85z" fill="#ea4335"/><path d="M43.65 25L57.4 1.2C56.05.4 54.5 0 52.9 0H34.4c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d"/><path d="M59.8 53H27.5L13.75 76.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc"/><path d="M73.4 26.5l-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25 59.8 53h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00"/></svg>`,
+    brandHtml: `<span class="brand-ico" style="background:transparent"><svg width="16" height="16" viewBox="0 0 87.3 78"><path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3L27.5 53H0c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/><path d="M43.65 25L29.9 1.2C28.55 2 27.4 3.1 26.6 4.5L1.2 48.5C.4 49.9 0 51.45 0 53h27.5z" fill="#00ac47"/><path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5H59.8l5.65 10.85z" fill="#ea4335"/><path d="M43.65 25L57.4 1.2C56.05.4 54.5 0 52.9 0H34.4c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d"/><path d="M59.8 53H27.5L13.75 76.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc"/><path d="M73.4 26.5l-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25 59.8 53h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00"/></svg></span>`,
   },
   dropbox: {
     id: 'dropbox',
@@ -58,7 +58,7 @@ const PROVIDER_DEFS: Record<ProviderId, SourceDef> = {
     label: 'Canva',
     fillIcon: true,
     icon: '',
-    brandHtml: `<span class="brand-ico" style="border-radius:50%;overflow:hidden"><svg width="20" height="20" viewBox="0 0 100 100"><defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#00C4CC"/><stop offset="100%" stop-color="#7B2FF7"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#cg)"/><path d="M62 32c-2.5-1.5-5.5-2-9-2-11 0-19 8.5-19 20s7.5 19 17 19c4 0 7-1.2 9.5-3.5 1.2-1.1 2-2.5 2-3.8 0-1.8-1.2-3-3-3-1 0-1.8.5-2.8 1.5-1.5 1.5-3.2 2.3-5.5 2.3-5.5 0-9.5-4.5-9.5-12.5 0-8.5 4.5-13.5 10.5-13.5 2 0 3.8.6 5 1.5 1 .8 1.6 1.8 1.8 3 .2 1 .8 1.5 1.8 1.5 1.8 0 3-1.3 3-3.2 0-1.5-.5-3.2-1.8-4.3z" fill="white"/></svg></span>`,
+    brandHtml: `<span class="brand-ico canva-ico" style="width:22px;height:22px;border-radius:50%;overflow:hidden;background:none"><svg width="22" height="22" viewBox="0 0 100 100"><defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#00C4CC"/><stop offset="100%" stop-color="#7B2FF7"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#cg)"/><path d="M62 32c-2.5-1.5-5.5-2-9-2-11 0-19 8.5-19 20s7.5 19 17 19c4 0 7-1.2 9.5-3.5 1.2-1.1 2-2.5 2-3.8 0-1.8-1.2-3-3-3-1 0-1.8.5-2.8 1.5-1.5 1.5-3.2 2.3-5.5 2.3-5.5 0-9.5-4.5-9.5-12.5 0-8.5 4.5-13.5 10.5-13.5 2 0 3.8.6 5 1.5 1 .8 1.6 1.8 1.8 3 .2 1 .8 1.5 1.8 1.5 1.8 0 3-1.3 3-3.2 0-1.5-.5-3.2-1.8-4.3z" fill="white"/></svg></span>`,
   },
 };
 

@@ -13,7 +13,7 @@ export class SfxActionsBar extends LitElement {
       border-top: 1px solid var(--sfx-up-border, #ebebeb);
       padding: 14px 24px;
       flex-shrink: 0;
-      box-shadow: 0 -4px 16px var(--sfx-up-shadow, rgba(0, 0, 0, 0.04));
+      box-shadow: none;
     }
 
     .left {
@@ -195,9 +195,6 @@ export class SfxActionsBar extends LitElement {
               </button>
             `
           : nothing}
-        <div class="count">
-          ${this.fileCount} <span>${this.fileCount === 1 ? 'file' : 'files'}</span>${this.totalSize > 0 ? html` <span>· ${this._formatSize(this.totalSize)}</span>` : nothing}
-        </div>
       </div>
       <div class="right">
         <button class="btn-ghost" @click=${this._clear}>

@@ -14,7 +14,7 @@ export class SfxFileItem extends LitElement {
       overflow: hidden;
       background: var(--sfx-up-bg, #fff);
       border: 1px solid var(--sfx-up-border, #e8eaed);
-      box-shadow: 0 1px 4px var(--sfx-up-shadow, rgba(0, 0, 0, 0.06));
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
       animation: tileIn 0.6s cubic-bezier(0.34, 1.2, 0.64, 1) both;
       transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s;
       cursor: default;
@@ -26,7 +26,6 @@ export class SfxFileItem extends LitElement {
     .tile:hover {
       box-shadow: 0 6px 24px var(--sfx-up-shadow, rgba(0, 0, 0, 0.11));
       transform: translateY(-2px);
-      border-color: var(--sfx-up-text-muted, #d1d5db);
     }
 
     /* --- Preview area --- */

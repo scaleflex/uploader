@@ -60,7 +60,7 @@ export class SfxDropZone extends LitElement {
 
     /* Compact state when files exist */
     .drop-zone.compact {
-      padding: 14px 24px;
+      padding: 14px 0;
       flex-direction: row;
       align-items: center;
       gap: 12px;
@@ -285,6 +285,16 @@ export class SfxDropZone extends LitElement {
       stroke-width: 0;
     }
 
+    .src-pill .canva-ico {
+      width: 22px;
+      height: 22px;
+    }
+
+    .src-pill .canva-ico svg {
+      width: 22px;
+      height: 22px;
+    }
+
     /* --- "More" pill + dropdown --- */
     .more-wrap {
       position: relative;
@@ -463,8 +473,22 @@ export class SfxDropZone extends LitElement {
     }
 
     .src-ico .brand-ico svg {
-      width: 10px;
-      height: 10px;
+      width: 12px;
+      height: 12px;
+      stroke: none;
+      stroke-width: 0;
+    }
+
+    .src-ico .canva-ico,
+    .more-item .canva-ico {
+      width: 22px;
+      height: 22px;
+    }
+
+    .src-ico .canva-ico svg,
+    .more-item .canva-ico svg {
+      width: 22px;
+      height: 22px;
     }
 
     /* --- Source icons row (compact mode) --- */
@@ -508,7 +532,7 @@ export class SfxDropZone extends LitElement {
       font-family: inherit;
     }
 
-    .src-ico svg {
+    .src-ico > svg {
       width: 15px;
       height: 15px;
       fill: none;
@@ -517,7 +541,7 @@ export class SfxDropZone extends LitElement {
       stroke-linecap: round;
     }
 
-    .src-ico svg.fill-icon {
+    .src-ico > svg.fill-icon {
       fill: currentColor;
       stroke: none;
       stroke-width: 0;
@@ -921,6 +945,7 @@ export class SfxDropZone extends LitElement {
                   (s) => html`
                     <button
                       class="src-ico"
+                      style=${s.iconColor && !s.brandHtml ? `color:${s.iconColor}` : ''}
                       data-tip=${s.label}
                       @click=${(e: MouseEvent) => {
                         e.stopPropagation();

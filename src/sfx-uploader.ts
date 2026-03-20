@@ -1107,6 +1107,13 @@ export class SfxUploader extends LitElement {
     `;
   }
 
+  private _formatSize(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+  }
+
   private _renderBody() {
     const s = this._storeCtrl.state;
     const files = [...s.files.values()];
@@ -1155,7 +1162,7 @@ export class SfxUploader extends LitElement {
 
                   ${hasFiles
                     ? html`
-                        <div class="asset-count">${files.length} ${files.length === 1 ? 'asset' : 'assets'}</div>
+                        <div class="asset-count">${files.length} ${files.length === 1 ? 'file' : 'files'} · ${this._formatSize(files.reduce((sum, f) => sum + (f.size || 0), 0))}</div>
                         <sfx-file-list .files=${files}></sfx-file-list>
                       `
                     : nothing}
