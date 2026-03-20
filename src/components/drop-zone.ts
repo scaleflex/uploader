@@ -215,7 +215,7 @@ export class SfxDropZone extends LitElement {
       display: flex;
       justify-content: center;
       gap: 8px;
-      flex-wrap: nowrap;
+      flex-wrap: wrap;
     }
 
     .compact .sources-grid {
@@ -638,6 +638,7 @@ export class SfxDropZone extends LitElement {
 
   @state() private _dragOver = false;
   @state() private _moreOpen = false;
+  @state() private _visiblePills = VISIBLE_PILLS;
 
   @query('.ripple') private _rippleEl!: HTMLElement;
   @query('input[type="file"]') fileInput!: HTMLInputElement;
@@ -816,7 +817,19 @@ export class SfxDropZone extends LitElement {
     if (this._moreOpen) {
       this._positionDropdown();
     }
+    this._updateVisiblePills();
   };
+
+  private _updateVisiblePills() {
+    const w = window.innerWidth;
+    if (w <= 480) {
+      this._visiblePills = 1;
+    } else if (w <= 768) {
+      this._visiblePills = 2;
+    } else {
+      this._visiblePills = VISIBLE_PILLS;
+    }
+  }
 
   connectedCallback() {
     super.connectedCallback();
@@ -824,6 +837,7 @@ export class SfxDropZone extends LitElement {
     document.addEventListener('click', this._onDocClick);
     window.addEventListener('scroll', this._onScrollOrResize, true);
     window.addEventListener('resize', this._onScrollOrResize);
+    this._updateVisiblePills();
   }
 
   disconnectedCallback() {
@@ -890,8 +904,8 @@ export class SfxDropZone extends LitElement {
       .filter(Boolean)
       .join(' ');
 
-    const visibleSources = this.sources.slice(0, VISIBLE_PILLS);
-    const overflowSources = this.sources.slice(VISIBLE_PILLS);
+    const visibleSources = this.sources.slice(0, this._visiblePills);
+    const overflowSources = this.sources.slice(this._visiblePills);
 
     return html`
       <div
