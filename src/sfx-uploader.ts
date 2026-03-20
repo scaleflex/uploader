@@ -236,7 +236,7 @@ export class SfxUploader extends LitElement {
       align-items: stretch;
       overflow-y: auto;
       gap: 0;
-      padding-bottom: 16px;
+      padding-bottom: 24px;
       scrollbar-width: thin;
       scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
     }
@@ -269,7 +269,7 @@ export class SfxUploader extends LitElement {
       font-size: 13px;
       font-weight: 500;
       color: var(--sfx-up-text-secondary, #64748b);
-      padding: 16px 0 8px;
+      padding: 24px 0 8px;
       flex-shrink: 0;
     }
 
