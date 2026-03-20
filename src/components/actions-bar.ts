@@ -7,13 +7,50 @@ export class SfxActionsBar extends LitElement {
   static styles = css`
     :host {
       display: flex;
-      align-items: center;
-      justify-content: space-between;
+      flex-direction: column;
       background: var(--sfx-up-bg, #ffffff);
       border-top: 1px solid var(--sfx-up-border, #ebebeb);
-      padding: 14px 24px;
       flex-shrink: 0;
       box-shadow: none;
+    }
+
+    /* --- Progress row --- */
+    .progress-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 24px 0;
+    }
+
+    .progress-track {
+      flex: 1;
+      height: 4px;
+      background: #e5e7eb;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--sfx-up-primary, #2563eb);
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+
+    .progress-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--sfx-up-text, #1e293b);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* --- Buttons row --- */
+    .buttons-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 24px;
     }
 
     .left {
@@ -150,6 +187,8 @@ export class SfxActionsBar extends LitElement {
   @property({ type: Number }) totalSize = 0;
   @property({ type: Number }) failedCount = 0;
   @property({ type: Boolean }) showFillMetadata = false;
+  @property({ type: Number }) completedCount = 0;
+  @property({ type: Number }) uploadProgress = 0;
 
   private _clear() {
     this.dispatchEvent(new CustomEvent('clear-all', { bubbles: true, composed: true }));
@@ -179,50 +218,64 @@ export class SfxActionsBar extends LitElement {
   }
 
   render() {
+    const isUploading = this.uploadState === 'uploading';
+
     return html`
-      <div class="left">
-        ${this.showFillMetadata && this.uploadState === 'idle'
-          ? html`
-              <button class="btn-sec" @click=${this._fillMetadata}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                  <polyline points="14 2 14 8 20 8"/>
-                  <line x1="16" y1="13" x2="8" y2="13"/>
-                  <line x1="16" y1="17" x2="8" y2="17"/>
-                  <line x1="10" y1="9" x2="8" y2="9"/>
-                </svg>
-                Fill Metadata
-              </button>
-            `
-          : nothing}
-      </div>
-      <div class="right">
-        <button class="btn-ghost" @click=${this._clear}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <polyline points="3 6 5 6 21 6" />
-            <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
-          </svg>
-          Clear
-        </button>
-        <button class="btn-sec" @click=${this._addMore}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-          Add more
-        </button>
-        ${this.failedCount > 0
-          ? html`
-              <button class="btn-retry" @click=${this._retryAll}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-                  <polyline points="23 4 23 10 17 10" />
-                  <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10" />
-                </svg>
-                Retry all (${this.failedCount})
-              </button>
-            `
-          : nothing}
-        ${this._renderUploadButton()}
+      ${isUploading
+        ? html`
+            <div class="progress-row">
+              <div class="progress-track">
+                <div class="progress-fill" style="width:${this.uploadProgress}%"></div>
+              </div>
+              <span class="progress-label">${this.completedCount}/${this.fileCount} files</span>
+            </div>
+          `
+        : nothing}
+      <div class="buttons-row">
+        <div class="left">
+          ${this.showFillMetadata && this.uploadState === 'idle'
+            ? html`
+                <button class="btn-sec" @click=${this._fillMetadata}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                    <line x1="10" y1="9" x2="8" y2="9"/>
+                  </svg>
+                  Fill Metadata
+                </button>
+              `
+            : nothing}
+        </div>
+        <div class="right">
+          <button class="btn-ghost" @click=${this._clear}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <polyline points="3 6 5 6 21 6" />
+              <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
+            </svg>
+            Clear
+          </button>
+          <button class="btn-sec" @click=${this._addMore}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Add more
+          </button>
+          ${this.failedCount > 0
+            ? html`
+                <button class="btn-retry" @click=${this._retryAll}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                    <polyline points="23 4 23 10 17 10" />
+                    <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10" />
+                  </svg>
+                  Retry all (${this.failedCount})
+                </button>
+              `
+            : nothing}
+          ${this._renderUploadButton()}
+        </div>
       </div>
     `;
   }

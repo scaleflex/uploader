@@ -142,6 +142,11 @@ export class SfxUploader extends LitElement {
       flex-shrink: 0;
     }
 
+    .header-icon-done {
+      background: var(--sfx-up-primary-bg, #eff6ff);
+      color: var(--sfx-up-primary, #2563eb);
+    }
+
     .header-icon svg {
       width: 16px;
       height: 16px;
@@ -291,6 +296,7 @@ export class SfxUploader extends LitElement {
       width: 440px;
       flex-shrink: 0;
       overflow-y: auto;
+      padding-right: 12px;
       scrollbar-width: thin;
       scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
     }
@@ -312,10 +318,8 @@ export class SfxUploader extends LitElement {
       min-width: 0;
       display: flex;
       flex-direction: column;
-      overflow-y: auto;
-      padding: 0 24px 24px;
-      scrollbar-width: thin;
-      scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+      overflow: hidden;
+      padding: 0 24px;
     }
 
     .preview-panel-header {
@@ -1452,16 +1456,21 @@ export class SfxUploader extends LitElement {
 
   private _renderHeader() {
     const mode = this.config?.mode ?? 'modal';
+    const isComplete = this._phase === 'complete';
     return html`
       <div class="header">
-        <div class="header-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-            <polyline points="16 16 12 12 8 16" />
-            <line x1="12" y1="12" x2="12" y2="21" />
-            <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
-          </svg>
+        <div class="header-icon ${isComplete ? 'header-icon-done' : ''}">
+          ${isComplete
+            ? html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>`
+            : html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                <polyline points="16 16 12 12 8 16" />
+                <line x1="12" y1="12" x2="12" y2="21" />
+                <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
+              </svg>`}
         </div>
-        <div class="header-title">Upload Files</div>
+        <div class="header-title">${isComplete ? 'Upload Complete' : 'Upload Files'}</div>
         <button class="back-btn" @click=${mode === 'modal' ? this._onModalDismiss : this._onInlineDismiss}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="19" y1="12" x2="5" y2="12"/>
@@ -1598,6 +1607,8 @@ export class SfxUploader extends LitElement {
               ? html`
                   <sfx-success-card
                     .fileCount=${files.length}
+                    .totalSize=${files.reduce((sum, f) => sum + (f.size || 0), 0)}
+                    .thumbnails=${files.filter((f) => f.previewUrl).map((f) => f.previewUrl!)}
                   ></sfx-success-card>
                 `
               : html`
@@ -1626,6 +1637,8 @@ export class SfxUploader extends LitElement {
                 .fileCount=${files.length}
                 .totalSize=${files.reduce((sum, f) => sum + (f.size || 0), 0)}
                 .failedCount=${files.filter((f) => f.status === 'failed' || f.status === 'error').length}
+                .completedCount=${files.filter((f) => f.status === 'complete').length}
+                .uploadProgress=${s.totalProgress ?? 0}
                 .showFillMetadata=${!!this.config?.showFillMetadata}
               ></sfx-actions-bar>
             `

@@ -1,5 +1,7 @@
-import { LitElement, html, css } from 'lit';
+import { LitElement, html, css, nothing } from 'lit';
 import { property } from 'lit/decorators.js';
+
+const MAX_THUMBS = 7;
 
 export class SfxSuccessCard extends LitElement {
   static styles = css`
@@ -11,15 +13,10 @@ export class SfxSuccessCard extends LitElement {
     }
 
     .card {
-      background: var(--sfx-up-bg, #fff);
-      border-radius: 20px;
-      border: 1.5px solid var(--success-10, #bbf7d0);
-      padding: 64px 48px;
       display: flex;
       flex-direction: column;
       align-items: center;
       text-align: center;
-      box-shadow: 0 8px 40px var(--sfx-up-shadow, rgba(34, 197, 94, 0.08));
       animation: fadeUp 0.4s ease both;
     }
 
@@ -27,13 +24,13 @@ export class SfxSuccessCard extends LitElement {
       width: 64px;
       height: 64px;
       border-radius: 50%;
-      background: var(--success-10, #dcfce7);
+      background: var(--sfx-up-primary-bg, #eff6ff);
       display: flex;
       align-items: center;
       justify-content: center;
       margin-bottom: 18px;
-      color: var(--sfx-up-success, #16a34a);
-      box-shadow: 0 4px 18px rgba(22, 163, 74, 0.16);
+      color: var(--sfx-up-primary, #2563eb);
+      box-shadow: 0 4px 18px var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.12));
       animation: popBounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s both;
     }
 
@@ -55,6 +52,47 @@ export class SfxSuccessCard extends LitElement {
       color: var(--sfx-up-text-muted, #94a3b8);
       line-height: 1.6;
       max-width: 320px;
+      margin-bottom: 20px;
+    }
+
+    /* --- Thumbnail strip --- */
+    .thumbs {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 14px;
+    }
+
+    .thumb {
+      width: 56px;
+      height: 56px;
+      border-radius: 8px;
+      object-fit: cover;
+      border: 1px solid var(--sfx-up-border, #e8eaed);
+    }
+
+    .thumb-more {
+      width: 56px;
+      height: 56px;
+      border-radius: 8px;
+      background: #f5f7fa;
+      border: 1px solid var(--sfx-up-border, #e8eaed);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--sfx-up-text-muted, #94a3b8);
+    }
+
+    /* --- Summary chip --- */
+    .summary {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--sfx-up-text, #1e293b);
+      background: #f5f7fa;
+      border-radius: 8px;
+      padding: 6px 14px;
       margin-bottom: 22px;
     }
 
@@ -129,6 +167,8 @@ export class SfxSuccessCard extends LitElement {
   `;
 
   @property({ type: Number }) fileCount = 0;
+  @property({ type: Number }) totalSize = 0;
+  @property({ type: Array }) thumbnails: string[] = [];
   @property({ type: String }) primaryLabel = 'Done';
 
   private _uploadMore() {
@@ -143,8 +183,16 @@ export class SfxSuccessCard extends LitElement {
     );
   }
 
+  private _formatSize(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+  }
+
   render() {
-    const noun = this.fileCount === 1 ? 'file has' : 'files have';
+    const visibleThumbs = this.thumbnails.slice(0, MAX_THUMBS);
+    const overflowCount = this.thumbnails.length - MAX_THUMBS;
 
     return html`
       <div class="card">
@@ -154,9 +202,23 @@ export class SfxSuccessCard extends LitElement {
           </svg>
         </div>
         <div class="title">Uploaded successfully!</div>
-        <div class="subtitle">
-          All ${this.fileCount} ${noun} been uploaded and are ready for review.
-        </div>
+        <div class="subtitle">All files are ready for use</div>
+
+        ${visibleThumbs.length > 0
+          ? html`
+              <div class="thumbs">
+                ${visibleThumbs.map(
+                  (url) => html`<img class="thumb" src=${url} alt="" />`
+                )}
+                ${overflowCount > 0
+                  ? html`<div class="thumb-more">+${overflowCount}</div>`
+                  : nothing}
+              </div>
+            `
+          : nothing}
+
+        <div class="summary">${this.fileCount} ${this.fileCount === 1 ? 'file' : 'files'} · ${this._formatSize(this.totalSize)} uploaded</div>
+
         <div class="actions">
           <button class="btn-ghost" @click=${this._uploadMore}>Upload more</button>
           <button class="btn-primary" @click=${this._primaryAction}>${this.primaryLabel}</button>
