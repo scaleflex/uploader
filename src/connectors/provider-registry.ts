@@ -58,14 +58,7 @@ const PROVIDER_DEFS: Record<ProviderId, SourceDef> = {
     label: 'Canva',
     fillIcon: true,
     icon: '',
-    brandHtml: `<span class="brand-ico" style="background:linear-gradient(135deg,#7b2ff7,#00c4cc)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M12 3.5a8.5 8.5 0 106.36 14.15" stroke="white" stroke-width="3.5" stroke-linecap="round"/></svg></span>`,
-  },
-  camera: {
-    id: 'camera',
-    label: 'Camera',
-    fillIcon: false,
-    icon: `<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>`,
-    brandHtml: `<span class="brand-ico" style="background:#6366f1"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span>`,
+    brandHtml: `<span class="brand-ico" style="border-radius:50%;overflow:hidden"><svg width="20" height="20" viewBox="0 0 100 100"><defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#00C4CC"/><stop offset="100%" stop-color="#7B2FF7"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#cg)"/><path d="M62 32c-2.5-1.5-5.5-2-9-2-11 0-19 8.5-19 20s7.5 19 17 19c4 0 7-1.2 9.5-3.5 1.2-1.1 2-2.5 2-3.8 0-1.8-1.2-3-3-3-1 0-1.8.5-2.8 1.5-1.5 1.5-3.2 2.3-5.5 2.3-5.5 0-9.5-4.5-9.5-12.5 0-8.5 4.5-13.5 10.5-13.5 2 0 3.8.6 5 1.5 1 .8 1.6 1.8 1.8 3 .2 1 .8 1.5 1.8 1.5 1.8 0 3-1.3 3-3.2 0-1.5-.5-3.2-1.8-4.3z" fill="white"/></svg></span>`,
   },
 };
 

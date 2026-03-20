@@ -41,7 +41,7 @@ function applyConfig() {
     mode: 'inline',
     connectors: {
       companionUrl: 'https://eu-on-24001.connector.filerobot.com',
-      providers: ['google-drive', 'dropbox', 'onedrive', 'box', 'unsplash', 'canva', 'camera'],
+      providers: ['google-drive', 'dropbox', 'onedrive', 'box', 'unsplash', 'canva'],
       customSources: [],
     },
   };

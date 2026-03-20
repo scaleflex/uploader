@@ -6,8 +6,7 @@ export type ProviderId =
   | 'instagram'
   | 'facebook'
   | 'unsplash'
-  | 'canva'
-  | 'camera';
+  | 'canva';
 
 import type { SourceDef } from '../types/source.types';
 

@@ -114,7 +114,7 @@ export class SfxUploader extends LitElement {
       max-height: 88vh;
       display: flex;
       flex-direction: column;
-      overflow: visible;
+      overflow: hidden;
       position: relative;
       animation: modalIn 0.3s cubic-bezier(0.34, 1.2, 0.64, 1);
     }
@@ -187,7 +187,7 @@ export class SfxUploader extends LitElement {
     /* --- Body --- */
     .body {
       flex: 1;
-      overflow: visible;
+      overflow: hidden;
       padding: 24px;
       display: flex;
       flex-direction: column;
@@ -211,7 +211,7 @@ export class SfxUploader extends LitElement {
       background: #fff;
       display: flex;
       flex-direction: column;
-      overflow: visible;
+      overflow: hidden;
     }
 
     /* --- Connector modal overlay --- */
@@ -625,7 +625,7 @@ export class SfxUploader extends LitElement {
   // --- Connector sources ---
 
   /** Reserved source IDs that cannot be overridden by custom sources. */
-  private static readonly _RESERVED_IDS = new Set(['device', 'camera', 'screen-cast', 'url']);
+  private static readonly _RESERVED_IDS = new Set(['device', 'camera', 'url']);
 
   private get _mergedSources(): SourceDef[] {
     const connectors = this.config?.connectors;
@@ -790,7 +790,16 @@ export class SfxUploader extends LitElement {
     }
 
     if (source === 'screen-cast') {
-      this._showScreenCastDialog = true;
+      return; // Screen cast removed from UI
+    }
+
+    // Canva uses its own SDK, not Companion OAuth
+    if (source === 'canva') {
+      if (!customElements.get('sfx-canva-dialog')) {
+        const { SfxCanvaDialog } = await import('./components/canva-dialog');
+        customElements.define('sfx-canva-dialog', SfxCanvaDialog);
+      }
+      this._showCanvaDialog = true;
       return;
     }
 
@@ -995,6 +1004,15 @@ export class SfxUploader extends LitElement {
     }
   };
 
+  private _onCanvaFileReady = (e: CustomEvent<{ file: File }>) => {
+    this._showCanvaDialog = false;
+    this._processIncomingFiles([e.detail.file]);
+  };
+
+  private _onCanvaCancel = () => {
+    this._showCanvaDialog = false;
+  };
+
   private _onPrimaryAction = () => {
     // Dispatch public event so consumers can handle "Done"/"View in DAM"/etc.
     this._dispatchPublic(PublicEvents.COMPLETE_ACTION, {});
@@ -1103,6 +1121,8 @@ export class SfxUploader extends LitElement {
         @camera-cancel=${this._onCameraCancel}
         @screencast-capture=${this._onScreenCastCapture}
         @screencast-cancel=${this._onScreenCastCancel}
+        @canva-file-ready=${this._onCanvaFileReady}
+        @canva-cancel=${this._onCanvaCancel}
       >
         <div class="body">
           ${phase === 'complete'
@@ -1140,6 +1160,9 @@ export class SfxUploader extends LitElement {
         ${this._showUrlDialog ? html`<sfx-url-dialog></sfx-url-dialog>` : nothing}
         ${this._showCameraDialog ? html`<sfx-camera-dialog></sfx-camera-dialog>` : nothing}
         ${this._showScreenCastDialog ? html`<sfx-screen-cast-dialog></sfx-screen-cast-dialog>` : nothing}
+        ${this._showCanvaDialog
+          ? html`<sfx-canva-dialog .apiKey=${this.config?.connectors?.canvaApiKey ?? ''}></sfx-canva-dialog>`
+          : nothing}
 
         ${this._activeConnector && this.config?.connectors
           ? html`

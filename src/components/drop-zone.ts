@@ -199,7 +199,7 @@ export class SfxDropZone extends LitElement {
     }
 
     .import-divider span {
-      font-size: 12px;
+      font-size: 14px;
       font-weight: 500;
       color: var(--sfx-up-text-muted, #94a3b8);
       white-space: nowrap;
@@ -310,11 +310,15 @@ export class SfxDropZone extends LitElement {
       font-family: inherit;
     }
 
-    .more-pill:hover {
+    .more-pill:hover,
+    .more-wrap.open .more-pill {
       border-color: var(--sfx-up-primary, #2563eb);
       color: var(--sfx-up-primary, #2563eb);
       background: rgba(239, 246, 255, 0.85);
       box-shadow: 0 2px 10px var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.18));
+    }
+
+    .more-pill:hover {
       transform: translateY(-1px);
     }
 
@@ -332,6 +336,11 @@ export class SfxDropZone extends LitElement {
       color: #6b7280;
     }
 
+    .more-wrap.open .more-dots,
+    .more-pill:hover .more-dots {
+      color: currentColor;
+    }
+
     .more-chevron {
       width: 12px;
       height: 12px;
@@ -341,26 +350,33 @@ export class SfxDropZone extends LitElement {
 
     .more-wrap.open .more-chevron {
       transform: rotate(180deg);
+      color: currentColor;
     }
 
+    /* Dropdown uses position:fixed to escape overflow:hidden ancestors */
     .more-dropdown {
-      position: absolute;
-      bottom: calc(100% + 8px);
-      right: 0;
+      position: fixed;
       background: #fff;
       border-radius: 14px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.14), 0 2px 8px rgba(0, 0, 0, 0.06);
       border: 1px solid #e8edf5;
       padding: 6px;
-      min-width: 200px;
+      min-width: 210px;
       max-height: 340px;
       overflow-y: auto;
       z-index: 99999;
       opacity: 0;
       visibility: hidden;
       pointer-events: none;
-      transform: translateY(-6px);
       transition: opacity 0.18s ease, visibility 0.18s ease, transform 0.18s ease;
+    }
+
+    .more-dropdown.above {
+      transform: translateY(-6px);
+    }
+
+    .more-dropdown.below {
+      transform: translateY(6px);
     }
 
     .more-wrap.open .more-dropdown {
@@ -389,7 +405,7 @@ export class SfxDropZone extends LitElement {
     }
 
     .more-item:hover {
-      background: #f5f7fa;
+      background: var(--sfx-up-primary-bg, #f5f7fa);
     }
 
     .more-item .more-item-ico {
