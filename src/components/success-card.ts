@@ -1,5 +1,6 @@
 import { LitElement, html, css, nothing } from 'lit';
 import { property } from 'lit/decorators.js';
+import { formatFileSize } from '../utils/file-utils';
 
 const MAX_THUMBS = 7;
 
@@ -183,13 +184,6 @@ export class SfxSuccessCard extends LitElement {
     );
   }
 
-  private _formatSize(bytes: number): string {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-    return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
-  }
-
   render() {
     const visibleThumbs = this.thumbnails.slice(0, MAX_THUMBS);
     const overflowCount = this.thumbnails.length - MAX_THUMBS;
@@ -217,7 +211,7 @@ export class SfxSuccessCard extends LitElement {
             `
           : nothing}
 
-        <div class="summary">${this.fileCount} ${this.fileCount === 1 ? 'file' : 'files'} · ${this._formatSize(this.totalSize)} uploaded</div>
+        <div class="summary">${this.fileCount} ${this.fileCount === 1 ? 'file' : 'files'} · ${formatFileSize(this.totalSize)} uploaded</div>
 
         <div class="actions">
           <button class="btn-ghost" @click=${this._uploadMore}>Upload more</button>

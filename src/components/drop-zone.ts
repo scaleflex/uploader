@@ -813,11 +813,14 @@ export class SfxDropZone extends LitElement {
     if (this._moreOpen) this._moreOpen = false;
   };
 
+  private _resizeTimer: ReturnType<typeof setTimeout> | null = null;
+
   private _onScrollOrResize = () => {
     if (this._moreOpen) {
       this._positionDropdown();
     }
-    this._updateVisiblePills();
+    if (this._resizeTimer) clearTimeout(this._resizeTimer);
+    this._resizeTimer = setTimeout(() => this._updateVisiblePills(), 100);
   };
 
   private _updateVisiblePills() {
@@ -846,6 +849,7 @@ export class SfxDropZone extends LitElement {
     document.removeEventListener('click', this._onDocClick);
     window.removeEventListener('scroll', this._onScrollOrResize, true);
     window.removeEventListener('resize', this._onScrollOrResize);
+    if (this._resizeTimer) clearTimeout(this._resizeTimer);
   }
 
   private _renderPill(s: SourceDef) {

@@ -5,8 +5,7 @@ export type ProviderId =
   | 'box'
   | 'instagram'
   | 'facebook'
-  | 'unsplash'
-  | 'canva';
+  | 'unsplash';
 
 import type { SourceDef } from '../types/source.types';
 
@@ -15,8 +14,6 @@ export interface ConnectorConfig {
   companionUrl: string; // e.g. 'https://eu-on-24001.connector.filerobot.com'
   providers: ProviderId[];
   customSources?: SourceDef[];  // external integrations (e.g. Canva via its own SDK)
-  /** Canva Design Button API key. Required when 'canva' is in providers. */
-  canvaApiKey?: string;
 }
 
 /** A file or folder item returned by Companion's list endpoint. */

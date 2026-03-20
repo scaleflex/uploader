@@ -17,7 +17,7 @@ function stripSlash(url: string): string {
  * Map our ProviderId to the Companion URL path segment.
  * e.g. 'google-drive' → 'drive' (Companion uses 'drive', not 'google-drive')
  */
-const COMPANION_PROVIDER_ID: Partial<Record<ProviderId, string>> = {
+const COMPANION_PROVIDER_ID: Record<ProviderId, string> = {
   'google-drive': 'drive',
   'dropbox': 'dropbox',
   'onedrive': 'onedrive',
@@ -25,7 +25,6 @@ const COMPANION_PROVIDER_ID: Partial<Record<ProviderId, string>> = {
   'instagram': 'instagram',
   'facebook': 'facebook',
   'unsplash': 'unsplash',
-  // 'canva' uses its own SDK, not Companion
 };
 
 function companionId(provider: ProviderId): string {

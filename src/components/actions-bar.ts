@@ -1,5 +1,6 @@
 import { LitElement, html, css, nothing } from 'lit';
 import { property } from 'lit/decorators.js';
+import { formatFileSize } from '../utils/file-utils';
 
 export type UploadButtonState = 'idle' | 'uploading' | 'done';
 
@@ -208,13 +209,6 @@ export class SfxActionsBar extends LitElement {
 
   private _retryAll() {
     this.dispatchEvent(new CustomEvent('retry-all', { bubbles: true, composed: true }));
-  }
-
-  private _formatSize(bytes: number): string {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-    return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
   }
 
   render() {

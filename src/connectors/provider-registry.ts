@@ -53,13 +53,6 @@ const PROVIDER_DEFS: Record<ProviderId, SourceDef> = {
     icon: '',
     brandHtml: `<span class="brand-ico" style="background:#111"><svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M8.5 11.5v5h7v-5h5.5V21h-18v-9.5h5.5zm7-8v5h-7v-5h7z"/></svg></span>`,
   },
-  canva: {
-    id: 'canva',
-    label: 'Canva',
-    fillIcon: true,
-    icon: '',
-    brandHtml: `<span class="brand-ico canva-ico" style="width:22px;height:22px;border-radius:50%;overflow:hidden;background:none"><svg width="22" height="22" viewBox="0 0 100 100"><defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#00C4CC"/><stop offset="100%" stop-color="#7B2FF7"/></linearGradient></defs><circle cx="50" cy="50" r="50" fill="url(#cg)"/><path d="M62 32c-2.5-1.5-5.5-2-9-2-11 0-19 8.5-19 20s7.5 19 17 19c4 0 7-1.2 9.5-3.5 1.2-1.1 2-2.5 2-3.8 0-1.8-1.2-3-3-3-1 0-1.8.5-2.8 1.5-1.5 1.5-3.2 2.3-5.5 2.3-5.5 0-9.5-4.5-9.5-12.5 0-8.5 4.5-13.5 10.5-13.5 2 0 3.8.6 5 1.5 1 .8 1.6 1.8 1.8 3 .2 1 .8 1.5 1.8 1.5 1.8 0 3-1.3 3-3.2 0-1.5-.5-3.2-1.8-4.3z" fill="white"/></svg></span>`,
-  },
 };
 
 /**
