@@ -219,6 +219,13 @@ export class SfxUploader extends LitElement {
       background: #fff;
     }
 
+    .body.body-drag-over {
+      background: var(--sfx-up-primary-bg, #eff6ff);
+      outline: 2px dashed var(--sfx-up-primary, #2563eb);
+      outline-offset: -4px;
+      border-radius: 8px;
+    }
+
     .body.has-files {
       justify-content: flex-start;
       align-items: stretch;
@@ -281,7 +288,7 @@ export class SfxUploader extends LitElement {
     }
 
     .preview-layout .file-grid-side {
-      width: 220px;
+      width: 440px;
       flex-shrink: 0;
       overflow-y: auto;
       scrollbar-width: thin;
@@ -445,6 +452,8 @@ export class SfxUploader extends LitElement {
   @state() private _showScreenCastDialog = false;
   @state() private _showCanvaDialog = false;
   @state() private _previewFileId: string | null = null;
+  @state() private _bodyDragOver = false;
+  private _bodyDragCounter = 0;
 
   private _store!: Store<UploaderState>;
   private _storeCtrl!: StoreController;
@@ -1214,6 +1223,40 @@ export class SfxUploader extends LitElement {
     }
   };
 
+  // --- Body-level drag & drop (active when drop zone is compact) ---
+
+  private _onBodyDragEnter = (e: DragEvent) => {
+    e.preventDefault();
+    this._bodyDragCounter++;
+    if (this._bodyDragCounter === 1) this._bodyDragOver = true;
+  };
+
+  private _onBodyDragOver = (e: DragEvent) => {
+    e.preventDefault();
+  };
+
+  private _onBodyDragLeave = (e: DragEvent) => {
+    e.preventDefault();
+    this._bodyDragCounter--;
+    if (this._bodyDragCounter <= 0) {
+      this._bodyDragCounter = 0;
+      this._bodyDragOver = false;
+    }
+  };
+
+  private _onBodyDrop = (e: DragEvent) => {
+    e.preventDefault();
+    this._bodyDragCounter = 0;
+    this._bodyDragOver = false;
+
+    const files = Array.from(e.dataTransfer?.files ?? []);
+    if (files.length > 0) {
+      this._onFilesSelected(
+        new CustomEvent('files-selected', { detail: { files } }),
+      );
+    }
+  };
+
   private _onKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Escape' && this._isOpen && this.config?.mode === 'modal') {
       this._onModalDismiss();
@@ -1383,7 +1426,13 @@ export class SfxUploader extends LitElement {
         @canva-file-ready=${this._onCanvaFileReady}
         @canva-cancel=${this._onCanvaCancel}
       >
-        <div class="body ${hasFiles ? 'has-files' : ''}">
+        <div
+          class="body ${hasFiles ? 'has-files' : ''} ${this._bodyDragOver ? 'body-drag-over' : ''}"
+          @dragenter=${hasFiles ? this._onBodyDragEnter : nothing}
+          @dragover=${hasFiles ? this._onBodyDragOver : nothing}
+          @dragleave=${hasFiles ? this._onBodyDragLeave : nothing}
+          @drop=${hasFiles ? this._onBodyDrop : nothing}
+        >
           ${phase === 'complete'
               ? html`
                   <sfx-success-card
