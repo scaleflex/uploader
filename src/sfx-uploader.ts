@@ -407,37 +407,33 @@ export class SfxUploader extends LitElement {
     .preview-nav.prev { left: 10px; }
     .preview-nav.next { right: 10px; }
 
-    .preview-filename {
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--sfx-up-text, #1e293b);
-      margin-top: 12px;
-      word-break: break-all;
-      flex-shrink: 0;
-    }
-
-    .preview-tags {
+    .preview-meta-list {
       display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 10px;
+      flex-direction: column;
+      margin-top: 16px;
       flex-shrink: 0;
+      gap: 2px;
     }
 
-    .preview-tag {
-      display: inline-flex;
-      align-items: center;
-      background: #f5f7fa;
-      border-radius: 6px;
-      padding: 4px 10px;
-      font-size: 12px;
-      color: #64748b;
+    .preview-meta-row {
+      display: flex;
+      align-items: baseline;
+      padding: 7px 0;
+    }
+
+    .preview-meta-label {
+      width: 110px;
+      flex-shrink: 0;
+      font-size: 13px;
       font-weight: 500;
+      color: var(--sfx-up-text-muted, #94a3b8);
     }
 
-    .preview-tag strong {
-      color: var(--sfx-up-text, #1e293b);
+    .preview-meta-value {
+      font-size: 13px;
       font-weight: 600;
+      color: var(--sfx-up-text, #1e293b);
+      word-break: break-all;
     }
 
     /* --- Connector modal overlay --- */
@@ -626,9 +622,9 @@ export class SfxUploader extends LitElement {
 
       .preview-layout .file-grid-side { max-height: 100px; }
       .preview-panel { padding: 0 0 12px; }
-      .preview-filename { font-size: 13px; margin-top: 8px; }
-      .preview-tags { gap: 4px; margin-top: 6px; }
-      .preview-tag { font-size: 11px; padding: 3px 8px; }
+      .preview-meta-row { padding: 6px 0; }
+      .preview-meta-label { width: 90px; font-size: 12px; }
+      .preview-meta-value { font-size: 12px; }
 
       .inline { max-height: 100vh; border-radius: 0; border: none; }
 
@@ -1596,12 +1592,27 @@ export class SfxUploader extends LitElement {
                 </div>
               `
             : nothing}
-          <div class="preview-filename">${previewFile.name}</div>
-          <div class="preview-tags">
-            <span class="preview-tag"><strong>${ext}</strong></span>
-            <span class="preview-tag">${this._formatSize(previewFile.size)}</span>
-            <span class="preview-tag" id="preview-dims">—</span>
-            <span class="preview-tag">${addedDate}</span>
+          <div class="preview-meta-list">
+            <div class="preview-meta-row">
+              <span class="preview-meta-label">Type</span>
+              <span class="preview-meta-value">${ext}</span>
+            </div>
+            <div class="preview-meta-row">
+              <span class="preview-meta-label">Size</span>
+              <span class="preview-meta-value">${this._formatSize(previewFile.size)}</span>
+            </div>
+            <div class="preview-meta-row">
+              <span class="preview-meta-label">Dimensions</span>
+              <span class="preview-meta-value" id="preview-dims">—</span>
+            </div>
+            <div class="preview-meta-row">
+              <span class="preview-meta-label">Name</span>
+              <span class="preview-meta-value">${previewFile.name}</span>
+            </div>
+            <div class="preview-meta-row">
+              <span class="preview-meta-label">Added</span>
+              <span class="preview-meta-value">${addedDate}</span>
+            </div>
           </div>
         </div>
       </div>
