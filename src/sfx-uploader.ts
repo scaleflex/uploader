@@ -154,26 +154,47 @@ export class SfxUploader extends LitElement {
       flex: 1;
     }
 
-    .close-btn {
+    .back-btn {
       width: 30px;
       height: 30px;
       border-radius: 8px;
       border: none;
       background: #f0f0f0;
       color: #888;
-      font-size: 15px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: background 0.15s, color 0.15s;
       flex-shrink: 0;
-      line-height: 1;
+      position: relative;
     }
 
-    .close-btn:hover {
+    .back-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .back-btn:hover {
       background: #e4e4e4;
       color: #333;
+    }
+
+    .back-btn:hover::after {
+      content: 'Back to Asset Picker';
+      position: absolute;
+      bottom: -30px;
+      right: 0;
+      background: #fff;
+      color: #333;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 4px 10px;
+      border-radius: 6px;
+      white-space: nowrap;
+      pointer-events: none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      z-index: 10;
     }
 
     /* --- Content wrapper (holds body + actions bar) --- */
@@ -203,6 +224,27 @@ export class SfxUploader extends LitElement {
       align-items: stretch;
       overflow-y: auto;
       gap: 0;
+      padding-bottom: 16px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+    }
+
+    .body.has-files::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .body.has-files::-webkit-scrollbar-track {
+      background: transparent;
+      margin: 8px 0;
+    }
+
+    .body.has-files::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.15);
+      border-radius: 3px;
+    }
+
+    .body.has-files::-webkit-scrollbar-thumb:hover {
+      background: rgba(0, 0, 0, 0.25);
     }
 
     .body sfx-drop-zone {
@@ -239,10 +281,16 @@ export class SfxUploader extends LitElement {
     }
 
     .preview-layout .file-grid-side {
-      flex: 1;
+      width: 220px;
+      flex-shrink: 0;
       overflow-y: auto;
-      min-width: 0;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
     }
+
+    .preview-layout .file-grid-side::-webkit-scrollbar { width: 5px; }
+    .preview-layout .file-grid-side::-webkit-scrollbar-track { background: transparent; }
+    .preview-layout .file-grid-side::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 3px; }
 
     .preview-topbar {
       display: flex;
@@ -253,12 +301,12 @@ export class SfxUploader extends LitElement {
     }
 
     .preview-panel {
-      width: 380px;
-      flex-shrink: 0;
+      flex: 1;
+      min-width: 0;
       display: flex;
       flex-direction: column;
-      overflow-y: auto;
-      padding: 0 0 24px 24px;
+      overflow: hidden;
+      padding: 0 24px 24px;
     }
 
     .preview-panel-header {
@@ -299,7 +347,8 @@ export class SfxUploader extends LitElement {
       width: 100%;
       border-radius: 8px;
       object-fit: contain;
-      max-height: 50vh;
+      min-height: 0;
+      flex: 1;
       background: #f9fafb;
     }
 
@@ -307,15 +356,17 @@ export class SfxUploader extends LitElement {
       font-size: 16px;
       font-weight: 600;
       color: var(--sfx-up-text, #1e293b);
-      margin-top: 16px;
+      margin-top: 12px;
       word-break: break-all;
+      flex-shrink: 0;
     }
 
     .preview-meta {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin-top: 16px;
+      gap: 12px;
+      margin-top: 12px;
+      flex-shrink: 0;
     }
 
     .preview-meta dt {
@@ -1207,9 +1258,12 @@ export class SfxUploader extends LitElement {
           </svg>
         </div>
         <div class="header-title">Upload Files</div>
-        ${mode === 'modal'
-          ? html`<button class="close-btn" @click=${this._onModalDismiss}>&#x2715;</button>`
-          : html`<button class="close-btn" @click=${this._onInlineDismiss}>&#x2715;</button>`}
+        <button class="back-btn" @click=${mode === 'modal' ? this._onModalDismiss : this._onInlineDismiss}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"/>
+            <polyline points="12 19 5 12 12 5"/>
+          </svg>
+        </button>
       </div>
     `;
   }
