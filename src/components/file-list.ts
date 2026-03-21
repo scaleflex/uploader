@@ -17,6 +17,13 @@ export class SfxFileList extends LitElement {
       gap: 12px;
       padding-bottom: 16px;
     }
+
+    @media (max-width: 480px) {
+      .grid {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 8px;
+      }
+    }
   `;
 
   @property({ attribute: false }) files: UploadFile[] = [];
@@ -25,7 +32,7 @@ export class SfxFileList extends LitElement {
     return html`
       <div class="grid">
         ${this.files.map(
-          (f) => html`<sfx-file-item .file=${f}></sfx-file-item>`,
+          (f, i) => html`<sfx-file-item .file=${f} style="--tile-index:${i}"></sfx-file-item>`,
         )}
       </div>
     `;

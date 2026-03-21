@@ -1,5 +1,6 @@
 import { LitElement, html, css, nothing } from 'lit';
 import { state } from 'lit/decorators.js';
+import { buttonStyles, focusStyles } from './shared-styles';
 
 /**
  * Modal dialog for capturing photos/video via webcam.
@@ -9,12 +10,12 @@ import { state } from 'lit/decorators.js';
  *  - `camera-cancel`   → void
  */
 export class SfxCameraDialog extends LitElement {
-  static styles = css`
+  static styles = [buttonStyles, focusStyles, css`
     :host { display: block; }
 
     .backdrop {
       position: fixed; inset: 0; z-index: 1000;
-      background: rgba(0, 0, 0, 0.4);
+      background: var(--sfx-up-backdrop, rgba(0, 0, 0, 0.45));
       backdrop-filter: blur(6px);
       display: flex; align-items: center; justify-content: center;
       padding: 20px;
@@ -23,7 +24,7 @@ export class SfxCameraDialog extends LitElement {
 
     .card {
       background: var(--sfx-up-bg, #fff);
-      border-radius: 20px;
+      border-radius: 12px;
       box-shadow: 0 28px 80px rgba(0, 0, 0, 0.18), 0 4px 16px rgba(0, 0, 0, 0.06);
       width: 100%; max-width: 520px;
       height: 520px;
@@ -37,7 +38,7 @@ export class SfxCameraDialog extends LitElement {
     }
 
     .head-icon {
-      width: 34px; height: 34px; border-radius: 10px;
+      width: 32px; height: 32px; border-radius: 8px;
       background: var(--sfx-up-primary-bg, #f5f5f7);
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0; color: var(--sfx-up-primary, #2563eb);
@@ -45,7 +46,7 @@ export class SfxCameraDialog extends LitElement {
 
     .head-icon svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
 
-    .title { font-size: 15px; font-weight: 700; color: var(--sfx-up-text, #1a1a1a); flex: 1; }
+    .title { font-size: 16px; font-weight: 700; color: var(--sfx-up-text, #1a1a1a); flex: 1; }
 
     .close-btn {
       width: 28px; height: 28px; border-radius: 8px; border: none;
@@ -71,23 +72,7 @@ export class SfxCameraDialog extends LitElement {
 
     .error { font-size: 13px; color: var(--sfx-up-error, #dc2626); text-align: center; padding: 40px 20px; }
 
-    .actions { display: flex; gap: 9px; justify-content: center; width: 100%; }
-
-    button.btn {
-      height: 36px; padding: 0 17px; border-radius: 9px; border: none;
-      font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
-      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-      transition: all 0.18s ease; white-space: nowrap;
-    }
-
-    .btn-ghost { background: none; color: var(--sfx-up-text-muted, #94a3b8); border: 1.5px solid var(--sfx-up-border, #e8edf5); }
-    .btn-ghost:hover { background: var(--sfx-up-border-light, #f8faff); color: var(--sfx-up-text-secondary, #64748b); border-color: var(--sfx-up-border, #d1dff0); }
-
-    .btn-primary {
-      background: linear-gradient(135deg, var(--sfx-up-primary, #2563eb), var(--sfx-up-primary-mid, #3b82f6));
-      color: var(--primary-foreground, #fff); box-shadow: 0 2px 10px var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.28));
-    }
-    .btn-primary:hover { background: linear-gradient(135deg, var(--sfx-up-primary-hover, #1d4ed8), var(--sfx-up-primary, #2563eb)); box-shadow: 0 4px 16px var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.38)); transform: translateY(-1px); }
+    .actions { display: flex; gap: 8px; justify-content: center; width: 100%; }
 
     .btn-capture {
       width: 52px; height: 52px; border-radius: 50%; padding: 0;
@@ -97,9 +82,15 @@ export class SfxCameraDialog extends LitElement {
     }
     .btn-capture:hover { background: var(--destructive-foreground, #b91c1c); transform: scale(1.05); }
 
+    .close-btn:focus-visible,
+    .btn-capture:focus-visible {
+      outline: 2px solid var(--sfx-up-primary, #2563eb);
+      outline-offset: 2px;
+    }
+
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes slideUp { from { transform: translateY(18px) scale(0.97); } to { transform: translateY(0) scale(1); } }
-  `;
+  `];
 
   @state() private _stream: MediaStream | null = null;
   @state() private _error = '';

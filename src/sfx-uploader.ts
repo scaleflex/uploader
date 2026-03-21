@@ -96,13 +96,20 @@ export class SfxUploader extends LitElement {
       --sfx-up-radius: 16px;
       --sfx-up-font: 'Inter', system-ui, -apple-system, sans-serif;
       --sfx-up-shadow: var(--shadow, rgba(0, 0, 0, 0.1));
+      --sfx-up-surface: var(--card, #f8fafc);
+      --sfx-up-backdrop: rgba(0, 0, 0, 0.45);
+      --sfx-up-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+      --sfx-up-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
+      --sfx-up-shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.16), 0 4px 12px rgba(0, 0, 0, 0.06);
+      --sfx-up-ring: var(--ring, oklch(0.578 0.198 268.129 / 0.7));
+      --sfx-up-max-height: 88vh;
     }
 
     /* --- Modal overlay --- */
     .modal-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.45);
+      background: var(--sfx-up-backdrop);
       backdrop-filter: blur(6px);
       display: flex;
       align-items: center;
@@ -118,7 +125,7 @@ export class SfxUploader extends LitElement {
       box-shadow: 0 28px 80px rgba(0, 0, 0, 0.2), 0 4px 16px rgba(0, 0, 0, 0.06);
       width: 100%;
       max-width: 1198px;
-      max-height: 88vh;
+      max-height: var(--sfx-up-max-height, 88vh);
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -132,7 +139,7 @@ export class SfxUploader extends LitElement {
       align-items: center;
       padding: 16px 24px;
       background: var(--sfx-up-bg, #fff);
-      border-bottom: 1px solid #f0f0f0;
+      border-bottom: 1px solid var(--sfx-up-border, #e2e8f0);
       flex-shrink: 0;
     }
 
@@ -160,7 +167,7 @@ export class SfxUploader extends LitElement {
     }
 
     .header-title {
-      font-size: 15px;
+      font-size: 16px;
       font-weight: 700;
       color: var(--sfx-up-text, #111827);
       flex: 1;
@@ -171,8 +178,8 @@ export class SfxUploader extends LitElement {
       height: 30px;
       border-radius: 8px;
       border: none;
-      background: #f0f0f0;
-      color: #888;
+      background: var(--sfx-up-surface, #f8fafc);
+      color: var(--sfx-up-text-muted, #94a3b8);
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -187,12 +194,52 @@ export class SfxUploader extends LitElement {
     }
 
     .header-btn:hover {
-      background: #e4e4e4;
-      color: #333;
+      background: var(--sfx-up-border, #e2e8f0);
+      color: var(--sfx-up-text, #1e293b);
+    }
+
+    .header-btn:focus-visible {
+      outline: 2px solid var(--sfx-up-ring, oklch(0.578 0.198 268.129 / 0.7));
+      outline-offset: 2px;
     }
 
     .header-btn-back {
       margin-right: 12px;
+      background: var(--sfx-up-primary-bg, #eff6ff);
+      color: var(--sfx-up-primary, #2563eb);
+      width: 32px;
+      height: 32px;
+      position: relative;
+    }
+
+    .header-btn-back:hover {
+      background: #dbeafe;
+      color: var(--sfx-up-primary, #2563eb);
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);
+    }
+
+    .header-btn-back::after {
+      content: 'Back to Asset Picker';
+      position: absolute;
+      left: calc(100% + 8px);
+      top: 50%;
+      transform: translateY(-50%);
+      background: #fff;
+      color: var(--sfx-up-text, #1e293b);
+      font-size: 12px;
+      font-weight: 500;
+      white-space: nowrap;
+      padding: 6px 12px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease;
+      z-index: 10;
+    }
+
+    .header-btn-back:hover::after {
+      opacity: 1;
     }
 
     .header-btn-close {
@@ -223,11 +270,11 @@ export class SfxUploader extends LitElement {
       padding: 24px;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
+      align-items: stretch;
+      justify-content: stretch;
       gap: 4px;
       min-height: 0;
-      background: #fff;
+      background: var(--sfx-up-bg, #fff);
     }
 
     .body.body-drag-over {
@@ -245,6 +292,12 @@ export class SfxUploader extends LitElement {
       padding-bottom: 24px;
       scrollbar-width: thin;
       scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+      animation: bodyReveal 0.35s ease both;
+    }
+
+    @keyframes bodyReveal {
+      from { opacity: 0.5; }
+      to { opacity: 1; }
     }
 
     .body.has-files::-webkit-scrollbar {
@@ -272,7 +325,7 @@ export class SfxUploader extends LitElement {
     }
 
     .asset-count {
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 500;
       color: var(--sfx-up-text-secondary, #64748b);
       padding: 24px 0 8px;
@@ -281,13 +334,20 @@ export class SfxUploader extends LitElement {
 
     /* --- Inline mode --- */
     .inline {
-      border: 1px solid var(--sfx-up-border, #e8edf5);
+      border: 1px solid var(--sfx-up-border, #e2e8f0);
       border-radius: var(--sfx-up-radius, 16px);
-      background: #fff;
+      background: var(--sfx-up-bg, #fff);
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      max-height: 88vh;
+      max-height: var(--sfx-up-max-height, 88vh);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+      transition: box-shadow 0.25s ease;
+      animation: inlineIn 0.25s ease;
+    }
+
+    .inline:hover {
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.03);
     }
 
     /* --- Preview split layout --- */
@@ -353,7 +413,7 @@ export class SfxUploader extends LitElement {
     }
 
     .preview-panel-header button:hover {
-      background: #f3f4f6;
+      background: var(--sfx-up-surface, #f8fafc);
       color: var(--sfx-up-text, #374151);
     }
 
@@ -413,6 +473,17 @@ export class SfxUploader extends LitElement {
     .preview-nav.prev { left: 10px; }
     .preview-nav.next { right: 10px; }
 
+    .preview-nav:disabled {
+      opacity: 0.35;
+      cursor: default;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    }
+
+    .preview-nav:disabled:hover {
+      transform: translateY(-50%);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    }
+
     .preview-meta-list {
       display: flex;
       flex-direction: column;
@@ -430,15 +501,15 @@ export class SfxUploader extends LitElement {
     .preview-meta-label {
       width: 110px;
       flex-shrink: 0;
-      font-size: 13px;
-      font-weight: 500;
+      font-size: 14px;
+      font-weight: 400;
       color: var(--sfx-up-text-muted, #94a3b8);
     }
 
     .preview-meta-value {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--sfx-up-text, #1e293b);
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--foreground, var(--sfx-up-text, #1e293b));
       word-break: break-all;
     }
 
@@ -447,7 +518,7 @@ export class SfxUploader extends LitElement {
       position: fixed;
       inset: 0;
       z-index: 1000;
-      background: oklch(0 0 0 / 0.4);
+      background: var(--sfx-up-backdrop);
       backdrop-filter: blur(6px);
       display: flex;
       align-items: center;
@@ -458,7 +529,7 @@ export class SfxUploader extends LitElement {
 
     .connector-modal {
       background: var(--sfx-up-bg, #fff);
-      border-radius: 20px;
+      border-radius: 12px;
       box-shadow: 0 28px 80px var(--sfx-up-shadow, rgba(0, 0, 0, 0.18)), 0 4px 16px oklch(0 0 0 / 0.06);
       width: 100%;
       max-width: 520px;
@@ -487,6 +558,11 @@ export class SfxUploader extends LitElement {
       }
     }
 
+    @keyframes inlineIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
     /* --- Fullscreen preview overlay --- */
     .fs-overlay {
       position: fixed;
@@ -501,7 +577,12 @@ export class SfxUploader extends LitElement {
     }
 
     .fs-overlay.zoomed {
-      cursor: zoom-out;
+      cursor: grab;
+      overflow: hidden;
+    }
+
+    .fs-overlay.zoomed.panning {
+      cursor: grabbing;
     }
 
     .fs-overlay.zoomed .fs-img {
@@ -509,7 +590,6 @@ export class SfxUploader extends LitElement {
       max-height: none;
       width: auto;
       height: auto;
-      transform: scale(1);
     }
 
     .fs-img {
@@ -517,7 +597,6 @@ export class SfxUploader extends LitElement {
       max-height: 88vh;
       object-fit: contain;
       border-radius: 4px;
-      transition: transform 0.2s ease;
       user-select: none;
       -webkit-user-drag: none;
     }
@@ -534,7 +613,7 @@ export class SfxUploader extends LitElement {
     .fs-btn {
       width: 40px;
       height: 40px;
-      border-radius: 10px;
+      border-radius: 6px;
       border: none;
       background: rgba(255, 255, 255, 0.12);
       backdrop-filter: blur(8px);
@@ -571,10 +650,18 @@ export class SfxUploader extends LitElement {
       z-index: 10001;
     }
 
+    .preview-nav:focus-visible,
+    .fs-btn:focus-visible {
+      outline: 2px solid var(--sfx-up-ring, oklch(0.578 0.198 268.129 / 0.7));
+      outline-offset: 2px;
+    }
+
     @media (prefers-reduced-motion: reduce) {
       .modal-backdrop { animation: none; }
       .modal-card { animation: none; }
+      .inline { animation: none; }
       .fs-overlay { animation: none; }
+      .body.has-files { animation: none; }
     }
 
     /* --- Responsive: Tablet (≤ 768px) --- */
@@ -621,7 +708,7 @@ export class SfxUploader extends LitElement {
       }
       .header { padding: 10px 14px; }
       .header-icon { width: 26px; height: 26px; margin-right: 8px; }
-      .header-title { font-size: 13px; }
+      .header-title { font-size: 14px; }
       .body { padding: 12px; }
       .body.has-files { padding: 12px; padding-bottom: 8px; }
       .asset-count { padding: 8px 0 4px; font-size: 11px; }
@@ -632,7 +719,7 @@ export class SfxUploader extends LitElement {
       .preview-meta-label { width: 90px; font-size: 12px; }
       .preview-meta-value { font-size: 12px; }
 
-      .inline { max-height: 100vh; border-radius: 0; border: none; }
+      .inline { max-height: 100vh; border-radius: 8px; box-shadow: none; }
 
       .connector-modal-backdrop { padding: 0; }
       .connector-modal {
@@ -654,6 +741,13 @@ export class SfxUploader extends LitElement {
   @state() private _previewFileId: string | null = null;
   @state() private _fullscreenPreviewUrl: string | null = null;
   @state() private _fullscreenZoomed = false;
+  private _fsPanX = 0;
+  private _fsPanY = 0;
+  private _fsDragging = false;
+  private _fsDragStartX = 0;
+  private _fsDragStartY = 0;
+  private _fsPanStartX = 0;
+  private _fsPanStartY = 0;
   @state() private _bodyDragOver = false;
   private _bodyDragCounter = 0;
 
@@ -1412,7 +1506,7 @@ export class SfxUploader extends LitElement {
     }
   };
 
-  // --- Body-level drag & drop (active when drop zone is compact) ---
+  // --- Body-level drag & drop (full-area drop target) ---
 
   private _onBodyDragEnter = (e: DragEvent) => {
     e.preventDefault();
@@ -1492,10 +1586,9 @@ export class SfxUploader extends LitElement {
     const dismiss = mode === 'modal' ? this._onModalDismiss : this._onInlineDismiss;
 
     const backBtn = headerButton === 'back'
-      ? html`<button class="header-btn header-btn-back" aria-label="Go back" @click=${dismiss}>
+      ? html`<button class="header-btn header-btn-back" aria-label="Back to Asset Picker" @click=${dismiss}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <line x1="19" y1="12" x2="5" y2="12"/>
-            <polyline points="12 19 5 12 12 5"/>
+            <polyline points="15 18 9 12 15 6"/>
           </svg>
         </button>`
       : nothing;
@@ -1585,16 +1678,12 @@ export class SfxUploader extends LitElement {
             ? html`
                 <div class="preview-img-wrap">
                   <img class="preview-image" src=${previewFile.previewUrl} alt=${previewFile.name} />
-                  ${files.indexOf(previewFile) > 0
-                    ? html`<button class="preview-nav prev" @click=${() => this._navigatePreview(files, -1)}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
-                      </button>`
-                    : nothing}
-                  ${files.indexOf(previewFile) < files.length - 1
-                    ? html`<button class="preview-nav next" @click=${() => this._navigatePreview(files, 1)}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 6 15 12 9 18"/></svg>
-                      </button>`
-                    : nothing}
+                  <button class="preview-nav prev" ?disabled=${files.indexOf(previewFile) === 0} @click=${() => this._navigatePreview(files, -1)}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                  </button>
+                  <button class="preview-nav next" ?disabled=${files.indexOf(previewFile) === files.length - 1} @click=${() => this._navigatePreview(files, 1)}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 6 15 12 9 18"/></svg>
+                  </button>
                 </div>
               `
             : nothing}
@@ -1672,10 +1761,10 @@ export class SfxUploader extends LitElement {
       >
         <div
           class="body ${hasFiles ? 'has-files' : ''} ${this._bodyDragOver ? 'body-drag-over' : ''}"
-          @dragenter=${hasFiles ? this._onBodyDragEnter : nothing}
-          @dragover=${hasFiles ? this._onBodyDragOver : nothing}
-          @dragleave=${hasFiles ? this._onBodyDragLeave : nothing}
-          @drop=${hasFiles ? this._onBodyDrop : nothing}
+          @dragenter=${this._onBodyDragEnter}
+          @dragover=${this._onBodyDragOver}
+          @dragleave=${this._onBodyDragLeave}
+          @drop=${this._onBodyDrop}
         >
           ${phase === 'complete'
               ? html`
@@ -1746,8 +1835,15 @@ export class SfxUploader extends LitElement {
         ${this._fullscreenPreviewUrl
           ? html`
               <div
-                class="fs-overlay ${this._fullscreenZoomed ? 'zoomed' : ''}"
-                @click=${this._onFsToggleZoom}
+                class="fs-overlay ${this._fullscreenZoomed ? 'zoomed' : ''} ${this._fsDragging ? 'panning' : ''}"
+                @click=${this._onFsOverlayClick}
+                @mousedown=${this._onFsPanStart}
+                @mousemove=${this._onFsPanMove}
+                @mouseup=${this._onFsPanEnd}
+                @mouseleave=${this._onFsPanEnd}
+                @touchstart=${this._onFsTouchStart}
+                @touchmove=${this._onFsTouchMove}
+                @touchend=${this._onFsPanEnd}
               >
                 <div class="fs-toolbar" @click=${(e: Event) => e.stopPropagation()}>
                   <button class="fs-btn" @click=${this._onFsToggleZoom} title="${this._fullscreenZoomed ? 'Zoom out' : 'Zoom in'}">
@@ -1765,7 +1861,8 @@ export class SfxUploader extends LitElement {
                   class="fs-img"
                   src=${this._fullscreenPreviewUrl}
                   alt=""
-                  @click=${this._onFsToggleZoom}
+                  style=${this._fullscreenZoomed ? `transform: translate(${this._fsPanX}px, ${this._fsPanY}px)` : ''}
+                  draggable="false"
                 />
                 <div class="fs-filename">${this._getFullscreenFilename()}</div>
               </div>
@@ -1778,12 +1875,78 @@ export class SfxUploader extends LitElement {
   private _onFsToggleZoom = (e?: Event) => {
     e?.stopPropagation();
     this._fullscreenZoomed = !this._fullscreenZoomed;
+    if (!this._fullscreenZoomed) {
+      this._fsPanX = 0;
+      this._fsPanY = 0;
+    }
+  };
+
+  private _onFsOverlayClick = (e: MouseEvent) => {
+    // Don't toggle zoom if user was panning
+    if (this._fsDragDidMove) return;
+    this._onFsToggleZoom(e);
+  };
+
+  // --- Pan (mouse) ---
+  private _fsDragDidMove = false;
+
+  private _onFsPanStart = (e: MouseEvent) => {
+    if (!this._fullscreenZoomed) return;
+    this._fsDragging = true;
+    this._fsDragDidMove = false;
+    this._fsDragStartX = e.clientX;
+    this._fsDragStartY = e.clientY;
+    this._fsPanStartX = this._fsPanX;
+    this._fsPanStartY = this._fsPanY;
+    e.preventDefault();
+  };
+
+  private _onFsPanMove = (e: MouseEvent) => {
+    if (!this._fsDragging) return;
+    const dx = e.clientX - this._fsDragStartX;
+    const dy = e.clientY - this._fsDragStartY;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) this._fsDragDidMove = true;
+    this._fsPanX = this._fsPanStartX + dx;
+    this._fsPanY = this._fsPanStartY + dy;
+    this.requestUpdate();
+  };
+
+  private _onFsPanEnd = () => {
+    this._fsDragging = false;
+    // Reset _fsDragDidMove after a tick so the click event (which fires after mouseup) can still read it
+    requestAnimationFrame(() => { this._fsDragDidMove = false; });
+  };
+
+  // --- Pan (touch) ---
+  private _onFsTouchStart = (e: TouchEvent) => {
+    if (!this._fullscreenZoomed || e.touches.length !== 1) return;
+    const t = e.touches[0];
+    this._fsDragging = true;
+    this._fsDragDidMove = false;
+    this._fsDragStartX = t.clientX;
+    this._fsDragStartY = t.clientY;
+    this._fsPanStartX = this._fsPanX;
+    this._fsPanStartY = this._fsPanY;
+  };
+
+  private _onFsTouchMove = (e: TouchEvent) => {
+    if (!this._fsDragging || e.touches.length !== 1) return;
+    const t = e.touches[0];
+    const dx = t.clientX - this._fsDragStartX;
+    const dy = t.clientY - this._fsDragStartY;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) this._fsDragDidMove = true;
+    this._fsPanX = this._fsPanStartX + dx;
+    this._fsPanY = this._fsPanStartY + dy;
+    this.requestUpdate();
+    e.preventDefault();
   };
 
   private _onFsClose = (e?: Event) => {
     e?.stopPropagation();
     this._fullscreenPreviewUrl = null;
     this._fullscreenZoomed = false;
+    this._fsPanX = 0;
+    this._fsPanY = 0;
   };
 
   private _getFullscreenFilename(): string {

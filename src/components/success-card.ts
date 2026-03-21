@@ -1,11 +1,12 @@
 import { LitElement, html, css, nothing } from 'lit';
 import { property } from 'lit/decorators.js';
 import { formatFileSize } from '../utils/file-utils';
+import { buttonStyles, focusStyles } from './shared-styles';
 
 const MAX_THUMBS = 7;
 
 export class SfxSuccessCard extends LitElement {
-  static styles = css`
+  static styles = [buttonStyles, focusStyles, css`
     :host {
       display: flex;
       flex: 1;
@@ -41,15 +42,15 @@ export class SfxSuccessCard extends LitElement {
     }
 
     .title {
-      font-size: 21px;
-      font-weight: 800;
+      font-size: 20px;
+      font-weight: 700;
       color: var(--sfx-up-text, #0f172a);
       letter-spacing: -0.4px;
-      margin-bottom: 7px;
+      margin-bottom: 8px;
     }
 
     .subtitle {
-      font-size: 13.5px;
+      font-size: 14px;
       color: var(--sfx-up-text-muted, #94a3b8);
       line-height: 1.6;
       max-width: 320px;
@@ -76,7 +77,7 @@ export class SfxSuccessCard extends LitElement {
       width: 56px;
       height: 56px;
       border-radius: 8px;
-      background: #f5f7fa;
+      background: var(--sfx-up-surface, #f8fafc);
       border: 1px solid var(--sfx-up-border, #e8eaed);
       display: flex;
       align-items: center;
@@ -88,10 +89,10 @@ export class SfxSuccessCard extends LitElement {
 
     /* --- Summary chip --- */
     .summary {
-      font-size: 13px;
-      font-weight: 600;
+      font-size: 14px;
+      font-weight: 400;
       color: var(--sfx-up-text, #1e293b);
-      background: #f5f7fa;
+      background: var(--sfx-up-surface, #f8fafc);
       border-radius: 8px;
       padding: 6px 14px;
       margin-bottom: 22px;
@@ -99,48 +100,7 @@ export class SfxSuccessCard extends LitElement {
 
     .actions {
       display: flex;
-      gap: 9px;
-    }
-
-    button {
-      height: 36px;
-      padding: 0 17px;
-      border-radius: 9px;
-      border: none;
-      font-family: inherit;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      transition: all 0.18s ease;
-      white-space: nowrap;
-    }
-
-    .btn-ghost {
-      background: none;
-      color: var(--sfx-up-text-muted, #94a3b8);
-      border: 1.5px solid var(--sfx-up-border, #e8edf5);
-    }
-
-    .btn-ghost:hover {
-      background: var(--sfx-up-border-light, #f8faff);
-      color: var(--sfx-up-text-secondary, #64748b);
-      border-color: var(--sfx-up-border, #d1dff0);
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, var(--sfx-up-primary, #2563eb), var(--sfx-up-primary-mid, #3b82f6));
-      color: var(--primary-foreground, #fff);
-      box-shadow: 0 2px 10px var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.28));
-    }
-
-    .btn-primary:hover {
-      background: linear-gradient(135deg, var(--sfx-up-primary-hover, #1d4ed8), var(--sfx-up-primary, #2563eb));
-      box-shadow: 0 4px 16px var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.38));
-      transform: translateY(-1px);
+      gap: 8px;
     }
 
     @keyframes fadeUp {
@@ -161,11 +121,18 @@ export class SfxSuccessCard extends LitElement {
       100% { transform: scale(1); }
     }
 
+    @media (max-width: 480px) {
+      .icon { width: 48px; height: 48px; margin-bottom: 12px; }
+      .icon svg { width: 24px; height: 24px; }
+      .title { font-size: 18px; }
+      .thumb, .thumb-more { width: 44px; height: 44px; }
+    }
+
     @media (prefers-reduced-motion: reduce) {
       .card { animation: none; }
       .icon { animation: none; }
     }
-  `;
+  `];
 
   @property({ type: Number }) fileCount = 0;
   @property({ type: Number }) totalSize = 0;

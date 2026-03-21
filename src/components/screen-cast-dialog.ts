@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { state } from 'lit/decorators.js';
+import { buttonStyles, focusStyles } from './shared-styles';
 
 /**
  * Modal dialog for screen capture/recording.
@@ -9,12 +10,12 @@ import { state } from 'lit/decorators.js';
  *  - `screencast-cancel`  → void
  */
 export class SfxScreenCastDialog extends LitElement {
-  static styles = css`
+  static styles = [buttonStyles, focusStyles, css`
     :host { display: block; }
 
     .backdrop {
       position: fixed; inset: 0; z-index: 1000;
-      background: rgba(0, 0, 0, 0.4);
+      background: var(--sfx-up-backdrop, rgba(0, 0, 0, 0.45));
       backdrop-filter: blur(6px);
       display: flex; align-items: center; justify-content: center;
       padding: 20px;
@@ -23,7 +24,7 @@ export class SfxScreenCastDialog extends LitElement {
 
     .card {
       background: var(--sfx-up-bg, #fff);
-      border-radius: 20px;
+      border-radius: 12px;
       box-shadow: 0 28px 80px rgba(0, 0, 0, 0.18), 0 4px 16px rgba(0, 0, 0, 0.06);
       width: 100%; max-width: 560px;
       overflow: hidden; display: flex; flex-direction: column;
@@ -36,7 +37,7 @@ export class SfxScreenCastDialog extends LitElement {
     }
 
     .head-icon {
-      width: 34px; height: 34px; border-radius: 10px;
+      width: 32px; height: 32px; border-radius: 8px;
       background: var(--sfx-up-primary-bg, #f5f5f7);
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0; color: var(--sfx-up-primary, #2563eb);
@@ -44,7 +45,7 @@ export class SfxScreenCastDialog extends LitElement {
 
     .head-icon svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
 
-    .title { font-size: 15px; font-weight: 700; color: var(--sfx-up-text, #1a1a1a); flex: 1; }
+    .title { font-size: 16px; font-weight: 700; color: var(--sfx-up-text, #1a1a1a); flex: 1; }
 
     .close-btn {
       width: 28px; height: 28px; border-radius: 8px; border: none;
@@ -73,23 +74,7 @@ export class SfxScreenCastDialog extends LitElement {
       background: var(--sfx-up-error, #dc2626); animation: pulse 1s ease-in-out infinite;
     }
 
-    .actions { display: flex; gap: 9px; justify-content: center; width: 100%; }
-
-    button.btn {
-      height: 36px; padding: 0 17px; border-radius: 9px; border: none;
-      font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
-      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-      transition: all 0.18s ease; white-space: nowrap;
-    }
-
-    .btn-ghost { background: none; color: var(--sfx-up-text-muted, #94a3b8); border: 1.5px solid var(--sfx-up-border, #e8edf5); }
-    .btn-ghost:hover { background: var(--sfx-up-border-light, #f8faff); color: var(--sfx-up-text-secondary, #64748b); border-color: var(--sfx-up-border, #d1dff0); }
-
-    .btn-primary {
-      background: linear-gradient(135deg, var(--sfx-up-primary, #2563eb), var(--sfx-up-primary-mid, #3b82f6));
-      color: var(--primary-foreground, #fff); box-shadow: 0 2px 10px var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.28));
-    }
-    .btn-primary:hover { background: linear-gradient(135deg, var(--sfx-up-primary-hover, #1d4ed8), var(--sfx-up-primary, #2563eb)); box-shadow: 0 4px 16px var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.38)); transform: translateY(-1px); }
+    .actions { display: flex; gap: 8px; justify-content: center; width: 100%; }
 
     .btn-danger {
       background: var(--sfx-up-error, #dc2626); color: var(--primary-foreground, #fff);
@@ -115,10 +100,15 @@ export class SfxScreenCastDialog extends LitElement {
       font-size: 14px; color: var(--sfx-up-text-secondary, #475569); max-width: 300px;
     }
 
+    .close-btn:focus-visible {
+      outline: 2px solid var(--sfx-up-primary, #2563eb);
+      outline-offset: 2px;
+    }
+
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes slideUp { from { transform: translateY(18px) scale(0.97); } to { transform: translateY(0) scale(1); } }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-  `;
+  `];
 
   @state() private _stream: MediaStream | null = null;
   @state() private _recording = false;

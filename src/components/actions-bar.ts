@@ -1,18 +1,31 @@
 import { LitElement, html, css, nothing } from 'lit';
 import { property } from 'lit/decorators.js';
 import { formatFileSize } from '../utils/file-utils';
+import { buttonStyles, focusStyles } from './shared-styles';
 
 export type UploadButtonState = 'idle' | 'uploading' | 'done';
 
 export class SfxActionsBar extends LitElement {
-  static styles = css`
+  static styles = [buttonStyles, focusStyles, css`
     :host {
       display: flex;
       flex-direction: column;
       background: var(--sfx-up-bg, #ffffff);
-      border-top: 1px solid var(--sfx-up-border, #ebebeb);
+      border-top: 1px solid var(--sfx-up-border, #e2e8f0);
       flex-shrink: 0;
       box-shadow: none;
+      animation: barSlideUp 0.3s cubic-bezier(0.34, 1.2, 0.64, 1) both;
+    }
+
+    @keyframes barSlideUp {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     /* --- Progress row --- */
@@ -26,7 +39,7 @@ export class SfxActionsBar extends LitElement {
     .progress-track {
       flex: 1;
       height: 4px;
-      background: #e5e7eb;
+      background: var(--sfx-up-border, #e2e8f0);
       border-radius: 2px;
       overflow: hidden;
     }
@@ -57,49 +70,16 @@ export class SfxActionsBar extends LitElement {
     .left {
       display: flex;
       align-items: center;
-      gap: 9px;
+      gap: 8px;
     }
 
     .right {
       display: flex;
       align-items: center;
-      gap: 9px;
+      gap: 8px;
     }
 
-    /* --- Buttons --- */
-    button {
-      height: 36px;
-      padding: 0 17px;
-      border-radius: 9px;
-      border: none;
-      font-family: inherit;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      transition: all 0.18s ease;
-      white-space: nowrap;
-    }
-
-    button svg {
-      width: 14px;
-      height: 14px;
-    }
-
-    .btn-ghost {
-      background: none;
-      color: var(--sfx-up-text-muted, #94a3b8);
-      border: 1.5px solid var(--sfx-up-border, #e8edf5);
-    }
-
-    .btn-ghost:hover {
-      background: var(--sfx-up-border-light, #f8faff);
-      color: var(--sfx-up-text-secondary, #64748b);
-      border-color: var(--sfx-up-border, #d1dff0);
-    }
+    /* --- Button overrides (base in shared-styles) --- */
 
     .btn-sec {
       background: var(--sfx-up-primary-bg, #eff6ff);
@@ -124,27 +104,7 @@ export class SfxActionsBar extends LitElement {
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, var(--sfx-up-primary, #2563eb), var(--sfx-up-primary-mid, #3b82f6));
-      color: var(--primary-foreground, #fff);
-      box-shadow: 0 2px 10px var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.28));
       min-width: 110px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .btn-primary:hover:not(:disabled) {
-      background: linear-gradient(135deg, var(--sfx-up-primary-hover, #1d4ed8), var(--sfx-up-primary, #2563eb));
-      box-shadow: 0 4px 16px var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.38));
-      transform: translateY(-1px);
-    }
-
-    .btn-primary:active {
-      transform: translateY(0);
-    }
-
-    .btn-primary:disabled {
-      opacity: 0.55;
-      cursor: not-allowed;
     }
 
     .btn-primary.done-state {
@@ -164,7 +124,7 @@ export class SfxActionsBar extends LitElement {
 
     /* --- Count --- */
     .count {
-      font-size: 13.5px;
+      font-size: 14px;
       font-weight: 700;
       color: var(--sfx-up-text, #1e293b);
     }
@@ -178,10 +138,23 @@ export class SfxActionsBar extends LitElement {
       to { transform: rotate(360deg); }
     }
 
+    @media (max-width: 480px) {
+      .buttons-row {
+        padding: 10px 12px;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      button {
+        height: 32px;
+        font-size: 12px;
+      }
+    }
+
     @media (prefers-reduced-motion: reduce) {
+      :host { animation: none; }
       .btn-spin { animation: none; }
     }
-  `;
+  `];
 
   @property({ type: String }) uploadState: UploadButtonState = 'idle';
   @property({ type: Number }) fileCount = 0;
@@ -244,9 +217,12 @@ export class SfxActionsBar extends LitElement {
         </div>
         <div class="right">
           <button class="btn-ghost" @click=${this._clear}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-              <polyline points="3 6 5 6 21 6" />
-              <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" />
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 6h18" />
+              <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+              <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+              <line x1="10" y1="11" x2="10" y2="17" />
+              <line x1="14" y1="11" x2="14" y2="17" />
             </svg>
             Clear
           </button>

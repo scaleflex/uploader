@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { state } from 'lit/decorators.js';
+import { buttonStyles, focusStyles } from './shared-styles';
 
 /**
  * Modal dialog for importing a file via URL.
@@ -9,7 +10,7 @@ import { state } from 'lit/decorators.js';
  *  - `url-cancel`  → void
  */
 export class SfxUrlDialog extends LitElement {
-  static styles = css`
+  static styles = [buttonStyles, focusStyles, css`
     :host {
       display: block;
     }
@@ -18,7 +19,7 @@ export class SfxUrlDialog extends LitElement {
       position: fixed;
       inset: 0;
       z-index: 1000;
-      background: oklch(0 0 0 / 0.4);
+      background: var(--sfx-up-backdrop, rgba(0, 0, 0, 0.45));
       backdrop-filter: blur(6px);
       display: flex;
       align-items: center;
@@ -29,8 +30,8 @@ export class SfxUrlDialog extends LitElement {
 
     .card {
       background: var(--sfx-up-bg, #fff);
-      border-radius: 20px;
-      box-shadow: 0 28px 80px var(--sfx-up-shadow, rgba(0, 0, 0, 0.18)), 0 4px 16px oklch(0 0 0 / 0.06);
+      border-radius: 12px;
+      box-shadow: 0 28px 80px var(--sfx-up-shadow, rgba(0, 0, 0, 0.18)), 0 4px 16px rgba(0, 0, 0, 0.06);
       width: 100%;
       max-width: 480px;
       overflow: hidden;
@@ -48,9 +49,9 @@ export class SfxUrlDialog extends LitElement {
     }
 
     .head-icon {
-      width: 34px;
-      height: 34px;
-      border-radius: 10px;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
       background: var(--sfx-up-primary-bg, #f5f5f7);
       display: flex;
       align-items: center;
@@ -69,7 +70,7 @@ export class SfxUrlDialog extends LitElement {
     }
 
     .title {
-      font-size: 15px;
+      font-size: 16px;
       font-weight: 700;
       color: var(--sfx-up-text, #1a1a1a);
       flex: 1;
@@ -107,7 +108,7 @@ export class SfxUrlDialog extends LitElement {
 
     label {
       display: block;
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 600;
       color: var(--sfx-up-text-muted, #aaa);
       margin-bottom: 5px;
@@ -124,9 +125,9 @@ export class SfxUrlDialog extends LitElement {
 
     input {
       width: 100%;
-      height: 42px;
+      height: 40px;
       border: 1.5px solid var(--sfx-up-border, #ebebeb);
-      border-radius: 10px;
+      border-radius: 6px;
       padding: 0 14px;
       font-size: 14px;
       font-family: inherit;
@@ -156,57 +157,9 @@ export class SfxUrlDialog extends LitElement {
 
     .actions {
       display: flex;
-      gap: 9px;
+      gap: 8px;
       justify-content: flex-end;
       margin-top: 18px;
-    }
-
-    button.btn {
-      height: 36px;
-      padding: 0 17px;
-      border-radius: 9px;
-      border: none;
-      font-family: inherit;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      transition: all 0.18s ease;
-      white-space: nowrap;
-    }
-
-    .btn-ghost {
-      background: none;
-      color: var(--sfx-up-text-muted, #94a3b8);
-      border: 1.5px solid var(--sfx-up-border, #e8edf5);
-    }
-
-    .btn-ghost:hover {
-      background: var(--sfx-up-border-light, #f8faff);
-      color: var(--sfx-up-text-secondary, #64748b);
-      border-color: var(--sfx-up-border, #d1dff0);
-    }
-
-    .btn-primary {
-      background: linear-gradient(135deg, var(--sfx-up-primary, #2563eb), var(--sfx-up-primary-mid, #3b82f6));
-      color: var(--primary-foreground, #fff);
-      box-shadow: 0 2px 10px var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.28));
-      position: relative;
-      overflow: hidden;
-    }
-
-    .btn-primary:hover:not(:disabled) {
-      background: linear-gradient(135deg, var(--sfx-up-primary-hover, #1d4ed8), var(--sfx-up-primary, #2563eb));
-      box-shadow: 0 4px 16px var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.38));
-      transform: translateY(-1px);
-    }
-
-    .btn-primary:disabled {
-      opacity: 0.55;
-      cursor: not-allowed;
     }
 
     .btn-spin {
@@ -228,10 +181,19 @@ export class SfxUrlDialog extends LitElement {
       to { transform: translateY(0) scale(1); }
     }
 
+    .close-btn:focus-visible {
+      outline: 2px solid var(--sfx-up-primary, #2563eb);
+      outline-offset: 2px;
+    }
+
+    input:focus-visible {
+      outline: none;
+    }
+
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
-  `;
+  `];
 
   @state() private _url = '';
   @state() private _name = '';

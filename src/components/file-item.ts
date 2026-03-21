@@ -10,14 +10,15 @@ export class SfxFileItem extends LitElement {
     }
 
     .tile {
-      border-radius: 10px;
+      border-radius: 12px;
       overflow: hidden;
       background: var(--sfx-up-bg, #fff);
       border: none;
       box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-      animation: tileIn 0.6s cubic-bezier(0.34, 1.2, 0.64, 1) both;
-      will-change: transform, opacity, filter;
-      transition: box-shadow 0.2s, transform 0.2s;
+      animation: tileIn 0.45s cubic-bezier(0.34, 1.2, 0.64, 1) both;
+      animation-delay: calc(min(var(--tile-index, 0), 8) * 0.04s);
+      will-change: transform, opacity;
+      transition: box-shadow 0.15s, transform 0.15s;
       cursor: default;
       display: flex;
       flex-direction: column;
@@ -88,7 +89,7 @@ export class SfxFileItem extends LitElement {
     .type-icon-inner.gen { color: var(--sfx-up-text-muted, #64748b); }
 
     .ext-label {
-      font-size: 9px;
+      font-size: 12px;
       font-weight: 800;
       text-transform: uppercase;
       margin-top: 2px;
@@ -96,15 +97,15 @@ export class SfxFileItem extends LitElement {
 
     /* --- Info bar --- */
     .info {
-      padding: 9px 11px 10px;
+      padding: 8px 12px;
       background: var(--sfx-up-bg, #fff);
       min-width: 0;
     }
 
     .name {
-      font-size: 12.5px;
-      font-weight: 600;
-      color: var(--sfx-up-text, #111827);
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--foreground, var(--sfx-up-text, #111827));
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -112,7 +113,7 @@ export class SfxFileItem extends LitElement {
     }
 
     .meta {
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 400;
       color: var(--sfx-up-text-muted, #9ca3af);
       white-space: nowrap;
@@ -130,7 +131,7 @@ export class SfxFileItem extends LitElement {
       top: 6px;
       right: 6px;
       display: flex;
-      gap: 3px;
+      gap: 4px;
       opacity: 0;
       transition: opacity 0.15s;
       z-index: 10;
@@ -151,7 +152,7 @@ export class SfxFileItem extends LitElement {
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background 0.15s, transform 0.12s;
+      transition: background 0.15s, transform 0.15s;
       color: var(--sfx-up-text-muted, #9ca3af);
       padding: 0;
     }
@@ -288,7 +289,7 @@ export class SfxFileItem extends LitElement {
       bottom: 28px;
       left: 6px;
       right: 6px;
-      font-size: 10px;
+      font-size: 12px;
       font-weight: 600;
       color: #fff;
       background: var(--sfx-up-error, #dc2626);
@@ -303,20 +304,17 @@ export class SfxFileItem extends LitElement {
     @keyframes tileIn {
       0% {
         opacity: 0;
-        transform: scale(0.8) translateY(22px);
-        filter: blur(10px);
+        transform: scale(0.92) translateY(14px);
       }
-      55% {
+      60% {
         opacity: 1;
-        filter: blur(0);
       }
       80% {
-        transform: scale(1.03) translateY(-3px);
+        transform: scale(1.02) translateY(-2px);
       }
       100% {
         opacity: 1;
         transform: scale(1) translateY(0);
-        filter: blur(0);
       }
     }
 
@@ -329,6 +327,17 @@ export class SfxFileItem extends LitElement {
 
     @keyframes spinRing {
       to { transform: rotate(360deg); }
+    }
+
+    .tile:focus-visible {
+      outline: 2px solid var(--sfx-up-ring, oklch(0.578 0.198 268.129 / 0.7));
+      outline-offset: 2px;
+    }
+
+    .act-btn:focus-visible,
+    .preview-btn:focus-visible {
+      outline: 2px solid var(--sfx-up-ring, oklch(0.578 0.198 268.129 / 0.7));
+      outline-offset: 2px;
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -389,7 +398,7 @@ export class SfxFileItem extends LitElement {
     ].filter(Boolean).join(' ');
 
     return html`
-      <div class=${tileClass}>
+      <div class=${tileClass} tabindex="0">
         <!-- Preview area -->
         <div class="preview">
           ${isImage && f.previewUrl
