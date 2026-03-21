@@ -227,6 +227,95 @@ body {
   box-shadow: 0 0 0 3px rgba(21, 91, 205, 0.1);
 }
 
+/* ── Custom select dropdown ─────────────────────── */
+.custom-select {
+  position: relative;
+  width: 100%;
+}
+
+.custom-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--sf-light-border);
+  border-radius: var(--sf-radius-xs);
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--sf-text-primary);
+  background: #fff;
+  cursor: pointer;
+  transition: all var(--sf-transition);
+  text-align: left;
+}
+
+.custom-select-trigger:hover {
+  border-color: var(--sf-primary);
+}
+
+.custom-select.open .custom-select-trigger {
+  border-color: var(--sf-primary);
+  box-shadow: 0 0 0 3px rgba(21, 91, 205, 0.1);
+}
+
+.custom-select-chevron {
+  flex-shrink: 0;
+  color: var(--sf-text-muted);
+  transition: transform 0.18s ease;
+}
+
+.custom-select.open .custom-select-chevron {
+  transform: rotate(180deg);
+}
+
+.custom-select-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid var(--sf-light-border);
+  border-radius: var(--sf-radius-sm);
+  box-shadow: var(--sf-shadow-md);
+  padding: 4px;
+  z-index: 100;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.15s ease, visibility 0.15s ease, transform 0.15s ease;
+}
+
+.custom-select.open .custom-select-dropdown {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.custom-select-option {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  border-radius: var(--sf-radius-xs);
+  background: none;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--sf-text-primary);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s ease;
+}
+
+.custom-select-option:hover {
+  background: var(--sf-bg-muted, #f1f5f9);
+}
+
+.custom-select-option.selected {
+  color: var(--sf-primary);
+  font-weight: 600;
+}
+
 /* ── Buttons ────────────────────────────────────── */
 .btn-primary {
   display: inline-flex;

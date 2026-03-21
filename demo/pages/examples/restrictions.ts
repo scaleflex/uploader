@@ -2,6 +2,7 @@ import type { Page } from '../../lib/router';
 import type { SfxUploader } from '../../../src/sfx-uploader';
 import { buildConfig } from '../../lib/auth';
 import { renderCodeBlock } from '../../lib/code-block';
+import { initCustomSelects } from '../../lib/custom-select';
 
 let maxNumberOfFiles: number | undefined = 5;
 let maxFileSize: number | undefined = 5 * 1024 * 1024;
@@ -87,6 +88,7 @@ const page: Page = {
     maxFileSize = 5 * 1024 * 1024;
     allowedFileTypes = ['image/*'];
     updateCode();
+    const cleanupSelects = initCustomSelects();
 
     document.getElementById('max-files')!.addEventListener('change', (e) => {
       const val = (e.target as HTMLSelectElement).value;
@@ -116,6 +118,8 @@ const page: Page = {
       });
       uploader.open();
     });
+
+    page.destroy = () => cleanupSelects();
   },
 };
 

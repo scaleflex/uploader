@@ -14,7 +14,7 @@ const page: Page = {
       <section class="page-section">
         <h2>Inline</h2>
         <p>The uploader below is rendered inline. It sizes to its container and does not use a backdrop overlay.</p>
-        <div id="inline-container" style="height: 500px; overflow: hidden; margin-top: 16px; border: 1px solid var(--sf-light-border); border-radius: var(--sf-radius);">
+        <div id="inline-container" style="height: 520px; margin-top: 16px;">
           <sfx-uploader id="inline-uploader"></sfx-uploader>
         </div>
       </section>

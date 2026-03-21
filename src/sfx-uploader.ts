@@ -325,6 +325,7 @@ export class SfxUploader extends LitElement {
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      height: 100%;
       max-height: var(--sfx-up-max-height, 88vh);
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
       transition: box-shadow 0.25s ease;
@@ -684,6 +685,8 @@ export class SfxUploader extends LitElement {
       .preview-panel { padding: 0 0 16px; }
 
       .preview-topbar { padding: 8px 0; }
+
+      .inline { border-radius: 12px; }
 
       .connector-modal-backdrop { padding: 8px; }
       .connector-modal {

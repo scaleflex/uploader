@@ -2,6 +2,7 @@ import type { Page } from '../../lib/router';
 import type { SfxUploader } from '../../../src/sfx-uploader';
 import { buildConfig } from '../../lib/auth';
 import { renderCodeBlock } from '../../lib/code-block';
+import { initCustomSelects } from '../../lib/custom-select';
 
 let concurrency = 3;
 
@@ -56,6 +57,7 @@ const page: Page = {
   init(uploader: SfxUploader) {
     concurrency = 3;
     updateCode();
+    const cleanupSelects = initCustomSelects();
 
     document.getElementById('concurrency-select')!.addEventListener('change', (e) => {
       concurrency = Number((e.target as HTMLSelectElement).value);
@@ -66,6 +68,8 @@ const page: Page = {
       uploader.config = buildConfig({ concurrency });
       uploader.open();
     });
+
+    page.destroy = () => cleanupSelects();
   },
 };
 
