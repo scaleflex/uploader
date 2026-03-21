@@ -407,7 +407,7 @@ export class SfxFileItem extends LitElement {
       <div class=${tileClass} tabindex="0">
         <!-- Preview area -->
         <div class="preview">
-          ${isImage && f.previewUrl
+          ${f.previewUrl
             ? html`<div class="preview-bg" style="background-image:url(${f.previewUrl})"></div>`
             : html`
                 <div class="preview-bg ${category}"></div>

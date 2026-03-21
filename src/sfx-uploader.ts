@@ -9,7 +9,7 @@ import type { UploaderState, UploadFile, UploadRestrictions, UploadResponse } fr
 import type { AuthConfig, AuthHeaders } from './auth/auth.types';
 import { resolveAuth, getApiBase, buildAuthHeaders } from './auth/auth.service';
 import { PublicEvents } from './events/public-events';
-import { generateFileId, guessMimeType, formatFileSize } from './utils/file-utils';
+import { generateFileId, guessMimeType, formatFileSize, generateVideoThumbnail } from './utils/file-utils';
 import { validateFile, buildAcceptString } from './utils/validate';
 import type { ProviderId, ConnectorConfig, RemoteFileInfo } from './connectors/connector.types';
 import { getProviderSources } from './connectors/provider-registry';
@@ -1202,7 +1202,7 @@ export class SfxUploader extends LitElement {
         continue;
       }
 
-      // Create preview for images
+      // Create preview for images; video thumbnails are generated async below
       let previewUrl: string | null = null;
       if (file.type.startsWith('image/')) {
         previewUrl = URL.createObjectURL(file);
@@ -1232,6 +1232,20 @@ export class SfxUploader extends LitElement {
       addFile(this._store, uploadFile);
       this._dispatchPublic(PublicEvents.FILE_ADDED, { file: uploadFile });
       callbacks?.onFileAdded?.(uploadFile);
+
+      // Generate video thumbnail asynchronously
+      if (file.type.startsWith('video/')) {
+        generateVideoThumbnail(file).then((thumbUrl) => {
+          if (!thumbUrl) return;
+          const state = this._store.getState();
+          const current = state.files.get(uploadFile.id);
+          if (current) {
+            const next = new Map(state.files);
+            next.set(uploadFile.id, { ...current, previewUrl: thumbUrl });
+            this._store.setState({ files: next });
+          }
+        });
+      }
     }
 
     // Auto-proceed if configured

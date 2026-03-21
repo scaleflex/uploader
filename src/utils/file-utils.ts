@@ -44,3 +44,58 @@ export function guessMimeType(name: string): string {
   const ext = name.split('.').pop()?.toLowerCase() ?? '';
   return MIME_MAP[ext] || '';
 }
+
+/** Generate a thumbnail from the first frame of a video file. Returns a blob URL or null. */
+export function generateVideoThumbnail(file: File): Promise<string | null> {
+  return new Promise((resolve) => {
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    video.muted = true;
+    video.playsInline = true;
+
+    const url = URL.createObjectURL(file);
+    let resolved = false;
+
+    const cleanup = () => {
+      if (!resolved) {
+        resolved = true;
+        resolve(null);
+      }
+      video.removeAttribute('src');
+      video.load();
+      URL.revokeObjectURL(url);
+    };
+
+    video.addEventListener('seeked', () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth || 320;
+        canvas.height = video.videoHeight || 240;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          canvas.toBlob((blob) => {
+            resolved = true;
+            resolve(blob ? URL.createObjectURL(blob) : null);
+            video.removeAttribute('src');
+            video.load();
+            URL.revokeObjectURL(url);
+          }, 'image/jpeg', 0.7);
+          return;
+        }
+      } catch { /* canvas tainted or other error */ }
+      cleanup();
+    }, { once: true });
+
+    video.addEventListener('error', () => cleanup(), { once: true });
+
+    // Timeout fallback in case video never loads
+    setTimeout(() => cleanup(), 5000);
+
+    video.src = url;
+    video.addEventListener('loadeddata', () => {
+      // Seek to 0.1s to get a meaningful frame (some videos have black first frame)
+      video.currentTime = 0.1;
+    }, { once: true });
+  });
+}
