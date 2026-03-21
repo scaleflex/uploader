@@ -1481,9 +1481,11 @@ export class SfxUploader extends LitElement {
   private _onPrimaryAction = () => {
     // Dispatch public event so consumers can handle "Done"/"View in DAM"/etc.
     this._dispatchPublic(PublicEvents.COMPLETE_ACTION, {});
-    // In modal mode, close the uploader
+    // In modal mode, close the uploader; otherwise reset to initial state
     if (this.config?.mode === 'modal') {
       this.close();
+    } else {
+      this._onClearAll();
     }
   };
 

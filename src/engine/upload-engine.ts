@@ -224,6 +224,14 @@ export class UploadEngine {
     const file = this.store.getState().files.get(fileId);
     if (!file) return;
 
+    // Duplicate file — server already has it, treat as success
+    if (error.message.toLowerCase().includes('same file')) {
+      updateFile(this.store, fileId, { status: 'complete', progress: 100 });
+      this.checkAllComplete();
+      this.processQueue();
+      return;
+    }
+
     const { retryConfig } = this.store.getState().queueConfig;
     const nextRetry = file.retryCount + 1;
 
