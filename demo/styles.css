@@ -60,7 +60,7 @@
   --sf-shadow-sm: 0 1px 3px oklch(26.18% 0.024 256.43 / 0.04), 0 1px 2px oklch(26.18% 0.024 256.43 / 0.06);
   --sf-shadow-md: 0 4px 20px oklch(26.18% 0.024 256.43 / 0.06), 0 1px 3px oklch(26.18% 0.024 256.43 / 0.04);
   --sf-shadow-lg: 0 12px 40px var(--shadow), 0 4px 12px oklch(26.18% 0.024 256.43 / 0.05);
-  --sf-shadow-glow: 0 0 60px var(--ring);
+  --sf-shadow-glow: 0 0 20px rgba(37, 99, 235, 0.1);
   --topbar-height: 64px;
   --sidebar-width: 260px;
 }

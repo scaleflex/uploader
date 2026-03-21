@@ -233,8 +233,10 @@ export class SfxDropZone extends LitElement {
     .sources-grid {
       display: flex;
       justify-content: center;
+      align-items: center;
       gap: 8px;
       flex-wrap: wrap;
+      min-height: 92px;
     }
 
     .compact .sources-grid {
@@ -328,15 +330,15 @@ export class SfxDropZone extends LitElement {
       display: none;
     }
 
-    .sources-cards .more-wrap {
+    .sources-cards > .more-wrap {
+      display: contents;
+    }
+
+    .sources-cards > .more-wrap > .src-card {
+      /* restore flex item behaviour lost by display:contents on the wrapper */
       flex: 1;
       min-width: 88px;
       max-width: 130px;
-    }
-
-    .sources-cards .more-wrap > .src-card {
-      width: 100%;
-      max-width: none;
     }
 
     .src-card {
