@@ -32,6 +32,7 @@ export class SfxFileList extends LitElement {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(186px, 1fr));
       gap: 12px;
+      padding: 2px;
       padding-bottom: 16px;
     }
 

@@ -534,7 +534,6 @@ html, body {
 /* ══ FILE TILE ══ */
 .tile {
   border-radius: 10px;
-  overflow: hidden;
   background: #fff;
   border: none;
   box-shadow: 0 1px 4px rgba(0,0,0,0.05);
@@ -644,7 +643,7 @@ html, body {
 /* progress bar */
 .tile-prog { position:absolute; bottom:0; left:0; right:0; height:2px; background:rgba(255,255,255,0.15); }
 .tile-prog-fill { height:100%; background:#fff; transform-origin:left; transform:scaleX(0); transition:transform 0.32s ease; }
-.tile.done .tile-prog-fill { transform:scaleX(1); background:rgba(255,255,255,0.6); }
+.tile.done .tile-prog { opacity: 0; }
 
 /* tile hover overlay */
 .tile-actions {

@@ -11,6 +11,7 @@ const airboxPuidInput = document.getElementById('cfg-airbox-puid') as HTMLInputE
 const applyBtn = document.getElementById('cfg-apply') as HTMLButtonElement;
 const modalBtn = document.getElementById('cfg-modal') as HTMLButtonElement;
 const stepBtn = document.getElementById('cfg-step') as HTMLButtonElement;
+const cardsBtn = document.getElementById('cfg-cards') as HTMLButtonElement;
 
 // Clear stale localStorage to use new defaults
 localStorage.removeItem('sfx-uploader-dev-config');
@@ -18,6 +19,7 @@ localStorage.removeItem('sfx-uploader-dev-config');
 function applyConfig(
   mode: 'inline' | 'modal' = 'inline',
   headerButton?: 'none' | 'close' | 'back',
+  sourcesLayout?: 'pills' | 'cards',
 ) {
   const container = containerInput.value.trim();
   const securityTemplateId = secTemplateInput.value.trim();
@@ -45,6 +47,7 @@ function applyConfig(
     targetFolder: folder,
     mode,
     ...(headerButton ? { headerButton } : {}),
+    ...(sourcesLayout ? { sourcesLayout } : {}),
     connectors: {
       companionUrl: 'https://eu-on-24001.connector.filerobot.com',
       providers: ['google-drive', 'dropbox', 'onedrive', 'box', 'unsplash'],
@@ -76,6 +79,13 @@ modalBtn.addEventListener('click', () => {
 stepBtn.addEventListener('click', () => {
   applyConfig('modal', 'back');
   uploader.open();
+});
+
+let cardsActive = false;
+cardsBtn.addEventListener('click', () => {
+  cardsActive = !cardsActive;
+  applyConfig('inline', undefined, cardsActive ? 'cards' : 'pills');
+  cardsBtn.textContent = cardsActive ? 'Pills Layout' : 'Cards Layout';
 });
 
 // Auto-apply if we have default values filled in

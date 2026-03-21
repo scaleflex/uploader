@@ -10,8 +10,7 @@ export class SfxFileItem extends LitElement {
     }
 
     .tile {
-      border-radius: 12px;
-      overflow: hidden;
+      border-radius: 10px;
       background: var(--sfx-up-bg, #fff);
       border: none;
       box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
@@ -36,6 +35,7 @@ export class SfxFileItem extends LitElement {
       overflow: hidden;
       flex-shrink: 0;
       background: var(--sfx-up-border-light, #f3f4f6);
+      border-radius: 10px 10px 0 0;
     }
 
     .preview-bg {
@@ -98,7 +98,6 @@ export class SfxFileItem extends LitElement {
     /* --- Info bar --- */
     .info {
       padding: 8px 12px;
-      background: var(--sfx-up-bg, #fff);
       min-width: 0;
     }
 
@@ -441,7 +440,7 @@ export class SfxFileItem extends LitElement {
             : nothing}
 
           <!-- Progress bar -->
-          ${f.status === 'uploading' || isDone
+          ${f.status === 'uploading'
             ? html`
                 <div class="progress">
                   <div class="progress-fill" style="transform:scaleX(${Math.min(f.progress, 100) / 100})"></div>

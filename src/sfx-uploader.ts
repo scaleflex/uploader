@@ -69,6 +69,8 @@ export interface UploaderConfig {
   connectors?: ConnectorConfig;
   /** Show "Fill Metadata" button in the actions bar. */
   showFillMetadata?: boolean;
+  /** Layout for the import-from sources section: horizontal pills (default) or cards grid. */
+  sourcesLayout?: 'pills' | 'cards';
 }
 
 type UploaderPhase = 'empty' | 'ready' | 'uploading' | 'complete';
@@ -1771,6 +1773,7 @@ export class SfxUploader extends LitElement {
                     .externalDragOver=${this._bodyDragOver}
                     .accept=${accept}
                     .sources=${this._mergedSources}
+                    .sourcesLayout=${this.config?.sourcesLayout ?? 'pills'}
                   ></sfx-drop-zone>
 
                   ${hasFiles
