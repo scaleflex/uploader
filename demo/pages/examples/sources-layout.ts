@@ -14,7 +14,7 @@ const page: Page = {
       <section class="page-section">
         <h2>Cards layout</h2>
         <p>Sources are displayed as a responsive grid of cards. The number of visible cards adapts to screen width — 5 on desktop, 3 on tablet, 2 on mobile — with overflow sources in a "More" dropdown.</p>
-        <div id="cards-container" style="height: 500px; overflow: hidden; margin-top: 16px; border: 1px solid var(--sf-light-border); border-radius: var(--sf-radius);">
+        <div id="cards-container" style="min-height: 580px; margin-top: 16px; margin-bottom: 32px;">
           <sfx-uploader id="cards-uploader"></sfx-uploader>
         </div>
       </section>
@@ -22,7 +22,7 @@ const page: Page = {
       <section class="page-section" style="margin-top: 40px;">
         <h2>Pills layout (default)</h2>
         <p>Sources are displayed as compact inline pills in a horizontal row.</p>
-        <div id="pills-container" style="height: 500px; overflow: hidden; margin-top: 16px; border: 1px solid var(--sf-light-border); border-radius: var(--sf-radius);">
+        <div id="pills-container" style="min-height: 560px; margin-top: 16px; margin-bottom: 32px;">
           <sfx-uploader id="pills-uploader"></sfx-uploader>
         </div>
       </section>

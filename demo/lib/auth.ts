@@ -32,6 +32,7 @@ export function buildConfig(overrides: Partial<UploaderConfig> = {}): UploaderCo
       container,
       securityTemplateId,
     },
+    autoProceed: false,
     connectors: {
       companionUrl: 'https://companion.scaleflex.com',
       providers: ['google-drive', 'dropbox', 'box', 'onedrive'],
