@@ -65,6 +65,7 @@ const page: Page = {
             <tr><td><code>showFillMetadata</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Show "Fill Metadata" button in the actions bar</td></tr>
             <tr><td><code>restrictions</code></td><td><code>UploadRestrictions</code></td><td><code>undefined</code></td><td>File validation rules (see below)</td></tr>
             <tr><td><code>connectors</code></td><td><code>ConnectorConfig</code></td><td><code>undefined</code></td><td>Cloud provider configuration (see below)</td></tr>
+            <tr><td><code>sourcesLayout</code></td><td><code>'pills' | 'cards'</code></td><td><code>'pills'</code></td><td>Layout for the import-from sources section. <code>'pills'</code> shows compact horizontal buttons; <code>'cards'</code> shows a grid of square cards with large icons.</td></tr>
             <tr><td><code>callbacks</code></td><td><code>UploaderCallbacks</code></td><td><code>undefined</code></td><td>Lifecycle callbacks (see <a href="#/docs/api">API</a>)</td></tr>
           </tbody>
         </table>
@@ -105,6 +106,29 @@ uploader.open();`,
   headerButton: 'back',
 };
 uploader.open();`,
+        )}
+
+        <h2>Sources layout</h2>
+        <p>Choose how import sources are displayed in the drop zone. The default <code>'pills'</code> layout shows compact horizontal buttons. The <code>'cards'</code> layout displays a grid of square cards with large icons — ideal for wider layouts where visual clarity is preferred.</p>
+
+        <h3>Pills (default)</h3>
+        <p>Sources appear as small inline pills in a single row. Overflow sources are hidden behind a "More" dropdown.</p>
+        ${code(
+          'typescript',
+          `uploader.config = {
+  auth: { /* ... */ },
+  // sourcesLayout: 'pills' // default
+};`,
+        )}
+
+        <h3>Cards</h3>
+        <p>Sources appear as a grid of square cards with centered icons and labels. The cards are responsive — 5 visible on desktop, 3 on tablet, 2 on mobile — with overflow in a "More" card.</p>
+        ${code(
+          'typescript',
+          `uploader.config = {
+  auth: { /* ... */ },
+  sourcesLayout: 'cards',
+};`,
         )}
 
         <h2>Upload restrictions</h2>

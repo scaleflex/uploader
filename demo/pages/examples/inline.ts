@@ -14,12 +14,12 @@ const page: Page = {
       <section class="page-section">
         <h2>Inline</h2>
         <p>The uploader below is rendered inline. It sizes to its container and does not use a backdrop overlay.</p>
-        <div id="inline-container" style="height: 500px; margin-top: 16px; border: 1px solid var(--sf-light-border); border-radius: var(--sf-radius);">
+        <div id="inline-container" style="height: 500px; overflow: hidden; margin-top: 16px; border: 1px solid var(--sf-light-border); border-radius: var(--sf-radius);">
           <sfx-uploader id="inline-uploader"></sfx-uploader>
         </div>
       </section>
 
-      <section class="page-section">
+      <section class="page-section" style="margin-top: 40px;">
         <h2>Modal</h2>
         <p>Click the button below to open a second uploader instance as a modal overlay.</p>
         <button class="btn-primary" id="open-modal-btn" style="margin-top: 8px;">Open uploader in modal</button>

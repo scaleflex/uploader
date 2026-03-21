@@ -12,18 +12,26 @@ export function validateFile(
     return `File exceeds ${limit} MB limit`;
   }
 
-  // Max total files size
+  // Max total files size (exclude rejected/cancelled files)
   if (restrictions.maxTotalFilesSize != null) {
     let totalSize = file.size;
-    for (const f of existingFiles.values()) totalSize += f.size;
+    for (const f of existingFiles.values()) {
+      if (f.status !== 'rejected' && f.status !== 'cancelled') totalSize += f.size;
+    }
     if (totalSize > restrictions.maxTotalFilesSize) {
       return 'Total file size limit exceeded';
     }
   }
 
-  // Max number of files
-  if (restrictions.maxNumberOfFiles != null && existingFiles.size >= restrictions.maxNumberOfFiles) {
-    return `Maximum ${restrictions.maxNumberOfFiles} files allowed`;
+  // Max number of files (exclude rejected/cancelled files from count)
+  if (restrictions.maxNumberOfFiles != null) {
+    let activeCount = 0;
+    for (const f of existingFiles.values()) {
+      if (f.status !== 'rejected' && f.status !== 'cancelled') activeCount++;
+    }
+    if (activeCount >= restrictions.maxNumberOfFiles) {
+      return `Maximum ${restrictions.maxNumberOfFiles} files allowed`;
+    }
   }
 
   // Allowed file types

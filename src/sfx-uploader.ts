@@ -369,9 +369,16 @@ export class SfxUploader extends LitElement {
       min-width: 0;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
+      overflow-y: auto;
+      overflow-x: hidden;
       padding: 0 20px 20px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
     }
+
+    .preview-panel::-webkit-scrollbar { width: 5px; }
+    .preview-panel::-webkit-scrollbar-track { background: transparent; }
+    .preview-panel::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 3px; }
 
     .preview-panel-header {
       display: flex;
@@ -1181,6 +1188,14 @@ export class SfxUploader extends LitElement {
         addFile(this._store, uploadFile);
         this._dispatchPublic(PublicEvents.FILE_REJECTED, { file: uploadFile, reason: error });
         callbacks?.onFileRejected?.(uploadFile, error);
+        // Auto-remove rejected file after 4 seconds
+        const rejId = uploadFile.id;
+        setTimeout(() => {
+          const f = this._store.getState().files.get(rejId);
+          if (f && f.status === 'rejected') {
+            removeFile(this._store, rejId);
+          }
+        }, 4000);
         continue;
       }
 

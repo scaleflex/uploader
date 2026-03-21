@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Cards layout for import-from sources (`sourcesLayout: 'cards'`) — displays sources as a responsive grid of square cards with large icons instead of compact pills
+
 ## [0.1.0] - 2026-03-18
 
 Initial release.

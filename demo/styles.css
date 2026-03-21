@@ -211,6 +211,10 @@ body {
   transition: all var(--sf-transition);
 }
 
+.form-group select {
+  padding-right: 36px;
+}
+
 .form-group input:focus,
 .form-group select:focus {
   outline: none;

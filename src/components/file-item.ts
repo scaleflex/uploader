@@ -282,7 +282,7 @@ export class SfxFileItem extends LitElement {
       height: 14px;
     }
 
-    /* --- Error state --- */
+    /* --- Error / rejected state --- */
     .error-badge {
       position: absolute;
       bottom: 28px;
@@ -298,6 +298,11 @@ export class SfxFileItem extends LitElement {
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+
+    .tile.rejected {
+      opacity: 0.6;
+      box-shadow: 0 0 0 2px var(--sfx-up-error, #dc2626);
     }
 
     @keyframes tileIn {
@@ -388,12 +393,14 @@ export class SfxFileItem extends LitElement {
     const isDone = f.status === 'complete' && f.progress > 0;
     const isUploading = f.status === 'uploading';
     const isError = f.status === 'error' || f.status === 'failed';
+    const isRejected = f.status === 'rejected';
     const ext = getFileExtension(f.name);
 
     const tileClass = [
       'tile',
       isDone ? 'done' : '',
       isUploading ? 'uploading' : '',
+      isRejected ? 'rejected' : '',
     ].filter(Boolean).join(' ');
 
     return html`
@@ -448,8 +455,8 @@ export class SfxFileItem extends LitElement {
               `
             : nothing}
 
-          <!-- Error badge -->
-          ${isError && f.error
+          <!-- Error / rejected badge -->
+          ${(isError || isRejected) && f.error
             ? html`<div class="error-badge" title=${f.error}>${f.error}</div>`
             : nothing}
         </div>
