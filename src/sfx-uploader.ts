@@ -771,10 +771,12 @@ export class SfxUploader extends LitElement {
     this.requestUpdate();
   }
 
-  /** Close the uploader (modal mode). */
+  /** Close the uploader (modal mode). Clears all files so next open starts fresh. */
   close() {
     if (!this._isOpen) return;
     this._isOpen = false;
+    this._onClearAll();
+    this._previewFileId = null;
     this.config?.callbacks?.onClose?.();
     this._dispatchPublic(PublicEvents.CLOSE, {});
     this.requestUpdate();
