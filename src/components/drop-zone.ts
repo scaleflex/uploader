@@ -378,6 +378,8 @@ export class SfxDropZone extends LitElement {
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      width: 28px;
+      height: 28px;
     }
 
     .src-card .card-ico svg {
@@ -412,11 +414,23 @@ export class SfxDropZone extends LitElement {
     }
 
     .src-card .brand-ico svg {
-      width: 16px;
-      height: 16px;
+      width: 24px;
+      height: 24px;
       fill: white;
       stroke: none;
       stroke-width: 0;
+    }
+
+    /* Google Drive has transparent background — show SVG at full card-ico size */
+    .src-card .brand-ico[style*="transparent"] {
+      background: none !important;
+      width: auto;
+      height: auto;
+    }
+
+    .src-card .brand-ico[style*="transparent"] svg {
+      width: 28px;
+      height: 28px;
     }
 
     .src-card .canva-ico {
@@ -478,6 +492,8 @@ export class SfxDropZone extends LitElement {
       width: 16px;
       height: 16px;
       color: var(--sfx-up-text-secondary, #475569);
+      fill: currentColor;
+      stroke: none;
     }
 
     .more-wrap.open .more-dots,
