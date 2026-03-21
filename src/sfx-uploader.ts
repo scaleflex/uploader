@@ -287,31 +287,14 @@ export class SfxUploader extends LitElement {
     .body.has-files {
       justify-content: flex-start;
       align-items: stretch;
-      overflow-y: auto;
+      overflow: hidden;
       gap: 0;
-      padding-bottom: 24px;
-      scrollbar-width: thin;
-      scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
       animation: bodyReveal 0.35s ease both;
     }
 
     @keyframes bodyReveal {
       from { opacity: 0.5; }
       to { opacity: 1; }
-    }
-
-    .body.has-files::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    .body.has-files::-webkit-scrollbar-track {
-      background: transparent;
-      margin: 8px 0;
-    }
-
-    .body.has-files::-webkit-scrollbar-thumb {
-      background: rgba(0, 0, 0, 0.15);
-      border-radius: 3px;
     }
 
     .body.has-files::-webkit-scrollbar-thumb:hover {
@@ -599,6 +582,11 @@ export class SfxUploader extends LitElement {
       border-radius: 4px;
       user-select: none;
       -webkit-user-drag: none;
+      transition: transform 0.25s ease;
+    }
+
+    .fs-overlay.panning .fs-img {
+      transition: none;
     }
 
     .fs-toolbar {
@@ -1102,7 +1090,7 @@ export class SfxUploader extends LitElement {
   // --- Connector sources ---
 
   /** Reserved source IDs that cannot be overridden by custom sources. */
-  private static readonly _RESERVED_IDS = new Set(['device', 'camera', 'url']);
+  private static readonly _RESERVED_IDS = new Set(['device', 'camera', 'url', 'screen-cast']);
 
   private get _mergedSources(): SourceDef[] {
     const connectors = this.config?.connectors;
@@ -1267,7 +1255,8 @@ export class SfxUploader extends LitElement {
     }
 
     if (source === 'screen-cast') {
-      return; // Screen cast removed from UI
+      this._showScreenCastDialog = true;
+      return;
     }
 
     // Check if this is a connector source
@@ -1863,7 +1852,7 @@ export class SfxUploader extends LitElement {
                   class="fs-img"
                   src=${this._fullscreenPreviewUrl}
                   alt=""
-                  style=${this._fullscreenZoomed ? `transform: translate(${this._fsPanX}px, ${this._fsPanY}px)` : ''}
+                  style=${this._fullscreenZoomed ? `transform: scale(2) translate(${this._fsPanX}px, ${this._fsPanY}px)` : ''}
                   draggable="false"
                 />
                 <div class="fs-filename">${this._getFullscreenFilename()}</div>

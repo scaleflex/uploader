@@ -7,8 +7,25 @@ export class SfxFileList extends LitElement {
     :host {
       display: block;
       flex: 1;
-      overflow-y: auto;
       min-height: 0;
+      overflow-y: auto;
+      padding-bottom: 8px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+    }
+
+    :host::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    :host::-webkit-scrollbar-track {
+      background: transparent;
+      margin: 8px 0;
+    }
+
+    :host::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.15);
+      border-radius: 3px;
     }
 
     .grid {

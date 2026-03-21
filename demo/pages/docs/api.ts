@@ -59,6 +59,10 @@ uploader.addEventListener('sfx-all-complete', (e) => {
             <tr><td><code>sfx-open</code></td><td>—</td><td>Uploader was opened</td></tr>
             <tr><td><code>sfx-close</code></td><td>—</td><td>Uploader was closed</td></tr>
             <tr><td><code>sfx-cancel</code></td><td>—</td><td>User cancelled the upload</td></tr>
+            <tr><td><code>sfx-before-upload</code></td><td><code>{ files: UploadFile[] }</code></td><td>Fired before upload starts (cancelable via <code>preventDefault()</code>)</td></tr>
+            <tr><td><code>sfx-file-preview</code></td><td><code>{ file: UploadFile }</code></td><td>User opened a file preview</td></tr>
+            <tr><td><code>sfx-fill-metadata</code></td><td><code>{ files: UploadFile[] }</code></td><td>User clicked "Fill Metadata"</td></tr>
+            <tr><td><code>sfx-complete-action</code></td><td><code>{}</code></td><td>User clicked the primary action on the completion screen (e.g. "Done")</td></tr>
           </tbody>
         </table>
 
@@ -70,14 +74,30 @@ uploader.addEventListener('sfx-all-complete', (e) => {
   auth: { /* ... */ },
   callbacks: {
     onFileAdded: (file) => console.log('Added:', file.name),
+    onFileRemoved: (file) => console.log('Removed:', file.name),
+    onFileRejected: (file, reason) => console.log('Rejected:', reason),
+    onUploadStarted: (files) => console.log('Started:', files.length),
     onUploadProgress: (file, progress, speed) => {
       console.log(\`\${file.name}: \${progress}% @ \${speed} B/s\`);
     },
+    onUploadComplete: (file, response) => console.log('Done:', file.name),
+    onUploadError: (file, error) => console.error('Error:', error),
+    onUploadRetry: (file, attempt) => console.log('Retry #' + attempt),
     onAllComplete: (successful, failed) => {
       console.log(\`Done: \${successful.length} ok, \${failed.length} failed\`);
     },
+    onTotalProgress: (percentage, speed, eta) => {
+      console.log(\`Total: \${percentage}% — ETA \${eta}s\`);
+    },
+    onBeforeUpload: (files) => {
+      // Return false to prevent the upload
+      return files.length > 0;
+    },
     onOpen: () => console.log('Uploader opened'),
     onClose: () => console.log('Uploader closed'),
+    onCancel: () => console.log('Upload cancelled'),
+    onFilePreview: (file) => console.log('Preview:', file.name),
+    onFillMetadata: (files) => console.log('Fill metadata for', files.length),
   },
 };`,
         )}
@@ -93,12 +113,19 @@ uploader.addEventListener('sfx-all-complete', (e) => {
             <tr><td><code>open</code></td><td><code>boolean</code></td><td>Controlled open state</td></tr>
             <tr><td><code>onFileAdded</code></td><td><code>(file) =&gt; void</code></td><td>File added callback</td></tr>
             <tr><td><code>onFileRemoved</code></td><td><code>(file) =&gt; void</code></td><td>File removed callback</td></tr>
+            <tr><td><code>onFileRejected</code></td><td><code>(file, reason) =&gt; void</code></td><td>File rejected by restrictions</td></tr>
+            <tr><td><code>onUploadStarted</code></td><td><code>(files) =&gt; void</code></td><td>Upload batch started</td></tr>
             <tr><td><code>onUploadProgress</code></td><td><code>(file, progress, speed) =&gt; void</code></td><td>Progress callback</td></tr>
             <tr><td><code>onUploadComplete</code></td><td><code>(file, response) =&gt; void</code></td><td>Single file complete callback</td></tr>
             <tr><td><code>onUploadError</code></td><td><code>(file, error) =&gt; void</code></td><td>Single file error callback</td></tr>
+            <tr><td><code>onUploadRetry</code></td><td><code>(file, attempt) =&gt; void</code></td><td>File retry callback</td></tr>
             <tr><td><code>onAllComplete</code></td><td><code>(successful, failed) =&gt; void</code></td><td>All uploads finished callback</td></tr>
+            <tr><td><code>onTotalProgress</code></td><td><code>(percentage, speed, eta) =&gt; void</code></td><td>Aggregate progress callback</td></tr>
             <tr><td><code>onOpen</code></td><td><code>() =&gt; void</code></td><td>Uploader opened callback</td></tr>
             <tr><td><code>onClose</code></td><td><code>() =&gt; void</code></td><td>Uploader closed callback</td></tr>
+            <tr><td><code>onCancel</code></td><td><code>() =&gt; void</code></td><td>Upload cancelled callback</td></tr>
+            <tr><td><code>className</code></td><td><code>string</code></td><td>CSS class for the host element</td></tr>
+            <tr><td><code>style</code></td><td><code>CSSProperties</code></td><td>Inline styles for the host element</td></tr>
           </tbody>
         </table>
 
