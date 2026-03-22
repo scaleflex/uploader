@@ -31,8 +31,10 @@ const page: Page = {
 
         <h2>Installation</h2>
         ${code('bash', `npm install @scaleflex/uploader`)}
-        <p>Or with yarn / pnpm:</p>
-        ${code('bash', `yarn add @scaleflex/uploader\npnpm add @scaleflex/uploader`)}
+        <p>Or with yarn:</p>
+        ${code('bash', `yarn add @scaleflex/uploader`)}
+        <p>Or with pnpm:</p>
+        ${code('bash', `pnpm add @scaleflex/uploader`)}
 
         <h2>Package exports</h2>
         <table>
