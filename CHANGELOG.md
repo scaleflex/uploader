@@ -7,9 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-03-22
+
 ### Added
 
-- Cards layout for import-from sources (`sourcesLayout: 'cards'`) — displays sources as a responsive grid of square cards with large icons instead of compact pills
+- Cards layout for import-from sources (`sourcesLayout: 'cards'`) — responsive grid of square cards with large icons
+- Video thumbnail generation from first frame
+- Configurable `headerButton` option (`close`, `back`, `none`)
+- Screen capture source
+- Prev/next navigation arrows on preview image
+- Custom dropdown selects replacing native selects with preview panel scroll
+- Clear files on modal close so next open starts fresh
+- Asset count label and total file size display in upload view
+- Extended drag-and-drop to entire body when drop zone is compact
+
+### Changed
+
+- Design polishing: normalized CSS tokens, aligned with UIKit design system
+- Preview panel redesigned: inline tags, two-column metadata table, fullscreen zoom
+- Uploader max-width set to 912px
+- File grid widened to 440px for two-column layout in preview mode
+- Responsive source pills on mobile viewports
+- Paddings normalized to 24px throughout body and asset count
+
+### Fixed
+
+- Drag-and-drop adding files twice
+- File restrictions: proper counting, rejected styling, auto-dismiss
+- Duplicate file errors and Done button in non-modal mode
+- Done badge appearing on non-uploaded files
+- File tile borders
+- Fullscreen zoom and scroll issues
+- Various logic bugs, config options, and accessibility improvements
+
+### Removed
+
+- Canva SDK integration
 
 ## [0.1.0] - 2026-03-18
 
