@@ -849,6 +849,7 @@ export class SfxDropZone extends LitElement {
 
   private _onDrop = (e: DragEvent) => {
     e.preventDefault();
+    e.stopPropagation(); // Prevent parent body drop handler from double-processing
     this._dragCounter = 0;
     this._dragOver = false;
 
