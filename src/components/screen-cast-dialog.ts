@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { state } from 'lit/decorators.js';
 import { buttonStyles, focusStyles } from './shared-styles';
+import { createFocusTrap } from '../utils/focus-trap';
 
 /**
  * Modal dialog for screen capture/recording.
@@ -123,8 +124,11 @@ export class SfxScreenCastDialog extends LitElement {
     if (e.target === e.currentTarget) this._cancel();
   };
 
+  private _focusTrap = createFocusTrap(() => this.shadowRoot, '.card');
+
   private _onKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Escape') this._cancel();
+    this._focusTrap(e);
   };
 
   disconnectedCallback() {
@@ -183,7 +187,9 @@ export class SfxScreenCastDialog extends LitElement {
 
   private _stopRecording = () => {
     this._recording = false;
-    this._recorder?.stop();
+    if (this._recorder?.state === 'recording') {
+      this._recorder.stop();
+    }
     this._recorder = null;
   };
 
@@ -218,7 +224,7 @@ export class SfxScreenCastDialog extends LitElement {
               </svg>
             </div>
             <div class="title">Screen cast</div>
-            <button class="close-btn" @click=${this._cancel}>\u2715</button>
+            <button class="close-btn" aria-label="Close" @click=${this._cancel}>\u2715</button>
           </div>
           <div class="body">
             ${this._error

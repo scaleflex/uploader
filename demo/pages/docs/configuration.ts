@@ -66,6 +66,9 @@ const page: Page = {
             <tr><td><code>restrictions</code></td><td><code>UploadRestrictions</code></td><td><code>undefined</code></td><td>File validation rules (see below)</td></tr>
             <tr><td><code>connectors</code></td><td><code>ConnectorConfig</code></td><td><code>undefined</code></td><td>Cloud provider configuration (see below)</td></tr>
             <tr><td><code>sourcesLayout</code></td><td><code>'pills' | 'cards'</code></td><td><code>'pills'</code></td><td>Layout for the import-from sources section. <code>'pills'</code> shows compact horizontal buttons; <code>'cards'</code> shows a grid of square cards with large icons.</td></tr>
+            <tr><td><code>clearOnClose</code></td><td><code>boolean</code></td><td><code>true</code></td><td>Whether closing the modal clears all files. Set to <code>false</code> to preserve files across open/close cycles.</td></tr>
+            <tr><td><code>clearOnComplete</code></td><td><code>boolean</code></td><td><code>true</code></td><td>Whether the "Done" action clears all files. In modal mode this also closes the uploader. Set to <code>false</code> to keep files after completion.</td></tr>
+            <tr><td><code>rejectedFileAutoRemoveDelay</code></td><td><code>number | false</code></td><td><code>4000</code></td><td>Auto-remove rejected files after this delay in milliseconds. Set to <code>0</code> or <code>false</code> to disable auto-removal.</td></tr>
             <tr><td><code>callbacks</code></td><td><code>UploaderCallbacks</code></td><td><code>undefined</code></td><td>Lifecycle callbacks (see <a href="#/docs/api">API</a>)</td></tr>
           </tbody>
         </table>
@@ -128,6 +131,41 @@ uploader.open();`,
           `uploader.config = {
   auth: { /* ... */ },
   sourcesLayout: 'cards',
+};`,
+        )}
+
+        <h2>Behavior options</h2>
+        <p>Control how the uploader handles files on close, completion, and rejection.</p>
+
+        <h3>Preserve files on close</h3>
+        <p>By default, closing the modal clears all files. Set <code>clearOnClose: false</code> to preserve files across open/close cycles — useful when the uploader is part of a multi-step flow.</p>
+        ${code(
+          'typescript',
+          `uploader.config = {
+  auth: { /* ... */ },
+  mode: 'modal',
+  clearOnClose: false, // files persist when the modal is closed
+};`,
+        )}
+
+        <h3>Keep files after completion</h3>
+        <p>By default, the "Done" action clears all files and resets the uploader. Set <code>clearOnComplete: false</code> to keep files after completion — useful when you want to display the result or allow further actions.</p>
+        ${code(
+          'typescript',
+          `uploader.config = {
+  auth: { /* ... */ },
+  clearOnComplete: false, // files remain after "Done" is clicked
+};`,
+        )}
+
+        <h3>Rejected file auto-removal</h3>
+        <p>Rejected files are auto-removed from the list after a configurable delay (default: 4 seconds). Set to <code>0</code> or <code>false</code> to keep rejected files visible until manually removed.</p>
+        ${code(
+          'typescript',
+          `uploader.config = {
+  auth: { /* ... */ },
+  rejectedFileAutoRemoveDelay: 6000, // 6 seconds (default: 4000)
+  // rejectedFileAutoRemoveDelay: 0,  // disable auto-removal
 };`,
         )}
 

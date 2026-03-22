@@ -1,6 +1,5 @@
 import { LitElement, html, css, nothing } from 'lit';
 import { property } from 'lit/decorators.js';
-import { formatFileSize } from '../utils/file-utils';
 import { buttonStyles, focusStyles } from './shared-styles';
 
 export type UploadButtonState = 'idle' | 'uploading' | 'done';
@@ -191,7 +190,7 @@ export class SfxActionsBar extends LitElement {
       ${isUploading
         ? html`
             <div class="progress-row">
-              <div class="progress-track">
+              <div class="progress-track" role="progressbar" aria-valuenow=${Math.round(this.uploadProgress)} aria-valuemin="0" aria-valuemax="100" aria-label="Upload progress">
                 <div class="progress-fill" style="width:${this.uploadProgress}%"></div>
               </div>
               <span class="progress-label">${this.completedCount}/${this.fileCount} files</span>

@@ -4,11 +4,8 @@ import type { RemoteFileInfo } from '../connectors/connector.types';
 
 export type FileStatus =
   | 'idle'
-  | 'validating'
   | 'queued'
-  | 'preparing'
   | 'uploading'
-  | 'processing'
   | 'complete'
   | 'error'
   | 'retrying'

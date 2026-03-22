@@ -18,14 +18,13 @@ describe('buildAuthHeaders', () => {
     expect(headers['X-Filerobot-Key']).toBe('resolved-sass-key');
   });
 
-  it('falls back to template ID when no resolved key', () => {
+  it('throws when no resolved key in security-template mode', () => {
     const auth: SecurityTemplateAuth = {
       mode: 'security-template',
       container: 'test',
       securityTemplateId: 'SECU_123',
     };
-    const headers = buildAuthHeaders(auth);
-    expect(headers['X-Filerobot-Key']).toBe('SECU_123');
+    expect(() => buildAuthHeaders(auth)).toThrow('SASS key exchange has not been performed');
   });
 
   it('builds headers for sass-key mode', () => {

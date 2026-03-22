@@ -1,6 +1,7 @@
 import { LitElement, html, css, nothing } from 'lit';
 import { state } from 'lit/decorators.js';
 import { buttonStyles, focusStyles } from './shared-styles';
+import { createFocusTrap } from '../utils/focus-trap';
 
 /**
  * Modal dialog for capturing photos/video via webcam.
@@ -101,8 +102,11 @@ export class SfxCameraDialog extends LitElement {
     if (e.target === e.currentTarget) this._cancel();
   };
 
+  private _focusTrap = createFocusTrap(() => this.shadowRoot, '.card');
+
   private _onKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Escape') this._cancel();
+    this._focusTrap(e);
   };
 
   connectedCallback() {
@@ -183,7 +187,7 @@ export class SfxCameraDialog extends LitElement {
               </svg>
             </div>
             <div class="title">Camera</div>
-            <button class="close-btn" @click=${this._cancel}>\u2715</button>
+            <button class="close-btn" aria-label="Close" @click=${this._cancel}>\u2715</button>
           </div>
           <div class="body">
             ${this._error

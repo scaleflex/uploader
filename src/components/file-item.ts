@@ -136,8 +136,14 @@ export class SfxFileItem extends LitElement {
       z-index: 10;
     }
 
-    .tile:hover .actions {
+    .tile:hover .actions,
+    .tile:focus-within .actions {
       opacity: 1;
+    }
+
+    /* Touch devices: always show actions since there is no hover */
+    @media (hover: none) {
+      .actions { opacity: 1; }
     }
 
     .act-btn {
@@ -200,8 +206,13 @@ export class SfxFileItem extends LitElement {
       z-index: 5;
     }
 
-    .tile:hover .preview-btn {
+    .tile:hover .preview-btn,
+    .tile:focus-within .preview-btn {
       opacity: 1;
+    }
+
+    @media (hover: none) {
+      .preview-btn { opacity: 1; }
     }
 
     .preview-btn:hover {
@@ -346,7 +357,6 @@ export class SfxFileItem extends LitElement {
 
     @media (prefers-reduced-motion: reduce) {
       .tile { animation: none; }
-      .done-check { animation: none; }
       .spin-ring { animation: none; }
     }
   `;
@@ -390,7 +400,7 @@ export class SfxFileItem extends LitElement {
 
     const category = getFileCategory(f);
     const isImage = category === 'image';
-    const isDone = f.status === 'complete' && f.progress > 0;
+    const isDone = f.status === 'complete';
     const isUploading = f.status === 'uploading';
     const isError = f.status === 'error' || f.status === 'failed';
     const isRejected = f.status === 'rejected';

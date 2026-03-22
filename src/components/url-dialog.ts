@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { state } from 'lit/decorators.js';
 import { buttonStyles, focusStyles } from './shared-styles';
+import { createFocusTrap } from '../utils/focus-trap';
 
 /**
  * Modal dialog for importing a file via URL.
@@ -162,14 +163,7 @@ export class SfxUrlDialog extends LitElement {
       margin-top: 18px;
     }
 
-    .btn-spin {
-      width: 14px;
-      height: 14px;
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-    }
+
 
     @keyframes fadeIn {
       from { opacity: 0; }
@@ -190,15 +184,11 @@ export class SfxUrlDialog extends LitElement {
       outline: none;
     }
 
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
   `];
 
   @state() private _url = '';
   @state() private _name = '';
   @state() private _error = '';
-  @state() private _loading = false;
 
   private _onBackdropClick = (e: MouseEvent) => {
     if (e.target === e.currentTarget) this._cancel();
@@ -228,9 +218,15 @@ export class SfxUrlDialog extends LitElement {
     }
   }
 
+  private _focusTrap = createFocusTrap(() => this.shadowRoot, '.card');
+
   private _onKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Escape') this._cancel();
-    if (e.key === 'Enter' && !this._loading) this._submit();
+    // Only submit on Enter from input fields, not from buttons (which have their own click)
+    if (e.key === 'Enter' && (e.target as HTMLElement)?.tagName === 'INPUT') {
+      this._submit();
+    }
+    this._focusTrap(e);
   };
 
   private _cancel() {
@@ -291,11 +287,11 @@ export class SfxUrlDialog extends LitElement {
               </svg>
             </div>
             <div class="title">Import from URL</div>
-            <button class="close-btn" @click=${this._cancel}>\u2715</button>
+            <button class="close-btn" aria-label="Close" @click=${this._cancel}>\u2715</button>
           </div>
           <div class="body">
             <div class="field">
-              <label>File URL</label>
+              <label for="urlInput">File URL</label>
               <input
                 id="urlInput"
                 type="url"
@@ -305,7 +301,7 @@ export class SfxUrlDialog extends LitElement {
               />
             </div>
             <div class="field">
-              <label>File name <span class="optional">(optional)</span></label>
+              <label for="nameInput">File name <span class="optional">(optional)</span></label>
               <input
                 id="nameInput"
                 type="text"
@@ -317,7 +313,7 @@ export class SfxUrlDialog extends LitElement {
             ${this._error ? html`<div class="error">${this._error}</div>` : ''}
             <div class="actions">
               <button class="btn btn-ghost" @click=${this._cancel}>Cancel</button>
-              <button class="btn btn-primary" ?disabled=${this._loading} @click=${this._submit}>
+              <button class="btn btn-primary" @click=${this._submit}>
                 Import file
               </button>
             </div>

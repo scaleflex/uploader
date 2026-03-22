@@ -14,10 +14,9 @@ export const PublicEvents = {
   OPEN: 'sfx-open',
   CLOSE: 'sfx-close',
   CANCEL: 'sfx-cancel',
-  SOURCE_CHANGE: 'sfx-source-change',
   COMPLETE_ACTION: 'sfx-complete-action',
-  CONNECTOR_AUTH: 'sfx-connector-auth',
-  CONNECTOR_FILES_ADDED: 'sfx-connector-files-added',
   FILE_PREVIEW: 'sfx-file-preview',
   FILL_METADATA: 'sfx-fill-metadata',
 } as const;
+
+export type PublicEventName = typeof PublicEvents[keyof typeof PublicEvents];

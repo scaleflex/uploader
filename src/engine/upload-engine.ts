@@ -92,6 +92,8 @@ export class UploadEngine {
    * Cancel a single file upload.
    */
   cancelFile(fileId: string): void {
+    const file = this.store.getState().files.get(fileId);
+    if (!file || !isActive(file.status)) return;
     this.abortUpload(fileId);
     updateFile(this.store, fileId, { status: 'cancelled' });
   }
@@ -165,6 +167,7 @@ export class UploadEngine {
 
     let lastLoaded = 0;
     let lastTime = Date.now();
+    let smoothedSpeed = 0;
 
     const baseOpts = {
       apiBase: this.config.apiBase,
@@ -178,12 +181,16 @@ export class UploadEngine {
     const onProgress = (bytesUploaded: number, bytesTotal: number) => {
       const now = Date.now();
       const elapsed = (now - lastTime) / 1000;
-      const speed = elapsed > 0 ? (bytesUploaded - lastLoaded) / elapsed : 0;
+      if (elapsed > 0) {
+        const instantSpeed = (bytesUploaded - lastLoaded) / elapsed;
+        // Exponential moving average (α=0.3) to smooth out speed fluctuations
+        smoothedSpeed = smoothedSpeed === 0 ? instantSpeed : 0.3 * instantSpeed + 0.7 * smoothedSpeed;
+      }
       lastLoaded = bytesUploaded;
       lastTime = now;
 
       const progress = bytesTotal > 0 ? (bytesUploaded / bytesTotal) * 100 : 0;
-      updateFile(this.store, file.id, { progress, bytesUploaded, speed });
+      updateFile(this.store, file.id, { progress, bytesUploaded, speed: smoothedSpeed });
       this.updateTotalProgress();
     };
 
@@ -223,14 +230,6 @@ export class UploadEngine {
 
     const file = this.store.getState().files.get(fileId);
     if (!file) return;
-
-    // Duplicate file — server already has it, treat as success
-    if (error.message.toLowerCase().includes('same file')) {
-      updateFile(this.store, fileId, { status: 'complete', progress: 100 });
-      this.checkAllComplete();
-      this.processQueue();
-      return;
-    }
 
     const { retryConfig } = this.store.getState().queueConfig;
     const nextRetry = file.retryCount + 1;
@@ -283,9 +282,16 @@ export class UploadEngine {
     let totalSpeed = 0;
 
     for (const file of files.values()) {
-      if (file.status === 'uploading' || file.status === 'complete') {
+      // Include all files that are part of the upload pipeline (queued through complete)
+      if (
+        file.status === 'queued' ||
+        file.status === 'uploading' ||
+        file.status === 'retrying' ||
+        file.status === 'complete' ||
+        file.status === 'failed'
+      ) {
         totalBytes += file.size;
-        totalUploaded += file.bytesUploaded;
+        totalUploaded += file.status === 'complete' ? file.size : file.bytesUploaded;
       }
       if (file.status === 'uploading') {
         totalSpeed += file.speed;
@@ -305,8 +311,7 @@ export class UploadEngine {
     const hasActive = [...files.values()].some((f) =>
       f.status === 'queued' ||
       f.status === 'uploading' ||
-      f.status === 'retrying' ||
-      f.status === 'preparing',
+      f.status === 'retrying',
     );
 
     if (!hasActive && this.store.getState().isUploading) {
@@ -316,5 +321,5 @@ export class UploadEngine {
 }
 
 function isActive(status: FileStatus): boolean {
-  return status === 'queued' || status === 'uploading' || status === 'retrying' || status === 'preparing';
+  return status === 'queued' || status === 'uploading' || status === 'retrying';
 }

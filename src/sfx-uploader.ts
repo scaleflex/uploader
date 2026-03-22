@@ -8,9 +8,9 @@ import type { SfxDropZone } from './components/drop-zone';
 import type { UploaderState, UploadFile, UploadRestrictions, UploadResponse } from './store/store.types';
 import type { AuthConfig, AuthHeaders } from './auth/auth.types';
 import { resolveAuth, getApiBase, buildAuthHeaders } from './auth/auth.service';
-import { PublicEvents } from './events/public-events';
+import { PublicEvents, type PublicEventName } from './events/public-events';
 import { generateFileId, guessMimeType, formatFileSize, generateVideoThumbnail } from './utils/file-utils';
-import { validateFile, buildAcceptString } from './utils/validate';
+import { validateFile, validateFileInfo, buildAcceptString } from './utils/validate';
 import type { ProviderId, ConnectorConfig, RemoteFileInfo } from './connectors/connector.types';
 import { getProviderSources } from './connectors/provider-registry';
 import { CORE_SOURCES, type SourceDef } from './components/source-pills';
@@ -71,6 +71,15 @@ export interface UploaderConfig {
   showFillMetadata?: boolean;
   /** Layout for the import-from sources section: horizontal pills (default) or cards grid. */
   sourcesLayout?: 'pills' | 'cards';
+  /** Whether closing the modal clears all files. Default: true. Set to false to preserve files across open/close. */
+  clearOnClose?: boolean;
+  /** Whether the "Done" action clears all files (inline mode resets, modal mode closes). Default: true. */
+  clearOnComplete?: boolean;
+  /**
+   * Auto-remove rejected files after this delay in milliseconds.
+   * Default: 4000 (4 seconds). Set to 0 or false to disable auto-removal.
+   */
+  rejectedFileAutoRemoveDelay?: number | false;
 }
 
 type UploaderPhase = 'empty' | 'ready' | 'uploading' | 'complete';
@@ -739,6 +748,7 @@ export class SfxUploader extends LitElement {
   @state() private _showCameraDialog = false;
   @state() private _showScreenCastDialog = false;
   @state() private _previewFileId: string | null = null;
+  @state() private _previewDims: string = '—';
   @state() private _fullscreenPreviewUrl: string | null = null;
   @state() private _fullscreenZoomed = false;
   private _fsPanX = 0;
@@ -756,6 +766,9 @@ export class SfxUploader extends LitElement {
   private _engine: UploadEngine | null = null;
   private _cachedSources: SourceDef[] = CORE_SOURCES;
   private _cachedSourcesConfig: ConnectorConfig | undefined = undefined;
+
+  // Timers for auto-removing rejected files (cleared on disconnect)
+  private _rejectedTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
   // Resolved auth state
   private _apiBase: string | null = null;
@@ -781,11 +794,13 @@ export class SfxUploader extends LitElement {
     this.requestUpdate();
   }
 
-  /** Close the uploader (modal mode). Clears all files so next open starts fresh. */
+  /** Close the uploader (modal mode). Optionally clears all files (controlled by clearOnClose config). */
   close() {
     if (!this._isOpen) return;
     this._isOpen = false;
-    this._onClearAll();
+    if (this.config?.clearOnClose !== false) {
+      this._onClearAll();
+    }
     this._previewFileId = null;
     this.config?.callbacks?.onClose?.();
     this._dispatchPublic(PublicEvents.CLOSE, {});
@@ -868,7 +883,7 @@ export class SfxUploader extends LitElement {
 
   /** Statuses where meta/tags can still be modified before upload. */
   private static readonly _MODIFIABLE_STATUSES = new Set([
-    'idle', 'queued', 'validating', 'rejected',
+    'idle', 'queued', 'rejected',
   ]);
 
   /** Update metadata and/or tags for a single file. */
@@ -918,11 +933,24 @@ export class SfxUploader extends LitElement {
     if (changed.has('config') && this.config) {
       this._applyConfig(this.config);
     }
+    // Resolve image dimensions when preview file changes
+    if (changed.has('_previewFileId') && this._previewFileId) {
+      const file = this._store.getState().files.get(this._previewFileId);
+      if (file) {
+        this._getImageDimensions(file).then((dims) => {
+          this._previewDims = dims ? `${dims.w} × ${dims.h}` : '—';
+        });
+      } else {
+        this._previewDims = '—';
+      }
+    }
   }
 
   connectedCallback() {
     super.connectedCallback();
     document.addEventListener('keydown', this._onKeyDown);
+    // Seed previous state so the first store change is not silently skipped
+    this._prevStoreState = this._store.getState();
     // Subscribe to store changes for public event dispatching
     this._unsubStoreEvents = this._store.subscribe(() => this._onStoreChange());
   }
@@ -933,6 +961,13 @@ export class SfxUploader extends LitElement {
     this._unsubStoreEvents?.();
     this._unsubStoreEvents = null;
     this._prevStoreState = null;
+    // Clear rejected file auto-removal timers
+    for (const timer of this._rejectedTimers.values()) clearTimeout(timer);
+    this._rejectedTimers.clear();
+    // Revoke all preview blob URLs to prevent memory leaks
+    for (const file of this._store.getState().files.values()) {
+      if (file.previewUrl) URL.revokeObjectURL(file.previewUrl);
+    }
     this._engine?.destroy();
     this._engine = null;
   }
@@ -950,7 +985,7 @@ export class SfxUploader extends LitElement {
         ...cfg.restrictions,
       };
     }
-    if (cfg.concurrency) {
+    if (cfg.concurrency != null) {
       const qc = this._store.getState().queueConfig;
       updates.queueConfig = { ...qc, concurrency: cfg.concurrency };
     }
@@ -980,7 +1015,7 @@ export class SfxUploader extends LitElement {
       this._apiBase = getApiBase(auth.container);
       this._authHeaders = buildAuthHeaders(auth);
       this._ensureEngine();
-      this._engine!.updateConfig({
+      this._engine?.updateConfig({
         apiBase: this._apiBase,
         authHeaders: this._authHeaders,
       });
@@ -996,7 +1031,7 @@ export class SfxUploader extends LitElement {
       this._apiBase = resolved.apiBase;
       this._authHeaders = resolved.headers;
       this._ensureEngine();
-      this._engine!.updateConfig({
+      this._engine?.updateConfig({
         apiBase: this._apiBase,
         authHeaders: this._authHeaders,
       });
@@ -1018,7 +1053,7 @@ export class SfxUploader extends LitElement {
 
   // --- Public event dispatching (spec §13.1) ---
 
-  private _dispatchPublic(eventName: string, detail: Record<string, unknown>) {
+  private _dispatchPublic(eventName: PublicEventName, detail: Record<string, unknown>) {
     this.dispatchEvent(
       new CustomEvent(eventName, { bubbles: true, composed: true, detail }),
     );
@@ -1191,14 +1226,20 @@ export class SfxUploader extends LitElement {
         addFile(this._store, uploadFile);
         this._dispatchPublic(PublicEvents.FILE_REJECTED, { file: uploadFile, reason: error });
         callbacks?.onFileRejected?.(uploadFile, error);
-        // Auto-remove rejected file after 4 seconds
-        const rejId = uploadFile.id;
-        setTimeout(() => {
-          const f = this._store.getState().files.get(rejId);
-          if (f && f.status === 'rejected') {
-            removeFile(this._store, rejId);
-          }
-        }, 4000);
+        // Auto-remove rejected file after configurable delay
+        const delay = this.config?.rejectedFileAutoRemoveDelay;
+        const autoRemoveMs = delay === false || delay === 0 ? 0 : (delay ?? 4000);
+        if (autoRemoveMs > 0) {
+          const rejId = uploadFile.id;
+          const timer = setTimeout(() => {
+            this._rejectedTimers.delete(rejId);
+            const f = this._store.getState().files.get(rejId);
+            if (f && f.status === 'rejected') {
+              removeFile(this._store, rejId);
+            }
+          }, autoRemoveMs);
+          this._rejectedTimers.set(rejId, timer);
+        }
         continue;
       }
 
@@ -1243,6 +1284,9 @@ export class SfxUploader extends LitElement {
             const next = new Map(state.files);
             next.set(uploadFile.id, { ...current, previewUrl: thumbUrl });
             this._store.setState({ files: next });
+          } else {
+            // File was removed before thumbnail resolved — revoke to prevent leak
+            URL.revokeObjectURL(thumbUrl);
           }
         });
       }
@@ -1275,7 +1319,7 @@ export class SfxUploader extends LitElement {
     }
 
     if (source === 'device') {
-      const dropZone = this.shadowRoot!.querySelector('sfx-drop-zone') as any;
+      const dropZone = this.shadowRoot!.querySelector('sfx-drop-zone') as SfxDropZone | null;
       dropZone?.browse();
       return;
     }
@@ -1318,9 +1362,26 @@ export class SfxUploader extends LitElement {
   private _onUrlSubmit = (e: CustomEvent<{ url: string; name: string }>) => {
     this._showUrlDialog = false;
     const { url, name } = e.detail;
+    const callbacks = this.config?.callbacks;
 
     const type = guessMimeType(name);
     const isImage = type.startsWith('image/');
+
+    // Validate against restrictions (size=0 for URL imports, so size checks are skipped)
+    const s = this._store.getState();
+    const error = validateFileInfo({ name, size: 0, type }, s.restrictions, s.files);
+    if (error) {
+      const rejFile: UploadFile = {
+        id: generateFileId(), status: 'rejected', file: null, remoteUrl: url,
+        name, size: 0, type, previewUrl: null, progress: 0, speed: 0,
+        bytesUploaded: 0, error, retryCount: 0, response: null,
+        addedAt: Date.now(), meta: {}, tags: [], remoteInfo: null,
+      };
+      addFile(this._store, rejFile);
+      this._dispatchPublic(PublicEvents.FILE_REJECTED, { file: rejFile, reason: error });
+      callbacks?.onFileRejected?.(rejFile, error);
+      return;
+    }
 
     const uploadFile: UploadFile = {
       id: generateFileId(),
@@ -1345,7 +1406,7 @@ export class SfxUploader extends LitElement {
 
     addFile(this._store, uploadFile);
     this._dispatchPublic(PublicEvents.FILE_ADDED, { file: uploadFile });
-    this.config?.callbacks?.onFileAdded?.(uploadFile);
+    callbacks?.onFileAdded?.(uploadFile);
 
     if (this._store.getState().queueConfig.autoProceed) {
       this.upload();
@@ -1376,19 +1437,20 @@ export class SfxUploader extends LitElement {
 
   private _removeFile(fileId: string) {
     const file = this._store.getState().files.get(fileId);
+    if (!file) return;
+    // Snapshot file for the event before mutating state
+    const snapshot = { ...file };
     // Revoke objectURL to free memory
-    if (file?.previewUrl) URL.revokeObjectURL(file.previewUrl);
-    // Cancel if active
-    if (file && (file.status === 'uploading' || file.status === 'queued')) {
+    if (file.previewUrl) URL.revokeObjectURL(file.previewUrl);
+    // Cancel if active (including retrying, which has a pending retry timer)
+    if (file.status === 'uploading' || file.status === 'queued' || file.status === 'retrying') {
       this._engine?.cancelFile(fileId);
     }
     removeFile(this._store, fileId);
     // Clear dimension cache
     this._dimCache.delete(fileId);
-    if (file) {
-      this._dispatchPublic(PublicEvents.FILE_REMOVED, { file });
-      this.config?.callbacks?.onFileRemoved?.(file);
-    }
+    this._dispatchPublic(PublicEvents.FILE_REMOVED, { file: snapshot });
+    this.config?.callbacks?.onFileRemoved?.(snapshot);
   }
 
   private _onFileRemove = (e: CustomEvent<{ fileId: string }>) => {
@@ -1424,13 +1486,20 @@ export class SfxUploader extends LitElement {
   private _onClearAll = () => {
     const callbacks = this.config?.callbacks;
 
-    // Revoke all preview URLs and dispatch removal events
-    for (const file of this._store.getState().files.values()) {
+    // Cancel all active uploads first so XHRs are aborted before removal events
+    this._engine?.cancelAll();
+    // Snapshot files, revoke preview URLs, and dispatch removal events
+    const allFiles = [...this._store.getState().files.values()];
+    for (const file of allFiles) {
       if (file.previewUrl) URL.revokeObjectURL(file.previewUrl);
       this._dispatchPublic(PublicEvents.FILE_REMOVED, { file });
       callbacks?.onFileRemoved?.(file);
     }
-    this._engine?.cancelAll();
+    // Clear rejected file auto-removal timers
+    for (const timer of this._rejectedTimers.values()) clearTimeout(timer);
+    this._rejectedTimers.clear();
+    // Clear dimension cache
+    this._dimCache.clear();
     this._store.setState({
       files: new Map(),
       isUploading: false,
@@ -1448,7 +1517,9 @@ export class SfxUploader extends LitElement {
 
   private _onUploadStart = () => {
     if (this._phase === 'complete') {
-      this._onClearAll();
+      if (this.config?.clearOnComplete !== false) {
+        this._onClearAll();
+      }
       return;
     }
     this.upload();
@@ -1461,6 +1532,27 @@ export class SfxUploader extends LitElement {
   private _onConnectorFilesSelected = (e: CustomEvent<{ files: RemoteFileInfo[] }>) => {
     const callbacks = this.config?.callbacks;
     for (const info of e.detail.files) {
+      // Re-read state each iteration so maxNumberOfFiles sees previously added files
+      const s = this._store.getState();
+      const error = validateFileInfo(
+        { name: info.name, size: info.size, type: info.mimeType },
+        s.restrictions,
+        s.files,
+      );
+      if (error) {
+        const rejFile: UploadFile = {
+          id: generateFileId(), status: 'rejected', file: null, remoteUrl: null,
+          name: info.name, size: info.size, type: info.mimeType,
+          previewUrl: info.thumbnail, progress: 0, speed: 0, bytesUploaded: 0,
+          error, retryCount: 0, response: null, addedAt: Date.now(),
+          meta: {}, tags: [], remoteInfo: info,
+        };
+        addFile(this._store, rejFile);
+        this._dispatchPublic(PublicEvents.FILE_REJECTED, { file: rejFile, reason: error });
+        callbacks?.onFileRejected?.(rejFile, error);
+        continue;
+      }
+
       const uploadFile: UploadFile = {
         id: generateFileId(),
         status: 'idle',
@@ -1506,10 +1598,10 @@ export class SfxUploader extends LitElement {
   private _onPrimaryAction = () => {
     // Dispatch public event so consumers can handle "Done"/"View in DAM"/etc.
     this._dispatchPublic(PublicEvents.COMPLETE_ACTION, {});
-    // In modal mode, close the uploader; otherwise reset to initial state
+    // In modal mode, close the uploader; otherwise optionally reset to initial state
     if (this.config?.mode === 'modal') {
       this.close();
-    } else {
+    } else if (this.config?.clearOnComplete !== false) {
       this._onClearAll();
     }
   };
@@ -1663,6 +1755,7 @@ export class SfxUploader extends LitElement {
   }
 
   private _renderPreviewLayout(files: UploadFile[]) {
+    if (files.length === 0) return nothing;
     const previewFile = files.find((f) => f.id === this._previewFileId) ?? files[0];
     const ext = previewFile.name.split('.').pop()?.toUpperCase() || '';
     const addedDate = new Date(previewFile.addedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -1725,7 +1818,7 @@ export class SfxUploader extends LitElement {
             </div>
             <div class="preview-meta-row">
               <span class="preview-meta-label">Dimensions</span>
-              <span class="preview-meta-value" id="preview-dims">—</span>
+              <span class="preview-meta-value">${this._previewDims}</span>
             </div>
             <div class="preview-meta-row">
               <span class="preview-meta-label">Name</span>
@@ -1788,17 +1881,17 @@ export class SfxUploader extends LitElement {
       >
         <div
           class="body ${hasFiles ? 'has-files' : ''} ${this._bodyDragOver ? 'body-drag-over' : ''}"
-          @dragenter=${this._onBodyDragEnter}
-          @dragover=${this._onBodyDragOver}
-          @dragleave=${this._onBodyDragLeave}
-          @drop=${this._onBodyDrop}
+          @dragenter=${hasFiles ? this._onBodyDragEnter : nothing}
+          @dragover=${hasFiles ? this._onBodyDragOver : nothing}
+          @dragleave=${hasFiles ? this._onBodyDragLeave : nothing}
+          @drop=${hasFiles ? this._onBodyDrop : nothing}
         >
           ${phase === 'complete'
               ? html`
                   <sfx-success-card
-                    .fileCount=${files.length}
-                    .totalSize=${files.reduce((sum, f) => sum + (f.size || 0), 0)}
-                    .thumbnails=${files.filter((f) => f.previewUrl).map((f) => f.previewUrl!)}
+                    .fileCount=${files.filter((f) => f.status === 'complete').length}
+                    .totalSize=${files.filter((f) => f.status === 'complete').reduce((sum, f) => sum + (f.size || 0), 0)}
+                    .thumbnails=${files.filter((f) => f.status === 'complete' && f.previewUrl).map((f) => f.previewUrl!)}
                   ></sfx-success-card>
                 `
               : html`

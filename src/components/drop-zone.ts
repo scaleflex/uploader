@@ -24,7 +24,7 @@ export class SfxDropZone extends LitElement {
     .drop-zone {
       border: none;
       border-radius: 12px;
-      background: #fff;
+      background: var(--sfx-up-bg, #fff);
       padding: 50px 40px 50px;
       display: flex;
       flex-direction: column;
@@ -516,10 +516,10 @@ export class SfxDropZone extends LitElement {
     /* Dropdown uses position:fixed to escape overflow:hidden ancestors */
     .more-dropdown {
       position: fixed;
-      background: #fff;
+      background: var(--sfx-up-bg, #fff);
       border-radius: 12px;
       box-shadow: 0 12px 40px rgba(0, 0, 0, 0.14), 0 2px 8px rgba(0, 0, 0, 0.06);
-      border: 1px solid #e8edf5;
+      border: 1px solid var(--sfx-up-border, #e8edf5);
       padding: 6px;
       min-width: 210px;
       max-height: 340px;
@@ -987,6 +987,12 @@ export class SfxDropZone extends LitElement {
     if (this._moreOpen) this._moreOpen = false;
   };
 
+  private _onDocKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'Escape' && this._moreOpen) {
+      this._moreOpen = false;
+    }
+  };
+
   private _resizeTimer: ReturnType<typeof setTimeout> | null = null;
 
   private _onScrollOrResize = () => {
@@ -1022,6 +1028,7 @@ export class SfxDropZone extends LitElement {
     super.connectedCallback();
     document.addEventListener('paste', this._onPaste);
     document.addEventListener('click', this._onDocClick);
+    document.addEventListener('keydown', this._onDocKeyDown);
     window.addEventListener('scroll', this._onScrollOrResize, true);
     window.addEventListener('resize', this._onScrollOrResize);
     this._updateVisiblePills();
@@ -1031,6 +1038,7 @@ export class SfxDropZone extends LitElement {
     super.disconnectedCallback();
     document.removeEventListener('paste', this._onPaste);
     document.removeEventListener('click', this._onDocClick);
+    document.removeEventListener('keydown', this._onDocKeyDown);
     window.removeEventListener('scroll', this._onScrollOrResize, true);
     window.removeEventListener('resize', this._onScrollOrResize);
     if (this._resizeTimer) clearTimeout(this._resizeTimer);
@@ -1059,6 +1067,7 @@ export class SfxDropZone extends LitElement {
     return html`
       <button
         class="src-card"
+        aria-label=${s.label}
         @click=${(e: MouseEvent) => {
           e.stopPropagation();
           this._onSourceIconClick(s);
@@ -1213,6 +1222,7 @@ export class SfxDropZone extends LitElement {
                       class="src-ico"
                       style=${s.iconColor && !s.brandHtml ? `color:${s.iconColor}` : ''}
                       data-tip=${s.label}
+                      aria-label=${s.label}
                       @click=${(e: MouseEvent) => {
                         e.stopPropagation();
                         this._onSourceIconClick(s);

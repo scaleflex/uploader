@@ -1,19 +1,29 @@
 import type { UploadRestrictions, UploadFile } from '../store/store.types';
 
-/** Validate a File against restrictions. Returns error message or null. */
-export function validateFile(
-  file: File,
+/** Minimal file info needed for validation (works for both File objects and remote imports). */
+export interface FileInfo {
+  name: string;
+  size: number;
+  type: string;
+}
+
+/**
+ * Validate file info against restrictions. Returns error message or null.
+ * Works for local File objects, URL imports, and connector imports.
+ */
+export function validateFileInfo(
+  file: FileInfo,
   restrictions: UploadRestrictions,
   existingFiles: Map<string, UploadFile>,
 ): string | null {
-  // Max file size
-  if (restrictions.maxFileSize != null && file.size > restrictions.maxFileSize) {
+  // Max file size (skip for remote files with unknown size 0)
+  if (restrictions.maxFileSize != null && file.size > 0 && file.size > restrictions.maxFileSize) {
     const limit = (restrictions.maxFileSize / (1024 * 1024)).toFixed(1);
     return `File exceeds ${limit} MB limit`;
   }
 
-  // Max total files size (exclude rejected/cancelled files)
-  if (restrictions.maxTotalFilesSize != null) {
+  // Max total files size (exclude rejected/cancelled files, skip if incoming size unknown)
+  if (restrictions.maxTotalFilesSize != null && file.size > 0) {
     let totalSize = file.size;
     for (const f of existingFiles.values()) {
       if (f.status !== 'rejected' && f.status !== 'cancelled') totalSize += f.size;
@@ -52,12 +62,22 @@ export function validateFile(
     const ext = '.' + (file.name.split('.').pop()?.toLowerCase() ?? '');
     const match = blocked.some((pattern) => {
       if (pattern.startsWith('.')) return ext === pattern.toLowerCase();
+      if (pattern.endsWith('/*')) return file.type.startsWith(pattern.slice(0, -1));
       return file.type === pattern;
     });
     if (match) return `File type is blocked`;
   }
 
   return null;
+}
+
+/** Validate a File against restrictions. Returns error message or null. */
+export function validateFile(
+  file: File,
+  restrictions: UploadRestrictions,
+  existingFiles: Map<string, UploadFile>,
+): string | null {
+  return validateFileInfo(file, restrictions, existingFiles);
 }
 
 /** Build accept string for file input from restrictions. */

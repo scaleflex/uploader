@@ -2,7 +2,13 @@ import { css } from 'lit';
 
 /** Shared button styles used across actions-bar, success-card, and dialog components. */
 export const buttonStyles = css`
-  button {
+  .btn,
+  .btn-ghost,
+  .btn-primary,
+  .btn-sec,
+  .btn-retry,
+  .btn-upload,
+  .btn-danger {
     height: 36px;
     padding: 0 16px;
     border-radius: 6px;
@@ -19,7 +25,13 @@ export const buttonStyles = css`
     white-space: nowrap;
   }
 
-  button svg {
+  .btn svg,
+  .btn-ghost svg,
+  .btn-primary svg,
+  .btn-sec svg,
+  .btn-retry svg,
+  .btn-upload svg,
+  .btn-danger svg {
     width: 14px;
     height: 14px;
   }
@@ -62,8 +74,7 @@ export const buttonStyles = css`
 
 /** Focus-visible outline for keyboard navigation. */
 export const focusStyles = css`
-  button:focus-visible,
-  :focus-visible {
+  button:focus-visible {
     outline: 2px solid var(--sfx-up-ring, oklch(0.578 0.198 268.129 / 0.7));
     outline-offset: 2px;
   }

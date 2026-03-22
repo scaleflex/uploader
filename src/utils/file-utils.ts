@@ -7,7 +7,7 @@ export function generateFileId(): string {
 
 /** Format bytes into human-readable string. */
 export function formatFileSize(bytes: number): string {
-  if (bytes === 0) return '0 B';
+  if (bytes <= 0) return '0 B';
   const units = ['B', 'KB', 'MB', 'GB'];
   const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
   const value = bytes / Math.pow(1024, i);
@@ -75,6 +75,7 @@ export function generateVideoThumbnail(file: File): Promise<string | null> {
         if (ctx) {
           ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
           canvas.toBlob((blob) => {
+            if (resolved) return; // timeout already fired — avoid leaking a blob URL
             resolved = true;
             resolve(blob ? URL.createObjectURL(blob) : null);
             video.removeAttribute('src');

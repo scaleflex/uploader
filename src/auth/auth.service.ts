@@ -59,8 +59,13 @@ export function buildAuthHeaders(auth: AuthConfig, resolvedSassKey?: string): Au
 
   switch (auth.mode) {
     case 'security-template':
-      // After exchange, use the resolved SASS key; fallback to template ID
-      headers['X-Filerobot-Key'] = resolvedSassKey ?? auth.securityTemplateId;
+      if (!resolvedSassKey) {
+        throw new Error(
+          '[sfx-uploader] Cannot build auth headers for security-template mode: SASS key exchange has not been performed. ' +
+          'Call resolveAuth() first or use sass-key mode with a pre-resolved key.',
+        );
+      }
+      headers['X-Filerobot-Key'] = resolvedSassKey;
       break;
 
     case 'sass-key':

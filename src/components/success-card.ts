@@ -156,7 +156,7 @@ export class SfxSuccessCard extends LitElement {
     const overflowCount = this.thumbnails.length - MAX_THUMBS;
 
     return html`
-      <div class="card">
+      <div class="card" role="status" aria-live="polite">
         <div class="icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
             <polyline points="20 6 9 17 4 12" />
