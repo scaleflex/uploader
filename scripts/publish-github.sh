@@ -11,7 +11,7 @@ set -euo pipefail
 #   - GitHub remote "origin" pointing to the public repo
 #   - npm run build / npm run build:demo must work
 
-GITHUB_REMOTE="origin"
+GITHUB_REMOTE="github"
 GITHUB_BRANCH="release"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -46,15 +46,15 @@ echo "==> Copying artifacts..."
 # Clean old artifacts but preserve .git
 find "$STAGE_DIR" -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
 
+# Copy built demo site to root (GitHub Pages serves from /)
+if [ -d "$ROOT_DIR/demo-dist" ]; then
+  cp -r "$ROOT_DIR/demo-dist/." "$STAGE_DIR/"
+elif [ -d "$ROOT_DIR/dist-demo" ]; then
+  cp -r "$ROOT_DIR/dist-demo/." "$STAGE_DIR/"
+fi
+
 # Copy build artifacts
 cp -r "$ROOT_DIR/dist" "$STAGE_DIR/"
-
-# Copy built demo site
-if [ -d "$ROOT_DIR/demo-dist" ]; then
-  cp -r "$ROOT_DIR/demo-dist" "$STAGE_DIR/demo"
-elif [ -d "$ROOT_DIR/dist-demo" ]; then
-  cp -r "$ROOT_DIR/dist-demo" "$STAGE_DIR/demo"
-fi
 
 # Copy package metadata
 cp "$ROOT_DIR/package.json" "$STAGE_DIR/"
