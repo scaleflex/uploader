@@ -360,6 +360,7 @@ export class SfxUploader extends LitElement {
       padding-right: 12px;
       scrollbar-width: thin;
       scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+      --sfx-up-grid-min: max(48%, 140px);
     }
 
     .preview-layout .file-grid-side::-webkit-scrollbar { width: 5px; }
