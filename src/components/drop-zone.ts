@@ -67,14 +67,14 @@ export class SfxDropZone extends LitElement {
 
     /* Compact state when files exist */
     .drop-zone.compact {
-      padding: 14px 0;
+      padding: 14px 16px;
       flex-direction: row;
       align-items: center;
       gap: 12px;
       justify-content: flex-start;
       overflow: visible;
-      border-bottom: 1px solid var(--sfx-up-border, #e2e8f0);
-      border-radius: 0;
+      border: 1.5px dashed var(--sfx-up-ring-color, #c4d5ef);
+      border-radius: 12px;
       animation: compactIn 0.3s ease both;
     }
 
@@ -1192,7 +1192,7 @@ export class SfxDropZone extends LitElement {
 
         ${!this.compact && this.sources.length > 0
           ? html`
-              <div class="import-divider"><span>Or import from</span></div>
+              <div class="import-divider"><span>or import from</span></div>
               ${this.sourcesLayout === 'cards'
                 ? html`
                     <div class="sources-cards">
@@ -1216,7 +1216,6 @@ export class SfxDropZone extends LitElement {
         ${this.compact && this.sources.length > 0
           ? html`
               <div class="sources-row">
-                <span class="src-divider"></span>
                 ${this.sources.map(
                   (s) => html`
                     <button
