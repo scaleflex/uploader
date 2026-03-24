@@ -358,14 +358,11 @@ export class SfxUploader extends LitElement {
       min-width: 0;
       overflow-y: auto;
       padding-right: 12px;
-      scrollbar-width: thin;
-      scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+      scrollbar-width: none;
       --sfx-up-grid-min: max(48%, 140px);
     }
 
-    .preview-layout .file-grid-side::-webkit-scrollbar { width: 5px; }
-    .preview-layout .file-grid-side::-webkit-scrollbar-track { background: transparent; }
-    .preview-layout .file-grid-side::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 3px; }
+    .preview-layout .file-grid-side::-webkit-scrollbar { display: none; }
 
     .preview-topbar {
       display: flex;
