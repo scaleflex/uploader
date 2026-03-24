@@ -123,14 +123,14 @@ export class SfxDropZone extends LitElement {
       position: absolute;
       inset: 0;
       border-radius: 50%;
-      border: 1.5px dashed var(--sfx-up-border, #e2e8f0);
+      border: 1.5px dashed var(--sfx-up-ring-color, #c4d5ef);
       animation: slowSpin 20s linear infinite;
       transition: border-color 0.3s;
     }
 
     .ring:nth-child(2) {
       inset: 13px;
-      border-color: var(--sfx-up-border-light, #f1f5f9);
+      border-color: var(--sfx-up-ring-color-light, #d8e5f5);
       border-style: dotted;
       animation-direction: reverse;
       animation-duration: 14s;
