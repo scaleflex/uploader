@@ -375,6 +375,25 @@ export class SfxUploader extends LitElement {
       padding: 12px 0;
     }
 
+    .preview-divider {
+      width: 1px;
+      background: var(--sfx-up-border, #e8edf5);
+      flex-shrink: 0;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .preview-divider::after {
+      content: '';
+      width: 4px;
+      height: 40px;
+      background: #c8cdd6;
+      border-radius: 2px;
+      position: absolute;
+    }
+
     .preview-panel {
       flex: 46;
       min-width: 0;
@@ -383,7 +402,6 @@ export class SfxUploader extends LitElement {
       overflow-y: auto;
       overflow-x: hidden;
       padding: 0 0 20px 20px;
-      border-left: 1px solid var(--sfx-up-border, #e8edf5);
       scrollbar-width: thin;
       scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
     }
@@ -1803,6 +1821,7 @@ export class SfxUploader extends LitElement {
         <div class="file-grid-side">
           <sfx-file-list .files=${files}></sfx-file-list>
         </div>
+        <div class="preview-divider"></div>
         <div class="preview-panel">
           <div class="preview-panel-header">
             <span class="preview-panel-filename" title=${previewFile.name}>${previewFile.name}</span>
