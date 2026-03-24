@@ -52,7 +52,7 @@ export async function exchangeSassKey(
 }
 
 /**
- * Build auth headers from a resolved SASS key or session tokens.
+ * Build auth headers from a resolved SASS key.
  */
 export function buildAuthHeaders(auth: AuthConfig, resolvedSassKey?: string): AuthHeaders {
   const headers: AuthHeaders = {};
@@ -72,11 +72,6 @@ export function buildAuthHeaders(auth: AuthConfig, resolvedSassKey?: string): Au
       headers['X-Filerobot-Key'] = auth.sassKey;
       break;
 
-    case 'session':
-      headers['X-Filerobot-Session'] = auth.sessionToken;
-      if (auth.companyToken) headers['X-Company-Token'] = auth.companyToken;
-      if (auth.projectToken) headers['X-Project-Token'] = auth.projectToken;
-      break;
   }
 
   if (auth.airboxPuid) {

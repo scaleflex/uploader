@@ -1,5 +1,5 @@
 import { getApiBase, exchangeSassKey, buildAuthHeaders, resolveAuth } from './auth.service';
-import type { SecurityTemplateAuth, SassKeyAuth, SessionAuth } from './auth.types';
+import type { SecurityTemplateAuth, SassKeyAuth } from './auth.types';
 
 describe('getApiBase', () => {
   it('returns Scaleflex API URL with container', () => {
@@ -35,32 +35,6 @@ describe('buildAuthHeaders', () => {
     };
     const headers = buildAuthHeaders(auth);
     expect(headers['X-Filerobot-Key']).toBe('my-sass-key');
-  });
-
-  it('builds headers for session mode', () => {
-    const auth: SessionAuth = {
-      mode: 'session',
-      container: 'test',
-      sessionToken: 'sess-token',
-      companyToken: 'comp-token',
-      projectToken: 'proj-token',
-    };
-    const headers = buildAuthHeaders(auth);
-    expect(headers['X-Filerobot-Session']).toBe('sess-token');
-    expect(headers['X-Company-Token']).toBe('comp-token');
-    expect(headers['X-Project-Token']).toBe('proj-token');
-  });
-
-  it('omits optional session tokens when not provided', () => {
-    const auth: SessionAuth = {
-      mode: 'session',
-      container: 'test',
-      sessionToken: 'sess-token',
-    };
-    const headers = buildAuthHeaders(auth);
-    expect(headers['X-Filerobot-Session']).toBe('sess-token');
-    expect(headers['X-Company-Token']).toBeUndefined();
-    expect(headers['X-Project-Token']).toBeUndefined();
   });
 
   it('includes airboxPuid header when set', () => {

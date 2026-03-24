@@ -1010,8 +1010,8 @@ export class SfxUploader extends LitElement {
   private async _resolveAuthAndEngine(cfg: UploaderConfig) {
     const auth = cfg.auth;
 
-    // For sass-key and session modes, resolve synchronously
-    if (auth.mode === 'sass-key' || auth.mode === 'session') {
+    // For sass-key mode, resolve synchronously
+    if (auth.mode === 'sass-key') {
       this._apiBase = getApiBase(auth.container);
       this._authHeaders = buildAuthHeaders(auth);
       this._ensureEngine();

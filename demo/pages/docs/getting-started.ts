@@ -25,7 +25,7 @@ const page: Page = {
         <h2>Requirements</h2>
         <ul>
           <li>A <a href="https://www.scaleflex.com">Scaleflex</a> account with a container</li>
-          <li>A <strong>security template ID</strong> (recommended) or session credentials</li>
+          <li>A <strong>security template ID</strong> (recommended) or a SASS key</li>
           <li>Any modern browser (Chrome, Firefox, Safari, Edge — last 2 versions)</li>
         </ul>
 
