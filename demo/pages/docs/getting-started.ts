@@ -36,6 +36,10 @@ const page: Page = {
         <p>Or with pnpm:</p>
         ${code('bash', `pnpm add @scaleflex/uploader`)}
 
+        <h3>CDN (no bundler)</h3>
+        <p>Load the self-contained bundle via script tag. All custom elements are registered automatically.</p>
+        ${code('html', `<script src="https://scaleflex.cloudimg.io/v7/plugins/scaleflex/uploader/0.2.1/sfx-uploader.min.js"></script>`)}
+
         <h2>Package exports</h2>
         <table>
           <thead><tr><th>Specifier</th><th>Description</th></tr></thead>

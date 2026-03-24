@@ -859,6 +859,29 @@ body:not(.has-sidebar) #content {
   color: var(--sf-primary);
 }
 
+.step-alt {
+  margin-top: 10px;
+}
+
+.step-alt-label {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--sf-text-muted);
+  margin-bottom: 6px;
+}
+
+.step-alt .step-code code {
+  font-size: 11px;
+}
+
+.step-note {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--sf-text-muted);
+}
+
 /* ── Code blocks ────────────────────────────────── */
 .code-block {
   margin-bottom: 20px;
@@ -1007,6 +1030,33 @@ body:not(.has-sidebar) #content {
   font-size: 12px;
   font-family: 'SF Mono', 'Fira Code', monospace;
   color: var(--sf-primary);
+}
+
+/* ── Claude Code section ─────────────────────────── */
+.claude-code-section {
+  padding: 80px 24px;
+  background: var(--sf-dark-surface);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.claude-code-steps {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  margin-top: 40px;
+}
+
+.claude-code-step h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--sf-text);
+  margin: 0 0 12px;
+}
+
+@media (max-width: 640px) {
+  .claude-code-steps {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ── Also by Scaleflex slider ──────────────────── */
