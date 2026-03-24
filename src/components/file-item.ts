@@ -12,7 +12,7 @@ export class SfxFileItem extends LitElement {
     .tile {
       border-radius: 10px;
       background: var(--sfx-up-bg, #fff);
-      border: none;
+      border: 1px solid var(--sfx-up-border, #e8edf5);
       box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
       animation: tileIn 0.45s cubic-bezier(0.34, 1.2, 0.64, 1) both;
       animation-delay: calc(min(var(--tile-index, 0), 8) * 0.04s);
@@ -497,7 +497,7 @@ export class SfxFileItem extends LitElement {
         <!-- Info bar -->
         <div class="info">
           <div class="name" title=${f.name}>${f.name}</div>
-          <div class="meta">${f.size ? formatFileSize(f.size) : ''}${f.type ? `${f.size ? ' \u00B7 ' : ''}${f.type}` : ''}</div>
+          <div class="meta">${ext ? ext.toUpperCase() : ''}${f.size ? ` \u00B7 ${formatFileSize(f.size)}` : ''}</div>
         </div>
       </div>
     `;

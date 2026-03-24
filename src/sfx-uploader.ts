@@ -382,7 +382,8 @@ export class SfxUploader extends LitElement {
       flex-direction: column;
       overflow-y: auto;
       overflow-x: hidden;
-      padding: 0 20px 20px;
+      padding: 0 0 20px 20px;
+      border-left: 1px solid var(--sfx-up-border, #e8edf5);
       scrollbar-width: thin;
       scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
     }
@@ -394,15 +395,27 @@ export class SfxUploader extends LitElement {
     .preview-panel-header {
       display: flex;
       align-items: center;
-      justify-content: flex-end;
+      justify-content: space-between;
       gap: 8px;
-      padding: 12px 0;
+      padding: 10px 0 12px;
       flex-shrink: 0;
+      border-bottom: 1px solid var(--sfx-up-border, #e8edf5);
+      margin-bottom: 12px;
+    }
+
+    .preview-panel-filename {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--sfx-up-text, #1e293b);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
     }
 
     .preview-panel-header button {
-      width: 32px;
-      height: 32px;
+      width: 28px;
+      height: 28px;
       border-radius: 6px;
       border: none;
       background: none;
@@ -413,6 +426,7 @@ export class SfxUploader extends LitElement {
       color: var(--sfx-up-text-muted, #9ca3af);
       transition: background 0.15s, color 0.15s;
       padding: 0;
+      flex-shrink: 0;
     }
 
     .preview-panel-header button:hover {
@@ -421,8 +435,27 @@ export class SfxUploader extends LitElement {
     }
 
     .preview-panel-header button svg {
-      width: 18px;
-      height: 18px;
+      width: 16px;
+      height: 16px;
+    }
+
+    .file-info-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 0 10px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--sfx-up-text, #1e293b);
+      border-top: 1px solid var(--sfx-up-border, #e8edf5);
+      margin-top: 4px;
+      flex-shrink: 0;
+    }
+
+    .file-info-header svg {
+      width: 16px;
+      height: 16px;
+      color: var(--sfx-up-text-muted, #9ca3af);
     }
 
     .preview-img-wrap {
@@ -1761,40 +1794,25 @@ export class SfxUploader extends LitElement {
     const ext = previewFile.name.split('.').pop()?.toUpperCase() || '';
     const addedDate = new Date(previewFile.addedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
+    const targetFolder = this._store.getState().targetFolder;
     return html`
       <div class="preview-topbar">
         <div class="asset-count" style="padding:0">${files.length} ${files.length === 1 ? 'asset' : 'assets'}</div>
-        <div class="preview-panel-header">
-          <button @click=${() => this._onFileRemoveById(previewFile.id)} title="Delete">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="3 6 5 6 21 6" />
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
-              <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-              <line x1="10" y1="11" x2="10" y2="17" />
-              <line x1="14" y1="11" x2="14" y2="17" />
-            </svg>
-          </button>
-          <button @click=${() => { if (previewFile.previewUrl) { this._fullscreenPreviewUrl = previewFile.previewUrl; this._fullscreenZoomed = false; } }} title="Fullscreen">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="15 3 21 3 21 9" />
-              <polyline points="9 21 3 21 3 15" />
-              <line x1="21" y1="3" x2="14" y2="10" />
-              <line x1="3" y1="21" x2="10" y2="14" />
-            </svg>
-          </button>
-          <button @click=${() => { this._previewFileId = null; }} title="Close">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-        </div>
       </div>
       <div class="preview-layout">
         <div class="file-grid-side">
           <sfx-file-list .files=${files}></sfx-file-list>
         </div>
         <div class="preview-panel">
+          <div class="preview-panel-header">
+            <span class="preview-panel-filename" title=${previewFile.name}>${previewFile.name}</span>
+            <button @click=${() => { this._previewFileId = null; }} title="Close">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
           ${previewFile.previewUrl
             ? html`
                 <div class="preview-img-wrap">
@@ -1808,6 +1826,10 @@ export class SfxUploader extends LitElement {
                 </div>
               `
             : nothing}
+          <div class="file-info-header">
+            File Info
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="18 15 12 9 6 15"/></svg>
+          </div>
           <div class="preview-meta-list">
             <div class="preview-meta-row">
               <span class="preview-meta-label">Type</span>
@@ -1825,10 +1847,15 @@ export class SfxUploader extends LitElement {
               <span class="preview-meta-label">Name</span>
               <span class="preview-meta-value">${previewFile.name}</span>
             </div>
+            ${targetFolder ? html`
+            <div class="preview-meta-row">
+              <span class="preview-meta-label">Folder</span>
+              <span class="preview-meta-value">${targetFolder}</span>
+            </div>` : html`
             <div class="preview-meta-row">
               <span class="preview-meta-label">Added</span>
               <span class="preview-meta-value">${addedDate}</span>
-            </div>
+            </div>`}
           </div>
         </div>
       </div>
