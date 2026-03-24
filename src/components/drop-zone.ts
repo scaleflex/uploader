@@ -488,19 +488,6 @@ export class SfxDropZone extends LitElement {
       stroke-linecap: round;
     }
 
-    .more-dots {
-      width: 16px;
-      height: 16px;
-      color: var(--sfx-up-text-secondary, #475569);
-      fill: currentColor;
-      stroke: none;
-    }
-
-    .more-wrap.open .more-dots,
-    .more-pill:hover .more-dots {
-      color: currentColor;
-    }
-
     .more-chevron {
       width: 12px;
       height: 12px;
@@ -1089,7 +1076,7 @@ export class SfxDropZone extends LitElement {
       <div class="more-wrap ${this._moreOpen ? 'open' : ''}">
         <button class="src-card" @click=${(e: MouseEvent) => this._toggleMore(e)}>
           <span class="card-ico" style="color: var(--sfx-up-text-muted, #94a3b8)">
-            <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+            <svg viewBox="0 0 24 24" style="fill: currentColor; stroke: none">
               <circle cx="5" cy="12" r="2.5"/>
               <circle cx="12" cy="12" r="2.5"/>
               <circle cx="19" cy="12" r="2.5"/>
@@ -1121,7 +1108,6 @@ export class SfxDropZone extends LitElement {
     return html`
       <div class="more-wrap ${this._moreOpen ? 'open' : ''}">
         <button class="more-pill" @click=${(e: MouseEvent) => this._toggleMore(e)}>
-          <svg class="more-dots" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>
           More
           <svg class="more-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
         </button>

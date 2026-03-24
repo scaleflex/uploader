@@ -300,6 +300,7 @@ export class SfxUploader extends LitElement {
       align-items: stretch;
       overflow: hidden;
       gap: 0;
+      padding-bottom: 0;
       animation: bodyReveal 0.35s ease both;
     }
 
@@ -357,12 +358,15 @@ export class SfxUploader extends LitElement {
       flex: 54;
       min-width: 0;
       overflow-y: auto;
-      padding-right: 12px;
-      scrollbar-width: none;
+      padding-right: 0;
+      scrollbar-width: thin;
+      scrollbar-color: #c8cdd6 transparent;
       --sfx-up-grid-min: max(48%, 140px);
     }
 
-    .preview-layout .file-grid-side::-webkit-scrollbar { display: none; }
+    .preview-layout .file-grid-side::-webkit-scrollbar { width: 14px; }
+    .preview-layout .file-grid-side::-webkit-scrollbar-track { background: transparent; }
+    .preview-layout .file-grid-side::-webkit-scrollbar-thumb { background: #c8cdd6; border-left: 4px solid transparent; border-right: 4px solid transparent; background-clip: padding-box; border-radius: 7px; }
 
     .preview-topbar {
       display: flex;
@@ -370,6 +374,7 @@ export class SfxUploader extends LitElement {
       justify-content: space-between;
       flex-shrink: 0;
       padding: 12px 0;
+      border-bottom: 1px solid var(--sfx-up-border, #e8edf5);
     }
 
     .preview-divider {
@@ -383,12 +388,7 @@ export class SfxUploader extends LitElement {
     }
 
     .preview-divider::after {
-      content: '';
-      width: 4px;
-      height: 40px;
-      background: #c8cdd6;
-      border-radius: 2px;
-      position: absolute;
+      display: none;
     }
 
     .preview-panel {
@@ -398,7 +398,8 @@ export class SfxUploader extends LitElement {
       flex-direction: column;
       overflow-y: auto;
       overflow-x: hidden;
-      padding: 0 0 20px 20px;
+      padding: 0;
+      border-right: 1px solid var(--sfx-up-border, #e8edf5);
       scrollbar-width: thin;
       scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
     }
@@ -412,10 +413,16 @@ export class SfxUploader extends LitElement {
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-      padding: 10px 0 12px;
+      padding: 16px;
       flex-shrink: 0;
       border-bottom: 1px solid var(--sfx-up-border, #e8edf5);
-      margin-bottom: 12px;
+    }
+
+    .preview-header-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
     }
 
     .preview-panel-filename {
@@ -476,15 +483,16 @@ export class SfxUploader extends LitElement {
     .preview-img-wrap {
       position: relative;
       flex-shrink: 0;
+      background: var(--sfx-up-surface, #f1f5f9);
+      border-bottom: 1px solid var(--sfx-up-border, #e8edf5);
     }
 
     .preview-image {
       width: 100%;
       height: 320px;
-      border-radius: 6px;
       object-fit: contain;
       display: block;
-      border: 1px solid var(--sfx-up-border, #e8eaed);
+      border: none;
     }
 
     .preview-nav {
@@ -538,15 +546,14 @@ export class SfxUploader extends LitElement {
     .preview-meta-list {
       display: flex;
       flex-direction: column;
-      margin-top: 16px;
       flex-shrink: 0;
-      gap: 2px;
+      padding: 0 16px 12px;
     }
 
     .preview-meta-row {
       display: flex;
       align-items: baseline;
-      padding: 7px 0;
+      padding: 12px 0;
     }
 
     .preview-meta-label {
@@ -562,6 +569,14 @@ export class SfxUploader extends LitElement {
       font-weight: 400;
       color: var(--foreground, var(--sfx-up-text, #1e293b));
       word-break: break-all;
+      min-width: 0;
+    }
+
+    .preview-meta-value.truncate {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      word-break: normal;
     }
 
     /* --- Connector modal overlay --- */
@@ -689,6 +704,33 @@ export class SfxUploader extends LitElement {
       width: 20px;
       height: 20px;
     }
+
+    .fs-nav {
+      position: fixed;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(8px);
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10001;
+      transition: background 0.15s;
+      padding: 0;
+    }
+
+    .fs-nav:hover { background: rgba(255, 255, 255, 0.3); }
+    .fs-nav:disabled { opacity: 0.3; cursor: default; }
+    .fs-nav:disabled:hover { background: rgba(255, 255, 255, 0.15); }
+    .fs-nav svg { width: 22px; height: 22px; }
+    .fs-nav.prev { left: 20px; }
+    .fs-nav.next { right: 20px; }
 
     .fs-filename {
       position: fixed;
@@ -1822,12 +1864,24 @@ export class SfxUploader extends LitElement {
         <div class="preview-panel">
           <div class="preview-panel-header">
             <span class="preview-panel-filename" title=${previewFile.name}>${previewFile.name}</span>
-            <button @click=${() => { this._previewFileId = null; }} title="Close">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
+            <div class="preview-header-actions">
+              ${previewFile.previewUrl ? html`
+                <button @click=${() => { this._fullscreenPreviewUrl = previewFile.previewUrl; this._fullscreenZoomed = false; }} title="Fullscreen">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 3 21 3 21 9" />
+                    <polyline points="9 21 3 21 3 15" />
+                    <line x1="21" y1="3" x2="14" y2="10" />
+                    <line x1="3" y1="21" x2="10" y2="14" />
+                  </svg>
+                </button>
+              ` : nothing}
+              <button @click=${() => { this._previewFileId = null; }} title="Close">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
           </div>
           ${previewFile.previewUrl
             ? html`
@@ -1842,10 +1896,6 @@ export class SfxUploader extends LitElement {
                 </div>
               `
             : nothing}
-          <div class="file-info-header">
-            File Info
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="18 15 12 9 6 15"/></svg>
-          </div>
           <div class="preview-meta-list">
             <div class="preview-meta-row">
               <span class="preview-meta-label">Type</span>
@@ -1861,7 +1911,7 @@ export class SfxUploader extends LitElement {
             </div>
             <div class="preview-meta-row">
               <span class="preview-meta-label">Name</span>
-              <span class="preview-meta-value">${previewFile.name}</span>
+              <span class="preview-meta-value truncate" title=${previewFile.name}>${previewFile.name}</span>
             </div>
             ${targetFolder ? html`
             <div class="preview-meta-row">
@@ -2029,6 +2079,12 @@ export class SfxUploader extends LitElement {
                   style=${this._fullscreenZoomed ? `transform: scale(2) translate(${this._fsPanX}px, ${this._fsPanY}px)` : ''}
                   draggable="false"
                 />
+                <button class="fs-nav prev" @click=${(e: Event) => { e.stopPropagation(); this._navigateFs(-1); }}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <button class="fs-nav next" @click=${(e: Event) => { e.stopPropagation(); this._navigateFs(1); }}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 6 15 12 9 18"/></svg>
+                </button>
                 <div class="fs-filename">${this._getFullscreenFilename()}</div>
               </div>
             `
@@ -2105,6 +2161,21 @@ export class SfxUploader extends LitElement {
     this.requestUpdate();
     e.preventDefault();
   };
+
+  private _navigateFs(direction: -1 | 1) {
+    const files = [...this._store.getState().files.values()].filter(
+      (f) => f.previewUrl,
+    );
+    const idx = files.findIndex((f) => f.previewUrl === this._fullscreenPreviewUrl);
+    const next = idx + direction;
+    if (next >= 0 && next < files.length) {
+      this._fullscreenPreviewUrl = files[next].previewUrl;
+      this._previewFileId = files[next].id;
+      this._fullscreenZoomed = false;
+      this._fsPanX = 0;
+      this._fsPanY = 0;
+    }
+  }
 
   private _onFsClose = (e?: Event) => {
     e?.stopPropagation();
