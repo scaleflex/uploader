@@ -361,7 +361,7 @@ export class SfxUploader extends LitElement {
       min-width: 0;
       min-height: 100%;
       overflow-y: auto;
-      padding-right: 0;
+      scrollbar-gutter: stable;
       scrollbar-width: thin;
       scrollbar-color: #c8cdd6 transparent;
       --sfx-up-grid-min: max(48%, 140px);

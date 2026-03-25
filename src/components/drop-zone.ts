@@ -248,6 +248,8 @@ export class SfxDropZone extends LitElement {
       align-items: center;
       gap: 8px;
       padding: 9px 18px;
+      height: 38px;
+      box-sizing: border-box;
       border-radius: 50px;
       border: 1.5px solid rgba(226, 232, 240, 0.6);
       background: rgba(255, 255, 255, 0.7);
