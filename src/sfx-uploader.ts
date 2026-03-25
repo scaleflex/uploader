@@ -679,165 +679,212 @@ export class SfxUploader extends LitElement {
       to { opacity: 1; transform: translateY(0); }
     }
 
-    /* --- Floating upload pill --- */
-    .upload-pill {
+    /* --- Floating upload card (Variant 3 style) --- */
+    .upload-float {
       position: fixed;
       bottom: 24px;
       right: 24px;
       z-index: 10000;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 18px;
-      background: var(--sfx-up-text, #1e293b);
-      color: #fff;
-      border-radius: 999px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-      cursor: pointer;
+      width: 320px;
+      border-radius: 12px;
+      background: var(--sfx-up-bg, #fff);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+      overflow: hidden;
       font-family: inherit;
-      animation: pillSlideIn 0.3s ease both;
-      transition: all 0.2s ease;
+      animation: floatSlideIn 0.3s ease both;
     }
 
-    .upload-pill:hover {
-      box-shadow: 0 6px 28px rgba(0,0,0,0.22);
-      transform: translateY(-2px);
-    }
-
-    .upload-pill.done {
-      background: #166534;
-    }
-
-    .upload-pill.expanded {
-      flex-direction: column;
-      align-items: stretch;
-      width: 340px;
-      padding: 0;
-      border-radius: 14px;
-      cursor: default;
-    }
-
-    .pill-spinner {
-      width: 16px;
-      height: 16px;
-      border: 2px solid rgba(255,255,255,0.3);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      flex-shrink: 0;
-    }
-
-    .pill-text {
-      font-size: 13px;
-      font-weight: 500;
-      white-space: nowrap;
-    }
-
-    .pill-percent {
-      font-size: 13px;
-      font-weight: 600;
-      opacity: 0.7;
-    }
-
-    .pill-chevron {
-      width: 14px;
-      height: 14px;
-      opacity: 0.5;
-      flex-shrink: 0;
-      transition: transform 0.2s;
-    }
-
-    .pill-check {
-      width: 18px;
-      height: 18px;
-      flex-shrink: 0;
-    }
-
-    /* Expanded pill */
-    .pill-header {
+    .float-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 12px 16px;
-      cursor: pointer;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--sfx-up-border, #e8edf5);
     }
 
-    .pill-header-left {
+    .float-header-left {
       display: flex;
       align-items: center;
       gap: 8px;
+    }
+
+    .float-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      background: var(--sfx-up-primary-bg, #eff6ff);
+      color: var(--sfx-up-primary, #2563eb);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .float-icon svg { width: 14px; height: 14px; }
+
+    .float-icon.done {
+      background: #f0fdf4;
+      color: #22c55e;
+    }
+
+    .float-title {
       font-size: 13px;
       font-weight: 600;
+      color: var(--sfx-up-text, #1e293b);
     }
 
-    .pill-header-chevron {
-      width: 16px;
-      height: 16px;
-      opacity: 0.5;
+    .float-subtitle {
+      font-size: 11px;
+      color: var(--sfx-up-text-muted, #94a3b8);
     }
 
-    .pill-progress-bar {
-      height: 3px;
-      background: rgba(255,255,255,0.15);
-      margin: 0 16px;
+    .float-actions {
+      display: flex;
+      gap: 4px;
+    }
+
+    .float-actions button {
+      width: 26px;
+      height: 26px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--sfx-up-text-muted, #94a3b8);
+      transition: background 0.15s;
+      padding: 0;
+    }
+
+    .float-actions button:hover {
+      background: var(--sfx-up-surface, #f8fafc);
+      color: var(--sfx-up-text, #374151);
+    }
+
+    .float-actions button svg { width: 14px; height: 14px; }
+
+    .float-progress {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--sfx-up-border, #e8edf5);
+    }
+
+    .float-progress-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .float-progress-label {
+      font-size: 12px;
+      color: var(--sfx-up-text-secondary, #475569);
+    }
+
+    .float-progress-pct {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--sfx-up-primary, #2563eb);
+    }
+
+    .float-bar {
+      height: 4px;
+      background: var(--sfx-up-border, #e8edf5);
       border-radius: 2px;
       overflow: hidden;
     }
 
-    .pill-progress-fill {
+    .float-bar-fill {
       height: 100%;
-      background: #fff;
+      background: var(--sfx-up-primary, #2563eb);
       border-radius: 2px;
       transition: width 0.3s ease;
     }
 
-    .pill-items {
-      padding: 8px 0;
-      max-height: 200px;
-      overflow-y: auto;
+    .float-bar-fill.done {
+      background: #22c55e;
     }
 
-    .pill-item {
+    .float-items {
+      max-height: 200px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(0,0,0,0.1) transparent;
+    }
+
+    .float-item {
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 6px 16px;
+      padding: 8px 14px;
+      border-bottom: 1px solid #f1f5f9;
     }
 
-    .pill-item-name {
-      flex: 1;
-      font-size: 12px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      opacity: 0.8;
-    }
+    .float-item:last-child { border-bottom: none; }
 
-    .pill-item-check {
-      color: #22c55e;
-      width: 16px;
-      height: 16px;
+    .float-item-thumb {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      background: var(--sfx-up-surface, #f8fafc);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--sfx-up-text-muted, #94a3b8);
       flex-shrink: 0;
     }
 
-    .pill-item-spin {
-      width: 14px;
-      height: 14px;
-      border: 2px solid rgba(255,255,255,0.2);
-      border-top-color: #fff;
+    .float-item-thumb svg { width: 16px; height: 16px; }
+
+    .float-item-info { flex: 1; min-width: 0; }
+
+    .float-item-name {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--sfx-up-text, #1e293b);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .float-item-size {
+      font-size: 11px;
+      color: var(--sfx-up-text-muted, #94a3b8);
+    }
+
+    .float-item-done {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #f0fdf4;
+      color: #22c55e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .float-item-done svg { width: 12px; height: 12px; }
+
+    .float-item-spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--sfx-up-border, #e8edf5);
+      border-top-color: var(--sfx-up-primary, #2563eb);
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
       flex-shrink: 0;
     }
 
-    .pill-item-error {
+    .float-item-error {
       color: #ef4444;
       width: 16px;
       height: 16px;
       flex-shrink: 0;
     }
 
-    @keyframes pillSlideIn {
+    @keyframes floatSlideIn {
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
     }
@@ -2167,48 +2214,58 @@ export class SfxUploader extends LitElement {
     const s = this._storeCtrl.state;
     const pct = Math.round(s.totalProgress ?? 0);
     const isDone = this._phase === 'complete';
-
-    if (!this._isPillExpanded) {
-      return html`
-        <div class="upload-pill ${isDone ? 'done' : ''}" @click=${this._onPillClick}>
-          ${isDone
-            ? html`<svg class="pill-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>`
-            : html`<div class="pill-spinner"></div>`}
-          <span class="pill-text">${isDone ? 'Upload complete' : `Uploading ${files.length} ${files.length === 1 ? 'file' : 'files'}`}</span>
-          ${!isDone ? html`<span class="pill-percent">${pct}%</span>` : nothing}
-          <svg class="pill-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
-        </div>
-      `;
-    }
-
-    // Expanded pill
     const completed = files.filter((f) => f.status === 'complete').length;
+    const eta = s.totalSpeed > 0 ? (s.totalBytes - s.totalBytesUploaded) / s.totalSpeed : 0;
+
     return html`
-      <div class="upload-pill expanded ${isDone ? 'done' : ''}">
-        <div class="pill-header" @click=${this._onPillClick}>
-          <div class="pill-header-left">
-            ${isDone
-              ? html`<svg class="pill-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="width:16px;height:16px"><polyline points="20 6 9 17 4 12"/></svg>`
-              : html`<div class="pill-spinner"></div>`}
-            ${isDone ? `${completed} files uploaded` : `Uploading ${files.length} files · ${pct}%`}
+      <div class="upload-float">
+        <div class="float-header">
+          <div class="float-header-left">
+            <div class="float-icon ${isDone ? 'done' : ''}">
+              ${isDone
+                ? html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>`
+                : html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>`}
+            </div>
+            <div>
+              <div class="float-title">${isDone ? 'Upload complete' : `Uploading ${files.length} ${files.length === 1 ? 'file' : 'files'}`}</div>
+              <div class="float-subtitle">${isDone ? `${completed} files uploaded` : `${completed} of ${files.length}${eta > 0 ? ` · ~${formatEta(eta)} left` : ''}`}</div>
+            </div>
           </div>
-          <svg class="pill-header-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="18 15 12 9 6 15"/></svg>
+          <div class="float-actions">
+            <button title="Open uploader" @click=${this._onPillReopen}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+            </button>
+            <button title="${isDone ? 'Dismiss' : 'Minimize'}" @click=${this._onPillClick}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+          </div>
         </div>
-        ${!isDone ? html`<div class="pill-progress-bar"><div class="pill-progress-fill" style="width:${pct}%"></div></div>` : nothing}
-        <div class="pill-items">
+        <div class="float-progress">
+          <div class="float-progress-top">
+            <span class="float-progress-label">Overall progress</span>
+            <span class="float-progress-pct">${isDone ? 'Done' : `${pct}%`}</span>
+          </div>
+          <div class="float-bar"><div class="float-bar-fill ${isDone ? 'done' : ''}" style="width:${isDone ? 100 : pct}%"></div></div>
+        </div>
+        <div class="float-items">
           ${files.map((f) => html`
-            <div class="pill-item">
-              ${f.status === 'complete'
-                ? html`<svg class="pill-item-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>`
-                : f.status === 'failed' || f.status === 'error'
-                  ? html`<svg class="pill-item-error" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`
-                  : html`<div class="pill-item-spin"></div>`}
-              <span class="pill-item-name">${f.name}</span>
+            <div class="float-item">
+              <div class="float-item-thumb">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+              </div>
+              <div class="float-item-info">
+                <div class="float-item-name">${f.name}</div>
+                <div class="float-item-size">${formatFileSize(f.size)}</div>
+              </div>
+              <div class="float-item-status">
+                ${f.status === 'complete'
+                  ? html`<div class="float-item-done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>`
+                  : f.status === 'failed' || f.status === 'error'
+                    ? html`<svg class="float-item-error" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`
+                    : html`<div class="float-item-spinner"></div>`}
+              </div>
             </div>
           `)}
-        </div>
-        <div class="pill-header" @click=${this._onPillReopen} style="border-top:1px solid rgba(255,255,255,0.1); justify-content:center; padding:10px 16px;">
-          <span style="font-size:12px; opacity:0.7;">${isDone ? 'Dismiss' : 'Open uploader'}</span>
         </div>
       </div>
     `;
