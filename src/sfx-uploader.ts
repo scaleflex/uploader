@@ -1809,9 +1809,10 @@ export class SfxUploader extends LitElement {
   }
 
   private _renderHeader() {
+    if (this._phase === 'complete') return nothing;
     const mode = this.config?.mode ?? 'modal';
     const headerButton = this.config?.headerButton ?? (mode === 'modal' ? 'close' : 'none');
-    const isComplete = this._phase === 'complete';
+    const isComplete = false;
     const dismiss = mode === 'modal' ? this._onModalDismiss : this._onInlineDismiss;
 
     const backBtn = headerButton === 'back'
@@ -1834,6 +1835,7 @@ export class SfxUploader extends LitElement {
     return html`
       <div class="header">
         ${backBtn}
+        ${headerButton !== 'back' ? html`
         <div class="header-icon ${isComplete ? 'header-icon-done' : ''}">
           ${isComplete
             ? html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
@@ -1844,7 +1846,7 @@ export class SfxUploader extends LitElement {
                 <line x1="12" y1="12" x2="12" y2="21" />
                 <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
               </svg>`}
-        </div>
+        </div>` : nothing}
         <div class="header-title">${isComplete ? 'Upload Complete' : 'Upload Files'}</div>
         ${closeBtn}
       </div>

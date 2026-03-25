@@ -12,6 +12,7 @@ export class SfxSuccessCard extends LitElement {
       flex: 1;
       justify-content: center;
       align-items: center;
+      padding-bottom: 24px;
     }
 
     .card {
@@ -32,7 +33,7 @@ export class SfxSuccessCard extends LitElement {
       justify-content: center;
       margin-bottom: 18px;
       color: var(--sfx-up-primary, #2563eb);
-      box-shadow: 0 4px 18px var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.12));
+      box-shadow: none;
       animation: popBounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s both;
     }
 
