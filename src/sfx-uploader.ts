@@ -350,13 +350,16 @@ export class SfxUploader extends LitElement {
     .preview-layout {
       display: flex;
       flex: 1;
+      height: 798px;
       min-height: 0;
       overflow: hidden;
+      border-top: 1px solid var(--sfx-up-border, #e8edf5);
     }
 
     .preview-layout .file-grid-side {
       flex: 54;
       min-width: 0;
+      min-height: 100%;
       overflow-y: auto;
       padding-right: 0;
       scrollbar-width: thin;
@@ -368,13 +371,33 @@ export class SfxUploader extends LitElement {
     .preview-layout .file-grid-side::-webkit-scrollbar-track { background: transparent; }
     .preview-layout .file-grid-side::-webkit-scrollbar-thumb { background: #c8cdd6; border-left: 4px solid transparent; border-right: 4px solid transparent; background-clip: padding-box; border-radius: 7px; }
 
+    .file-grid-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 16px;
+      min-height: 61px;
+      box-sizing: border-box;
+      flex-shrink: 0;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: var(--sfx-up-bg, #fff);
+    }
+
+    .file-grid-header-text {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--sfx-up-text, #1e293b);
+    }
+
     .preview-topbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
       flex-shrink: 0;
       padding: 12px 0;
-      border-bottom: 1px solid var(--sfx-up-border, #e8edf5);
     }
 
     .preview-divider {
@@ -396,12 +419,8 @@ export class SfxUploader extends LitElement {
       min-width: 0;
       display: flex;
       flex-direction: column;
-      overflow-y: auto;
-      overflow-x: hidden;
+      overflow: hidden;
       padding: 0;
-      border-right: 1px solid var(--sfx-up-border, #e8edf5);
-      scrollbar-width: thin;
-      scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
     }
 
     .preview-panel::-webkit-scrollbar { width: 5px; }
@@ -482,14 +501,14 @@ export class SfxUploader extends LitElement {
 
     .preview-img-wrap {
       position: relative;
-      flex-shrink: 0;
+      flex: 1;
+      min-height: 0;
       background: var(--sfx-up-surface, #f1f5f9);
-      border-bottom: 1px solid var(--sfx-up-border, #e8edf5);
     }
 
     .preview-image {
       width: 100%;
-      height: 320px;
+      height: 100%;
       object-fit: contain;
       display: block;
       border: none;
@@ -1852,12 +1871,14 @@ export class SfxUploader extends LitElement {
     const addedDate = new Date(previewFile.addedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
     const targetFolder = this._store.getState().targetFolder;
+    const totalSize = files.reduce((sum, f) => sum + (f.size || 0), 0);
     return html`
-      <div class="preview-topbar">
-        <div class="asset-count" style="padding:0">${files.length} ${files.length === 1 ? 'asset' : 'assets'}</div>
-      </div>
+      <div class="preview-topbar"></div>
       <div class="preview-layout">
         <div class="file-grid-side">
+          <div class="file-grid-header">
+            <span class="file-grid-header-text">${files.length} ${files.length === 1 ? 'asset' : 'assets'} · ${formatFileSize(totalSize)}</span>
+          </div>
           <sfx-file-list .files=${files}></sfx-file-list>
         </div>
         <div class="preview-divider"></div>
