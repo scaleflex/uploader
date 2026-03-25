@@ -12,8 +12,8 @@ export class SfxFileItem extends LitElement {
     .tile {
       border-radius: 10px;
       background: var(--sfx-up-bg, #fff);
-      border: 1px solid var(--sfx-up-border, #e8edf5);
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+      border: 1px solid #dde3ed;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.06);
       animation: tileIn 0.45s cubic-bezier(0.34, 1.2, 0.64, 1) both;
       animation-delay: calc(min(var(--tile-index, 0), 8) * 0.04s);
       will-change: transform, opacity;
@@ -25,7 +25,7 @@ export class SfxFileItem extends LitElement {
     }
 
     .tile:hover {
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06), 0 6px 16px rgba(0, 0, 0, 0.08);
     }
 
     /* --- Preview area --- */
@@ -47,7 +47,7 @@ export class SfxFileItem extends LitElement {
     }
 
     .tile:hover .preview-bg {
-      transform: scale(1.03);
+      transform: none;
     }
 
     .preview-bg.pdf { background: linear-gradient(135deg, var(--destructive-10, #fef2f2), var(--destructive-10, #fee2e2)); }

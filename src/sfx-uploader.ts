@@ -136,6 +136,7 @@ export class SfxUploader extends LitElement {
       box-shadow: 0 28px 80px rgba(0, 0, 0, 0.2), 0 4px 16px rgba(0, 0, 0, 0.06);
       width: 100%;
       max-width: 912px;
+      min-height: var(--sfx-up-min-height, 580px);
       max-height: var(--sfx-up-max-height, 88vh);
       display: flex;
       flex-direction: column;
@@ -786,6 +787,10 @@ export class SfxUploader extends LitElement {
       font-size: 12px;
       font-weight: 600;
       color: var(--sfx-up-primary, #2563eb);
+    }
+
+    .float-progress-pct.done {
+      color: #22c55e;
     }
 
     .float-bar {
@@ -2243,7 +2248,7 @@ export class SfxUploader extends LitElement {
         <div class="float-progress">
           <div class="float-progress-top">
             <span class="float-progress-label">Overall progress</span>
-            <span class="float-progress-pct">${isDone ? 'Done' : `${pct}%`}</span>
+            <span class="float-progress-pct ${isDone ? 'done' : ''}">${isDone ? 'Done' : `${pct}%`}</span>
           </div>
           <div class="float-bar"><div class="float-bar-fill ${isDone ? 'done' : ''}" style="width:${isDone ? 100 : pct}%"></div></div>
         </div>
@@ -2515,7 +2520,6 @@ export class SfxUploader extends LitElement {
                 <button class="fs-nav next" @click=${(e: Event) => { e.stopPropagation(); this._navigateFs(1); }}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 6 15 12 9 18"/></svg>
                 </button>
-                <div class="fs-filename">${this._getFullscreenFilename()}</div>
               </div>
             `
           : nothing}

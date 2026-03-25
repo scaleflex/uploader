@@ -27,12 +27,12 @@ export class SfxSuccessCard extends LitElement {
       width: 64px;
       height: 64px;
       border-radius: 50%;
-      background: var(--sfx-up-primary-bg, #eff6ff);
+      background: #f0fdf4;
       display: flex;
       align-items: center;
       justify-content: center;
       margin-bottom: 18px;
-      color: var(--sfx-up-primary, #2563eb);
+      color: #22c55e;
       box-shadow: none;
       animation: popBounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.1s both;
     }
@@ -102,6 +102,16 @@ export class SfxSuccessCard extends LitElement {
     .actions {
       display: flex;
       gap: 8px;
+    }
+
+    .actions .btn-primary {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      box-shadow: 0 2px 10px rgba(34, 197, 94, 0.28);
+    }
+
+    .actions .btn-primary:hover:not(:disabled) {
+      background: linear-gradient(135deg, #16a34a, #15803d);
+      box-shadow: 0 4px 16px rgba(34, 197, 94, 0.38);
     }
 
     @keyframes fadeUp {
