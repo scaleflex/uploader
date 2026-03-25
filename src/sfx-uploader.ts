@@ -1,4 +1,4 @@
-import { LitElement, html, css, nothing } from 'lit';
+import { LitElement, html, css, nothing, render as litRender } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { createStore, Store } from './store';
 import { addFile, removeFile } from './store/helpers';
@@ -136,7 +136,7 @@ export class SfxUploader extends LitElement {
       box-shadow: 0 28px 80px rgba(0, 0, 0, 0.2), 0 4px 16px rgba(0, 0, 0, 0.06);
       width: 100%;
       max-width: 912px;
-      min-height: var(--sfx-up-min-height, 580px);
+      min-height: var(--sfx-up-min-height, 660px);
       max-height: var(--sfx-up-max-height, 88vh);
       display: flex;
       flex-direction: column;
@@ -673,6 +673,32 @@ export class SfxUploader extends LitElement {
       border-color: var(--sfx-up-primary, #2563eb);
       color: var(--sfx-up-primary, #2563eb);
     }
+
+    .upload-header {
+      justify-content: space-between;
+    }
+
+    .upload-header .float-actions button {
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--sfx-up-text-muted, #94a3b8);
+      transition: background 0.15s;
+      padding: 0;
+    }
+
+    .upload-header .float-actions button:hover {
+      background: var(--sfx-up-surface, #f8fafc);
+      color: var(--sfx-up-text, #374151);
+    }
+
+    .upload-header .float-actions button svg { width: 16px; height: 16px; }
 
     @keyframes spin { to { transform: rotate(360deg); } }
     @keyframes fadeUp {
@@ -1356,7 +1382,86 @@ export class SfxUploader extends LitElement {
         this._previewDims = '—';
       }
     }
+    // Render floating card portal in document.body
+    this._updateFloatingPortal();
   }
+
+  private static _floatStylesInjected = false;
+
+  private _injectFloatStyles() {
+    if (SfxUploader._floatStylesInjected) return;
+    SfxUploader._floatStylesInjected = true;
+    const style = document.createElement('style');
+    style.setAttribute('data-sfx-upload-float-styles', '');
+    style.textContent = `
+      [data-sfx-upload-float] .upload-float { position:fixed; bottom:24px; right:24px; z-index:10000; width:320px; border-radius:12px; background:#fff; box-shadow:0 8px 32px rgba(0,0,0,0.12),0 2px 8px rgba(0,0,0,0.06); overflow:hidden; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; animation:sfxFloatIn .3s ease both; }
+      [data-sfx-upload-float] .float-header { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-bottom:1px solid #e8edf5; }
+      [data-sfx-upload-float] .float-header-left { display:flex; align-items:center; gap:8px; }
+      [data-sfx-upload-float] .float-icon { width:28px; height:28px; border-radius:6px; background:#eff6ff; color:#2563eb; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+      [data-sfx-upload-float] .float-icon svg { width:14px; height:14px; }
+      [data-sfx-upload-float] .float-icon.done { background:#f0fdf4; color:#22c55e; }
+      [data-sfx-upload-float] .float-title { font-size:13px; font-weight:600; color:#1e293b; }
+      [data-sfx-upload-float] .float-subtitle { font-size:11px; color:#94a3b8; }
+      [data-sfx-upload-float] .float-actions { display:flex; gap:4px; }
+      [data-sfx-upload-float] .float-actions button { width:26px; height:26px; border:none; background:none; cursor:pointer; border-radius:6px; display:flex; align-items:center; justify-content:center; color:#94a3b8; transition:background .15s; padding:0; }
+      [data-sfx-upload-float] .float-actions button:hover { background:#f8fafc; color:#374151; }
+      [data-sfx-upload-float] .float-actions button svg { width:14px; height:14px; }
+      [data-sfx-upload-float] .float-progress { padding:10px 14px; border-bottom:1px solid #e8edf5; }
+      [data-sfx-upload-float] .float-progress-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+      [data-sfx-upload-float] .float-progress-label { font-size:12px; color:#475569; }
+      [data-sfx-upload-float] .float-progress-pct { font-size:12px; font-weight:600; color:#2563eb; }
+      [data-sfx-upload-float] .float-progress-pct.done { color:#22c55e; }
+      [data-sfx-upload-float] .float-bar { height:4px; background:#e8edf5; border-radius:2px; overflow:hidden; }
+      [data-sfx-upload-float] .float-bar-fill { height:100%; background:#2563eb; border-radius:2px; transition:width .3s ease; }
+      [data-sfx-upload-float] .float-bar-fill.done { background:#22c55e; }
+      [data-sfx-upload-float] .float-items { max-height:200px; overflow-y:auto; }
+      [data-sfx-upload-float] .float-item { display:flex; align-items:center; gap:10px; padding:8px 14px; border-bottom:1px solid #f1f5f9; }
+      [data-sfx-upload-float] .float-item:last-child { border-bottom:none; }
+      [data-sfx-upload-float] .float-item-thumb { width:32px; height:32px; border-radius:6px; background:#f8fafc; display:flex; align-items:center; justify-content:center; color:#94a3b8; flex-shrink:0; }
+      [data-sfx-upload-float] .float-item-thumb svg { width:16px; height:16px; }
+      [data-sfx-upload-float] .float-item-info { flex:1; min-width:0; }
+      [data-sfx-upload-float] .float-item-name { font-size:12px; font-weight:500; color:#1e293b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+      [data-sfx-upload-float] .float-item-size { font-size:11px; color:#94a3b8; }
+      [data-sfx-upload-float] .float-item-done { width:18px; height:18px; border-radius:50%; background:#f0fdf4; color:#22c55e; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+      [data-sfx-upload-float] .float-item-done svg { width:12px; height:12px; }
+      [data-sfx-upload-float] .float-item-spinner { width:16px; height:16px; border:2px solid #e8edf5; border-top-color:#2563eb; border-radius:50%; animation:sfxSpin .8s linear infinite; flex-shrink:0; }
+      [data-sfx-upload-float] .float-item-error { color:#ef4444; width:16px; height:16px; flex-shrink:0; }
+      [data-sfx-upload-float] .float-collapsed { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; width:320px; border-radius:12px; }
+      [data-sfx-upload-float] .float-collapsed-left { display:flex; align-items:center; gap:8px; }
+      [data-sfx-upload-float] .float-collapsed-spinner { width:18px; height:18px; border:2.5px solid #e8edf5; border-top-color:#2563eb; border-radius:50%; animation:sfxSpin .8s linear infinite; flex-shrink:0; }
+      [data-sfx-upload-float] .float-collapsed-icon { width:18px; height:18px; flex-shrink:0; }
+      [data-sfx-upload-float] .float-collapsed-icon svg { width:18px; height:18px; }
+      [data-sfx-upload-float] .float-collapsed-icon.done { color:#22c55e; }
+      [data-sfx-upload-float] .float-collapsed-text { font-size:13px; font-weight:500; color:#1e293b; white-space:nowrap; }
+      [data-sfx-upload-float] .float-collapsed-pct { font-size:13px; font-weight:600; color:#2563eb; }
+      [data-sfx-upload-float] .float-collapsed-actions { display:flex; gap:4px; }
+      [data-sfx-upload-float] .float-collapsed-actions button { width:26px; height:26px; border:none; background:none; cursor:pointer; border-radius:6px; display:flex; align-items:center; justify-content:center; color:#94a3b8; transition:background .15s; padding:0; }
+      [data-sfx-upload-float] .float-collapsed-actions button:hover { background:#f1f5f9; color:#374151; }
+      [data-sfx-upload-float] .float-collapsed-actions button svg { width:14px; height:14px; }
+      @keyframes sfxFloatIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+      @keyframes sfxSpin { to{transform:rotate(360deg)} }
+    `;
+    document.head.appendChild(style);
+  }
+
+  private _updateFloatingPortal() {
+    const files = [...this._storeCtrl.state.files.values()];
+    if (this._isMinimized && files.length > 0) {
+      this._injectFloatStyles();
+      if (!this._portalContainer) {
+        this._portalContainer = document.createElement('div');
+        this._portalContainer.setAttribute('data-sfx-upload-float', '');
+        document.body.appendChild(this._portalContainer);
+      }
+      litRender(this._renderFloatingPill(files), this._portalContainer);
+    } else if (this._portalContainer) {
+      litRender(nothing, this._portalContainer);
+      this._portalContainer.remove();
+      this._portalContainer = null;
+    }
+  }
+
+  private _portalContainer: HTMLDivElement | null = null;
 
   connectedCallback() {
     super.connectedCallback();
@@ -1373,6 +1478,9 @@ export class SfxUploader extends LitElement {
     this._unsubStoreEvents?.();
     this._unsubStoreEvents = null;
     this._prevStoreState = null;
+    // Remove portal container
+    this._portalContainer?.remove();
+    this._portalContainer = null;
     // Clear rejected file auto-removal timers
     for (const timer of this._rejectedTimers.values()) clearTimeout(timer);
     this._rejectedTimers.clear();
@@ -2033,19 +2141,19 @@ export class SfxUploader extends LitElement {
 
   private _onMinimize = () => {
     this._isMinimized = true;
-    this._isOpen = false;
-    this._isPillExpanded = false;
+    this._isPillExpanded = true;
     this.requestUpdate();
   };
 
   private _onPillClick = () => {
-    if (this._phase === 'complete') {
-      // Done — close pill and clear
-      this._isMinimized = false;
-      this._isPillExpanded = false;
-      return;
-    }
     this._isPillExpanded = !this._isPillExpanded;
+    this.requestUpdate();
+  };
+
+  private _onPillDismiss = () => {
+    this._isMinimized = false;
+    this._isPillExpanded = false;
+    this.requestUpdate();
   };
 
   private _onPillReopen = () => {
@@ -2116,7 +2224,7 @@ export class SfxUploader extends LitElement {
 
     if (mode === 'modal') {
       return html`
-        ${this._isOpen ? html`
+        ${this._isOpen && !this._isMinimized ? html`
           <div class="modal-backdrop" @click=${this._onModalBackdropClick}>
             <div class="modal-card">
               ${this._renderHeader()}
@@ -2124,7 +2232,6 @@ export class SfxUploader extends LitElement {
             </div>
           </div>
         ` : nothing}
-        ${this._isMinimized ? this._renderFloatingPill(files) : nothing}
       `;
     }
 
@@ -2138,7 +2245,26 @@ export class SfxUploader extends LitElement {
   }
 
   private _renderHeader() {
-    if (this._phase === 'complete' || this._phase === 'uploading') return nothing;
+    if (this._phase === 'complete') return nothing;
+    if (this._phase === 'uploading') {
+      const s = this._storeCtrl.state;
+      const files = [...s.files.values()];
+      const completed = files.filter((f) => f.status === 'complete').length;
+      const eta = s.totalSpeed > 0 ? (s.totalBytes - s.totalBytesUploaded) / s.totalSpeed : 0;
+      return html`
+        <div class="header upload-header">
+          <div class="float-header-left">
+            <div class="float-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>
+            </div>
+            <div>
+              <div class="float-title">Uploading ${files.length} ${files.length === 1 ? 'file' : 'files'}</div>
+              <div class="float-subtitle">${completed} of ${files.length}${eta > 0 ? ` · ~${formatEta(eta)} left` : ''}</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
     const mode = this.config?.mode ?? 'modal';
     const headerButton = this.config?.headerButton ?? (mode === 'modal' ? 'close' : 'none');
     const isComplete = false;
@@ -2222,6 +2348,30 @@ export class SfxUploader extends LitElement {
     const completed = files.filter((f) => f.status === 'complete').length;
     const eta = s.totalSpeed > 0 ? (s.totalBytes - s.totalBytesUploaded) / s.totalSpeed : 0;
 
+    // Collapsed pill — compact white bar
+    if (this._isPillExpanded === false) {
+      return html`
+        <div class="upload-float float-collapsed">
+          <div class="float-collapsed-left">
+            ${isDone
+              ? html`<div class="float-collapsed-icon done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>`
+              : html`<div class="float-collapsed-spinner"></div>`}
+            <span class="float-collapsed-text">${isDone ? 'Upload complete' : `Uploading ${files.length} ${files.length === 1 ? 'file' : 'files'}`}</span>
+            ${!isDone ? html`<span class="float-collapsed-pct">${pct}%</span>` : nothing}
+          </div>
+          <div class="float-collapsed-actions">
+            <button title="Expand" @click=${this._onPillClick}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="18 15 12 9 6 15"/></svg>
+            </button>
+            <button title="Dismiss" @click=${this._onPillDismiss}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    // Expanded card
     return html`
       <div class="upload-float">
         <div class="float-header">
@@ -2237,11 +2387,11 @@ export class SfxUploader extends LitElement {
             </div>
           </div>
           <div class="float-actions">
-            <button title="Open uploader" @click=${this._onPillReopen}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+            <button title="Collapse" @click=${this._onPillClick}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
             </button>
-            <button title="${isDone ? 'Dismiss' : 'Minimize'}" @click=${this._onPillClick}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <button title="Dismiss" @click=${this._onPillDismiss}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           </div>
         </div>
