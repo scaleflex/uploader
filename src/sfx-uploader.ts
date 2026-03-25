@@ -9,7 +9,7 @@ import type { UploaderState, UploadFile, UploadRestrictions, UploadResponse } fr
 import type { AuthConfig, AuthHeaders } from './auth/auth.types';
 import { resolveAuth, getApiBase, buildAuthHeaders } from './auth/auth.service';
 import { PublicEvents, type PublicEventName } from './events/public-events';
-import { generateFileId, guessMimeType, formatFileSize, generateVideoThumbnail } from './utils/file-utils';
+import { generateFileId, guessMimeType, formatFileSize, formatEta, generateVideoThumbnail } from './utils/file-utils';
 import { validateFile, validateFileInfo, buildAcceptString } from './utils/validate';
 import type { ProviderId, ConnectorConfig, RemoteFileInfo } from './connectors/connector.types';
 import { getProviderSources } from './connectors/provider-registry';
@@ -598,6 +598,250 @@ export class SfxUploader extends LitElement {
       word-break: normal;
     }
 
+    /* --- Upload overlay (in-modal) --- */
+    .upload-overlay {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      gap: 8px;
+      padding: 32px 24px;
+      animation: fadeUp 0.3s ease both;
+    }
+
+    .upload-overlay-spinner {
+      width: 48px;
+      height: 48px;
+      border: 3px solid var(--sfx-up-border, #e2e8f0);
+      border-top-color: var(--sfx-up-primary, #2563eb);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 8px;
+    }
+
+    .upload-overlay-percent {
+      font-size: 40px;
+      font-weight: 700;
+      color: var(--sfx-up-primary, #2563eb);
+      line-height: 1;
+    }
+
+    .upload-overlay-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--sfx-up-text, #1e293b);
+    }
+
+    .upload-overlay-subtitle {
+      font-size: 13px;
+      color: var(--sfx-up-text-muted, #94a3b8);
+      margin-bottom: 8px;
+    }
+
+    .upload-overlay-bar {
+      width: 240px;
+      height: 6px;
+      background: var(--sfx-up-border, #e2e8f0);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .upload-overlay-bar-fill {
+      height: 100%;
+      background: var(--sfx-up-primary, #2563eb);
+      border-radius: 3px;
+      transition: width 0.3s ease;
+    }
+
+    .upload-overlay-minimize {
+      padding: 8px 20px;
+      border: 1px solid var(--sfx-up-border, #e2e8f0);
+      background: var(--sfx-up-bg, #fff);
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--sfx-up-text-secondary, #475569);
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+
+    .upload-overlay-minimize:hover {
+      border-color: var(--sfx-up-primary, #2563eb);
+      color: var(--sfx-up-primary, #2563eb);
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* --- Floating upload pill --- */
+    .upload-pill {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 10000;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 18px;
+      background: var(--sfx-up-text, #1e293b);
+      color: #fff;
+      border-radius: 999px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      cursor: pointer;
+      font-family: inherit;
+      animation: pillSlideIn 0.3s ease both;
+      transition: all 0.2s ease;
+    }
+
+    .upload-pill:hover {
+      box-shadow: 0 6px 28px rgba(0,0,0,0.22);
+      transform: translateY(-2px);
+    }
+
+    .upload-pill.done {
+      background: #166534;
+    }
+
+    .upload-pill.expanded {
+      flex-direction: column;
+      align-items: stretch;
+      width: 340px;
+      padding: 0;
+      border-radius: 14px;
+      cursor: default;
+    }
+
+    .pill-spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      flex-shrink: 0;
+    }
+
+    .pill-text {
+      font-size: 13px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+
+    .pill-percent {
+      font-size: 13px;
+      font-weight: 600;
+      opacity: 0.7;
+    }
+
+    .pill-chevron {
+      width: 14px;
+      height: 14px;
+      opacity: 0.5;
+      flex-shrink: 0;
+      transition: transform 0.2s;
+    }
+
+    .pill-check {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+
+    /* Expanded pill */
+    .pill-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      cursor: pointer;
+    }
+
+    .pill-header-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .pill-header-chevron {
+      width: 16px;
+      height: 16px;
+      opacity: 0.5;
+    }
+
+    .pill-progress-bar {
+      height: 3px;
+      background: rgba(255,255,255,0.15);
+      margin: 0 16px;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .pill-progress-fill {
+      height: 100%;
+      background: #fff;
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+
+    .pill-items {
+      padding: 8px 0;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .pill-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 16px;
+    }
+
+    .pill-item-name {
+      flex: 1;
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      opacity: 0.8;
+    }
+
+    .pill-item-check {
+      color: #22c55e;
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+    }
+
+    .pill-item-spin {
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255,255,255,0.2);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      flex-shrink: 0;
+    }
+
+    .pill-item-error {
+      color: #ef4444;
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+    }
+
+    @keyframes pillSlideIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     /* --- Connector modal overlay --- */
     .connector-modal-backdrop {
       position: fixed;
@@ -869,6 +1113,8 @@ export class SfxUploader extends LitElement {
   private _fsPanStartX = 0;
   private _fsPanStartY = 0;
   @state() private _bodyDragOver = false;
+  @state() private _isMinimized = false;
+  @state() private _isPillExpanded = false;
   private _bodyDragCounter = 0;
 
   private _store!: Store<UploaderState>;
@@ -897,6 +1143,10 @@ export class SfxUploader extends LitElement {
 
   /** Open the uploader (modal mode). */
   open() {
+    if (this._isMinimized) {
+      this._isMinimized = false;
+      this._isPillExpanded = false;
+    }
     if (this._isOpen) return;
     this._isOpen = true;
     this.config?.callbacks?.onOpen?.();
@@ -1729,6 +1979,30 @@ export class SfxUploader extends LitElement {
     this.close();
   };
 
+  private _onMinimize = () => {
+    this._isMinimized = true;
+    this._isOpen = false;
+    this._isPillExpanded = false;
+    this.requestUpdate();
+  };
+
+  private _onPillClick = () => {
+    if (this._phase === 'complete') {
+      // Done — close pill and clear
+      this._isMinimized = false;
+      this._isPillExpanded = false;
+      return;
+    }
+    this._isPillExpanded = !this._isPillExpanded;
+  };
+
+  private _onPillReopen = () => {
+    this._isMinimized = false;
+    this._isPillExpanded = false;
+    this._isOpen = true;
+    this.requestUpdate();
+  };
+
   private _onModalBackdropClick = (e: MouseEvent) => {
     if (e.target === e.currentTarget) {
       this._onModalDismiss();
@@ -1786,16 +2060,19 @@ export class SfxUploader extends LitElement {
 
   render() {
     const mode = this.config?.mode ?? 'modal';
+    const files = [...this._storeCtrl.state.files.values()];
 
     if (mode === 'modal') {
-      if (!this._isOpen) return nothing;
       return html`
-        <div class="modal-backdrop" @click=${this._onModalBackdropClick}>
-          <div class="modal-card">
-            ${this._renderHeader()}
-            ${this._renderBody()}
+        ${this._isOpen ? html`
+          <div class="modal-backdrop" @click=${this._onModalBackdropClick}>
+            <div class="modal-card">
+              ${this._renderHeader()}
+              ${this._renderBody()}
+            </div>
           </div>
-        </div>
+        ` : nothing}
+        ${this._isMinimized ? this._renderFloatingPill(files) : nothing}
       `;
     }
 
@@ -1809,7 +2086,7 @@ export class SfxUploader extends LitElement {
   }
 
   private _renderHeader() {
-    if (this._phase === 'complete') return nothing;
+    if (this._phase === 'complete' || this._phase === 'uploading') return nothing;
     const mode = this.config?.mode ?? 'modal';
     const headerButton = this.config?.headerButton ?? (mode === 'modal' ? 'close' : 'none');
     const isComplete = false;
@@ -1864,6 +2141,77 @@ export class SfxUploader extends LitElement {
       img.onerror = () => { this._dimCache.set(file.id, null); resolve(null); };
       img.src = file.previewUrl!;
     });
+  }
+
+  private _renderUploadOverlay(files: UploadFile[]) {
+    const s = this._storeCtrl.state;
+    const pct = Math.round(s.totalProgress ?? 0);
+    const completed = files.filter((f) => f.status === 'complete').length;
+    const eta = s.totalSpeed > 0 ? (s.totalBytes - s.totalBytesUploaded) / s.totalSpeed : 0;
+
+    return html`
+      <div class="upload-overlay">
+        <div class="upload-overlay-spinner"></div>
+        <div class="upload-overlay-percent">${pct}%</div>
+        <div class="upload-overlay-title">Uploading ${files.length} ${files.length === 1 ? 'file' : 'files'}</div>
+        <div class="upload-overlay-subtitle">${completed} of ${files.length} complete${eta > 0 ? html` · ~${formatEta(eta)} left` : nothing}</div>
+        <div class="upload-overlay-bar">
+          <div class="upload-overlay-bar-fill" style="width:${pct}%"></div>
+        </div>
+        <button class="upload-overlay-minimize" @click=${this._onMinimize}>Minimize & continue in background</button>
+      </div>
+    `;
+  }
+
+  private _renderFloatingPill(files: UploadFile[]) {
+    const s = this._storeCtrl.state;
+    const pct = Math.round(s.totalProgress ?? 0);
+    const isDone = this._phase === 'complete';
+
+    if (!this._isPillExpanded) {
+      return html`
+        <div class="upload-pill ${isDone ? 'done' : ''}" @click=${this._onPillClick}>
+          ${isDone
+            ? html`<svg class="pill-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>`
+            : html`<div class="pill-spinner"></div>`}
+          <span class="pill-text">${isDone ? 'Upload complete' : `Uploading ${files.length} ${files.length === 1 ? 'file' : 'files'}`}</span>
+          ${!isDone ? html`<span class="pill-percent">${pct}%</span>` : nothing}
+          <svg class="pill-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+      `;
+    }
+
+    // Expanded pill
+    const completed = files.filter((f) => f.status === 'complete').length;
+    return html`
+      <div class="upload-pill expanded ${isDone ? 'done' : ''}">
+        <div class="pill-header" @click=${this._onPillClick}>
+          <div class="pill-header-left">
+            ${isDone
+              ? html`<svg class="pill-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="width:16px;height:16px"><polyline points="20 6 9 17 4 12"/></svg>`
+              : html`<div class="pill-spinner"></div>`}
+            ${isDone ? `${completed} files uploaded` : `Uploading ${files.length} files · ${pct}%`}
+          </div>
+          <svg class="pill-header-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="18 15 12 9 6 15"/></svg>
+        </div>
+        ${!isDone ? html`<div class="pill-progress-bar"><div class="pill-progress-fill" style="width:${pct}%"></div></div>` : nothing}
+        <div class="pill-items">
+          ${files.map((f) => html`
+            <div class="pill-item">
+              ${f.status === 'complete'
+                ? html`<svg class="pill-item-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>`
+                : f.status === 'failed' || f.status === 'error'
+                  ? html`<svg class="pill-item-error" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`
+                  : html`<div class="pill-item-spin"></div>`}
+              <span class="pill-item-name">${f.name}</span>
+            </div>
+          `)}
+        </div>
+        <div class="pill-header" @click=${this._onPillReopen} style="border-top:1px solid rgba(255,255,255,0.1); justify-content:center; padding:10px 16px;">
+          <span style="font-size:12px; opacity:0.7;">${isDone ? 'Dismiss' : 'Open uploader'}</span>
+        </div>
+      </div>
+    `;
   }
 
   private _renderPreviewLayout(files: UploadFile[]) {
@@ -2011,6 +2359,8 @@ export class SfxUploader extends LitElement {
                     .thumbnails=${files.filter((f) => f.status === 'complete' && f.previewUrl).map((f) => f.previewUrl!)}
                   ></sfx-success-card>
                 `
+              : phase === 'uploading'
+              ? this._renderUploadOverlay(files)
               : html`
                   <sfx-drop-zone
                     .compact=${hasFiles}
@@ -2031,10 +2381,10 @@ export class SfxUploader extends LitElement {
                 `}
         </div>
 
-        ${hasFiles && phase !== 'complete'
+        ${hasFiles && phase !== 'complete' && phase !== 'uploading'
           ? html`
               <sfx-actions-bar
-                .uploadState=${phase === 'uploading' ? 'uploading' : 'idle'}
+                .uploadState=${'idle' as const}
                 .fileCount=${files.length}
                 .totalSize=${files.reduce((sum, f) => sum + (f.size || 0), 0)}
                 .failedCount=${files.filter((f) => f.status === 'failed' || f.status === 'error').length}

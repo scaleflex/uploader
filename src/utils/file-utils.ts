@@ -14,6 +14,15 @@ export function formatFileSize(bytes: number): string {
   return `${i === 0 ? value : value.toFixed(1)} ${units[i]}`;
 }
 
+/** Format seconds into a human-readable ETA string. */
+export function formatEta(seconds: number): string {
+  if (seconds <= 0) return '0s';
+  if (seconds < 60) return `${Math.round(seconds)}s`;
+  const m = Math.floor(seconds / 60);
+  const s = Math.round(seconds % 60);
+  return s > 0 ? `${m}m ${s}s` : `${m}m`;
+}
+
 /** Detect file type category for icon/color styling. */
 export function getFileCategory(file: { name: string; type: string }): string {
   const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
