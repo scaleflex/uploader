@@ -81,7 +81,7 @@ Initial release.
 - OAuth token management with `localStorage` caching for cloud providers
 - Provider browser UI with folder navigation and file selection
 - Custom source plugin architecture (`connectors.customSources`)
-- Three authentication modes: security template, SASS key, and session token
+- Two authentication modes: security template and SASS key
 - SASS key exchange for security template mode
 - Auth header generation and API base URL derivation
 - 20+ custom DOM events (`sfx-*`) with `bubbles` and `composed` for shadow DOM crossing

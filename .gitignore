@@ -1,6 +1,8 @@
 node_modules/
 dist/
+dist-cdn/
 demo-dist/
+.env.local
 /tmp
 /out-tsc
 

@@ -25,7 +25,7 @@ const page: Page = {
         <h2>Requirements</h2>
         <ul>
           <li>A <a href="https://www.scaleflex.com">Scaleflex</a> account with a container</li>
-          <li>A <strong>security template ID</strong> (recommended) or session credentials</li>
+          <li>A <strong>security template ID</strong> (recommended) or a SASS key</li>
           <li>Any modern browser (Chrome, Firefox, Safari, Edge — last 2 versions)</li>
         </ul>
 
@@ -35,6 +35,10 @@ const page: Page = {
         ${code('bash', `yarn add @scaleflex/uploader`)}
         <p>Or with pnpm:</p>
         ${code('bash', `pnpm add @scaleflex/uploader`)}
+
+        <h3>CDN (no bundler)</h3>
+        <p>Load the self-contained bundle via script tag. All custom elements are registered automatically.</p>
+        ${code('html', `<script src="https://scaleflex.cloudimg.io/v7/plugins/scaleflex/uploader/0.2.1/sfx-uploader.min.js"></script>`)}
 
         <h2>Package exports</h2>
         <table>

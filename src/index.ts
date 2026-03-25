@@ -17,7 +17,6 @@ export type {
   AuthConfig,
   SecurityTemplateAuth,
   SassKeyAuth,
-  SessionAuth,
   AuthHeaders,
 } from './auth';
 export { resolveAuth, exchangeSassKey, getApiBase, buildAuthHeaders } from './auth';

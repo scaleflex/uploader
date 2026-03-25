@@ -9,7 +9,7 @@ const page: Page = {
         <p class="doc-lead">All configuration is passed via the <code>config</code> property on the <code>&lt;sfx-uploader&gt;</code> element.</p>
 
         <h2>Authentication</h2>
-        <p>The uploader supports three authentication modes:</p>
+        <p>The uploader supports two authentication modes:</p>
 
         <h3>Security template (recommended)</h3>
         <p>Use for client-side integrations. The uploader exchanges the security template ID for a SASS key on init.</p>
@@ -33,21 +33,6 @@ const page: Page = {
     mode: 'sass-key',
     container: string,
     sassKey: string,
-  }
-}`,
-        )}
-
-        <h3>Session (internal / Scaleflex apps)</h3>
-        <p>Use when your backend manages Scaleflex sessions.</p>
-        ${code(
-          'typescript',
-          `{
-  auth: {
-    mode: 'session',
-    container: string,        // Scaleflex container name
-    sessionToken: string,     // X-Session-Token
-    companyToken?: string,    // X-Company-Token (optional)
-    projectToken?: string,    // X-Project-Token (optional)
   }
 }`,
         )}

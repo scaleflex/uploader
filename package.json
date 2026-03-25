@@ -1,6 +1,6 @@
 {
   "name": "@scaleflex/uploader",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Framework-agnostic file upload widget for Scaleflex VXP",
   "type": "module",
   "main": "dist/index.cjs",
@@ -25,6 +25,7 @@
   },
   "files": [
     "dist",
+    ".claude/skills",
     "README.md",
     "LICENSE",
     "CHANGELOG.md"
@@ -39,6 +40,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "release": "node scripts/release-cdn.mjs plugin",
     "publish:github": "./scripts/publish-github.sh",
     "push:source": "git push gitlab main"
   },

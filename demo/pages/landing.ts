@@ -59,6 +59,15 @@ const page: Page = {
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                 </button>
               </div>
+              <div class="step-alt">
+                <span class="step-alt-label">or use CDN</span>
+                <div class="step-code">
+                  <code>&lt;script src="https://scaleflex.cloudimg.io/v7/plugins/scaleflex/uploader/0.2.1/sfx-uploader.min.js"&gt;&lt;/script&gt;</code>
+                  <button class="step-copy" data-code='<script src="https://scaleflex.cloudimg.io/v7/plugins/scaleflex/uploader/0.2.1/sfx-uploader.min.js"></script>' aria-label="Copy to clipboard">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  </button>
+                </div>
+              </div>
             </div>
             <div class="quick-start-step">
               <div class="step-header">
@@ -71,6 +80,7 @@ const page: Page = {
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                 </button>
               </div>
+              <p class="step-note">Skip this step when using the CDN — elements are registered automatically.</p>
             </div>
             <div class="quick-start-step">
               <div class="step-header">
@@ -132,6 +142,38 @@ const page: Page = {
               </div>
               <h3>Fully themeable</h3>
               <p>CSS custom properties with <code>--sfx-up-*</code> prefix. Works in modal or inline mode.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="claude-code-section">
+        <div class="section-inner">
+          <div class="section-header">
+            <div class="section-label">AI-assisted setup</div>
+            <h2>Integrate with Claude Code</h2>
+            <p>This package ships with a ready-made <a href="https://docs.anthropic.com/en/docs/claude-code" target="_blank" rel="noopener">Claude Code</a> skill. Claude detects your framework, wires auth, events, theming, and restrictions automatically.</p>
+          </div>
+          <div class="claude-code-steps">
+            <div class="claude-code-step">
+              <h3>1. Copy the skill into your project</h3>
+              <div class="step-code">
+                <code>cp -r node_modules/@scaleflex/uploader/.claude/skills/integrate-uploader .claude/skills/</code>
+                <button class="step-copy" data-code="cp -r node_modules/@scaleflex/uploader/.claude/skills/integrate-uploader .claude/skills/" aria-label="Copy to clipboard">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                </button>
+              </div>
+              <p class="step-note">Commit <code>.claude/skills/</code> so every team member gets it.</p>
+            </div>
+            <div class="claude-code-step">
+              <h3>2. Use the skill</h3>
+              <div class="step-code">
+                <code>/integrate-uploader</code>
+                <button class="step-copy" data-code="/integrate-uploader" aria-label="Copy to clipboard">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                </button>
+              </div>
+              <p class="step-note">Type this in Claude Code and it walks you through the full integration.</p>
             </div>
           </div>
         </div>
@@ -277,6 +319,35 @@ const page: Page = {
 <script type="module">
   import '@scaleflex/uploader/define';
 </script>
+
+<sfx-uploader id="uploader"></sfx-uploader>
+
+<button onclick="document.getElementById('uploader').open()">
+  Upload files
+</button>
+
+<script>
+  const uploader = document.getElementById('uploader');
+  uploader.config = {
+    auth: {
+      mode: 'security-template',
+      container: 'YOUR_CONTAINER',
+      securityTemplateId: 'YOUR_TEMPLATE_ID',
+    },
+    mode: 'modal',
+    targetFolder: '/uploads',
+  };
+
+  uploader.addEventListener('sfx-all-complete', (e) => {
+    console.log('Uploaded:', e.detail.successful);
+  });
+</script>`,
+      },
+      {
+        label: 'CDN',
+        lang: 'markup',
+        code: `
+<script src="https://scaleflex.cloudimg.io/v7/plugins/scaleflex/uploader/0.2.1/sfx-uploader.min.js"></script>
 
 <sfx-uploader id="uploader"></sfx-uploader>
 

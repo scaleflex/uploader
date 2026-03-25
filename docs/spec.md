@@ -546,23 +546,6 @@ Two authentication methods, matching Filerobot API:
 - Should only be used in server-side or trusted environments
 - Supports automatic renewal on expiration (visibility change detection)
 
-### 8.3 Session Auth (for Hub/Portals integration)
-
-```typescript
-{
-  auth: {
-    mode: 'session',
-    container: 'my-container',
-    sessionToken: '...',
-    companyToken: '...',
-    projectToken: '...',
-  }
-}
-```
-
-- For when the uploader is embedded within an authenticated Scaleflex app
-- Uses existing session headers: `X-Filerobot-Key`, `X-Filerobot-Session`, `X-Company-Token`, `X-Project-Token`
-
 ---
 
 ## 9. API Integration (Filerobot)
@@ -627,7 +610,7 @@ interface FilerobotUploadResponse {
 ### 9.4 API Client
 
 Reuse the `ApiClient` pattern from asset-picker:
-- Abstract auth layer (session vs security template)
+- Abstract auth layer (security template vs SASS key)
 - 30-second timeout with `AbortController`
 - Automatic error parsing
 - Geo-replicated endpoint support (matching js-admin's `client-georeplicated.js`)
@@ -821,7 +804,7 @@ export const Uploader = forwardRef<UploaderRef, UploaderProps>((props, ref) => {
 ```typescript
 interface UploaderConfig {
   // --- Authentication (required) ---
-  auth: SessionAuth | SecurityTemplateAuth | SassKeyAuth
+  auth: SecurityTemplateAuth | SassKeyAuth
 
   // --- Display ---
   mode?: 'modal' | 'inline' | 'dropdown'     // Default: 'modal'
@@ -1223,7 +1206,7 @@ import '@scaleflex/uploader/define'
 
 const uploader = document.createElement('sfx-uploader')
 uploader.config = {
-  auth: { mode: 'session', ...sessionTokens },
+  auth: { mode: 'security-template', container: 'my-container', securityTemplateId: 'SECU_XXX' },
   mode: 'dropdown',
   targetFolder: '/portals/campaign-assets/',
   restrictions: { allowedFileTypes: ['image/*', 'video/*'] },
@@ -1263,7 +1246,7 @@ function HubUploadStep({ folder, projectMetadataModel, requiredFields, onUploade
   return (
     <Uploader
       config={{
-        auth: { mode: 'session', ...hubSession },
+        auth: { mode: 'security-template', container: 'my-container', securityTemplateId: 'SECU_XXX' },
         mode: 'inline',
         targetFolder: folder,
         showFolderPicker: true,

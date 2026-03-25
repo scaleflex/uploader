@@ -16,7 +16,6 @@ const page: Page = {
   AuthConfig,
   SecurityTemplateAuth,
   SassKeyAuth,
-  SessionAuth,
   UploadFile,
   FileStatus,
   UploadRestrictions,
