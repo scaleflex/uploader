@@ -10,6 +10,7 @@ export function makeUploadFile(overrides: Partial<UploadFile> = {}): UploadFile 
     size: 5,
     type: 'image/png',
     previewUrl: null,
+    duration: null,
     progress: 0,
     speed: 0,
     bytesUploaded: 0,

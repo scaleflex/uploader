@@ -95,6 +95,21 @@ export class SfxFileItem extends LitElement {
       margin-top: 2px;
     }
 
+    .duration-badge {
+      position: absolute;
+      bottom: 6px;
+      right: 6px;
+      background: rgba(0, 0, 0, 0.65);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 4px;
+      line-height: 1.3;
+      pointer-events: none;
+      z-index: 2;
+    }
+
     /* --- Info bar --- */
     .info {
       padding: 8px 12px;
@@ -469,6 +484,11 @@ export class SfxFileItem extends LitElement {
           ${(isError || isRejected) && f.error
             ? html`<div class="error-badge" title=${f.error}>${f.error}</div>`
             : nothing}
+
+          <!-- Video duration badge -->
+          ${f.duration != null && f.duration > 0
+            ? html`<div class="duration-badge">${this._formatDuration(f.duration)}</div>`
+            : nothing}
         </div>
 
         <!-- Action buttons -->
@@ -501,6 +521,12 @@ export class SfxFileItem extends LitElement {
         </div>
       </div>
     `;
+  }
+
+  private _formatDuration(seconds: number): string {
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${m}:${s.toString().padStart(2, '0')}`;
   }
 
   private _renderTypeIcon(category: string) {

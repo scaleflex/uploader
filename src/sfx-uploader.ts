@@ -9,7 +9,7 @@ import type { UploaderState, UploadFile, UploadRestrictions, UploadResponse } fr
 import type { AuthConfig, AuthHeaders } from './auth/auth.types';
 import { resolveAuth, getApiBase, buildAuthHeaders } from './auth/auth.service';
 import { PublicEvents, type PublicEventName } from './events/public-events';
-import { generateFileId, guessMimeType, formatFileSize, formatEta, generateVideoThumbnail } from './utils/file-utils';
+import { generateFileId, guessMimeType, formatFileSize, formatEta, generateVideoThumbnail, getFileCategory } from './utils/file-utils';
 import { validateFile, validateFileInfo, buildAcceptString } from './utils/validate';
 import type { ProviderId, ConnectorConfig, RemoteFileInfo } from './connectors/connector.types';
 import { getProviderSources } from './connectors/provider-registry';
@@ -381,7 +381,7 @@ export class SfxUploader extends LitElement {
       position: absolute;
       top: 0;
       bottom: 0;
-      right: 7px;
+      right: 14px;
       width: 1px;
       background: var(--sfx-up-border, #e8edf5);
       pointer-events: none;
@@ -389,7 +389,10 @@ export class SfxUploader extends LitElement {
     }
 
     .preview-layout sfx-file-list {
-      padding-right: 10px;
+      padding-right: 16px;
+      --sfx-scrollbar-w: 14px;
+      --sfx-scrollbar-inset: 4px;
+      --sfx-scrollbar-radius: 7px;
     }
 
     .file-grid-header {
@@ -519,6 +522,53 @@ export class SfxUploader extends LitElement {
       height: 16px;
       color: var(--sfx-up-text-muted, #9ca3af);
     }
+
+    .preview-doc-wrap {
+      position: relative;
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .preview-doc-wrap.pdf { background: linear-gradient(135deg, #fef2f2, #fee2e2); }
+    .preview-doc-wrap.doc { background: linear-gradient(135deg, var(--sfx-up-primary-bg, #eff6ff), var(--sfx-up-primary-bg, #dbeafe)); }
+    .preview-doc-wrap.vid { background: linear-gradient(135deg, #f5f3ff, #ede9fe); }
+    .preview-doc-wrap.zip { background: linear-gradient(135deg, var(--warning-10, #fffbeb), var(--warning-10, #fef3c7)); }
+    .preview-doc-wrap.gen { background: linear-gradient(135deg, var(--sfx-up-border-light, #f8fafc), var(--sfx-up-border-light, #f1f5f9)); }
+
+    .preview-doc-icon {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .preview-doc-icon svg {
+      width: 48px;
+      height: 48px;
+      stroke-width: 1.5;
+    }
+
+    .preview-doc-icon.pdf svg { color: var(--sfx-up-error, #dc2626); }
+    .preview-doc-icon.doc svg { color: var(--sfx-up-primary, #1d4ed8); }
+    .preview-doc-icon.vid svg { color: #7c3aed; }
+    .preview-doc-icon.zip svg { color: var(--warning-foreground, #b45309); }
+    .preview-doc-icon.gen svg { color: var(--sfx-up-text-muted, #64748b); }
+
+    .preview-doc-ext {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .preview-doc-ext.pdf { color: var(--sfx-up-error, #dc2626); }
+    .preview-doc-ext.doc { color: var(--sfx-up-primary, #1d4ed8); }
+    .preview-doc-ext.vid { color: #7c3aed; }
+    .preview-doc-ext.zip { color: var(--warning-foreground, #b45309); }
+    .preview-doc-ext.gen { color: var(--sfx-up-text-muted, #64748b); }
 
     .preview-img-wrap {
       position: relative;
@@ -1202,6 +1252,7 @@ export class SfxUploader extends LitElement {
   @state() private _previewFileId: string | null = null;
   @state() private _previewDims: string = '—';
   @state() private _fullscreenPreviewUrl: string | null = null;
+  @state() private _fullscreenVideoFile: File | null = null;
   @state() private _fullscreenZoomed = false;
   private _fsPanX = 0;
   private _fsPanY = 0;
@@ -1752,6 +1803,7 @@ export class SfxUploader extends LitElement {
           size: file.size,
           type: file.type,
           previewUrl: null,
+          duration: null,
           progress: 0,
           speed: 0,
           bytesUploaded: 0,
@@ -1798,6 +1850,7 @@ export class SfxUploader extends LitElement {
         size: file.size,
         type: file.type,
         previewUrl,
+        duration: null,
         progress: 0,
         speed: 0,
         bytesUploaded: 0,
@@ -1814,7 +1867,7 @@ export class SfxUploader extends LitElement {
       this._dispatchPublic(PublicEvents.FILE_ADDED, { file: uploadFile });
       callbacks?.onFileAdded?.(uploadFile);
 
-      // Generate video thumbnail asynchronously
+      // Generate video thumbnail and extract duration asynchronously
       if (file.type.startsWith('video/')) {
         generateVideoThumbnail(file).then((thumbUrl) => {
           if (!thumbUrl) return;
@@ -1825,10 +1878,25 @@ export class SfxUploader extends LitElement {
             next.set(uploadFile.id, { ...current, previewUrl: thumbUrl });
             this._store.setState({ files: next });
           } else {
-            // File was removed before thumbnail resolved — revoke to prevent leak
             URL.revokeObjectURL(thumbUrl);
           }
         });
+        // Extract duration
+        const vid = document.createElement('video');
+        vid.preload = 'metadata';
+        vid.src = URL.createObjectURL(file);
+        vid.onloadedmetadata = () => {
+          const duration = vid.duration;
+          URL.revokeObjectURL(vid.src);
+          if (!isFinite(duration)) return;
+          const state = this._store.getState();
+          const current = state.files.get(uploadFile.id);
+          if (current) {
+            const next = new Map(state.files);
+            next.set(uploadFile.id, { ...current, duration });
+            this._store.setState({ files: next });
+          }
+        };
       }
     }
 
@@ -1918,7 +1986,7 @@ export class SfxUploader extends LitElement {
     if (error) {
       const rejFile: UploadFile = {
         id: generateFileId(), status: 'rejected', file: null, remoteUrl: url,
-        name, size: 0, type, previewUrl: null, progress: 0, speed: 0,
+        name, size: 0, type, previewUrl: null, duration: null, progress: 0, speed: 0,
         bytesUploaded: 0, error, retryCount: 0, response: null,
         addedAt: Date.now(), meta: {}, tags: [], remoteInfo: null,
       };
@@ -1937,6 +2005,7 @@ export class SfxUploader extends LitElement {
       size: 0,
       type,
       previewUrl: isImage ? url : null,
+      duration: null,
       progress: 0,
       speed: 0,
       bytesUploaded: 0,
@@ -2095,7 +2164,7 @@ export class SfxUploader extends LitElement {
         const rejFile: UploadFile = {
           id: generateFileId(), status: 'rejected', file: null, remoteUrl: null,
           name: info.name, size: info.size, type: info.mimeType,
-          previewUrl: info.thumbnail, progress: 0, speed: 0, bytesUploaded: 0,
+          previewUrl: info.thumbnail, duration: null, progress: 0, speed: 0, bytesUploaded: 0,
           error, retryCount: 0, response: null, addedAt: Date.now(),
           meta: {}, tags: [], remoteInfo: info,
         };
@@ -2114,6 +2183,7 @@ export class SfxUploader extends LitElement {
         size: info.size,
         type: info.mimeType,
         previewUrl: info.thumbnail,
+        duration: null,
         progress: 0,
         speed: 0,
         bytesUploaded: 0,
@@ -2486,8 +2556,8 @@ export class SfxUploader extends LitElement {
           <div class="preview-panel-header">
             <span class="preview-panel-filename" title=${previewFile.name}>${previewFile.name}</span>
             <div class="preview-header-actions">
-              ${previewFile.previewUrl ? html`
-                <button @click=${() => { this._fullscreenPreviewUrl = previewFile.previewUrl; this._fullscreenZoomed = false; }} title="Fullscreen">
+              ${previewFile.previewUrl || (previewFile.type.startsWith('video/') && previewFile.file) ? html`
+                <button @click=${() => { this._fullscreenPreviewUrl = previewFile.previewUrl; this._fullscreenVideoFile = previewFile.type.startsWith('video/') && previewFile.file ? previewFile.file : null; this._fullscreenZoomed = false; }} title="Fullscreen">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="15 3 21 3 21 9" />
                     <polyline points="9 21 3 21 3 15" />
@@ -2504,7 +2574,19 @@ export class SfxUploader extends LitElement {
               </button>
             </div>
           </div>
-          ${previewFile.previewUrl
+          ${previewFile.type.startsWith('video/') && previewFile.file
+            ? html`
+                <div class="preview-img-wrap">
+                  <video class="preview-image" src=${URL.createObjectURL(previewFile.file)} autoplay loop muted playsinline></video>
+                  <button class="preview-nav prev" ?disabled=${files.indexOf(previewFile) === 0} @click=${() => this._navigatePreview(files, -1)}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                  </button>
+                  <button class="preview-nav next" ?disabled=${files.indexOf(previewFile) === files.length - 1} @click=${() => this._navigatePreview(files, 1)}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 6 15 12 9 18"/></svg>
+                  </button>
+                </div>
+              `
+          : previewFile.previewUrl
             ? html`
                 <div class="preview-img-wrap">
                   <img class="preview-image" src=${previewFile.previewUrl} alt=${previewFile.name} />
@@ -2516,7 +2598,20 @@ export class SfxUploader extends LitElement {
                   </button>
                 </div>
               `
-            : nothing}
+            : html`
+                <div class="preview-doc-wrap ${getFileCategory(previewFile)}">
+                  <div class="preview-doc-icon ${getFileCategory(previewFile)}">
+                    ${this._renderDocTypeIcon(getFileCategory(previewFile))}
+                    <span class="preview-doc-ext ${getFileCategory(previewFile)}">${ext}</span>
+                  </div>
+                  <button class="preview-nav prev" ?disabled=${files.indexOf(previewFile) === 0} @click=${() => this._navigatePreview(files, -1)}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                  </button>
+                  <button class="preview-nav next" ?disabled=${files.indexOf(previewFile) === files.length - 1} @click=${() => this._navigatePreview(files, 1)}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 6 15 12 9 18"/></svg>
+                  </button>
+                </div>
+              `}
           <div class="preview-meta-list">
             <div class="preview-meta-row">
               <span class="preview-meta-label">Type</span>
@@ -2547,6 +2642,21 @@ export class SfxUploader extends LitElement {
         </div>
       </div>
     `;
+  }
+
+  private _renderDocTypeIcon(category: string) {
+    switch (category) {
+      case 'pdf':
+        return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
+      case 'doc':
+        return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`;
+      case 'vid':
+        return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>`;
+      case 'zip':
+        return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>`;
+      default:
+        return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>`;
+    }
   }
 
   private _navigatePreview(files: UploadFile[], direction: -1 | 1) {
@@ -2703,13 +2813,21 @@ export class SfxUploader extends LitElement {
                     </svg>
                   </button>
                 </div>
-                <img
-                  class="fs-img"
-                  src=${this._fullscreenPreviewUrl}
-                  alt=""
-                  style=${this._fullscreenZoomed ? `transform: scale(2) translate(${this._fsPanX}px, ${this._fsPanY}px)` : ''}
-                  draggable="false"
-                />
+                ${this._fullscreenVideoFile
+                  ? html`<video
+                      class="fs-img"
+                      src=${URL.createObjectURL(this._fullscreenVideoFile)}
+                      autoplay loop muted playsinline
+                      draggable="false"
+                      @click=${(e: Event) => e.stopPropagation()}
+                    ></video>`
+                  : html`<img
+                      class="fs-img"
+                      src=${this._fullscreenPreviewUrl}
+                      alt=""
+                      style=${this._fullscreenZoomed ? `transform: scale(2) translate(${this._fsPanX}px, ${this._fsPanY}px)` : ''}
+                      draggable="false"
+                    />`}
                 <button class="fs-nav prev" @click=${(e: Event) => { e.stopPropagation(); this._navigateFs(-1); }}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
                 </button>
@@ -2794,13 +2912,15 @@ export class SfxUploader extends LitElement {
 
   private _navigateFs(direction: -1 | 1) {
     const files = [...this._store.getState().files.values()].filter(
-      (f) => f.previewUrl,
+      (f) => f.previewUrl || (f.type.startsWith('video/') && f.file),
     );
-    const idx = files.findIndex((f) => f.previewUrl === this._fullscreenPreviewUrl);
+    const idx = files.findIndex((f) => f.previewUrl === this._fullscreenPreviewUrl && (this._fullscreenVideoFile ? f.file === this._fullscreenVideoFile : true));
     const next = idx + direction;
     if (next >= 0 && next < files.length) {
-      this._fullscreenPreviewUrl = files[next].previewUrl;
-      this._previewFileId = files[next].id;
+      const nextFile = files[next];
+      this._fullscreenPreviewUrl = nextFile.previewUrl;
+      this._fullscreenVideoFile = nextFile.type.startsWith('video/') && nextFile.file ? nextFile.file : null;
+      this._previewFileId = nextFile.id;
       this._fullscreenZoomed = false;
       this._fsPanX = 0;
       this._fsPanY = 0;
@@ -2810,6 +2930,7 @@ export class SfxUploader extends LitElement {
   private _onFsClose = (e?: Event) => {
     e?.stopPropagation();
     this._fullscreenPreviewUrl = null;
+    this._fullscreenVideoFile = null;
     this._fullscreenZoomed = false;
     this._fsPanX = 0;
     this._fsPanY = 0;

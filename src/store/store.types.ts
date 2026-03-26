@@ -28,6 +28,7 @@ export interface UploadFile {
   size: number;              // bytes (0 for remote URLs until server reports)
   type: string;              // MIME
   previewUrl: string | null; // objectURL for local images
+  duration: number | null;   // seconds (video/audio)
 
   // Progress
   progress: number;          // 0–100
