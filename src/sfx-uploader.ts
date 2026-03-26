@@ -369,16 +369,16 @@ export class SfxUploader extends LitElement {
       flex: 54;
       min-width: 0;
       min-height: 100%;
-      overflow-y: auto;
-      scrollbar-gutter: stable;
-      scrollbar-width: thin;
-      scrollbar-color: #c8cdd6 transparent;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
       --sfx-up-grid-min: max(48%, 140px);
+      background-image: linear-gradient(to right, transparent calc(100% - 8px), var(--sfx-up-border, #e8edf5) calc(100% - 8px), var(--sfx-up-border, #e8edf5) calc(100% - 7px), transparent calc(100% - 7px));
     }
 
-    .preview-layout .file-grid-side::-webkit-scrollbar { width: 14px; }
-    .preview-layout .file-grid-side::-webkit-scrollbar-track { background: transparent; }
-    .preview-layout .file-grid-side::-webkit-scrollbar-thumb { background: #c8cdd6; border-left: 4px solid transparent; border-right: 4px solid transparent; background-clip: padding-box; border-radius: 7px; }
+    .preview-layout sfx-file-list {
+      padding-right: 10px;
+    }
 
     .file-grid-header {
       display: flex;
