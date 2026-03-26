@@ -310,7 +310,7 @@ export class SfxUploader extends LitElement {
       align-items: stretch;
       overflow: hidden;
       gap: 0;
-      padding: 0 16px 16px 16px;
+      padding: 0 16px 0 16px;
       animation: bodyReveal 0.35s ease both;
     }
 
@@ -372,8 +372,20 @@ export class SfxUploader extends LitElement {
       overflow: hidden;
       display: flex;
       flex-direction: column;
+      position: relative;
       --sfx-up-grid-min: max(48%, 140px);
-      background-image: linear-gradient(to right, transparent calc(100% - 8px), var(--sfx-up-border, #e8edf5) calc(100% - 8px), var(--sfx-up-border, #e8edf5) calc(100% - 7px), transparent calc(100% - 7px));
+    }
+
+    .preview-layout .file-grid-side::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      right: 7px;
+      width: 1px;
+      background: var(--sfx-up-border, #e8edf5);
+      pointer-events: none;
+      z-index: 3;
     }
 
     .preview-layout sfx-file-list {
