@@ -291,9 +291,18 @@ export class SfxUploader extends LitElement {
 
     .body.body-drag-over {
       background: var(--sfx-up-primary-bg, #eff6ff);
-      outline: 2px dashed var(--sfx-up-primary, #2563eb);
-      outline-offset: -4px;
       border-radius: 8px;
+      position: relative;
+    }
+
+    .body.body-drag-over::after {
+      content: '';
+      position: absolute;
+      inset: 4px;
+      border: 2px dashed var(--sfx-up-primary, #2563eb);
+      border-radius: 8px;
+      z-index: 100;
+      pointer-events: none;
     }
 
     .body.has-files {
@@ -301,7 +310,7 @@ export class SfxUploader extends LitElement {
       align-items: stretch;
       overflow: hidden;
       gap: 0;
-      padding-bottom: 0;
+      padding: 0 16px 16px 16px;
       animation: bodyReveal 0.35s ease both;
     }
 
@@ -354,7 +363,6 @@ export class SfxUploader extends LitElement {
       height: 798px;
       min-height: 0;
       overflow: hidden;
-      border-top: 1px solid var(--sfx-up-border, #e8edf5);
     }
 
     .preview-layout .file-grid-side {
@@ -398,7 +406,7 @@ export class SfxUploader extends LitElement {
       align-items: center;
       justify-content: space-between;
       flex-shrink: 0;
-      padding: 12px 0;
+      padding: 0;
     }
 
     .preview-divider {
@@ -1824,6 +1832,11 @@ export class SfxUploader extends LitElement {
     this._processIncomingFiles(e.detail.files);
   };
 
+  private _onDropTileSourceClick = (e: CustomEvent<{ source: SourceDef }>) => {
+    const source = e.detail.source;
+    this._onSourceClick(new CustomEvent('source-click', { detail: { source: source.id } }) as CustomEvent<{ source: string }>);
+  };
+
   private _onSourceClick = async (e: CustomEvent<{ source: string }>) => {
     const source = e.detail.source;
 
@@ -2032,7 +2045,14 @@ export class SfxUploader extends LitElement {
 
   private _onAddMore = () => {
     const dropZone = this.shadowRoot!.querySelector('sfx-drop-zone') as SfxDropZone | null;
-    dropZone?.browse();
+    if (dropZone) {
+      dropZone.browse();
+      return;
+    }
+    // Fallback: use file-list's hidden input when drop-zone is not rendered
+    const fileList = this.shadowRoot!.querySelector('sfx-file-list');
+    const input = fileList?.shadowRoot?.querySelector('input[type="file"]') as HTMLInputElement | null;
+    input?.click();
   };
 
   private _onUploadStart = () => {
@@ -2441,7 +2461,13 @@ export class SfxUploader extends LitElement {
           <div class="file-grid-header">
             <span class="file-grid-header-text">${files.length} ${files.length === 1 ? 'asset' : 'assets'} · ${formatFileSize(totalSize)}</span>
           </div>
-          <sfx-file-list .files=${files}></sfx-file-list>
+          <sfx-file-list
+            .files=${files}
+            .showDropTile=${true}
+            .sources=${this._mergedSources}
+            .accept=${buildAcceptString(this._storeCtrl.state.restrictions)}
+            @source-click=${this._onDropTileSourceClick}
+          ></sfx-file-list>
         </div>
         <div class="preview-divider"></div>
         <div class="preview-panel">
@@ -2574,20 +2600,28 @@ export class SfxUploader extends LitElement {
               : phase === 'uploading'
               ? this._renderUploadOverlay(files)
               : html`
-                  <sfx-drop-zone
-                    .compact=${hasFiles}
-                    .externalDragOver=${this._bodyDragOver}
-                    .accept=${accept}
-                    .sources=${this._mergedSources}
-                    .sourcesLayout=${this.config?.sourcesLayout ?? 'pills'}
-                  ></sfx-drop-zone>
+                  ${hasFiles
+                    ? nothing
+                    : html`<sfx-drop-zone
+                        .compact=${hasFiles}
+                        .externalDragOver=${this._bodyDragOver}
+                        .accept=${accept}
+                        .sources=${this._mergedSources}
+                        .sourcesLayout=${this.config?.sourcesLayout ?? 'pills'}
+                      ></sfx-drop-zone>`}
 
                   ${hasFiles
                     ? this._previewFileId
                       ? this._renderPreviewLayout(files)
                       : html`
                           <div class="asset-count">${files.length} ${files.length === 1 ? 'file' : 'files'} · ${formatFileSize(files.reduce((sum, f) => sum + (f.size || 0), 0))}</div>
-                          <sfx-file-list .files=${files}></sfx-file-list>
+                          <sfx-file-list
+                            .files=${files}
+                            .showDropTile=${true}
+                            .sources=${this._mergedSources}
+                            .accept=${accept}
+                            @source-click=${this._onDropTileSourceClick}
+                          ></sfx-file-list>
                         `
                     : nothing}
                 `}

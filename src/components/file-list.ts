@@ -1,6 +1,9 @@
-import { LitElement, html, css } from 'lit';
+import { LitElement, html, css, nothing, svg as svgTag } from 'lit';
 import { property } from 'lit/decorators.js';
+import { unsafeSVG } from 'lit/directives/unsafe-svg.js';
+import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import type { UploadFile } from '../store/store.types';
+import type { SourceDef } from '../types/source.types';
 
 export class SfxFileList extends LitElement {
   static styles = css`
@@ -9,6 +12,7 @@ export class SfxFileList extends LitElement {
       flex: 1;
       min-height: 0;
       overflow-y: auto;
+      padding-right: 6px;
       padding-bottom: 8px;
       scrollbar-width: thin;
       scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
@@ -42,13 +46,172 @@ export class SfxFileList extends LitElement {
         gap: 8px;
       }
     }
+
+    /* --- Drop tile (first card in grid) --- */
+    .drop-tile {
+      border-radius: 10px;
+      border: 1.5px dashed var(--sfx-up-border, #c4d5ef);
+      background: var(--sfx-up-surface, #f8fafc);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      padding: 16px 12px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .drop-tile:hover {
+      border-color: var(--sfx-up-primary, #2563eb);
+      background: var(--sfx-up-primary-bg, #eff6ff);
+    }
+
+    .drop-tile-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--sfx-up-primary-bg, #eff6ff);
+      color: var(--sfx-up-primary, #2563eb);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .drop-tile-icon svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .drop-tile-text {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--sfx-up-text-secondary, #475569);
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    .drop-tile-text span {
+      color: var(--sfx-up-primary, #2563eb);
+      font-weight: 600;
+    }
+
+    .drop-tile-sources {
+      display: flex;
+      gap: 4px;
+      margin-top: 4px;
+    }
+
+    .drop-tile-src {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      border: 1px solid var(--sfx-up-border, #e2e8f0);
+      background: var(--sfx-up-bg, #fff);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      padding: 0;
+      color: var(--sfx-up-text-muted, #94a3b8);
+    }
+
+    .drop-tile-src:hover {
+      border-color: var(--sfx-up-primary, #2563eb);
+      background: var(--sfx-up-primary-bg, #eff6ff);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);
+    }
+
+    .drop-tile-src svg {
+      width: 14px;
+      height: 14px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .drop-tile-src svg.fill-icon {
+      fill: currentColor;
+      stroke: none;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
   `;
 
   @property({ attribute: false }) files: UploadFile[] = [];
+  @property({ type: Boolean }) showDropTile = false;
+  @property({ attribute: false }) sources: SourceDef[] = [];
+  @property({ type: String }) accept = '';
+
+  private _onDropTileClick() {
+    const input = this.renderRoot.querySelector('input[type="file"]') as HTMLInputElement;
+    input?.click();
+  }
+
+  private _onFileInput(e: Event) {
+    const input = e.target as HTMLInputElement;
+    const files = Array.from(input.files ?? []);
+    if (files.length > 0) {
+      this.dispatchEvent(new CustomEvent('files-selected', { detail: { files }, bubbles: true, composed: true }));
+    }
+    input.value = '';
+  }
+
+  private _onSourceClick(e: Event, source: SourceDef) {
+    e.stopPropagation();
+    if (source.id === 'device') {
+      const input = this.renderRoot.querySelector('input[type="file"]') as HTMLInputElement;
+      input?.click();
+      return;
+    }
+    this.dispatchEvent(new CustomEvent('source-click', { detail: { source }, bubbles: true, composed: true }));
+  }
+
+  private _renderDropTile() {
+    const visibleSources = this.sources.slice(0, 4);
+    return html`
+      <div class="drop-tile" @click=${this._onDropTileClick}>
+        <div class="drop-tile-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <polyline points="16 16 12 12 8 16" />
+            <line x1="12" y1="12" x2="12" y2="21" />
+            <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
+          </svg>
+        </div>
+        <div class="drop-tile-text">Drop files or<br>click to <span>browse</span></div>
+        ${visibleSources.length > 0 ? html`
+          <div class="drop-tile-sources">
+            ${visibleSources.map((s) => html`
+              <button
+                class="drop-tile-src"
+                style=${s.iconColor && !s.brandHtml ? `color:${s.iconColor}` : ''}
+                title=${s.label}
+                @click=${(e: Event) => this._onSourceClick(e, s)}
+              >
+                ${s.brandHtml
+                  ? unsafeHTML(s.brandHtml)
+                  : svgTag`<svg viewBox="0 0 24 24" class=${s.fillIcon ? 'fill-icon' : ''}>${unsafeSVG(s.icon)}</svg>`}
+              </button>
+            `)}
+          </div>
+        ` : nothing}
+        <input type="file" multiple .accept=${this.accept} @change=${this._onFileInput} />
+      </div>
+    `;
+  }
 
   render() {
     return html`
       <div class="grid">
+        ${this.showDropTile ? this._renderDropTile() : nothing}
         ${this.files.map(
           (f, i) => html`<sfx-file-item .file=${f} style="--tile-index:${i}"></sfx-file-item>`,
         )}
