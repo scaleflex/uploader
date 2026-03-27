@@ -310,8 +310,12 @@ export class SfxUploader extends LitElement {
       align-items: stretch;
       overflow: hidden;
       gap: 0;
-      padding: 0 16px 0 16px;
+      padding: 0 8px 0 8px;
       animation: bodyReveal 0.35s ease both;
+    }
+
+    .body.has-files:has(.preview-layout) {
+      padding-right: 0;
     }
 
     @keyframes bodyReveal {
@@ -330,10 +334,14 @@ export class SfxUploader extends LitElement {
     }
 
     .asset-count {
-      font-size: 12px;
-      font-weight: 500;
+      font-size: 14px;
+      font-weight: 400;
       color: var(--sfx-up-text-secondary, #64748b);
-      padding: 24px 0 8px;
+      padding: 16px;
+      min-height: 61px;
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
       flex-shrink: 0;
     }
 
@@ -411,9 +419,9 @@ export class SfxUploader extends LitElement {
     }
 
     .file-grid-header-text {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--sfx-up-text, #1e293b);
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--sfx-up-text-secondary, #64748b);
     }
 
     .preview-topbar {
@@ -456,7 +464,7 @@ export class SfxUploader extends LitElement {
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-      padding: 16px;
+      padding: 16px 24px 16px 16px;
       flex-shrink: 0;
       border-bottom: 1px solid var(--sfx-up-border, #e8edf5);
     }
@@ -469,8 +477,8 @@ export class SfxUploader extends LitElement {
     }
 
     .preview-panel-filename {
-      font-size: 13px;
-      font-weight: 500;
+      font-size: 16px;
+      font-weight: 400;
       color: var(--sfx-up-text, #1e293b);
       white-space: nowrap;
       overflow: hidden;
@@ -1182,8 +1190,8 @@ export class SfxUploader extends LitElement {
       .header-icon svg { width: 14px; height: 14px; }
       .header-title { font-size: 14px; }
       .body { padding: 16px; }
-      .body.has-files { padding: 16px; padding-bottom: 12px; }
-      .asset-count { padding: 12px 0 6px; font-size: 12px; }
+      .body.has-files { padding: 0 8px; padding-bottom: 12px; }
+      .asset-count { padding: 16px; }
 
       .preview-layout { flex-direction: column; }
       .preview-layout .file-grid-side {
@@ -1221,8 +1229,8 @@ export class SfxUploader extends LitElement {
       .header-icon { width: 26px; height: 26px; margin-right: 8px; }
       .header-title { font-size: 14px; }
       .body { padding: 12px; }
-      .body.has-files { padding: 12px; padding-bottom: 8px; }
-      .asset-count { padding: 8px 0 4px; font-size: 11px; }
+      .body.has-files { padding: 0 8px; padding-bottom: 8px; }
+      .asset-count { padding: 16px; }
 
       .preview-layout .file-grid-side { max-height: 100px; }
       .preview-panel { padding: 0 0 12px; }
@@ -2577,7 +2585,7 @@ export class SfxUploader extends LitElement {
           ${previewFile.type.startsWith('video/') && previewFile.file
             ? html`
                 <div class="preview-img-wrap">
-                  <video class="preview-image" src=${URL.createObjectURL(previewFile.file)} autoplay loop muted playsinline></video>
+                  <video class="preview-image" src=${URL.createObjectURL(previewFile.file)} controls playsinline></video>
                   <button class="preview-nav prev" ?disabled=${files.indexOf(previewFile) === 0} @click=${() => this._navigatePreview(files, -1)}>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
                   </button>
@@ -2817,7 +2825,7 @@ export class SfxUploader extends LitElement {
                   ? html`<video
                       class="fs-img"
                       src=${URL.createObjectURL(this._fullscreenVideoFile)}
-                      autoplay loop muted playsinline
+                      controls playsinline
                       draggable="false"
                       @click=${(e: Event) => e.stopPropagation()}
                     ></video>`

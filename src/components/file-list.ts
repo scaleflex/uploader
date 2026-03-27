@@ -12,10 +12,10 @@ export class SfxFileList extends LitElement {
       flex: 1;
       min-height: 0;
       overflow-y: auto;
-      padding-right: 6px;
       padding-bottom: 8px;
       scrollbar-width: thin;
       scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+      scrollbar-gutter: stable;
     }
 
     :host::-webkit-scrollbar {
