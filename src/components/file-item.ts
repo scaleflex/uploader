@@ -414,7 +414,6 @@ export class SfxFileItem extends LitElement {
     if (!f) return nothing;
 
     const category = getFileCategory(f);
-    const isImage = category === 'image';
     const isDone = f.status === 'complete';
     const isUploading = f.status === 'uploading';
     const isError = f.status === 'error' || f.status === 'failed';
@@ -517,7 +516,7 @@ export class SfxFileItem extends LitElement {
         <!-- Info bar -->
         <div class="info">
           <div class="name" title=${f.name}>${f.name}</div>
-          <div class="meta">${ext ? ext.toUpperCase() : ''}${f.size ? ` \u00B7 ${formatFileSize(f.size)}` : ''}</div>
+          <div class="meta">${ext || ''}${f.size ? ` \u00B7 ${formatFileSize(f.size)}` : ''}</div>
         </div>
       </div>
     `;

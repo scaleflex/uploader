@@ -368,7 +368,6 @@ export class SfxUploader extends LitElement {
     .preview-layout {
       display: flex;
       flex: 1;
-      height: 798px;
       min-height: 0;
       overflow: hidden;
     }
@@ -1273,6 +1272,7 @@ export class SfxUploader extends LitElement {
   @state() private _isMinimized = false;
   @state() private _isPillExpanded = false;
   private _bodyDragCounter = 0;
+  private _videoBlobUrls = new Map<File, string>();
 
   private _store!: Store<UploaderState>;
   private _storeCtrl!: StoreController;
@@ -1452,9 +1452,11 @@ export class SfxUploader extends LitElement {
     }
     // Resolve image dimensions when preview file changes
     if (changed.has('_previewFileId') && this._previewFileId) {
-      const file = this._store.getState().files.get(this._previewFileId);
+      const targetId = this._previewFileId;
+      const file = this._store.getState().files.get(targetId);
       if (file) {
         this._getImageDimensions(file).then((dims) => {
+          if (this._previewFileId !== targetId) return; // stale
           this._previewDims = dims ? `${dims.w} × ${dims.h}` : '—';
         });
       } else {
@@ -1465,11 +1467,8 @@ export class SfxUploader extends LitElement {
     this._updateFloatingPortal();
   }
 
-  private static _floatStylesInjected = false;
-
   private _injectFloatStyles() {
-    if (SfxUploader._floatStylesInjected) return;
-    SfxUploader._floatStylesInjected = true;
+    if (document.querySelector('style[data-sfx-upload-float-styles]')) return;
     const style = document.createElement('style');
     style.setAttribute('data-sfx-upload-float-styles', '');
     style.textContent = `
@@ -1560,6 +1559,12 @@ export class SfxUploader extends LitElement {
     // Remove portal container
     this._portalContainer?.remove();
     this._portalContainer = null;
+    // Remove injected float styles if no other portal containers remain
+    if (!document.querySelector('[data-sfx-upload-float]')) {
+      document.querySelector('style[data-sfx-upload-float-styles]')?.remove();
+    }
+    // Revoke cached video blob URLs
+    this._revokeVideoBlobUrls();
     // Clear rejected file auto-removal timers
     for (const timer of this._rejectedTimers.values()) clearTimeout(timer);
     this._rejectedTimers.clear();
@@ -1893,6 +1898,7 @@ export class SfxUploader extends LitElement {
         const vid = document.createElement('video');
         vid.preload = 'metadata';
         vid.src = URL.createObjectURL(file);
+        vid.onerror = () => { URL.revokeObjectURL(vid.src); };
         vid.onloadedmetadata = () => {
           const duration = vid.duration;
           URL.revokeObjectURL(vid.src);
@@ -1921,12 +1927,14 @@ export class SfxUploader extends LitElement {
   };
 
   private _onDropTileSourceClick = (e: CustomEvent<{ source: SourceDef }>) => {
-    const source = e.detail.source;
-    this._onSourceClick(new CustomEvent('source-click', { detail: { source: source.id } }) as CustomEvent<{ source: string }>);
+    this._handleSourceActivation(e.detail.source.id);
   };
 
   private _onSourceClick = async (e: CustomEvent<{ source: string }>) => {
-    const source = e.detail.source;
+    this._handleSourceActivation(e.detail.source);
+  };
+
+  private _handleSourceActivation = async (source: string) => {
 
     // Check for custom source with onActivate callback
     const sourceDef = this._mergedSources.find(s => s.id === source);
@@ -2062,8 +2070,19 @@ export class SfxUploader extends LitElement {
     if (!file) return;
     // Snapshot file for the event before mutating state
     const snapshot = { ...file };
+    // Reset fullscreen if this file was being viewed (before revoking URLs)
+    if ((this._fullscreenPreviewUrl && this._fullscreenPreviewUrl === file.previewUrl)
+      || (this._fullscreenVideoFile && this._fullscreenVideoFile === file.file)) {
+      this._fullscreenPreviewUrl = null;
+      this._fullscreenVideoFile = null;
+    }
     // Revoke objectURL to free memory
     if (file.previewUrl) URL.revokeObjectURL(file.previewUrl);
+    // Revoke cached video blob URL
+    if (file.file) {
+      const blobUrl = this._videoBlobUrls.get(file.file);
+      if (blobUrl) { URL.revokeObjectURL(blobUrl); this._videoBlobUrls.delete(file.file); }
+    }
     // Cancel if active (including retrying, which has a pending retry timer)
     if (file.status === 'uploading' || file.status === 'queued' || file.status === 'retrying') {
       this._engine?.cancelFile(fileId);
@@ -2071,6 +2090,14 @@ export class SfxUploader extends LitElement {
     removeFile(this._store, fileId);
     // Clear dimension cache
     this._dimCache.delete(fileId);
+    // Clear rejected timer if pending
+    const rejTimer = this._rejectedTimers.get(fileId);
+    if (rejTimer) { clearTimeout(rejTimer); this._rejectedTimers.delete(fileId); }
+    // Reset preview to next file if this file was being previewed
+    if (this._previewFileId === fileId) {
+      const remaining = [...this._store.getState().files.values()];
+      this._previewFileId = remaining.length > 0 ? remaining[0].id : null;
+    }
     this._dispatchPublic(PublicEvents.FILE_REMOVED, { file: snapshot });
     this.config?.callbacks?.onFileRemoved?.(snapshot);
   }
@@ -2117,11 +2144,17 @@ export class SfxUploader extends LitElement {
       this._dispatchPublic(PublicEvents.FILE_REMOVED, { file });
       callbacks?.onFileRemoved?.(file);
     }
+    // Revoke all cached video blob URLs
+    this._revokeVideoBlobUrls();
     // Clear rejected file auto-removal timers
     for (const timer of this._rejectedTimers.values()) clearTimeout(timer);
     this._rejectedTimers.clear();
     // Clear dimension cache
     this._dimCache.clear();
+    // Reset preview/fullscreen state
+    this._previewFileId = null;
+    this._fullscreenPreviewUrl = null;
+    this._fullscreenVideoFile = null;
     this._store.setState({
       files: new Map(),
       isUploading: false,
@@ -2263,12 +2296,6 @@ export class SfxUploader extends LitElement {
   private _onPillDismiss = () => {
     this._isMinimized = false;
     this._isPillExpanded = false;
-    this.requestUpdate();
-  };
-
-  private _onPillReopen = () => {
-    this._isMinimized = false;
-    this._isPillExpanded = false;
     this._isOpen = true;
     this.requestUpdate();
   };
@@ -2315,7 +2342,7 @@ export class SfxUploader extends LitElement {
 
   private _onKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Escape') {
-      if (this._fullscreenPreviewUrl) {
+      if (this._fullscreenPreviewUrl || this._fullscreenVideoFile) {
         this._onFsClose();
         return;
       }
@@ -2377,7 +2404,6 @@ export class SfxUploader extends LitElement {
     }
     const mode = this.config?.mode ?? 'modal';
     const headerButton = this.config?.headerButton ?? (mode === 'modal' ? 'close' : 'none');
-    const isComplete = false;
     const dismiss = mode === 'modal' ? this._onModalDismiss : this._onInlineDismiss;
 
     const backBtn = headerButton === 'back'
@@ -2401,18 +2427,14 @@ export class SfxUploader extends LitElement {
       <div class="header">
         ${backBtn}
         ${headerButton !== 'back' ? html`
-        <div class="header-icon ${isComplete ? 'header-icon-done' : ''}">
-          ${isComplete
-            ? html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>`
-            : html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-                <polyline points="16 16 12 12 8 16" />
-                <line x1="12" y1="12" x2="12" y2="21" />
-                <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
-              </svg>`}
+        <div class="header-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <polyline points="16 16 12 12 8 16" />
+            <line x1="12" y1="12" x2="12" y2="21" />
+            <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
+          </svg>
         </div>` : nothing}
-        <div class="header-title">${isComplete ? 'Upload Complete' : 'Upload Files'}</div>
+        <div class="header-title">Upload Files</div>
         ${closeBtn}
       </div>
     `;
@@ -2493,7 +2515,7 @@ export class SfxUploader extends LitElement {
             </div>
             <div>
               <div class="float-title">${isDone ? 'Upload complete' : `Uploading ${files.length} ${files.length === 1 ? 'file' : 'files'}`}</div>
-              <div class="float-subtitle">${isDone ? `${completed} files uploaded` : `${completed} of ${files.length}${eta > 0 ? ` · ~${formatEta(eta)} left` : ''}`}</div>
+              <div class="float-subtitle">${isDone ? `${completed} ${completed === 1 ? 'file' : 'files'} uploaded` : `${completed} of ${files.length}${eta > 0 ? ` · ~${formatEta(eta)} left` : ''}`}</div>
             </div>
           </div>
           <div class="float-actions">
@@ -2556,6 +2578,7 @@ export class SfxUploader extends LitElement {
             .showDropTile=${true}
             .sources=${this._mergedSources}
             .accept=${buildAcceptString(this._storeCtrl.state.restrictions)}
+            @files-selected=${this._onFilesSelected}
             @source-click=${this._onDropTileSourceClick}
           ></sfx-file-list>
         </div>
@@ -2585,7 +2608,7 @@ export class SfxUploader extends LitElement {
           ${previewFile.type.startsWith('video/') && previewFile.file
             ? html`
                 <div class="preview-img-wrap">
-                  <video class="preview-image" src=${URL.createObjectURL(previewFile.file)} controls playsinline></video>
+                  <video class="preview-image" src=${this._getVideoBlobUrl(previewFile.file)} controls playsinline></video>
                   <button class="preview-nav prev" ?disabled=${files.indexOf(previewFile) === 0} @click=${() => this._navigatePreview(files, -1)}>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
                   </button>
@@ -2671,15 +2694,11 @@ export class SfxUploader extends LitElement {
     const idx = files.findIndex((f) => f.id === this._previewFileId);
     const next = idx + direction;
     if (next >= 0 && next < files.length) {
+      // Pause any playing video before switching
+      const video = this.shadowRoot?.querySelector('.preview-image[controls]') as HTMLVideoElement | null;
+      if (video) { video.pause(); video.removeAttribute('src'); video.load(); }
       this._previewFileId = files[next].id;
     }
-  }
-
-  private _onFileRemoveById(fileId: string) {
-    this._removeFile(fileId);
-    const files = [...this._store.getState().files.values()];
-    if (files.length === 0) this._previewFileId = null;
-    else if (this._previewFileId === fileId) this._previewFileId = files[0].id;
   }
 
   private _renderBody() {
@@ -2750,6 +2769,7 @@ export class SfxUploader extends LitElement {
                             .showDropTile=${true}
                             .sources=${this._mergedSources}
                             .accept=${accept}
+                            @files-selected=${this._onFilesSelected}
                             @source-click=${this._onDropTileSourceClick}
                           ></sfx-file-list>
                         `
@@ -2796,7 +2816,7 @@ export class SfxUploader extends LitElement {
             `
           : nothing}
 
-        ${this._fullscreenPreviewUrl
+        ${this._fullscreenPreviewUrl || this._fullscreenVideoFile
           ? html`
               <div
                 class="fs-overlay ${this._fullscreenZoomed ? 'zoomed' : ''} ${this._fsDragging ? 'panning' : ''}"
@@ -2824,7 +2844,7 @@ export class SfxUploader extends LitElement {
                 ${this._fullscreenVideoFile
                   ? html`<video
                       class="fs-img"
-                      src=${URL.createObjectURL(this._fullscreenVideoFile)}
+                      src=${this._getVideoBlobUrl(this._fullscreenVideoFile)}
                       controls playsinline
                       draggable="false"
                       @click=${(e: Event) => e.stopPropagation()}
@@ -2922,7 +2942,8 @@ export class SfxUploader extends LitElement {
     const files = [...this._store.getState().files.values()].filter(
       (f) => f.previewUrl || (f.type.startsWith('video/') && f.file),
     );
-    const idx = files.findIndex((f) => f.previewUrl === this._fullscreenPreviewUrl && (this._fullscreenVideoFile ? f.file === this._fullscreenVideoFile : true));
+    const idx = files.findIndex((f) => f.id === this._previewFileId);
+    if (idx === -1) return;
     const next = idx + direction;
     if (next >= 0 && next < files.length) {
       const nextFile = files[next];
@@ -2944,10 +2965,18 @@ export class SfxUploader extends LitElement {
     this._fsPanY = 0;
   };
 
-  private _getFullscreenFilename(): string {
-    if (!this._previewFileId) return '';
-    const file = this._store.getState().files.get(this._previewFileId);
-    return file?.name ?? '';
+  private _getVideoBlobUrl(file: File): string {
+    let url = this._videoBlobUrls.get(file);
+    if (!url) {
+      url = URL.createObjectURL(file);
+      this._videoBlobUrls.set(file, url);
+    }
+    return url;
+  }
+
+  private _revokeVideoBlobUrls() {
+    for (const url of this._videoBlobUrls.values()) URL.revokeObjectURL(url);
+    this._videoBlobUrls.clear();
   }
 }
 

@@ -16,10 +16,11 @@ export function formatFileSize(bytes: number): string {
 
 /** Format seconds into a human-readable ETA string. */
 export function formatEta(seconds: number): string {
-  if (seconds <= 0) return '0s';
-  if (seconds < 60) return `${Math.round(seconds)}s`;
-  const m = Math.floor(seconds / 60);
-  const s = Math.round(seconds % 60);
+  if (!isFinite(seconds) || seconds <= 0) return '0s';
+  const total = Math.round(seconds);
+  if (total < 60) return `${total}s`;
+  const m = Math.floor(total / 60);
+  const s = total % 60;
   return s > 0 ? `${m}m ${s}s` : `${m}m`;
 }
 

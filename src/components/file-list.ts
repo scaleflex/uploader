@@ -1,5 +1,5 @@
 import { LitElement, html, css, nothing, svg as svgTag } from 'lit';
-import { property } from 'lit/decorators.js';
+import { property, state } from 'lit/decorators.js';
 import { unsafeSVG } from 'lit/directives/unsafe-svg.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import type { UploadFile } from '../store/store.types';
@@ -312,13 +312,12 @@ export class SfxFileList extends LitElement {
   @property({ attribute: false }) sources: SourceDef[] = [];
   @property({ type: String }) accept = '';
 
-  private _moreOpen = false;
+  @state() private _moreOpen = false;
   private _outsideClickHandler = (e: MouseEvent) => {
     const path = e.composedPath();
     const moreWrap = this.renderRoot.querySelector('.drop-tile-more-wrap');
     if (moreWrap && !path.includes(moreWrap)) {
       this._moreOpen = false;
-      this.requestUpdate();
       document.removeEventListener('click', this._outsideClickHandler, true);
     }
   };
@@ -350,7 +349,6 @@ export class SfxFileList extends LitElement {
   private _toggleMore(e: Event) {
     e.stopPropagation();
     this._moreOpen = !this._moreOpen;
-    this.requestUpdate();
     if (this._moreOpen) {
       requestAnimationFrame(() => document.addEventListener('click', this._outsideClickHandler, true));
     } else {
@@ -360,13 +358,13 @@ export class SfxFileList extends LitElement {
 
   disconnectedCallback() {
     super.disconnectedCallback();
+    this._moreOpen = false;
     document.removeEventListener('click', this._outsideClickHandler, true);
   }
 
   private _onMoreSourceClick(e: Event, source: SourceDef) {
     this._moreOpen = false;
     document.removeEventListener('click', this._outsideClickHandler, true);
-    this.requestUpdate();
     this._onSourceClick(e, source);
   }
 
@@ -426,7 +424,7 @@ export class SfxFileList extends LitElement {
             ` : nothing}
           </div>
         ` : nothing}
-        <input type="file" multiple .accept=${this.accept} @change=${this._onFileInput} />
+        <input type="file" multiple accept=${this.accept || nothing} @change=${this._onFileInput} />
       </div>
     `;
   }
