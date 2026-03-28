@@ -30,8 +30,8 @@ export class SfxFileList extends LitElement {
     :host::-webkit-scrollbar-thumb {
       background: rgba(0, 0, 0, 0.15);
       border-radius: var(--sfx-scrollbar-radius, 6px);
-      border-left: var(--sfx-scrollbar-inset, 3px) solid transparent;
-      border-right: var(--sfx-scrollbar-inset, 3px) solid transparent;
+      border-left: var(--sfx-scrollbar-inset-left, var(--sfx-scrollbar-inset, 3px)) solid transparent;
+      border-right: var(--sfx-scrollbar-inset-right, var(--sfx-scrollbar-inset, 3px)) solid transparent;
       background-clip: padding-box;
     }
 

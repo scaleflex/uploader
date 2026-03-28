@@ -398,7 +398,8 @@ export class SfxUploader extends LitElement {
     .preview-layout sfx-file-list {
       padding-right: 16px;
       --sfx-scrollbar-w: 14px;
-      --sfx-scrollbar-inset: 4px;
+      --sfx-scrollbar-inset-left: 2px;
+      --sfx-scrollbar-inset-right: 6px;
       --sfx-scrollbar-radius: 7px;
     }
 
