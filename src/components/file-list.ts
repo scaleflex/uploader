@@ -28,10 +28,9 @@ export class SfxFileList extends LitElement {
     }
 
     :host::-webkit-scrollbar-thumb {
-      background: rgba(0, 0, 0, 0.15);
-      border-radius: var(--sfx-scrollbar-radius, 6px);
-      border-left: var(--sfx-scrollbar-inset-left, var(--sfx-scrollbar-inset, 3px)) solid transparent;
-      border-right: var(--sfx-scrollbar-inset-right, var(--sfx-scrollbar-inset, 3px)) solid transparent;
+      background-color: rgba(0, 0, 0, 0.15);
+      border-left: 3px solid transparent;
+      border-right: 3px solid transparent;
       background-clip: padding-box;
     }
 
@@ -64,6 +63,8 @@ export class SfxFileList extends LitElement {
       padding: 16px 12px;
       position: relative;
       z-index: 1;
+      min-height: 0;
+      overflow: hidden;
     }
 
     .drop-tile:hover {
@@ -72,8 +73,8 @@ export class SfxFileList extends LitElement {
     }
 
     .drop-tile-rings {
-      width: 72px;
-      height: 72px;
+      width: clamp(48px, 8vw, 72px);
+      height: clamp(48px, 8vw, 72px);
       position: relative;
       display: flex;
       align-items: center;
@@ -102,8 +103,8 @@ export class SfxFileList extends LitElement {
     }
 
     .drop-tile-core {
-      width: 40px;
-      height: 40px;
+      width: clamp(28px, 5vw, 40px);
+      height: clamp(28px, 5vw, 40px);
       border-radius: 50%;
       background: var(--sfx-up-primary-bg, #eff6ff);
       color: var(--sfx-up-primary, #2563eb);

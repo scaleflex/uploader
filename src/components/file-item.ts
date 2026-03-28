@@ -311,19 +311,21 @@ export class SfxFileItem extends LitElement {
     /* --- Error / rejected state --- */
     .error-badge {
       position: absolute;
-      bottom: 28px;
+      bottom: 6px;
       left: 6px;
       right: 6px;
-      font-size: 12px;
-      font-weight: 600;
+      font-size: 11px;
+      font-weight: 500;
+      line-height: 1.3;
       color: #fff;
-      background: var(--sfx-up-error, #dc2626);
-      border-radius: 4px;
-      padding: 3px 6px;
+      background: rgba(220, 38, 38, 0.85);
+      border-radius: 6px;
+      padding: 4px 8px;
       text-align: center;
-      white-space: nowrap;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
       overflow: hidden;
-      text-overflow: ellipsis;
     }
 
     .tile.rejected {
