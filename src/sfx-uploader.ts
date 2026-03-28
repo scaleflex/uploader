@@ -310,7 +310,7 @@ export class SfxUploader extends LitElement {
       align-items: stretch;
       overflow: hidden;
       gap: 0;
-      padding: 0 8px 0 8px;
+      padding: 0 0 0 8px;
       animation: bodyReveal 0.35s ease both;
     }
 
@@ -1189,7 +1189,7 @@ export class SfxUploader extends LitElement {
       .header-icon svg { width: 14px; height: 14px; }
       .header-title { font-size: 14px; }
       .body { padding: 16px; }
-      .body.has-files { padding: 0 8px; padding-bottom: 12px; }
+      .body.has-files { padding: 0 0 12px 8px; }
       .asset-count { padding: 16px; }
 
       .preview-layout { flex-direction: column; }
@@ -1228,7 +1228,7 @@ export class SfxUploader extends LitElement {
       .header-icon { width: 26px; height: 26px; margin-right: 8px; }
       .header-title { font-size: 14px; }
       .body { padding: 12px; }
-      .body.has-files { padding: 0 8px; padding-bottom: 8px; }
+      .body.has-files { padding: 0 0 8px 8px; }
       .asset-count { padding: 16px; }
 
       .preview-layout .file-grid-side { max-height: 100px; }
