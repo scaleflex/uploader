@@ -2771,7 +2771,6 @@ export class SfxUploader extends LitElement {
                             .showDropTile=${true}
                             .sources=${this._mergedSources}
                             .accept=${accept}
-                            @files-selected=${this._onFilesSelected}
                             @source-click=${this._onDropTileSourceClick}
                           ></sfx-file-list>
                         `
