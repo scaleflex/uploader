@@ -318,12 +318,13 @@ export class SfxFileItem extends LitElement {
       font-weight: 500;
       line-height: 1.3;
       color: #fff;
-      background: rgba(220, 38, 38, 0.85);
+      background: color-mix(in srgb, var(--sfx-up-error, #dc2626) 85%, transparent);
       border-radius: 6px;
       padding: 4px 8px;
       text-align: center;
       display: -webkit-box;
       -webkit-line-clamp: 2;
+      line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
@@ -486,8 +487,8 @@ export class SfxFileItem extends LitElement {
             ? html`<div class="error-badge" title=${f.error}>${f.error}</div>`
             : nothing}
 
-          <!-- Video duration badge -->
-          ${f.duration != null && f.duration > 0
+          <!-- Video duration badge (hidden when error badge is shown to avoid overlap) -->
+          ${!(isError || isRejected) && f.duration != null && f.duration > 0
             ? html`<div class="duration-badge">${this._formatDuration(f.duration)}</div>`
             : nothing}
         </div>

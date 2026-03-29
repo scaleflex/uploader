@@ -401,8 +401,9 @@ export class SfxUploader extends LitElement {
       --sfx-scrollbar-w: 14px;
       --sfx-scrollbar-inset-left: 2px;
       --sfx-scrollbar-inset-right: 6px;
-      --sfx-scrollbar-radius: 7px;
     }
+
+    /* NOTE: scrollbar border-radius is hardcoded to 6px in sfx-file-list */
 
     .file-grid-header {
       display: flex;
@@ -1185,14 +1186,13 @@ export class SfxUploader extends LitElement {
     /* --- Responsive: Tablet (≤ 768px) --- */
     @media (max-width: 768px) {
       .modal-backdrop { padding: 12px; }
-      .modal-card { border-radius: 12px; max-height: 92vh; }
+      .modal-card { border-radius: 12px; max-height: 92vh; min-height: auto; }
       .header { padding: 12px 16px; }
       .header-icon { width: 28px; height: 28px; margin-right: 10px; }
       .header-icon svg { width: 14px; height: 14px; }
       .header-title { font-size: 14px; }
       .body { padding: 16px; }
       .body.has-files { padding: 0 0 12px 8px; }
-      .asset-count { padding: 16px; }
 
       .preview-layout { flex-direction: column; }
       .preview-layout .file-grid-side {
@@ -1206,7 +1206,7 @@ export class SfxUploader extends LitElement {
 
       .preview-topbar { padding: 8px 0; }
 
-      .inline { border-radius: 12px; }
+      .inline { border-radius: 12px; min-height: auto; }
 
       .connector-modal-backdrop { padding: 8px; }
       .connector-modal {
@@ -1231,7 +1231,6 @@ export class SfxUploader extends LitElement {
       .header-title { font-size: 14px; }
       .body { padding: 12px; }
       .body.has-files { padding: 0 0 8px 8px; }
-      .asset-count { padding: 16px; }
 
       .preview-layout .file-grid-side { max-height: 100px; }
       .preview-panel { padding: 0 0 12px; }
@@ -1245,9 +1244,14 @@ export class SfxUploader extends LitElement {
       .connector-modal {
         border-radius: 0;
         height: 100vh;
-        max-height: none;
         min-height: auto;
       }
+    }
+
+    /* --- Responsive: Landscape / short viewports --- */
+    @media (max-height: 700px) {
+      .modal-card { min-height: auto; }
+      .inline { min-height: auto; }
     }
   `;
 
@@ -2580,7 +2584,6 @@ export class SfxUploader extends LitElement {
             .showDropTile=${true}
             .sources=${this._mergedSources}
             .accept=${buildAcceptString(this._storeCtrl.state.restrictions)}
-            @files-selected=${this._onFilesSelected}
             @source-click=${this._onDropTileSourceClick}
           ></sfx-file-list>
         </div>
