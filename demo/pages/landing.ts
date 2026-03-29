@@ -1,7 +1,6 @@
 import type { Page } from '../lib/router';
 import type { SfxUploader } from '../../src/sfx-uploader';
 import { buildConfig } from '../lib/auth';
-import { renderCodeBlock } from '../lib/code-block';
 
 const page: Page = {
   render() {
@@ -45,52 +44,80 @@ const page: Page = {
           <div class="section-header">
             <div class="section-label">Quick Start</div>
             <h2>Up and running in under a minute</h2>
-            <p>Install from npm, import the custom element, and start uploading with a few lines of code.</p>
+            <p>Pick your integration method and paste the code.</p>
           </div>
-          <div class="quick-start-steps">
-            <div class="quick-start-step">
-              <div class="step-header">
-                <div class="step-number">1</div>
-                <h3>Install</h3>
-              </div>
-              <div class="step-code">
+          <div class="qs-card">
+            <div class="qs-tabs">
+              <button class="qs-tab active" data-tab="npm">npm</button>
+              <button class="qs-tab" data-tab="cdn">CDN</button>
+              <button class="qs-tab" data-tab="react">React</button>
+            </div>
+
+            <div class="qs-panel active" data-panel="npm">
+              <div class="qs-install-bar">
                 <code>npm install @scaleflex/uploader</code>
                 <button class="step-copy" data-code="npm install @scaleflex/uploader" aria-label="Copy to clipboard">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                 </button>
               </div>
-              <div class="step-alt">
-                <span class="step-alt-label">or use CDN</span>
-                <div class="step-code">
-                  <code>&lt;script src="https://scaleflex.cloudimg.io/v7/plugins/scaleflex/uploader/0.2.1/sfx-uploader.min.js"&gt;&lt;/script&gt;</code>
-                  <button class="step-copy" data-code='<script src="https://scaleflex.cloudimg.io/v7/plugins/scaleflex/uploader/0.2.1/sfx-uploader.min.js"></script>' aria-label="Copy to clipboard">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                  </button>
-                </div>
-              </div>
+              <div class="qs-code" data-code-npm><pre><code class="language-markup">&lt;script type="module"&gt;
+  import '@scaleflex/uploader/define';
+&lt;/script&gt;
+
+&lt;sfx-uploader id="uploader"&gt;&lt;/sfx-uploader&gt;
+
+&lt;script&gt;
+  document.getElementById('uploader').config = {
+    auth: {
+      mode: 'security-template',
+      container: 'YOUR_CONTAINER',
+      securityTemplateId: 'YOUR_TEMPLATE_ID',
+    },
+  };
+&lt;/script&gt;</code></pre></div>
             </div>
-            <div class="quick-start-step">
-              <div class="step-header">
-                <div class="step-number">2</div>
-                <h3>Import</h3>
-              </div>
-              <div class="step-code">
-                <code>import '@scaleflex/uploader/define';</code>
-                <button class="step-copy" data-code="import '@scaleflex/uploader/define';" aria-label="Copy to clipboard">
+
+            <div class="qs-panel" data-panel="cdn">
+              <div class="qs-code" data-code-cdn><pre><code class="language-markup">&lt;script src="https://scaleflex.cloudimg.io/v7/plugins/scaleflex/uploader/0.2.1/sfx-uploader.min.js"&gt;&lt;/script&gt;
+
+&lt;sfx-uploader id="uploader"&gt;&lt;/sfx-uploader&gt;
+
+&lt;script&gt;
+  document.getElementById('uploader').config = {
+    auth: {
+      mode: 'security-template',
+      container: 'YOUR_CONTAINER',
+      securityTemplateId: 'YOUR_TEMPLATE_ID',
+    },
+  };
+&lt;/script&gt;</code></pre></div>
+            </div>
+
+            <div class="qs-panel" data-panel="react">
+              <div class="qs-install-bar">
+                <code>npm install @scaleflex/uploader</code>
+                <button class="step-copy" data-code="npm install @scaleflex/uploader" aria-label="Copy to clipboard">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                 </button>
               </div>
-              <p class="step-note">Skip this step when using the CDN — elements are registered automatically.</p>
-            </div>
-            <div class="quick-start-step">
-              <div class="step-header">
-                <div class="step-number">3</div>
-                <h3>Use</h3>
-              </div>
-              <p class="step-description">Add <code>&lt;sfx-uploader&gt;</code> to your HTML, set config, and call <code>.open()</code> or use inline mode.</p>
+              <div class="qs-code" data-code-react><pre><code class="language-tsx">import { Uploader } from '@scaleflex/uploader/react';
+
+export function App() {
+  return (
+    &lt;Uploader
+      config={{
+        auth: {
+          mode: 'security-template',
+          container: 'YOUR_CONTAINER',
+          securityTemplateId: 'YOUR_TEMPLATE_ID',
+        },
+      }}
+      onAllComplete={(files) =&gt; console.log(files)}
+    /&gt;
+  );
+}</code></pre></div>
             </div>
           </div>
-          <div id="quick-start-code"></div>
         </div>
       </section>
 
@@ -142,38 +169,6 @@ const page: Page = {
               </div>
               <h3>Fully themeable</h3>
               <p>CSS custom properties with <code>--sfx-up-*</code> prefix. Works in modal or inline mode.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="claude-code-section">
-        <div class="section-inner">
-          <div class="section-header">
-            <div class="section-label">AI-assisted setup</div>
-            <h2>Integrate with Claude Code</h2>
-            <p>This package ships with a ready-made <a href="https://docs.anthropic.com/en/docs/claude-code" target="_blank" rel="noopener">Claude Code</a> skill. Claude detects your framework, wires auth, events, theming, and restrictions automatically.</p>
-          </div>
-          <div class="claude-code-steps">
-            <div class="claude-code-step">
-              <h3>1. Copy the skill into your project</h3>
-              <div class="step-code">
-                <code>cp -r node_modules/@scaleflex/uploader/.claude/skills/integrate-uploader .claude/skills/</code>
-                <button class="step-copy" data-code="cp -r node_modules/@scaleflex/uploader/.claude/skills/integrate-uploader .claude/skills/" aria-label="Copy to clipboard">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                </button>
-              </div>
-              <p class="step-note">Commit <code>.claude/skills/</code> so every team member gets it.</p>
-            </div>
-            <div class="claude-code-step">
-              <h3>2. Use the skill</h3>
-              <div class="step-code">
-                <code>/integrate-uploader</code>
-                <button class="step-copy" data-code="/integrate-uploader" aria-label="Copy to clipboard">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                </button>
-              </div>
-              <p class="step-note">Type this in Claude Code and it walks you through the full integration.</p>
             </div>
           </div>
         </div>
@@ -311,100 +306,42 @@ const page: Page = {
       });
     });
 
-    renderCodeBlock('#quick-start-code', [
-      {
-        label: 'HTML',
-        lang: 'markup',
-        code: `
-<script type="module">
-  import '@scaleflex/uploader/define';
-</script>
+    // Quick-start tabs
+    document.querySelectorAll<HTMLButtonElement>('.qs-tab').forEach((tab) => {
+      tab.addEventListener('click', () => {
+        const target = tab.dataset.tab!;
+        document.querySelectorAll('.qs-tab').forEach((t) => t.classList.remove('active'));
+        document.querySelectorAll('.qs-panel').forEach((p) => p.classList.remove('active'));
+        tab.classList.add('active');
+        document.querySelector(`.qs-panel[data-panel="${target}"]`)?.classList.add('active');
+      });
+    });
 
-<sfx-uploader id="uploader"></sfx-uploader>
+    // Prism highlight quick-start code blocks
+    requestAnimationFrame(() => {
+      document.querySelectorAll('.qs-code code[class*="language-"]').forEach((el) => {
+        if (typeof Prism !== 'undefined') Prism.highlightElement(el);
+      });
+    });
 
-<button onclick="document.getElementById('uploader').open()">
-  Upload files
-</button>
-
-<script>
-  const uploader = document.getElementById('uploader');
-  uploader.config = {
-    auth: {
-      mode: 'security-template',
-      container: 'YOUR_CONTAINER',
-      securityTemplateId: 'YOUR_TEMPLATE_ID',
-    },
-    mode: 'modal',
-    targetFolder: '/uploads',
-  };
-
-  uploader.addEventListener('sfx-all-complete', (e) => {
-    console.log('Uploaded:', e.detail.successful);
-  });
-</script>`,
-      },
-      {
-        label: 'CDN',
-        lang: 'markup',
-        code: `
-<script src="https://scaleflex.cloudimg.io/v7/plugins/scaleflex/uploader/0.2.1/sfx-uploader.min.js"></script>
-
-<sfx-uploader id="uploader"></sfx-uploader>
-
-<button onclick="document.getElementById('uploader').open()">
-  Upload files
-</button>
-
-<script>
-  const uploader = document.getElementById('uploader');
-  uploader.config = {
-    auth: {
-      mode: 'security-template',
-      container: 'YOUR_CONTAINER',
-      securityTemplateId: 'YOUR_TEMPLATE_ID',
-    },
-    mode: 'modal',
-    targetFolder: '/uploads',
-  };
-
-  uploader.addEventListener('sfx-all-complete', (e) => {
-    console.log('Uploaded:', e.detail.successful);
-  });
-</script>`,
-      },
-      {
-        label: 'React',
-        lang: 'tsx',
-        code: `
-import { useRef } from 'react';
-import { Uploader, type UploaderRef } from '@scaleflex/uploader/react';
-
-export function App() {
-  const ref = useRef<UploaderRef>(null);
-
-  return (
-    <>
-      <button onClick={() => ref.current?.open()}>Upload files</button>
-      <Uploader
-        ref={ref}
-        config={{
-          auth: {
-            mode: 'security-template',
-            container: 'YOUR_CONTAINER',
-            securityTemplateId: 'YOUR_TEMPLATE_ID',
-          },
-          mode: 'modal',
-          targetFolder: '/uploads',
-        }}
-        onAllComplete={(successful, failed) => {
-          console.log('Done:', successful.length, 'uploaded');
-        }}
-      />
-    </>
-  );
-}`,
-      },
-    ]);
+    // Quick-start code copy buttons
+    document.querySelectorAll<HTMLElement>('.qs-code').forEach((block) => {
+      const pre = block.querySelector('pre');
+      if (!pre) return;
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'qs-copy-code';
+      copyBtn.textContent = 'Copy';
+      copyBtn.addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(pre.textContent?.trim() ?? '');
+          copyBtn.textContent = 'Copied!';
+        } catch {
+          copyBtn.textContent = 'Failed';
+        }
+        setTimeout(() => (copyBtn.textContent = 'Copy'), 1500);
+      });
+      block.prepend(copyBtn);
+    });
 
     // "Also by Scaleflex" slider
     const slides = document.querySelectorAll<HTMLElement>('.demo-also-slide');
