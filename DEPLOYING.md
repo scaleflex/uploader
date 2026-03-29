@@ -42,8 +42,10 @@ This will:
 
 In the GitHub repo (Settings → Pages), make sure:
 
-- **Source** is set to **GitHub Actions**
-- The workflow at `.github/workflows/pages.yml` auto-deploys on push to `main`
+- **Source** is set to **Deploy from a branch**
+- **Branch** is set to `release` / `/ (root)`
+- The `main` branch should NOT exist on GitHub — only `release` is pushed
+- Set `release` as the **default branch** (Settings → General → Default branch)
 
 ## Demo URL
 
