@@ -23,6 +23,8 @@ export interface UploaderRef {
   addFiles(files: File[]): void;
   resumeUpload(files?: UploadFile[]): void;
   cancelUpload(): void;
+  getFiles(): UploadFile[];
+  getFile(fileId: string): UploadFile | undefined;
 }
 
 export interface UploaderProps {
@@ -43,6 +45,9 @@ export interface UploaderProps {
   onOpen?: () => void;
   onClose?: () => void;
   onCancel?: () => void;
+  onBeforeUpload?: (files: UploadFile[]) => boolean | void;
+  onFilePreview?: (file: UploadFile) => void;
+  onFillMetadata?: (files: UploadFile[]) => void;
 
   className?: string;
   style?: CSSProperties;
@@ -66,6 +71,9 @@ export const Uploader = forwardRef<UploaderRef, UploaderProps>(
       onOpen,
       onClose,
       onCancel,
+      onBeforeUpload,
+      onFilePreview,
+      onFillMetadata,
       className,
       style,
     },
@@ -87,6 +95,9 @@ export const Uploader = forwardRef<UploaderRef, UploaderProps>(
     const onOpenRef = useRef(onOpen);
     const onCloseRef = useRef(onClose);
     const onCancelRef = useRef(onCancel);
+    const onBeforeUploadRef = useRef(onBeforeUpload);
+    const onFilePreviewRef = useRef(onFilePreview);
+    const onFillMetadataRef = useRef(onFillMetadata);
 
     // Keep callback refs current
     useLayoutEffect(() => {
@@ -103,6 +114,9 @@ export const Uploader = forwardRef<UploaderRef, UploaderProps>(
       onOpenRef.current = onOpen;
       onCloseRef.current = onClose;
       onCancelRef.current = onCancel;
+      onBeforeUploadRef.current = onBeforeUpload;
+      onFilePreviewRef.current = onFilePreview;
+      onFillMetadataRef.current = onFillMetadata;
     });
 
     useImperativeHandle(ref, () => ({
@@ -113,6 +127,8 @@ export const Uploader = forwardRef<UploaderRef, UploaderProps>(
       addFiles(files: File[]) { elRef.current?.addFiles(files); },
       resumeUpload(files?: UploadFile[]) { elRef.current?.resumeUpload(files); },
       cancelUpload() { elRef.current?.cancelUpload(); },
+      getFiles() { return elRef.current?.getFiles() ?? []; },
+      getFile(fileId: string) { return elRef.current?.getFile(fileId); },
     }));
 
     // Sync config property
@@ -200,6 +216,22 @@ export const Uploader = forwardRef<UploaderRef, UploaderProps>(
         onCancelRef.current?.();
       };
 
+      const handleBeforeUpload = (e: Event) => {
+        const { files } = (e as CustomEvent).detail;
+        const result = onBeforeUploadRef.current?.(files);
+        if (result === false) (e as CustomEvent).preventDefault();
+      };
+
+      const handleFilePreview = (e: Event) => {
+        const { file } = (e as CustomEvent).detail;
+        onFilePreviewRef.current?.(file);
+      };
+
+      const handleFillMetadata = (e: Event) => {
+        const { files } = (e as CustomEvent).detail;
+        onFillMetadataRef.current?.(files);
+      };
+
       el.addEventListener('sfx-file-added', handleFileAdded);
       el.addEventListener('sfx-file-removed', handleFileRemoved);
       el.addEventListener('sfx-file-rejected', handleFileRejected);
@@ -213,6 +245,9 @@ export const Uploader = forwardRef<UploaderRef, UploaderProps>(
       el.addEventListener('sfx-open', handleOpen);
       el.addEventListener('sfx-close', handleClose);
       el.addEventListener('sfx-cancel', handleCancel);
+      el.addEventListener('sfx-before-upload', handleBeforeUpload);
+      el.addEventListener('sfx-file-preview', handleFilePreview);
+      el.addEventListener('sfx-fill-metadata', handleFillMetadata);
 
       return () => {
         el.removeEventListener('sfx-file-added', handleFileAdded);
@@ -228,6 +263,9 @@ export const Uploader = forwardRef<UploaderRef, UploaderProps>(
         el.removeEventListener('sfx-open', handleOpen);
         el.removeEventListener('sfx-close', handleClose);
         el.removeEventListener('sfx-cancel', handleCancel);
+        el.removeEventListener('sfx-before-upload', handleBeforeUpload);
+        el.removeEventListener('sfx-file-preview', handleFilePreview);
+        el.removeEventListener('sfx-fill-metadata', handleFillMetadata);
       };
     }, []);
 
