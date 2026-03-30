@@ -11,7 +11,7 @@ const page: Page = {
         <h2>Authentication</h2>
         <p>The uploader supports two authentication modes:</p>
 
-        <h3>Security template (recommended)</h3>
+        <h3>Security template (external / public apps)</h3>
         <p>Use for client-side integrations. The uploader exchanges the security template ID for a SASS key on init.</p>
         ${code(
           'typescript',
@@ -24,7 +24,7 @@ const page: Page = {
 }`,
         )}
 
-        <h3>SASS key (direct)</h3>
+        <h3>SASS key (internal / Scaleflex apps)</h3>
         <p>Use when you already have a SASS key (e.g. from your backend).</p>
         ${code(
           'typescript',

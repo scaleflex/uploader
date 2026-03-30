@@ -6,7 +6,7 @@ const page: Page = {
     return `
       <div class="doc-content">
         <h1>Getting started</h1>
-        <p class="doc-lead">Add a production-ready file upload widget to any web app in minutes.</p>
+        <p class="doc-lead"><code>@scaleflex/uploader</code> is a drop-in modal component that connects to a <a href="https://www.scaleflex.com">Scaleflex VXP</a> DAM project and lets users drag &amp; drop, paste, import from URL, capture from webcam, and upload files to their cloud storage.</p>
 
         <h2>Features</h2>
         <ul>
@@ -24,8 +24,8 @@ const page: Page = {
 
         <h2>Requirements</h2>
         <ul>
-          <li>A <a href="https://www.scaleflex.com">Scaleflex</a> account with a container</li>
-          <li>A <strong>security template ID</strong> (recommended) or a SASS key</li>
+          <li>A <a href="https://www.scaleflex.com">Scaleflex VXP</a> DAM account with a project token</li>
+          <li>Either a <strong>security template key</strong> or a <strong>SASS key</strong> for authentication</li>
           <li>Any modern browser (Chrome, Firefox, Safari, Edge — last 2 versions)</li>
         </ul>
 
