@@ -2425,6 +2425,10 @@ export class SfxUploader extends LitElement {
 
   /** Shared dismiss handler for X button, backdrop click, Escape */
   private _onModalDismiss = () => {
+    // Cancel active uploads when closing
+    if (this._phase === 'uploading') {
+      this._engine?.cancelAll();
+    }
     this.config?.callbacks?.onCancel?.();
     this._dispatchPublic(PublicEvents.CANCEL, {});
     this.close();
@@ -2621,9 +2625,6 @@ export class SfxUploader extends LitElement {
 
     return html`
       <div class="upload-overlay">
-        <button class="upload-overlay-close" title="Cancel upload" @click=${this._onCancelAndClose}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
         <div class="upload-overlay-spinner"></div>
         <div class="upload-overlay-percent">${pct}%</div>
         <div class="upload-overlay-title">Uploading ${files.length} ${files.length === 1 ? 'file' : 'files'}</div>
