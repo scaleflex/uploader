@@ -1448,6 +1448,58 @@ body:not(.has-sidebar) #content {
 .open-btn-spacing { margin-top: 12px; }
 .mono-input { font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', monospace; }
 
+/* ── Toggle switch control ─────────────────────── */
+.toggle-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle-control input { position: absolute; opacity: 0; pointer-events: none; }
+
+.toggle-track {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  background: var(--sf-light-border, #d1d5db);
+  border-radius: 10px;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.toggle-control input:checked + .toggle-track {
+  background: var(--sf-primary, #2563eb);
+}
+
+.toggle-control input:checked + .toggle-track .toggle-thumb {
+  transform: translateX(16px);
+}
+
+.toggle-control input:focus-visible + .toggle-track {
+  outline: 2px solid var(--sf-primary, #2563eb);
+  outline-offset: 2px;
+}
+
+.toggle-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--sf-text-primary);
+}
+
 /* ── Doc content ───────────────────────────────── */
 .doc-content {
   max-width: 800px;

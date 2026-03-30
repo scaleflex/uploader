@@ -77,6 +77,16 @@ export interface UploaderConfig {
   /** Whether the "Done" action clears all files (inline mode resets, modal mode closes). Default: true. */
   clearOnComplete?: boolean;
   /**
+   * Automatically close the uploader when all uploads complete.
+   * - `true`  — closes after a 1.5 s delay so the user briefly sees the success state.
+   * - number — custom delay in milliseconds (e.g. `2000` for 2 s).
+   * - `false` / omitted — disabled (default).
+   *
+   * Fires `onCompleteAction` + `onClose` callbacks and the corresponding public
+   * events before closing, same as if the user clicked "Done".
+   */
+  closeOnComplete?: boolean | number;
+  /**
    * Auto-remove rejected files after this delay in milliseconds.
    * Default: 4000 (4 seconds). Set to 0 or false to disable auto-removal.
    */
@@ -1287,6 +1297,9 @@ export class SfxUploader extends LitElement {
   // Timers for auto-removing rejected files (cleared on disconnect)
   private _rejectedTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
+  // Timer for closeOnComplete auto-close
+  private _closeOnCompleteTimer: ReturnType<typeof setTimeout> | null = null;
+
   // Resolved auth state
   private _apiBase: string | null = null;
   private _authHeaders: AuthHeaders | null = null;
@@ -1319,6 +1332,8 @@ export class SfxUploader extends LitElement {
   close() {
     if (!this._isOpen) return;
     this._isOpen = false;
+    // Cancel any pending closeOnComplete timer so it doesn't fire after manual close
+    if (this._closeOnCompleteTimer) { clearTimeout(this._closeOnCompleteTimer); this._closeOnCompleteTimer = null; }
     if (this.config?.clearOnClose !== false) {
       this._onClearAll();
     }
@@ -1572,6 +1587,8 @@ export class SfxUploader extends LitElement {
     // Clear rejected file auto-removal timers
     for (const timer of this._rejectedTimers.values()) clearTimeout(timer);
     this._rejectedTimers.clear();
+    // Clear closeOnComplete timer
+    if (this._closeOnCompleteTimer) { clearTimeout(this._closeOnCompleteTimer); this._closeOnCompleteTimer = null; }
     // Revoke all preview blob URLs to prevent memory leaks
     for (const file of this._store.getState().files.values()) {
       if (file.previewUrl) URL.revokeObjectURL(file.previewUrl);
@@ -1740,6 +1757,21 @@ export class SfxUploader extends LitElement {
         const failed = allFiles.filter((f) => f.status === 'failed' || f.status === 'error');
         this._dispatchPublic(PublicEvents.ALL_COMPLETE, { successful, failed });
         callbacks?.onAllComplete?.(successful, failed);
+
+        // Auto-close after a brief delay so the user sees the success state
+        const closeOpt = this.config?.closeOnComplete;
+        if (closeOpt) {
+          const delay = typeof closeOpt === 'number' ? closeOpt : 1500;
+          this._closeOnCompleteTimer = setTimeout(() => {
+            this._closeOnCompleteTimer = null;
+            // Guard: only act if still in the complete phase (user may have clicked "Upload more")
+            if (this._phase !== 'complete') return;
+            // Fire the same callbacks/events as the "Done" button
+            this._dispatchPublic(PublicEvents.COMPLETE_ACTION, {});
+            this.config?.callbacks?.onCompleteAction?.();
+            this.close();
+          }, delay);
+        }
       }
     }
   }
@@ -2140,6 +2172,8 @@ export class SfxUploader extends LitElement {
   private _onClearAll = () => {
     const callbacks = this.config?.callbacks;
 
+    // Clear closeOnComplete timer so a stale auto-close doesn't fire after reset
+    if (this._closeOnCompleteTimer) { clearTimeout(this._closeOnCompleteTimer); this._closeOnCompleteTimer = null; }
     // Cancel all active uploads first so XHRs are aborted before removal events
     this._engine?.cancelAll();
     // Snapshot files, revoke preview URLs, and dispatch removal events
