@@ -400,19 +400,11 @@ export class SfxUploader extends LitElement {
     }
 
     .preview-layout .file-grid-side::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      right: 14px;
-      width: 1px;
-      background: var(--sfx-up-border, #e8edf5);
-      pointer-events: none;
-      z-index: 3;
+      display: none;
     }
 
     .preview-layout sfx-file-list {
-      padding-right: 16px;
+      padding-right: 6px;
       --sfx-scrollbar-w: 14px;
       --sfx-scrollbar-inset-left: 2px;
       --sfx-scrollbar-inset-right: 6px;
@@ -703,7 +695,32 @@ export class SfxUploader extends LitElement {
       flex: 1;
       gap: 8px;
       padding: 32px 24px;
+      position: relative;
       animation: fadeUp 0.3s ease both;
+    }
+
+    .upload-overlay-close {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: none;
+      color: var(--sfx-up-text-muted, #94a3b8);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      padding: 0;
+    }
+
+    .upload-overlay-close svg { width: 16px; height: 16px; }
+
+    .upload-overlay-close:hover {
+      background: var(--sfx-up-surface, #f8fafc);
+      color: var(--sfx-up-text, #1e293b);
     }
 
     .upload-overlay-spinner {
@@ -2413,6 +2430,11 @@ export class SfxUploader extends LitElement {
     this.close();
   };
 
+  private _onCancelAndClose = () => {
+    this._engine?.cancelAll();
+    this._onModalDismiss();
+  };
+
   private _onMinimize = () => {
     this._isMinimized = true;
     this._isPillExpanded = true;
@@ -2599,6 +2621,9 @@ export class SfxUploader extends LitElement {
 
     return html`
       <div class="upload-overlay">
+        <button class="upload-overlay-close" title="Cancel upload" @click=${this._onCancelAndClose}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
         <div class="upload-overlay-spinner"></div>
         <div class="upload-overlay-percent">${pct}%</div>
         <div class="upload-overlay-title">Uploading ${files.length} ${files.length === 1 ? 'file' : 'files'}</div>
