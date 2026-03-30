@@ -49,6 +49,7 @@ export interface UploaderCallbacks {
   onCancel?: () => void;
   onFilePreview?: (file: UploadFile) => void;
   onFillMetadata?: (files: UploadFile[]) => void;
+  onCompleteAction?: () => void;
 }
 
 export interface UploaderConfig {
@@ -109,9 +110,6 @@ export class SfxUploader extends LitElement {
       --sfx-up-shadow: var(--shadow, rgba(0, 0, 0, 0.1));
       --sfx-up-surface: var(--card, #f8fafc);
       --sfx-up-backdrop: rgba(0, 0, 0, 0.45);
-      --sfx-up-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
-      --sfx-up-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04);
-      --sfx-up-shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.16), 0 4px 12px rgba(0, 0, 0, 0.06);
       --sfx-up-ring: var(--ring, oklch(0.578 0.198 268.129 / 0.7));
       --sfx-up-max-height: 88vh;
     }
@@ -2267,6 +2265,7 @@ export class SfxUploader extends LitElement {
   private _onPrimaryAction = () => {
     // Dispatch public event so consumers can handle "Done"/"View in DAM"/etc.
     this._dispatchPublic(PublicEvents.COMPLETE_ACTION, {});
+    this.config?.callbacks?.onCompleteAction?.();
     // In modal mode, close the uploader; otherwise optionally reset to initial state
     if (this.config?.mode === 'modal') {
       this.close();

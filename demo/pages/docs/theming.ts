@@ -49,9 +49,6 @@ const page: Page = {
           <thead><tr><th>Property</th><th>Default</th><th>Description</th></tr></thead>
           <tbody>
             <tr><td><code>--sfx-up-shadow</code></td><td><code>rgba(0,0,0,0.1)</code></td><td>Generic shadow colour</td></tr>
-            <tr><td><code>--sfx-up-shadow-sm</code></td><td><code>0 1px 3px rgba(0,0,0,0.06)</code></td><td>Small shadow</td></tr>
-            <tr><td><code>--sfx-up-shadow-md</code></td><td>medium shadow</td><td>Medium shadow (cards, dropdowns)</td></tr>
-            <tr><td><code>--sfx-up-shadow-lg</code></td><td>large shadow</td><td>Large shadow (modals)</td></tr>
           </tbody>
         </table>
 
