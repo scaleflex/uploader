@@ -807,7 +807,7 @@ export class SfxUploader extends LitElement {
       bottom: 24px;
       right: 24px;
       z-index: 10000;
-      width: 320px;
+      width: 470px;
       border-radius: 12px;
       background: var(--sfx-up-bg, #fff);
       box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
@@ -847,6 +847,11 @@ export class SfxUploader extends LitElement {
     .float-icon.done {
       background: #f0fdf4;
       color: #22c55e;
+    }
+
+    .float-icon.error {
+      background: #fef2f2;
+      color: #ef4444;
     }
 
     .float-title {
@@ -910,9 +915,9 @@ export class SfxUploader extends LitElement {
       color: var(--sfx-up-primary, #2563eb);
     }
 
-    .float-progress-pct.done {
-      color: #22c55e;
-    }
+    .float-progress-pct.done { color: #22c55e; }
+    .float-progress-pct.warn { color: #f59e0b; }
+    .float-progress-pct.error { color: #ef4444; }
 
     .float-bar {
       height: 4px;
@@ -928,13 +933,14 @@ export class SfxUploader extends LitElement {
       transition: width 0.3s ease;
     }
 
-    .float-bar-fill.done {
-      background: #22c55e;
-    }
+    .float-bar-fill.done { background: #22c55e; }
+    .float-bar-fill.warn { background: #f59e0b; }
+    .float-bar-fill.error { background: #ef4444; }
 
     .float-items {
       max-height: 200px;
       overflow-y: auto;
+      overflow-x: hidden;
       scrollbar-width: thin;
       scrollbar-color: rgba(0,0,0,0.1) transparent;
     }
@@ -945,6 +951,7 @@ export class SfxUploader extends LitElement {
       gap: 10px;
       padding: 8px 14px;
       border-bottom: 1px solid #f1f5f9;
+      overflow: hidden;
     }
 
     .float-item:last-child { border-bottom: none; }
@@ -963,7 +970,7 @@ export class SfxUploader extends LitElement {
 
     .float-item-thumb svg { width: 16px; height: 16px; }
 
-    .float-item-info { flex: 1; min-width: 0; }
+    .float-item-info { flex: 1; min-width: 0; overflow: hidden; }
 
     .float-item-name {
       font-size: 12px;
@@ -1003,12 +1010,68 @@ export class SfxUploader extends LitElement {
       flex-shrink: 0;
     }
 
-    .float-item-error {
-      color: #ef4444;
-      width: 16px;
-      height: 16px;
+    .float-item-error-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
       flex-shrink: 0;
     }
+
+    .float-item-error-icon {
+      width: 16px;
+      height: 16px;
+      color: #ef4444;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    .float-item-tooltip {
+      display: none;
+      position: absolute;
+      right: calc(100% + 8px);
+      top: 50%;
+      transform: translateY(-50%);
+      background: #fff;
+      color: #1e293b;
+      font-size: 11px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      white-space: nowrap;
+      pointer-events: none;
+      z-index: 10;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.08);
+    }
+
+    .float-item-error-wrap:hover .float-item-tooltip {
+      display: block;
+    }
+
+    .float-item-status {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .float-item-retry {
+      width: 24px;
+      height: 24px;
+      border: none;
+      background: none;
+      color: var(--sfx-up-primary, #2563eb);
+      cursor: pointer;
+      padding: 4px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+    }
+
+    .float-item-retry svg { width: 16px; height: 16px; }
+
+    .float-item-retry:hover { background: #f1f5f9; color: #1d4ed8; }
 
     @keyframes floatSlideIn {
       from { opacity: 0; transform: translateY(20px); }
@@ -1382,6 +1445,12 @@ export class SfxUploader extends LitElement {
     this.config?.callbacks?.onUploadStarted?.(files);
 
     this._engine.uploadAll();
+
+    if (this.config?.minimizeOnUpload) {
+      this._isMinimized = true;
+      this._isPillExpanded = true;
+      this.requestUpdate();
+    }
   }
 
   /** Programmatically add files. */
@@ -1498,13 +1567,14 @@ export class SfxUploader extends LitElement {
     const style = document.createElement('style');
     style.setAttribute('data-sfx-upload-float-styles', '');
     style.textContent = `
-      [data-sfx-upload-float] .upload-float { position:fixed; bottom:24px; right:24px; z-index:10000; width:320px; border-radius:12px; background:#fff; box-shadow:0 8px 32px rgba(0,0,0,0.12),0 2px 8px rgba(0,0,0,0.06); overflow:hidden; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; animation:sfxFloatIn .3s ease both; }
+      [data-sfx-upload-float] .upload-float { position:fixed; bottom:24px; right:24px; z-index:10000; width:470px; border-radius:12px; background:#fff; box-shadow:0 8px 32px rgba(0,0,0,0.12),0 2px 8px rgba(0,0,0,0.06); overflow:hidden; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; animation:sfxFloatIn .3s ease both; }
       [data-sfx-upload-float] .float-header { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-bottom:1px solid #e8edf5; }
       [data-sfx-upload-float] .float-header-left { display:flex; align-items:center; gap:8px; }
       [data-sfx-upload-float] .float-icon { width:28px; height:28px; border-radius:6px; background:#eff6ff; color:#2563eb; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
       [data-sfx-upload-float] .float-icon svg { width:14px; height:14px; }
       [data-sfx-upload-float] .float-icon.done { background:#f0fdf4; color:#22c55e; }
       [data-sfx-upload-float] .float-icon.warn { background:#fffbeb; color:#f59e0b; }
+      [data-sfx-upload-float] .float-icon.error { background:#fef2f2; color:#ef4444; }
       [data-sfx-upload-float] .float-title { font-size:13px; font-weight:600; color:#1e293b; }
       [data-sfx-upload-float] .float-subtitle { font-size:11px; color:#94a3b8; }
       [data-sfx-upload-float] .float-actions { display:flex; gap:4px; }
@@ -1517,10 +1587,12 @@ export class SfxUploader extends LitElement {
       [data-sfx-upload-float] .float-progress-pct { font-size:12px; font-weight:600; color:#2563eb; }
       [data-sfx-upload-float] .float-progress-pct.done { color:#22c55e; }
       [data-sfx-upload-float] .float-progress-pct.warn { color:#f59e0b; }
+      [data-sfx-upload-float] .float-progress-pct.error { color:#ef4444; }
       [data-sfx-upload-float] .float-bar { height:4px; background:#e8edf5; border-radius:2px; overflow:hidden; }
       [data-sfx-upload-float] .float-bar-fill { height:100%; background:#2563eb; border-radius:2px; transition:width .3s ease; }
       [data-sfx-upload-float] .float-bar-fill.done { background:#22c55e; }
       [data-sfx-upload-float] .float-bar-fill.warn { background:#f59e0b; }
+      [data-sfx-upload-float] .float-bar-fill.error { background:#ef4444; }
       [data-sfx-upload-float] .float-items { max-height:200px; overflow-y:auto; }
       [data-sfx-upload-float] .float-item { display:flex; align-items:center; gap:10px; padding:8px 14px; border-bottom:1px solid #f1f5f9; }
       [data-sfx-upload-float] .float-item:last-child { border-bottom:none; }
@@ -1532,14 +1604,22 @@ export class SfxUploader extends LitElement {
       [data-sfx-upload-float] .float-item-done { width:18px; height:18px; border-radius:50%; background:#f0fdf4; color:#22c55e; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
       [data-sfx-upload-float] .float-item-done svg { width:12px; height:12px; }
       [data-sfx-upload-float] .float-item-spinner { width:16px; height:16px; border:2px solid #e8edf5; border-top-color:#2563eb; border-radius:50%; animation:sfxSpin .8s linear infinite; flex-shrink:0; }
-      [data-sfx-upload-float] .float-item-error { color:#ef4444; width:16px; height:16px; flex-shrink:0; cursor:help; }
-      [data-sfx-upload-float] .float-collapsed { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; width:320px; border-radius:12px; }
+      [data-sfx-upload-float] .float-item-status { display:flex; flex-direction:row; align-items:center; gap:4px; flex-shrink:0; }
+      [data-sfx-upload-float] .float-item-error-wrap { position:relative; display:flex; align-items:center; flex-shrink:0; }
+      [data-sfx-upload-float] .float-item-error-icon { width:16px; height:16px; color:#ef4444; flex-shrink:0; cursor:pointer; }
+      [data-sfx-upload-float] .float-item-tooltip { display:none; position:absolute; right:calc(100% + 8px); top:50%; transform:translateY(-50%); background:#fff; color:#1e293b; font-size:11px; padding:6px 10px; border-radius:6px; white-space:nowrap; pointer-events:none; z-index:10; box-shadow:0 2px 12px rgba(0,0,0,0.12),0 1px 4px rgba(0,0,0,0.08); }
+      [data-sfx-upload-float] .float-item-error-wrap:hover .float-item-tooltip { display:block; }
+      [data-sfx-upload-float] .float-item-retry { width:24px; height:24px; border:none; background:none; color:#2563eb; cursor:pointer; padding:4px; flex-shrink:0; display:flex; align-items:center; justify-content:center; border-radius:4px; }
+      [data-sfx-upload-float] .float-item-retry svg { width:14px; height:14px; }
+      [data-sfx-upload-float] .float-item-retry:hover { background:#f1f5f9; color:#1d4ed8; }
+      [data-sfx-upload-float] .float-collapsed { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; width:470px; border-radius:12px; }
       [data-sfx-upload-float] .float-collapsed-left { display:flex; align-items:center; gap:8px; }
       [data-sfx-upload-float] .float-collapsed-spinner { width:18px; height:18px; border:2.5px solid #e8edf5; border-top-color:#2563eb; border-radius:50%; animation:sfxSpin .8s linear infinite; flex-shrink:0; }
       [data-sfx-upload-float] .float-collapsed-icon { width:18px; height:18px; flex-shrink:0; }
       [data-sfx-upload-float] .float-collapsed-icon svg { width:18px; height:18px; }
       [data-sfx-upload-float] .float-collapsed-icon.done { color:#22c55e; }
       [data-sfx-upload-float] .float-collapsed-icon.warn { color:#f59e0b; }
+      [data-sfx-upload-float] .float-collapsed-icon.error { color:#ef4444; }
       [data-sfx-upload-float] .float-collapsed-text { font-size:13px; font-weight:500; color:#1e293b; white-space:nowrap; }
       [data-sfx-upload-float] .float-collapsed-pct { font-size:13px; font-weight:600; color:#2563eb; }
       [data-sfx-upload-float] .float-collapsed-actions { display:flex; gap:4px; }
@@ -2344,10 +2424,17 @@ export class SfxUploader extends LitElement {
     this.requestUpdate();
   };
 
-  private _onPillDismiss = () => {
+  private _onPillExpand = () => {
     this._isMinimized = false;
     this._isPillExpanded = false;
     this._isOpen = true;
+    this.requestUpdate();
+  };
+
+  private _onPillDismiss = () => {
+    this._isMinimized = false;
+    this._isPillExpanded = false;
+    this._isOpen = false;
     this.requestUpdate();
   };
 
@@ -2539,17 +2626,22 @@ export class SfxUploader extends LitElement {
           <div class="float-collapsed-left">
             ${isDone
               ? failed > 0
-                ? html`<div class="float-collapsed-icon warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>`
+                ? completed > 0
+                  ? html`<div class="float-collapsed-icon warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>`
+                  : html`<div class="float-collapsed-icon error"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>`
                 : html`<div class="float-collapsed-icon done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>`
               : html`<div class="float-collapsed-spinner"></div>`}
-            <span class="float-collapsed-text">${isDone ? (failed > 0 ? `${failed} ${failed === 1 ? 'file' : 'files'} not uploaded` : 'Upload complete') : `Uploading ${files.length} ${files.length === 1 ? 'file' : 'files'}`}</span>
+            <span class="float-collapsed-text">${isDone ? (failed > 0 ? (completed > 0 ? 'Partially uploaded' : 'Upload failed') : 'Upload complete') : `Uploading ${files.length} ${files.length === 1 ? 'file' : 'files'}`}</span>
             ${!isDone ? html`<span class="float-collapsed-pct">${pct}%</span>` : nothing}
           </div>
           <div class="float-collapsed-actions">
+            <button title="Open uploader" @click=${this._onPillExpand}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+            </button>
             <button title="Expand" @click=${this._onPillClick}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="18 15 12 9 6 15"/></svg>
             </button>
-            <button title="Dismiss" @click=${this._onPillDismiss}>
+            <button title="Close" @click=${this._onPillDismiss}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           </div>
@@ -2562,23 +2654,28 @@ export class SfxUploader extends LitElement {
       <div class="upload-float">
         <div class="float-header">
           <div class="float-header-left">
-            <div class="float-icon ${isDone ? (failed > 0 ? 'warn' : 'done') : ''}">
+            <div class="float-icon ${isDone ? (failed > 0 ? (completed > 0 ? 'warn' : 'error') : 'done') : ''}">
               ${isDone
                 ? failed > 0
-                  ? html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`
+                  ? completed > 0
+                    ? html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`
+                    : html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`
                   : html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>`
                 : html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>`}
             </div>
             <div>
-              <div class="float-title">${isDone ? (failed > 0 ? `${failed} ${failed === 1 ? 'file' : 'files'} not uploaded` : 'Upload complete') : `Uploading ${files.length} ${files.length === 1 ? 'file' : 'files'}`}</div>
+              <div class="float-title">${isDone ? (failed > 0 ? (completed > 0 ? 'Partially uploaded' : 'Upload failed') : 'Upload complete') : `Uploading ${files.length} ${files.length === 1 ? 'file' : 'files'}`}</div>
               <div class="float-subtitle">${isDone ? `${completed} ${completed === 1 ? 'file' : 'files'} uploaded${failed > 0 ? `, ${failed} failed` : ''}` : `${completed} of ${files.length}${eta > 0 ? ` · ~${formatEta(eta)} left` : ''}`}</div>
             </div>
           </div>
           <div class="float-actions">
+            <button title="Expand" @click=${this._onPillExpand}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+            </button>
             <button title="Collapse" @click=${this._onPillClick}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
             </button>
-            <button title="Dismiss" @click=${this._onPillDismiss}>
+            <button title="Close" @click=${this._onPillDismiss}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           </div>
@@ -2586,15 +2683,17 @@ export class SfxUploader extends LitElement {
         <div class="float-progress">
           <div class="float-progress-top">
             <span class="float-progress-label">Overall progress</span>
-            <span class="float-progress-pct ${isDone ? (failed > 0 ? 'warn' : 'done') : ''}">${isDone ? 'Done' : `${pct}%`}</span>
+            <span class="float-progress-pct ${isDone ? (failed > 0 ? (completed > 0 ? 'warn' : 'error') : 'done') : ''}">${isDone ? 'Done' : `${pct}%`}</span>
           </div>
-          <div class="float-bar"><div class="float-bar-fill ${isDone ? (failed > 0 ? 'warn' : 'done') : ''}" style="width:${isDone ? 100 : pct}%"></div></div>
+          <div class="float-bar"><div class="float-bar-fill ${isDone ? (failed > 0 ? (completed > 0 ? 'warn' : 'error') : 'done') : ''}" style="width:${isDone ? 100 : pct}%"></div></div>
         </div>
         <div class="float-items">
-          ${files.map((f) => html`
+          ${files.map((f) => {
+            const isFailed = f.status === 'failed' || f.status === 'error';
+            return html`
             <div class="float-item">
-              <div class="float-item-thumb">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+              <div class="float-item-thumb" style=${f.previewUrl ? `background-image:url(${f.previewUrl});background-size:cover;background-position:center` : ''}>
+                ${!f.previewUrl ? html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>` : nothing}
               </div>
               <div class="float-item-info">
                 <div class="float-item-name">${f.name}</div>
@@ -2603,12 +2702,19 @@ export class SfxUploader extends LitElement {
               <div class="float-item-status">
                 ${f.status === 'complete'
                   ? html`<div class="float-item-done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>`
-                  : f.status === 'failed' || f.status === 'error'
-                    ? html`<svg class="float-item-error" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><title>${f.error || 'Upload failed'}</title><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`
+                  : isFailed
+                    ? html`
+                        <div class="float-item-error-wrap">
+                          <svg class="float-item-error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                          <span class="float-item-tooltip">${f.error || 'Upload failed'}</span>
+                        </div>
+                        <button class="float-item-retry" @click=${() => { this._ensureEngine(); this._engine?.retryFile(f.id); }}>
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+                        </button>`
                     : html`<div class="float-item-spinner"></div>`}
               </div>
             </div>
-          `)}
+          `; })}
         </div>
       </div>
     `;
@@ -2799,7 +2905,10 @@ export class SfxUploader extends LitElement {
                     .fileCount=${files.filter((f) => f.status === 'complete').length}
                     .totalSize=${files.filter((f) => f.status === 'complete').reduce((sum, f) => sum + (f.size || 0), 0)}
                     .thumbnails=${files.filter((f) => f.status === 'complete' && f.previewUrl).map((f) => f.previewUrl!)}
-                    .failedFiles=${files.filter((f) => f.status === 'failed').map((f) => ({ name: f.name, error: f.error || 'Upload failed' }))}
+                    .failedFiles=${files.filter((f) => f.status === 'failed').map((f) => ({ id: f.id, name: f.name, error: f.error || 'Upload failed' }))}
+                    @close-uploader=${this._onModalDismiss}
+                    @file-retry=${this._onFileRetry}
+                    @retry-all=${this._onRetryAll}
                   ></sfx-success-card>
                 `
               : phase === 'uploading'

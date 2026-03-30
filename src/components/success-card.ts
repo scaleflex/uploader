@@ -12,7 +12,9 @@ export class SfxSuccessCard extends LitElement {
       flex: 1;
       justify-content: center;
       align-items: center;
-      padding-bottom: 24px;
+      padding: 24px 0;
+      position: relative;
+      overflow-y: auto;
     }
 
     .card {
@@ -127,20 +129,43 @@ export class SfxSuccessCard extends LitElement {
     /* --- Failed files list --- */
     .failed-list {
       width: 100%;
-      max-width: 360px;
+      max-width: 400px;
+      max-height: 200px;
       margin-bottom: 20px;
       border-radius: 8px;
       border: 1px solid var(--sfx-up-border, #e8eaed);
-      overflow: hidden;
+      overflow-y: auto;
+      overflow-x: hidden;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(0,0,0,0.15) transparent;
+    }
+
+    .failed-list::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .failed-list::-webkit-scrollbar-track {
+      background: transparent;
+      margin: 6px 0;
+    }
+
+    .failed-list::-webkit-scrollbar-thumb {
+      background: rgba(0,0,0,0.15);
+      border-radius: 3px;
+    }
+
+    .failed-list::-webkit-scrollbar-thumb:hover {
+      background: rgba(0,0,0,0.25);
     }
 
     .failed-item {
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       gap: 8px;
       padding: 8px 12px;
-      border-bottom: 1px solid var(--sfx-up-border, #f1f5f9);
       text-align: left;
+      border-bottom: 1px solid var(--sfx-up-border, #f1f5f9);
+      margin-right: 8px;
     }
 
     .failed-item:last-child {
@@ -173,6 +198,62 @@ export class SfxSuccessCard extends LitElement {
       font-size: 11px;
       color: var(--sfx-up-text-muted, #94a3b8);
       line-height: 1.4;
+    }
+
+    .failed-retry {
+      width: 24px;
+      height: 24px;
+      border: none;
+      background: none;
+      color: var(--sfx-up-primary, #2563eb);
+      cursor: pointer;
+      padding: 4px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      margin-top: -2px;
+    }
+
+    .failed-retry svg { width: 14px; height: 14px; }
+
+    .failed-retry:hover { background: #f1f5f9; color: #1d4ed8; }
+
+    .close-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: none;
+      color: var(--sfx-up-text-muted, #94a3b8);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      padding: 0;
+    }
+
+    .close-btn svg { width: 16px; height: 16px; }
+
+    .close-btn:hover { background: var(--sfx-up-surface, #f8fafc); color: var(--sfx-up-text, #1e293b); }
+
+    .btn-retry-all {
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      border: 1px solid var(--sfx-up-primary, #2563eb);
+      background: #fff;
+      color: var(--sfx-up-primary, #2563eb);
+      cursor: pointer;
+    }
+
+    .btn-retry-all:hover {
+      background: #eff6ff;
     }
 
     @keyframes fadeUp {
@@ -210,7 +291,7 @@ export class SfxSuccessCard extends LitElement {
   @property({ type: Number }) totalSize = 0;
   @property({ type: Array }) thumbnails: string[] = [];
   @property({ type: String }) primaryLabel = 'Done';
-  @property({ type: Array }) failedFiles: { name: string; error: string }[] = [];
+  @property({ type: Array }) failedFiles: { id: string; name: string; error: string }[] = [];
 
   private _uploadMore() {
     this.dispatchEvent(
@@ -224,6 +305,24 @@ export class SfxSuccessCard extends LitElement {
     );
   }
 
+  private _retryFile(fileId: string) {
+    this.dispatchEvent(
+      new CustomEvent('file-retry', { bubbles: true, composed: true, detail: { fileId } }),
+    );
+  }
+
+  private _retryAll() {
+    this.dispatchEvent(
+      new CustomEvent('retry-all', { bubbles: true, composed: true }),
+    );
+  }
+
+  private _close() {
+    this.dispatchEvent(
+      new CustomEvent('close-uploader', { bubbles: true, composed: true }),
+    );
+  }
+
   render() {
     const visibleThumbs = this.thumbnails.slice(0, MAX_THUMBS);
     const overflowCount = this.thumbnails.length - MAX_THUMBS;
@@ -232,6 +331,9 @@ export class SfxSuccessCard extends LitElement {
     const allFailed = hasFailed && !hasSuccesses;
 
     return html`
+      <button class="close-btn" title="Close" @click=${this._close}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
       <div class="card" role="status" aria-live="polite">
         <div class="icon ${allFailed ? 'error' : hasFailed ? 'warning' : ''}">
           ${allFailed
@@ -269,11 +371,14 @@ export class SfxSuccessCard extends LitElement {
             <div class="failed-list">
               ${this.failedFiles.map((f) => html`
                 <div class="failed-item">
-                  <svg class="failed-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Error"><title>Error</title><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                   <div class="failed-info">
                     <div class="failed-name">${f.name}</div>
                     <div class="failed-reason">${f.error}</div>
                   </div>
+                  <svg class="failed-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Error"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  <button class="failed-retry" title="Retry" @click=${() => this._retryFile(f.id)}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+                  </button>
                 </div>
               `)}
             </div>
@@ -282,6 +387,7 @@ export class SfxSuccessCard extends LitElement {
 
         <div class="actions">
           <button class="btn-ghost" @click=${this._uploadMore}>Upload more</button>
+          ${hasFailed ? html`<button class="btn-retry-all" @click=${this._retryAll}>Retry all (${this.failedFiles.length})</button>` : nothing}
           <button class="btn-primary" @click=${this._primaryAction}>${this.primaryLabel}</button>
         </div>
       </div>
