@@ -25,6 +25,7 @@ const routes: RouteEntry[] = [
   { pattern: '/examples/events', load: () => import('../pages/examples/events').then((m) => m.default) },
   { pattern: '/examples/inline', load: () => import('../pages/examples/inline').then((m) => m.default) },
   { pattern: '/examples/sources-layout', load: () => import('../pages/examples/sources-layout').then((m) => m.default) },
+  { pattern: '/examples/minimize-to-background', load: () => import('../pages/examples/minimize-to-background').then((m) => m.default) },
   { pattern: '/examples/react-wrapper', load: () => import('../pages/examples/react-wrapper').then((m) => m.default) },
 ];
 

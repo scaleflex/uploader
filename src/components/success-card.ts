@@ -42,6 +42,16 @@ export class SfxSuccessCard extends LitElement {
       height: 30px;
     }
 
+    .icon.error {
+      background: #fef2f2;
+      color: #ef4444;
+    }
+
+    .icon.warning {
+      background: #fffbeb;
+      color: #f59e0b;
+    }
+
     .title {
       font-size: 20px;
       font-weight: 700;
@@ -114,6 +124,57 @@ export class SfxSuccessCard extends LitElement {
       box-shadow: 0 4px 16px rgba(34, 197, 94, 0.38);
     }
 
+    /* --- Failed files list --- */
+    .failed-list {
+      width: 100%;
+      max-width: 360px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      border: 1px solid var(--sfx-up-border, #e8eaed);
+      overflow: hidden;
+    }
+
+    .failed-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--sfx-up-border, #f1f5f9);
+      text-align: left;
+    }
+
+    .failed-item:last-child {
+      border-bottom: none;
+    }
+
+    .failed-icon {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+      color: #ef4444;
+      margin-top: 1px;
+    }
+
+    .failed-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .failed-name {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--sfx-up-text, #1e293b);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .failed-reason {
+      font-size: 11px;
+      color: var(--sfx-up-text-muted, #94a3b8);
+      line-height: 1.4;
+    }
+
     @keyframes fadeUp {
       from {
         opacity: 0;
@@ -149,6 +210,7 @@ export class SfxSuccessCard extends LitElement {
   @property({ type: Number }) totalSize = 0;
   @property({ type: Array }) thumbnails: string[] = [];
   @property({ type: String }) primaryLabel = 'Done';
+  @property({ type: Array }) failedFiles: { name: string; error: string }[] = [];
 
   private _uploadMore() {
     this.dispatchEvent(
@@ -165,16 +227,27 @@ export class SfxSuccessCard extends LitElement {
   render() {
     const visibleThumbs = this.thumbnails.slice(0, MAX_THUMBS);
     const overflowCount = this.thumbnails.length - MAX_THUMBS;
+    const hasSuccesses = this.fileCount > 0;
+    const hasFailed = this.failedFiles.length > 0;
+    const allFailed = hasFailed && !hasSuccesses;
 
     return html`
       <div class="card" role="status" aria-live="polite">
-        <div class="icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
+        <div class="icon ${allFailed ? 'error' : hasFailed ? 'warning' : ''}">
+          ${allFailed
+            ? html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>`
+            : hasFailed
+              ? html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>`
+              : html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>`}
         </div>
-        <div class="title">Uploaded successfully!</div>
-        <div class="subtitle">All files are ready for use</div>
+        <div class="title">${allFailed ? 'Upload failed' : hasFailed ? 'Partially uploaded' : 'Uploaded successfully!'}</div>
+        <div class="subtitle">${allFailed ? `${this.failedFiles.length === 1 ? 'File' : 'Files'} could not be uploaded` : hasFailed ? `${this.fileCount} ${this.fileCount === 1 ? 'file' : 'files'} uploaded, ${this.failedFiles.length} failed` : 'All files are ready for use'}</div>
 
         ${visibleThumbs.length > 0
           ? html`
@@ -189,7 +262,23 @@ export class SfxSuccessCard extends LitElement {
             `
           : nothing}
 
-        <div class="summary">${this.fileCount} ${this.fileCount === 1 ? 'file' : 'files'} · ${formatFileSize(this.totalSize)} uploaded</div>
+        ${hasSuccesses ? html`<div class="summary">${this.fileCount} ${this.fileCount === 1 ? 'file' : 'files'} · ${formatFileSize(this.totalSize)} uploaded</div>` : nothing}
+
+        ${hasFailed
+          ? html`
+            <div class="failed-list">
+              ${this.failedFiles.map((f) => html`
+                <div class="failed-item">
+                  <svg class="failed-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Error"><title>Error</title><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  <div class="failed-info">
+                    <div class="failed-name">${f.name}</div>
+                    <div class="failed-reason">${f.error}</div>
+                  </div>
+                </div>
+              `)}
+            </div>
+          `
+          : nothing}
 
         <div class="actions">
           <button class="btn-ghost" @click=${this._uploadMore}>Upload more</button>

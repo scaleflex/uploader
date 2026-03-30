@@ -75,6 +75,7 @@ const page: Page = {
             <tr><td><code>clearOnClose</code></td><td><code>boolean</code></td><td><code>true</code></td><td>Whether closing the modal clears all files. Set to <code>false</code> to preserve files across open/close cycles.</td></tr>
             <tr><td><code>clearOnComplete</code></td><td><code>boolean</code></td><td><code>true</code></td><td>Whether the "Done" action clears all files. In modal mode this also closes the uploader. Set to <code>false</code> to keep files after completion.</td></tr>
             <tr><td><code>closeOnComplete</code></td><td><code>boolean | number</code></td><td><code>false</code></td><td>Automatically close the uploader after all uploads finish. <code>true</code> uses a 1.5 s delay; pass a number for a custom delay in ms. Pairs well with <code>autoProceed</code> for a fully hands-off flow.</td></tr>
+            <tr><td><code>minimizeOnUpload</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Show a "Minimize & continue in background" button during uploads. When clicked, the modal collapses to a floating progress pill so the user can keep working.</td></tr>
             <tr><td><code>rejectedFileAutoRemoveDelay</code></td><td><code>number | false</code></td><td><code>false</code></td><td>Auto-remove rejected files after this delay in milliseconds. Set to a number (e.g. <code>4000</code>) to enable auto-removal.</td></tr>
           </tbody>
         </table>
@@ -182,6 +183,16 @@ uploader.open();`,
   auth: { /* ... */ },
   autoProceed: true,      // start uploading immediately
   closeOnComplete: true,  // auto-close after uploads finish
+};`,
+        )}
+
+        <h3>Minimize to background</h3>
+        <p>Set <code>minimizeOnUpload: true</code> to show a "Minimize & continue in background" button on the upload overlay. When clicked, the modal collapses into a small floating progress pill in the bottom-right corner, letting the user continue working while uploads finish in the background.</p>
+        ${code(
+          'typescript',
+          `uploader.config = {
+  auth: { /* ... */ },
+  minimizeOnUpload: true, // show minimize button during uploads
 };`,
         )}
 

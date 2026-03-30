@@ -67,6 +67,7 @@ export interface UploadResponse {
     modified_at: string;
   };
   msg?: string;
+  hint?: string;
 }
 
 // --- Queue config (spec §5.4) ---
