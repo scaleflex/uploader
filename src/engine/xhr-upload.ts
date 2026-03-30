@@ -55,7 +55,7 @@ export function xhrUploadFile(
     if (xhr.status >= 200 && xhr.status < 300 && body.status === 'success') {
       opts.onComplete(body);
     } else {
-      opts.onError(new Error(body.msg || `Upload failed (HTTP ${xhr.status})`));
+      opts.onError(new Error(body.hint || body.msg || `Upload failed (HTTP ${xhr.status})`));
     }
   });
 
@@ -136,7 +136,7 @@ export function xhrUploadUrl(
     if (xhr.status >= 200 && xhr.status < 300 && body.status === 'success') {
       opts.onComplete(body);
     } else {
-      opts.onError(new Error(body.msg || `Upload failed (HTTP ${xhr.status})`));
+      opts.onError(new Error(body.hint || body.msg || `Upload failed (HTTP ${xhr.status})`));
     }
   });
 
