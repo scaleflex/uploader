@@ -25,6 +25,8 @@ export interface UploaderRef {
   cancelUpload(): void;
   getFiles(): UploadFile[];
   getFile(fileId: string): UploadFile | undefined;
+  updateFileMeta(fileId: string, meta?: Record<string, unknown>, tags?: string[]): void;
+  updateFilesMeta(updates: Array<{ fileId: string; meta?: Record<string, unknown>; tags?: string[] }>): void;
 }
 
 export interface UploaderProps {
@@ -48,6 +50,7 @@ export interface UploaderProps {
   onBeforeUpload?: (files: UploadFile[]) => boolean | void;
   onFilePreview?: (file: UploadFile) => void;
   onFillMetadata?: (files: UploadFile[]) => void;
+  onCompleteAction?: () => void;
 
   className?: string;
   style?: CSSProperties;
@@ -74,6 +77,7 @@ export const Uploader = forwardRef<UploaderRef, UploaderProps>(
       onBeforeUpload,
       onFilePreview,
       onFillMetadata,
+      onCompleteAction,
       className,
       style,
     },
@@ -98,6 +102,7 @@ export const Uploader = forwardRef<UploaderRef, UploaderProps>(
     const onBeforeUploadRef = useRef(onBeforeUpload);
     const onFilePreviewRef = useRef(onFilePreview);
     const onFillMetadataRef = useRef(onFillMetadata);
+    const onCompleteActionRef = useRef(onCompleteAction);
 
     // Keep callback refs current
     useLayoutEffect(() => {
@@ -117,6 +122,7 @@ export const Uploader = forwardRef<UploaderRef, UploaderProps>(
       onBeforeUploadRef.current = onBeforeUpload;
       onFilePreviewRef.current = onFilePreview;
       onFillMetadataRef.current = onFillMetadata;
+      onCompleteActionRef.current = onCompleteAction;
     });
 
     useImperativeHandle(ref, () => ({
@@ -129,6 +135,8 @@ export const Uploader = forwardRef<UploaderRef, UploaderProps>(
       cancelUpload() { elRef.current?.cancelUpload(); },
       getFiles() { return elRef.current?.getFiles() ?? []; },
       getFile(fileId: string) { return elRef.current?.getFile(fileId); },
+      updateFileMeta(fileId: string, meta?: Record<string, unknown>, tags?: string[]) { elRef.current?.updateFileMeta(fileId, meta, tags); },
+      updateFilesMeta(updates: Array<{ fileId: string; meta?: Record<string, unknown>; tags?: string[] }>) { elRef.current?.updateFilesMeta(updates); },
     }));
 
     // Sync config property
@@ -232,6 +240,10 @@ export const Uploader = forwardRef<UploaderRef, UploaderProps>(
         onFillMetadataRef.current?.(files);
       };
 
+      const handleCompleteAction = () => {
+        onCompleteActionRef.current?.();
+      };
+
       el.addEventListener('sfx-file-added', handleFileAdded);
       el.addEventListener('sfx-file-removed', handleFileRemoved);
       el.addEventListener('sfx-file-rejected', handleFileRejected);
@@ -248,6 +260,7 @@ export const Uploader = forwardRef<UploaderRef, UploaderProps>(
       el.addEventListener('sfx-before-upload', handleBeforeUpload);
       el.addEventListener('sfx-file-preview', handleFilePreview);
       el.addEventListener('sfx-fill-metadata', handleFillMetadata);
+      el.addEventListener('sfx-complete-action', handleCompleteAction);
 
       return () => {
         el.removeEventListener('sfx-file-added', handleFileAdded);
@@ -266,6 +279,7 @@ export const Uploader = forwardRef<UploaderRef, UploaderProps>(
         el.removeEventListener('sfx-before-upload', handleBeforeUpload);
         el.removeEventListener('sfx-file-preview', handleFilePreview);
         el.removeEventListener('sfx-fill-metadata', handleFillMetadata);
+        el.removeEventListener('sfx-complete-action', handleCompleteAction);
       };
     }, []);
 

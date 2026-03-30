@@ -20,6 +20,8 @@ const page: Page = {
             <tr><td><code>cancelUpload()</code></td><td>Cancel all in-progress uploads</td></tr>
             <tr><td><code>getFiles(): UploadFile[]</code></td><td>Get a snapshot of all current files</td></tr>
             <tr><td><code>getFile(fileId: string): UploadFile | undefined</code></td><td>Get a single file by ID</td></tr>
+            <tr><td><code>updateFileMeta(fileId, meta?, tags?)</code></td><td>Update metadata and/or tags for a single file</td></tr>
+            <tr><td><code>updateFilesMeta(updates)</code></td><td>Batch-update metadata and/or tags for multiple files</td></tr>
           </tbody>
         </table>
 
@@ -100,6 +102,7 @@ uploader.addEventListener('sfx-all-complete', (e) => {
     onCancel: () => console.log('Upload cancelled'),
     onFilePreview: (file) => console.log('Preview:', file.name),
     onFillMetadata: (files) => console.log('Fill metadata for', files.length),
+    onCompleteAction: () => console.log('User clicked Done'),
   },
 };`,
         )}
@@ -129,6 +132,7 @@ uploader.addEventListener('sfx-all-complete', (e) => {
             <tr><td><code>onBeforeUpload</code></td><td><code>(files) =&gt; boolean | void</code></td><td>Fired before upload starts; return <code>false</code> to prevent</td></tr>
             <tr><td><code>onFilePreview</code></td><td><code>(file) =&gt; void</code></td><td>User opened a file preview</td></tr>
             <tr><td><code>onFillMetadata</code></td><td><code>(files) =&gt; void</code></td><td>User clicked "Fill Metadata"</td></tr>
+            <tr><td><code>onCompleteAction</code></td><td><code>() =&gt; void</code></td><td>User clicked "Done" on the completion screen</td></tr>
             <tr><td><code>className</code></td><td><code>string</code></td><td>CSS class for the host element</td></tr>
             <tr><td><code>style</code></td><td><code>CSSProperties</code></td><td>Inline styles for the host element</td></tr>
           </tbody>
