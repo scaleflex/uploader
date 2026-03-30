@@ -2,6 +2,8 @@ import type { Page } from '../lib/router';
 import type { SfxUploader } from '../../src/sfx-uploader';
 import { buildConfig } from '../lib/auth';
 
+declare const Prism: { highlightElement(el: Element): void };
+
 const page: Page = {
   render() {
     return `
