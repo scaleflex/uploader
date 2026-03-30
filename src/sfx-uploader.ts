@@ -1811,6 +1811,7 @@ export class SfxUploader extends LitElement {
       const error = validateFile(file, s.restrictions, s.files);
       if (error) {
         // Create a rejected file entry so the user sees the error
+        const rejectedPreview = file.type.startsWith('image/') ? URL.createObjectURL(file) : null;
         const uploadFile: UploadFile = {
           id: generateFileId(),
           status: 'rejected',
@@ -1819,7 +1820,7 @@ export class SfxUploader extends LitElement {
           name: file.name,
           size: file.size,
           type: file.type,
-          previewUrl: null,
+          previewUrl: rejectedPreview,
           duration: null,
           progress: 0,
           speed: 0,
