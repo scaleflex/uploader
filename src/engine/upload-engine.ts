@@ -189,7 +189,7 @@ export class UploadEngine {
       lastLoaded = bytesUploaded;
       lastTime = now;
 
-      const progress = bytesTotal > 0 ? (bytesUploaded / bytesTotal) * 100 : 0;
+      const progress = bytesTotal > 0 ? Math.min((bytesUploaded / bytesTotal) * 100, 100) : 0;
       updateFile(this.store, file.id, { progress, bytesUploaded, speed: smoothedSpeed });
       this.updateTotalProgress();
     };
@@ -302,7 +302,7 @@ export class UploadEngine {
       totalBytes,
       totalBytesUploaded: totalUploaded,
       totalSpeed,
-      totalProgress: totalBytes > 0 ? (totalUploaded / totalBytes) * 100 : 0,
+      totalProgress: totalBytes > 0 ? Math.min((totalUploaded / totalBytes) * 100, 100) : 0,
     });
   }
 
