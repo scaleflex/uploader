@@ -1839,7 +1839,7 @@ export class SfxUploader extends LitElement {
         callbacks?.onFileRejected?.(uploadFile, error);
         // Auto-remove rejected file after configurable delay
         const delay = this.config?.rejectedFileAutoRemoveDelay;
-        const autoRemoveMs = delay === false || delay === 0 ? 0 : (delay ?? 4000);
+        const autoRemoveMs = delay === false || delay === 0 || delay === undefined ? 0 : delay;
         if (autoRemoveMs > 0) {
           const rejId = uploadFile.id;
           const timer = setTimeout(() => {
