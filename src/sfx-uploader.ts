@@ -699,30 +699,6 @@ export class SfxUploader extends LitElement {
       animation: fadeUp 0.3s ease both;
     }
 
-    .upload-overlay-close {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      width: 28px;
-      height: 28px;
-      border: none;
-      background: none;
-      color: var(--sfx-up-text-muted, #94a3b8);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 6px;
-      padding: 0;
-    }
-
-    .upload-overlay-close svg { width: 16px; height: 16px; }
-
-    .upload-overlay-close:hover {
-      background: var(--sfx-up-surface, #f8fafc);
-      color: var(--sfx-up-text, #1e293b);
-    }
-
     .upload-overlay-spinner {
       width: 48px;
       height: 48px;
@@ -1088,7 +1064,7 @@ export class SfxUploader extends LitElement {
 
     .float-item-retry svg { width: 16px; height: 16px; }
 
-    .float-item-retry:hover { background: #f1f5f9; color: #1d4ed8; }
+    .float-item-retry:hover { background: var(--sfx-up-surface, #f8fafc); color: var(--sfx-up-primary-hover, #1d4ed8); }
 
     @keyframes floatSlideIn {
       from { opacity: 0; transform: translateY(20px); }
@@ -1463,7 +1439,7 @@ export class SfxUploader extends LitElement {
 
     this._engine.uploadAll();
 
-    if (this.config?.minimizeOnUpload) {
+    if (this.config?.minimizeOnUpload && this.config?.mode !== 'inline') {
       this._isMinimized = true;
       this._isPillExpanded = true;
       this.requestUpdate();
@@ -1611,11 +1587,11 @@ export class SfxUploader extends LitElement {
       [data-sfx-upload-float] .float-bar-fill.warn { background:#f59e0b; }
       [data-sfx-upload-float] .float-bar-fill.error { background:#ef4444; }
       [data-sfx-upload-float] .float-items { max-height:200px; overflow-y:auto; }
-      [data-sfx-upload-float] .float-item { display:flex; align-items:center; gap:10px; padding:8px 14px; border-bottom:1px solid #f1f5f9; }
+      [data-sfx-upload-float] .float-item { display:flex; align-items:center; gap:10px; padding:8px 14px; border-bottom:1px solid #f1f5f9; overflow:hidden; }
       [data-sfx-upload-float] .float-item:last-child { border-bottom:none; }
       [data-sfx-upload-float] .float-item-thumb { width:32px; height:32px; border-radius:6px; background:#f8fafc; display:flex; align-items:center; justify-content:center; color:#94a3b8; flex-shrink:0; }
       [data-sfx-upload-float] .float-item-thumb svg { width:16px; height:16px; }
-      [data-sfx-upload-float] .float-item-info { flex:1; min-width:0; }
+      [data-sfx-upload-float] .float-item-info { flex:1; min-width:0; overflow:hidden; }
       [data-sfx-upload-float] .float-item-name { font-size:12px; font-weight:500; color:#1e293b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
       [data-sfx-upload-float] .float-item-size { font-size:11px; color:#94a3b8; }
       [data-sfx-upload-float] .float-item-done { width:18px; height:18px; border-radius:50%; background:#f0fdf4; color:#22c55e; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
@@ -2423,6 +2399,18 @@ export class SfxUploader extends LitElement {
     this._dispatchPublic(PublicEvents.CANCEL, {});
   };
 
+  /** Close button on the success card — route to the right dismiss based on mode */
+  private _onSuccessCardClose = () => {
+    if (this.config?.mode === 'inline') {
+      // In inline mode, behave like "Done": clear files and reset
+      this._dispatchPublic(PublicEvents.COMPLETE_ACTION, {});
+      this.config?.callbacks?.onCompleteAction?.();
+      this._onClearAll();
+    } else {
+      this._onModalDismiss();
+    }
+  };
+
   /** Shared dismiss handler for X button, backdrop click, Escape */
   private _onModalDismiss = () => {
     // Cancel active uploads when closing
@@ -2432,11 +2420,6 @@ export class SfxUploader extends LitElement {
     this.config?.callbacks?.onCancel?.();
     this._dispatchPublic(PublicEvents.CANCEL, {});
     this.close();
-  };
-
-  private _onCancelAndClose = () => {
-    this._engine?.cancelAll();
-    this._onModalDismiss();
   };
 
   private _onMinimize = () => {
@@ -2460,8 +2443,12 @@ export class SfxUploader extends LitElement {
   private _onPillDismiss = () => {
     this._isMinimized = false;
     this._isPillExpanded = false;
-    this._isOpen = false;
-    this.requestUpdate();
+    if (this._phase === 'uploading') {
+      this._engine?.cancelAll();
+    }
+    this.config?.callbacks?.onCancel?.();
+    this._dispatchPublic(PublicEvents.CANCEL, {});
+    this.close();
   };
 
   private _onModalBackdropClick = (e: MouseEvent) => {
@@ -2932,7 +2919,7 @@ export class SfxUploader extends LitElement {
                     .totalSize=${files.filter((f) => f.status === 'complete').reduce((sum, f) => sum + (f.size || 0), 0)}
                     .thumbnails=${files.filter((f) => f.status === 'complete' && f.previewUrl).map((f) => f.previewUrl!)}
                     .failedFiles=${files.filter((f) => f.status === 'failed').map((f) => ({ id: f.id, name: f.name, error: f.error || 'Upload failed' }))}
-                    @close-uploader=${this._onModalDismiss}
+                    @close-uploader=${this._onSuccessCardClose}
                     @file-retry=${this._onFileRetry}
                     @retry-all=${this._onRetryAll}
                   ></sfx-success-card>

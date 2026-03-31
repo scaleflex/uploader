@@ -218,7 +218,7 @@ export class SfxSuccessCard extends LitElement {
 
     .failed-retry svg { width: 14px; height: 14px; }
 
-    .failed-retry:hover { background: #f1f5f9; color: #1d4ed8; }
+    .failed-retry:hover { background: var(--sfx-up-surface, #f8fafc); color: var(--sfx-up-primary-hover, #1d4ed8); }
 
     .close-btn {
       position: absolute;
@@ -253,7 +253,7 @@ export class SfxSuccessCard extends LitElement {
     }
 
     .btn-retry-all:hover {
-      background: #eff6ff;
+      background: var(--sfx-up-primary-bg, #eff6ff);
     }
 
     @keyframes fadeUp {
@@ -371,11 +371,11 @@ export class SfxSuccessCard extends LitElement {
             <div class="failed-list">
               ${this.failedFiles.map((f) => html`
                 <div class="failed-item">
+                  <svg class="failed-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Error"><title>Error</title><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                   <div class="failed-info">
                     <div class="failed-name">${f.name}</div>
                     <div class="failed-reason">${f.error}</div>
                   </div>
-                  <svg class="failed-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Error"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                   <button class="failed-retry" title="Retry" @click=${() => this._retryFile(f.id)}>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
                   </button>
