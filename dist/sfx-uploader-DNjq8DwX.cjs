@@ -1,804 +1,11 @@
-import { LitElement as U, css as S, svg as R, html as l, render as T, nothing as c } from "lit";
-import { property as b, state as g, query as je } from "lit/decorators.js";
-import { unsafeSVG as O } from "lit/directives/unsafe-svg.js";
-import { unsafeHTML as M } from "lit/directives/unsafe-html.js";
-class Oe {
-  constructor(e) {
-    this.listeners = /* @__PURE__ */ new Set(), this._notifying = !1, this._pendingState = null, this.state = e;
-  }
-  getState() {
-    return this.state;
-  }
-  setState(e) {
-    if (this._notifying) {
-      this._pendingState = { ...this._pendingState || {}, ...e };
-      return;
-    }
-    const t = this.state;
-    this.state = { ...t, ...e }, this._notifying = !0;
-    try {
-      this.listeners.forEach((i) => i(this.state, t));
-    } finally {
-      this._notifying = !1;
-    }
-    if (this._pendingState) {
-      const i = this._pendingState;
-      this._pendingState = null, this.setState(i);
-    }
-  }
-  subscribe(e) {
-    return this.listeners.add(e), () => this.listeners.delete(e);
-  }
-  destroy() {
-    this.listeners.clear();
-  }
-}
-function P(a, e, t) {
-  const i = a.getState().files, r = i.get(e);
-  if (!r) return;
-  const o = new Map(i);
-  o.set(e, { ...r, ...t }), a.setState({ files: o });
-}
-function H(a, e) {
-  const t = new Map(a.getState().files);
-  t.set(e.id, e), a.setState({ files: t });
-}
-function Ce(a, e) {
-  const t = a.getState().files;
-  if (!t.has(e)) return;
-  const i = new Map(t);
-  i.delete(e), a.setState({ files: i });
-}
-function Re() {
-  return new Oe({
-    files: /* @__PURE__ */ new Map(),
-    queueConfig: {
-      concurrency: 3,
-      autoProceed: !1,
-      retryConfig: {
-        maxRetries: 0,
-        baseDelay: 1e3,
-        maxDelay: 3e4,
-        backoffFactor: 2
-      }
-    },
-    isPaused: !1,
-    restrictions: {
-      maxFileSize: null,
-      maxTotalFilesSize: null,
-      maxNumberOfFiles: null,
-      minNumberOfFiles: null,
-      allowedFileTypes: null,
-      blockedFileTypes: null
-    },
-    targetFolder: "/",
-    totalProgress: 0,
-    totalSpeed: 0,
-    totalBytesUploaded: 0,
-    totalBytes: 0,
-    isUploading: !1
-  });
-}
-class Me {
-  constructor(e, t) {
-    this.host = e, this.store = t, e.addController(this);
-  }
-  get state() {
-    return this.store.getState();
-  }
-  setState(e) {
-    this.store.setState(e);
-  }
-  hostConnected() {
-    this.unsubscribe = this.store.subscribe(() => {
-      this.host.requestUpdate();
-    });
-  }
-  hostDisconnected() {
-    var e;
-    (e = this.unsubscribe) == null || e.call(this);
-  }
-}
-function Te(a, e) {
-  const t = new XMLHttpRequest();
-  let i = !1;
-  const o = `${e.apiBase.replace(/\/+$/, "")}/v4/files?folder=${encodeURIComponent(e.folder)}`;
-  t.open("POST", o);
-  for (const [n, d] of Object.entries(e.authHeaders))
-    t.setRequestHeader(n, d);
-  t.upload.addEventListener("progress", (n) => {
-    n.lengthComputable && !i && e.onProgress(n.loaded, n.total);
-  }), t.addEventListener("load", () => {
-    if (i) return;
-    let n;
-    try {
-      n = JSON.parse(t.responseText);
-    } catch {
-      e.onError(new Error(`Invalid JSON response (HTTP ${t.status})`));
-      return;
-    }
-    t.status >= 200 && t.status < 300 && n.status === "success" ? e.onComplete(n) : e.onError(new Error(n.hint || n.msg || `Upload failed (HTTP ${t.status})`));
-  }), t.addEventListener("error", () => {
-    i || e.onError(new Error("Network error — check your connection"));
-  }), t.addEventListener("timeout", () => {
-    i || e.onError(new Error("Upload timed out"));
-  });
-  const s = new FormData();
-  if (a.file) {
-    const n = {
-      name: a.name,
-      type: a.type
-    };
-    Object.keys(a.meta).length > 0 && (n.meta = a.meta), a.tags.length > 0 && (n.tags = a.tags), s.append("info[files[]]", JSON.stringify(n)), s.append("files[]", a.file, a.name);
-  }
-  return t.timeout = 6e4, t.send(s), {
-    abort() {
-      i = !0, t.abort();
-    }
-  };
-}
-function Be(a, e) {
-  const t = new XMLHttpRequest();
-  let i = !1;
-  const o = `${e.apiBase.replace(/\/+$/, "")}/v4/files/upload_url`;
-  t.open("POST", o);
-  for (const [n, d] of Object.entries(e.authHeaders))
-    t.setRequestHeader(n, d);
-  if (t.setRequestHeader("Content-Type", "application/json"), t.addEventListener("load", () => {
-    if (i) return;
-    let n;
-    try {
-      n = JSON.parse(t.responseText);
-    } catch {
-      e.onError(new Error(`Invalid JSON response (HTTP ${t.status})`));
-      return;
-    }
-    t.status >= 200 && t.status < 300 && n.status === "success" ? e.onComplete(n) : e.onError(new Error(n.hint || n.msg || `Upload failed (HTTP ${t.status})`));
-  }), t.addEventListener("error", () => {
-    i || e.onError(new Error("Network error — check your connection"));
-  }), t.addEventListener("timeout", () => {
-    i || e.onError(new Error("Upload timed out"));
-  }), !a.remoteUrl)
-    return e.onError(new Error("Remote URL is required for URL upload")), { abort() {
-    } };
-  const s = {
-    files_urls: [{ url: a.remoteUrl, name: a.name }],
-    dir: e.folder
-  };
-  return t.timeout = 6e4, t.send(JSON.stringify(s)), {
-    abort() {
-      i = !0, t.abort();
-    }
-  };
-}
-function re(a) {
-  return {
-    Accept: "application/json",
-    "Content-Type": "application/json",
-    "uppy-auth-token": a
-  };
-}
-function N(a) {
-  return a.replace(/\/+$/, "");
-}
-const Le = {
-  "google-drive": "drive",
-  dropbox: "dropbox",
-  onedrive: "onedrive",
-  box: "box",
-  instagram: "instagram",
-  facebook: "facebook",
-  unsplash: "unsplash"
-};
-function G(a) {
-  return Le[a] ?? a;
-}
-function wt(a, e) {
-  const t = N(a), i = btoa(JSON.stringify({ origin: window.location.origin })), r = G(e);
-  return `${t}/${r}/connect?state=${encodeURIComponent(i)}`;
-}
-async function yt(a, e, t, i = "") {
-  const r = N(a), o = i ? `/${i}` : "", s = G(e), n = await fetch(`${r}/${s}/list${o}`, {
-    method: "GET",
-    headers: re(t),
-    credentials: "same-origin"
-  });
-  if (n.status === 401)
-    throw new de();
-  if (!n.ok) {
-    const d = await n.json().catch(() => null);
-    throw new Error((d == null ? void 0 : d.message) || `Companion list failed (HTTP ${n.status})`);
-  }
-  return n.json();
-}
-async function _t(a, e, t) {
-  const i = N(a), r = await fetch(`${i}/${t}`, {
-    method: "GET",
-    headers: re(e),
-    credentials: "same-origin"
-  });
-  if (r.status === 401)
-    throw new de();
-  if (!r.ok) {
-    const o = await r.json().catch(() => null);
-    throw new Error((o == null ? void 0 : o.message) || `Companion list failed (HTTP ${r.status})`);
-  }
-  return r.json();
-}
-async function kt(a, e, t, i) {
-  const r = N(a), o = G(e), s = i ? `q=${encodeURIComponent(t)}&${i}` : `q=${encodeURIComponent(t)}`, n = await fetch(`${r}/search/${o}/list?${s}`, {
-    method: "GET",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json"
-    },
-    credentials: "same-origin"
-  });
-  if (!n.ok) {
-    const d = await n.json().catch(() => null);
-    throw new Error((d == null ? void 0 : d.message) || `Search failed (HTTP ${n.status})`);
-  }
-  return n.json();
-}
-async function Ae(a, e, t, i, r, o = !1) {
-  const s = N(a), n = G(e), d = o ? `${s}/search/${n}/get/${i}` : `${s}/${n}/get/${i}`, p = o ? { Accept: "application/json", "Content-Type": "application/json" } : re(t), h = await fetch(d, {
-    method: "POST",
-    headers: p,
-    credentials: "same-origin",
-    body: JSON.stringify({
-      ...r,
-      httpMethod: r.httpMethod ?? "POST",
-      useFormData: r.useFormData ?? !0,
-      fieldname: r.fieldname ?? "files[]"
-    })
-  });
-  if (h.status === 401)
-    throw new de();
-  if (!h.ok) {
-    const u = await h.json().catch(() => null);
-    throw new Error((u == null ? void 0 : u.message) || `Companion upload failed (HTTP ${h.status})`);
-  }
-  return h.json();
-}
-async function Ct(a, e, t) {
-  const i = N(a), r = G(e), o = await fetch(`${i}/${r}/logout`, {
-    method: "GET",
-    headers: re(t),
-    credentials: "same-origin"
-  });
-  return o.ok ? o.json() : { ok: !1, revoked: !1 };
-}
-function Ie(a) {
-  var r;
-  const t = ((r = /^(?:https?:\/\/|\/\/)?(?:[^@\n]+@)?(?:www\.)?([^\n]+)/i.exec(a)) == null ? void 0 : r[1]) ?? a;
-  return `${location.protocol === "https:" ? "wss" : "ws"}://${t}`;
-}
-class de extends Error {
-  constructor() {
-    super("Authentication expired"), this.name = "AuthExpiredError";
-  }
-}
-function He(a, e) {
-  const t = a.remoteInfo;
-  if (!t)
-    return e.onError(new Error("remoteInfo is required for companion upload")), { abort() {
-    } };
-  let i = !1, r = null;
-  const s = `${e.apiBase.replace(/\/+$/, "")}/v4/files?folder=${encodeURIComponent(e.folder)}`, n = {};
-  a.meta && Object.keys(a.meta).length > 0 && Object.assign(n, a.meta), a.tags && a.tags.length > 0 && (n.tags = a.tags);
-  const d = !t.token;
-  return Ae(t.companionUrl, t.provider, t.token, t.requestPath, {
-    fileId: t.fileId,
-    endpoint: s,
-    headers: e.authHeaders,
-    size: t.size,
-    metadata: Object.keys(n).length > 0 ? n : void 0
-  }, d).then((p) => {
-    if (i) return;
-    const u = `${Ie(t.companionUrl)}/api/${p.token}`;
-    try {
-      r = new WebSocket(u);
-    } catch {
-      e.onError(new Error("Failed to connect to upload progress channel"));
-      return;
-    }
-    r.onmessage = (x) => {
-      var f, m, _;
-      if (!i)
-        try {
-          const w = JSON.parse(x.data);
-          switch (w.action) {
-            case "progress": {
-              const y = w.payload, C = y.bytesUploaded ?? 0, D = y.bytesTotal ?? (t.size || 1);
-              e.onProgress(C, D);
-              break;
-            }
-            case "success": {
-              const y = w.payload;
-              if (r == null || r.close(), (f = y.response) != null && f.responseText)
-                try {
-                  const C = JSON.parse(y.response.responseText);
-                  if (C.status === "success") {
-                    e.onComplete(C);
-                    return;
-                  }
-                  e.onError(new Error(C.msg || "Upload failed"));
-                  return;
-                } catch {
-                }
-              e.onError(new Error("Upload completed but no valid response received"));
-              break;
-            }
-            case "error": {
-              r == null || r.close();
-              const y = w.payload;
-              let C = ((m = y.error) == null ? void 0 : m.message) || "Upload failed";
-              if ((_ = y.response) != null && _.responseText)
-                try {
-                  const D = JSON.parse(y.response.responseText);
-                  C = D.hint || D.msg || D.message || C;
-                } catch {
-                }
-              e.onError(new Error(C));
-              break;
-            }
-          }
-        } catch {
-        }
-    }, r.onerror = () => {
-      i || e.onError(new Error("Upload progress connection failed"));
-    }, r.onclose = () => {
-      r = null;
-    };
-  }).catch((p) => {
-    i || e.onError(p instanceof Error ? p : new Error(String(p)));
-  }), {
-    abort() {
-      if (i = !0, r) {
-        try {
-          r.send(JSON.stringify({ action: "cancel", payload: {} }));
-        } catch {
-        }
-        r.close(), r = null;
-      }
-    }
-  };
-}
-class qe {
-  constructor(e, t) {
-    this.activeUploads = /* @__PURE__ */ new Map(), this.retryTimers = /* @__PURE__ */ new Map(), this.unsubscribe = null, this.store = e, this.config = t;
-  }
-  /**
-   * Start processing the queue. Subscribes to store changes to
-   * automatically pick up newly queued files.
-   */
-  start() {
-    this.unsubscribe || (this.unsubscribe = this.store.subscribe(() => this.processQueue()), this.processQueue());
-  }
-  /**
-   * Upload all queued files. Transitions idle files → queued, then processes.
-   */
-  uploadAll() {
-    const { files: e } = this.store.getState();
-    let t = !1;
-    for (const i of e.values())
-      i.status === "idle" ? (P(this.store, i.id, { status: "queued" }), t = !0) : i.status === "queued" && (t = !0);
-    t && (this.store.setState({ isUploading: !0 }), this.processQueue());
-  }
-  /**
-   * Retry a single failed/errored file.
-   */
-  retryFile(e) {
-    const t = this.store.getState().files.get(e);
-    !t || t.status !== "error" && t.status !== "failed" || (P(this.store, e, {
-      status: "queued",
-      error: null,
-      progress: 0,
-      bytesUploaded: 0,
-      speed: 0
-    }), this.processQueue());
-  }
-  /**
-   * Retry all failed/errored files.
-   */
-  retryAll() {
-    const { files: e } = this.store.getState();
-    for (const t of e.values())
-      (t.status === "error" || t.status === "failed") && P(this.store, t.id, {
-        status: "queued",
-        error: null,
-        progress: 0,
-        bytesUploaded: 0,
-        speed: 0
-      });
-    this.processQueue();
-  }
-  /**
-   * Cancel a single file upload.
-   */
-  cancelFile(e) {
-    const t = this.store.getState().files.get(e);
-    !t || !$e(t.status) || (this.abortUpload(e), P(this.store, e, { status: "cancelled" }));
-  }
-  /**
-   * Cancel all active/queued uploads.
-   */
-  cancelAll() {
-    const { files: e } = this.store.getState();
-    for (const t of e.values())
-      $e(t.status) && (this.abortUpload(t.id), P(this.store, t.id, { status: "cancelled" }));
-    this.store.setState({ isUploading: !1 });
-  }
-  /**
-   * Update auth config (e.g. after SASS key renewal).
-   */
-  updateConfig(e) {
-    Object.assign(this.config, e);
-  }
-  /**
-   * Clean up: abort all uploads, clear timers, unsubscribe.
-   */
-  destroy() {
-    var e;
-    for (const t of this.activeUploads.keys())
-      this.abortUpload(t);
-    for (const t of this.retryTimers.values())
-      clearTimeout(t);
-    this.retryTimers.clear(), (e = this.unsubscribe) == null || e.call(this), this.unsubscribe = null;
-  }
-  // --- Private ---
-  processQueue() {
-    const e = this.store.getState();
-    if (e.isPaused) return;
-    const { concurrency: t } = e.queueConfig, i = this.activeUploads.size, r = t - i;
-    if (r <= 0) return;
-    const s = [...e.files.values()].filter((n) => n.status === "queued").sort((n, d) => n.retryCount !== d.retryCount ? d.retryCount - n.retryCount : n.addedAt - d.addedAt).slice(0, r);
-    for (const n of s)
-      this.startUpload(n);
-  }
-  startUpload(e) {
-    P(this.store, e.id, { status: "uploading", error: null });
-    let t = 0, i = Date.now(), r = 0;
-    const o = {
-      apiBase: this.config.apiBase,
-      authHeaders: this.config.authHeaders,
-      folder: this.store.getState().targetFolder,
-      onComplete: (d) => this.handleComplete(e.id, d),
-      onError: (d) => this.handleError(e.id, d)
-    }, s = (d, p) => {
-      const h = Date.now(), u = (h - i) / 1e3;
-      if (u > 0) {
-        const f = (d - t) / u;
-        r = r === 0 ? f : 0.3 * f + 0.7 * r;
-      }
-      t = d, i = h;
-      const x = p > 0 ? Math.min(d / p * 100, 100) : 0;
-      P(this.store, e.id, { progress: x, bytesUploaded: d, speed: r }), this.updateTotalProgress();
-    };
-    let n;
-    e.remoteInfo ? n = He(e, { ...o, onProgress: s }) : e.remoteUrl ? n = Be(e, o) : n = Te(e, { ...o, onProgress: s }), this.activeUploads.set(e.id, n);
-  }
-  handleComplete(e, t) {
-    this.activeUploads.delete(e), P(this.store, e, {
-      status: "complete",
-      progress: 100,
-      response: t
-    }), this.updateTotalProgress(), this.checkAllComplete(), this.processQueue();
-  }
-  handleError(e, t) {
-    this.activeUploads.delete(e);
-    const i = this.store.getState().files.get(e);
-    if (!i) return;
-    const { retryConfig: r } = this.store.getState().queueConfig, o = i.retryCount + 1;
-    if (o <= r.maxRetries) {
-      const s = Math.min(
-        r.baseDelay * Math.pow(r.backoffFactor, i.retryCount),
-        r.maxDelay
-      );
-      P(this.store, e, {
-        status: "retrying",
-        error: t.message,
-        retryCount: o
-      });
-      const n = setTimeout(() => {
-        this.retryTimers.delete(e), P(this.store, e, { status: "queued" }), this.processQueue();
-      }, s);
-      this.retryTimers.set(e, n);
-    } else
-      P(this.store, e, {
-        status: "failed",
-        error: t.message
-      }), this.checkAllComplete(), this.processQueue();
-  }
-  abortUpload(e) {
-    var i;
-    (i = this.activeUploads.get(e)) == null || i.abort(), this.activeUploads.delete(e);
-    const t = this.retryTimers.get(e);
-    t && (clearTimeout(t), this.retryTimers.delete(e));
-  }
-  updateTotalProgress() {
-    const { files: e } = this.store.getState();
-    let t = 0, i = 0, r = 0;
-    for (const o of e.values())
-      (o.status === "queued" || o.status === "uploading" || o.status === "retrying" || o.status === "complete" || o.status === "failed") && (t += o.size, i += o.status === "complete" ? o.size : o.bytesUploaded), o.status === "uploading" && (r += o.speed);
-    this.store.setState({
-      totalBytes: t,
-      totalBytesUploaded: i,
-      totalSpeed: r,
-      totalProgress: t > 0 ? Math.min(i / t * 100, 100) : 0
-    });
-  }
-  checkAllComplete() {
-    const { files: e } = this.store.getState();
-    ![...e.values()].some(
-      (i) => i.status === "queued" || i.status === "uploading" || i.status === "retrying"
-    ) && this.store.getState().isUploading && this.store.setState({ isUploading: !1 });
-  }
-}
-function $e(a) {
-  return a === "queued" || a === "uploading" || a === "retrying";
-}
-function pe(a) {
-  return `https://api.filerobot.com/${a}`;
-}
-async function Ye(a, e) {
-  const t = `${pe(a)}/key/${encodeURIComponent(e)}`, i = new AbortController(), r = setTimeout(() => i.abort(), 3e4);
-  try {
-    const o = await fetch(t, { signal: i.signal });
-    if (clearTimeout(r), !o.ok)
-      throw new Error(`SASS key exchange failed (HTTP ${o.status})`);
-    const s = await o.json();
-    if (s.status === "error")
-      throw new Error(`SASS key exchange failed: ${s.msg || "Unknown error"}`);
-    return s.key;
-  } catch (o) {
-    throw clearTimeout(r), o instanceof DOMException && o.name === "AbortError" ? new Error("SASS key exchange timed out") : o;
-  }
-}
-function se(a, e) {
-  const t = {};
-  switch (a.mode) {
-    case "security-template":
-      if (!e)
-        throw new Error(
-          "[sfx-uploader] Cannot build auth headers for security-template mode: SASS key exchange has not been performed. Call resolveAuth() first or use sass-key mode with a pre-resolved key."
-        );
-      t["X-Filerobot-Key"] = e;
-      break;
-    case "sass-key":
-      t["X-Filerobot-Key"] = a.sassKey;
-      break;
-  }
-  return a.airboxPuid && (t["X-Filerobot-Airbox-Puid"] = a.airboxPuid), t;
-}
-async function Ve(a) {
-  const e = pe(a.container);
-  if (a.mode === "security-template") {
-    const t = await Ye(a.container, a.securityTemplateId);
-    return { apiBase: e, headers: se(a, t), sassKey: t };
-  }
-  return { apiBase: e, headers: se(a) };
-}
-const v = {
-  FILE_ADDED: "sfx-file-added",
-  FILE_REMOVED: "sfx-file-removed",
-  FILE_REJECTED: "sfx-file-rejected",
-  UPLOAD_STARTED: "sfx-upload-started",
-  UPLOAD_PROGRESS: "sfx-upload-progress",
-  UPLOAD_COMPLETE: "sfx-upload-complete",
-  UPLOAD_ERROR: "sfx-upload-error",
-  UPLOAD_RETRY: "sfx-upload-retry",
-  ALL_COMPLETE: "sfx-all-complete",
-  TOTAL_PROGRESS: "sfx-total-progress",
-  BEFORE_UPLOAD: "sfx-before-upload",
-  OPEN: "sfx-open",
-  CLOSE: "sfx-close",
-  CANCEL: "sfx-cancel",
-  COMPLETE_ACTION: "sfx-complete-action",
-  FILE_PREVIEW: "sfx-file-preview",
-  FILL_METADATA: "sfx-fill-metadata"
-};
-let Ne = 0;
-function q() {
-  return `file-${Date.now()}-${++Ne}`;
-}
-function Y(a) {
-  if (a <= 0) return "0 B";
-  const e = ["B", "KB", "MB", "GB"], t = Math.min(Math.floor(Math.log(a) / Math.log(1024)), e.length - 1), i = a / Math.pow(1024, t);
-  return `${t === 0 ? i : i.toFixed(1)} ${e[t]}`;
-}
-function oe(a) {
-  if (!isFinite(a) || a <= 0) return "0s";
-  const e = Math.round(a);
-  if (e < 60) return `${e}s`;
-  const t = Math.floor(e / 60), i = e % 60;
-  return i > 0 ? `${t}m ${i}s` : `${t}m`;
-}
-function X(a) {
-  var t;
-  const e = ((t = a.name.split(".").pop()) == null ? void 0 : t.toLowerCase()) ?? "";
-  return a.type.startsWith("image/") ? "image" : a.type.startsWith("video/") || ["mp4", "mov", "avi", "webm", "mkv"].includes(e) ? "vid" : a.type === "application/pdf" || e === "pdf" ? "pdf" : ["doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "rtf", "odt"].includes(e) ? "doc" : ["zip", "rar", "7z", "tar", "gz", "bz2"].includes(e) ? "zip" : "gen";
-}
-function Xe(a) {
-  const e = a.lastIndexOf(".");
-  return e >= 0 ? a.slice(e + 1).toUpperCase() : "";
-}
-const We = {
-  jpg: "image/jpeg",
-  jpeg: "image/jpeg",
-  png: "image/png",
-  gif: "image/gif",
-  webp: "image/webp",
-  svg: "image/svg+xml",
-  bmp: "image/bmp",
-  ico: "image/x-icon",
-  mp4: "video/mp4",
-  mov: "video/quicktime",
-  avi: "video/x-msvideo",
-  webm: "video/webm",
-  pdf: "application/pdf",
-  zip: "application/zip",
-  doc: "application/msword",
-  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-};
-function Ke(a) {
-  var t;
-  const e = ((t = a.split(".").pop()) == null ? void 0 : t.toLowerCase()) ?? "";
-  return We[e] || "";
-}
-function Ge(a) {
-  return new Promise((e) => {
-    const t = document.createElement("video");
-    t.preload = "metadata", t.muted = !0, t.playsInline = !0;
-    const i = URL.createObjectURL(a);
-    let r = !1;
-    const o = () => {
-      r || (r = !0, e(null)), t.removeAttribute("src"), t.load(), URL.revokeObjectURL(i);
-    };
-    t.addEventListener("seeked", () => {
-      try {
-        const s = document.createElement("canvas");
-        s.width = t.videoWidth || 320, s.height = t.videoHeight || 240;
-        const n = s.getContext("2d");
-        if (n) {
-          n.drawImage(t, 0, 0, s.width, s.height), s.toBlob((d) => {
-            r || (r = !0, e(d ? URL.createObjectURL(d) : null), t.removeAttribute("src"), t.load(), URL.revokeObjectURL(i));
-          }, "image/jpeg", 0.7);
-          return;
-        }
-      } catch {
-      }
-      o();
-    }, { once: !0 }), t.addEventListener("error", () => o(), { once: !0 }), setTimeout(() => o(), 5e3), t.src = i, t.addEventListener("loadeddata", () => {
-      t.currentTime = 0.1;
-    }, { once: !0 });
-  });
-}
-function ae(a, e, t) {
-  var i, r;
-  if (e.maxFileSize != null && a.size > 0 && a.size > e.maxFileSize)
-    return `File exceeds ${(e.maxFileSize / 1048576).toFixed(1)} MB limit`;
-  if (e.maxTotalFilesSize != null && a.size > 0) {
-    let o = a.size;
-    for (const s of t.values())
-      s.status !== "rejected" && s.status !== "cancelled" && (o += s.size);
-    if (o > e.maxTotalFilesSize)
-      return "Total file size limit exceeded";
-  }
-  if (e.maxNumberOfFiles != null) {
-    let o = 0;
-    for (const s of t.values())
-      s.status !== "rejected" && s.status !== "cancelled" && o++;
-    if (o >= e.maxNumberOfFiles)
-      return `Maximum ${e.maxNumberOfFiles} files allowed`;
-  }
-  if (e.allowedFileTypes != null) {
-    const o = e.allowedFileTypes, s = "." + (((i = a.name.split(".").pop()) == null ? void 0 : i.toLowerCase()) ?? "");
-    if (!o.some((d) => d.startsWith(".") ? s === d.toLowerCase() : d.endsWith("/*") ? a.type.startsWith(d.slice(0, -1)) : a.type === d)) return "File type not allowed";
-  }
-  if (e.blockedFileTypes != null) {
-    const o = e.blockedFileTypes, s = "." + (((r = a.name.split(".").pop()) == null ? void 0 : r.toLowerCase()) ?? "");
-    if (o.some((d) => d.startsWith(".") ? s === d.toLowerCase() : d.endsWith("/*") ? a.type.startsWith(d.slice(0, -1)) : a.type === d)) return "File type is blocked";
-  }
-  return null;
-}
-function Ze(a, e, t) {
-  return ae(a, e, t);
-}
-function Se(a) {
-  return a.allowedFileTypes ? a.allowedFileTypes.join(",") : "";
-}
-const Ee = {
-  "google-drive": {
-    id: "google-drive",
-    label: "Google Drive",
-    fillIcon: !0,
-    icon: "",
-    brandHtml: '<span class="brand-ico" style="background:transparent"><svg width="16" height="16" viewBox="0 0 87.3 78"><path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3L27.5 53H0c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/><path d="M43.65 25L29.9 1.2C28.55 2 27.4 3.1 26.6 4.5L1.2 48.5C.4 49.9 0 51.45 0 53h27.5z" fill="#00ac47"/><path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5H59.8l5.65 10.85z" fill="#ea4335"/><path d="M43.65 25L57.4 1.2C56.05.4 54.5 0 52.9 0H34.4c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d"/><path d="M59.8 53H27.5L13.75 76.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc"/><path d="M73.4 26.5l-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25 59.8 53h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00"/></svg></span>'
-  },
-  dropbox: {
-    id: "dropbox",
-    label: "Dropbox",
-    fillIcon: !0,
-    icon: "",
-    brandHtml: '<span class="brand-ico" style="background:#0061ff"><svg width="11" height="11" viewBox="0 0 528 512" fill="white"><path d="M264.4 116.3l-132 84.3 132 84.3-132 84.3L0 284.1l132.3-84.3L0 116.3 132.3 32l132.1 84.3zm-132 284.5l132-84.3 132 84.3-132 84.4-132-84.4zm132-116.6l132.3-84.3-132.3-83.9 131.6-84.3L528 116.3l-132.3 84.1L528 284.7l-132.4 83.9-131.2-84.4z"/></svg></span>'
-  },
-  onedrive: {
-    id: "onedrive",
-    label: "OneDrive",
-    fillIcon: !0,
-    icon: "",
-    brandHtml: '<span class="brand-ico" style="background:#0078d4"><svg width="11" height="11" viewBox="0 0 24 24" fill="white"><path d="M10.5 13.5C10.5 11.57 12.07 10 14 10h6.5c.17 0 .34.01.5.02A6 6 0 009.01 11.6 4 4 0 0010.5 13.5zM12 14.5a5 5 0 00-5-5 5 5 0 00-5 5 3 3 0 003 3h9.5A3.5 3.5 0 0018 14c0-.18-.01-.35-.03-.52A5.48 5.48 0 0112 14.5z"/></svg></span>'
-  },
-  box: {
-    id: "box",
-    label: "Box",
-    fillIcon: !0,
-    icon: "",
-    brandHtml: '<span class="brand-ico" style="background:#0e50a0;font-size:9px;font-weight:800;color:#fff">box</span>'
-  },
-  instagram: {
-    id: "instagram",
-    label: "Instagram",
-    fillIcon: !0,
-    icon: "",
-    brandHtml: '<span class="brand-ico" style="background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)"><svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M12 2.16c2.94 0 3.29.01 4.45.06 1.07.05 1.8.22 2.43.46.66.25 1.21.6 1.77 1.16.55.55.9 1.1 1.16 1.77.25.64.41 1.37.46 2.43.05 1.16.06 1.51.06 4.45s-.01 3.29-.06 4.45c-.05 1.07-.22 1.8-.46 2.43a4.9 4.9 0 01-1.16 1.77c-.55.55-1.1.9-1.77 1.16-.64.25-1.37.41-2.43.46-1.16.05-1.51.06-4.45.06s-3.29-.01-4.45-.06c-1.07-.05-1.8-.22-2.43-.46a4.9 4.9 0 01-1.77-1.16 4.9 4.9 0 01-1.16-1.77c-.25-.64-.41-1.37-.46-2.43C2.17 15.29 2.16 14.94 2.16 12s.01-3.29.06-4.45c.05-1.07.22-1.8.46-2.43a4.9 4.9 0 011.16-1.77A4.9 4.9 0 015.61 2.2c.64-.25 1.37-.41 2.43-.46C9.21 2.17 9.56 2.16 12 2.16zM12 16a4 4 0 110-8 4 4 0 010 8zm6.4-9.85a1.44 1.44 0 100 2.88 1.44 1.44 0 000-2.88z"/></svg></span>'
-  },
-  facebook: {
-    id: "facebook",
-    label: "Facebook",
-    fillIcon: !0,
-    icon: "",
-    brandHtml: '<span class="brand-ico" style="background:#1877f2"><svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M24 12.07C24 5.41 18.63 0 12 0S0 5.41 0 12.07c0 6.02 4.39 11.02 10.12 11.93v-8.44H7.08v-3.49h3.04V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.95.93-1.95 1.89v2.26h3.33l-.53 3.49h-2.8v8.44C19.61 23.09 24 18.09 24 12.07z"/></svg></span>'
-  },
-  unsplash: {
-    id: "unsplash",
-    label: "Unsplash",
-    fillIcon: !0,
-    icon: "",
-    brandHtml: '<span class="brand-ico" style="background:#111"><svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M8.5 11.5v5h7v-5h5.5V21h-18v-9.5h5.5zm7-8v5h-7v-5h7z"/></svg></span>'
-  }
-};
-function Je(a) {
-  return a.filter((e) => e in Ee).map((e) => Ee[e]);
-}
-var Qe = Object.defineProperty, et = (a, e, t, i) => {
-  for (var r = void 0, o = a.length - 1, s; o >= 0; o--)
-    (s = a[o]) && (r = s(e, t, r) || r);
-  return r && Qe(e, t, r), r;
-};
-const tt = '<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>', rt = '<path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>', it = '<path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/>', ot = '<rect x="2" y="3" width="20" height="14" rx="2"/><circle cx="12" cy="10" r="1"/><path d="M7 21l5-5 5 5"/>', W = [
-  { id: "device", label: "My Device", icon: tt, iconColor: "#2563eb" },
-  { id: "url", label: "URL link", icon: rt, iconColor: "#16a34a" },
-  { id: "camera", label: "Camera", icon: it, iconColor: "#7c3aed" },
-  { id: "screen-cast", label: "Screen capture", icon: ot, iconColor: "#ea580c" }
-], he = class he extends U {
-  constructor() {
-    super(...arguments), this.sources = W;
-  }
-  _handleClick(e) {
-    this.dispatchEvent(
-      new CustomEvent("source-click", {
-        detail: { source: e.id },
-        bubbles: !0,
-        composed: !0
-      })
-    );
-  }
-  render() {
-    return l`
-      ${this.sources.map(
-      (e) => l`
-          <button @click=${() => this._handleClick(e)}>
-            ${e.brandHtml ? M(e.brandHtml) : R`<svg viewBox="0 0 24 24" class=${e.fillIcon ? "fill-icon" : ""}>${O(e.icon)}</svg>`}
+"use strict";const s=require("lit"),c=require("lit/decorators.js"),z=require("lit/directives/unsafe-svg.js"),j=require("lit/directives/unsafe-html.js");class Pe{constructor(e){this.listeners=new Set,this._notifying=!1,this._pendingState=null,this.state=e}getState(){return this.state}setState(e){if(this._notifying){this._pendingState={...this._pendingState||{},...e};return}const t=this.state;this.state={...t,...e},this._notifying=!0;try{this.listeners.forEach(o=>o(this.state,t))}finally{this._notifying=!1}if(this._pendingState){const o=this._pendingState;this._pendingState=null,this.setState(o)}}subscribe(e){return this.listeners.add(e),()=>this.listeners.delete(e)}destroy(){this.listeners.clear()}}function S(n,e,t){const o=n.getState().files,r=o.get(e);if(!r)return;const i=new Map(o);i.set(e,{...r,...t}),n.setState({files:i})}function L(n,e){const t=new Map(n.getState().files);t.set(e.id,e),n.setState({files:t})}function ye(n,e){const t=n.getState().files;if(!t.has(e))return;const o=new Map(t);o.delete(e),n.setState({files:o})}function Ue(){return new Pe({files:new Map,queueConfig:{concurrency:3,autoProceed:!1,retryConfig:{maxRetries:0,baseDelay:1e3,maxDelay:3e4,backoffFactor:2}},isPaused:!1,restrictions:{maxFileSize:null,maxTotalFilesSize:null,maxNumberOfFiles:null,minNumberOfFiles:null,allowedFileTypes:null,blockedFileTypes:null},targetFolder:"/",totalProgress:0,totalSpeed:0,totalBytesUploaded:0,totalBytes:0,isUploading:!1})}class Me{constructor(e,t){this.host=e,this.store=t,e.addController(this)}get state(){return this.store.getState()}setState(e){this.store.setState(e)}hostConnected(){this.unsubscribe=this.store.subscribe(()=>{this.host.requestUpdate()})}hostDisconnected(){var e;(e=this.unsubscribe)==null||e.call(this)}}function Oe(n,e){const t=new XMLHttpRequest;let o=!1;const i=`${e.apiBase.replace(/\/+$/,"")}/v4/files?folder=${encodeURIComponent(e.folder)}`;t.open("POST",i);for(const[l,d]of Object.entries(e.authHeaders))t.setRequestHeader(l,d);t.upload.addEventListener("progress",l=>{l.lengthComputable&&!o&&e.onProgress(l.loaded,l.total)}),t.addEventListener("load",()=>{if(o)return;let l;try{l=JSON.parse(t.responseText)}catch{e.onError(new Error(`Invalid JSON response (HTTP ${t.status})`));return}t.status>=200&&t.status<300&&l.status==="success"?e.onComplete(l):e.onError(new Error(l.hint||l.msg||`Upload failed (HTTP ${t.status})`))}),t.addEventListener("error",()=>{o||e.onError(new Error("Network error — check your connection"))}),t.addEventListener("timeout",()=>{o||e.onError(new Error("Upload timed out"))});const a=new FormData;if(n.file){const l={name:n.name,type:n.type};Object.keys(n.meta).length>0&&(l.meta=n.meta),n.tags.length>0&&(l.tags=n.tags),a.append("info[files[]]",JSON.stringify(l)),a.append("files[]",n.file,n.name)}return t.timeout=6e4,t.send(a),{abort(){o=!0,t.abort()}}}function Le(n,e){const t=new XMLHttpRequest;let o=!1;const i=`${e.apiBase.replace(/\/+$/,"")}/v4/files/upload_url`;t.open("POST",i);for(const[l,d]of Object.entries(e.authHeaders))t.setRequestHeader(l,d);if(t.setRequestHeader("Content-Type","application/json"),t.addEventListener("load",()=>{if(o)return;let l;try{l=JSON.parse(t.responseText)}catch{e.onError(new Error(`Invalid JSON response (HTTP ${t.status})`));return}t.status>=200&&t.status<300&&l.status==="success"?e.onComplete(l):e.onError(new Error(l.hint||l.msg||`Upload failed (HTTP ${t.status})`))}),t.addEventListener("error",()=>{o||e.onError(new Error("Network error — check your connection"))}),t.addEventListener("timeout",()=>{o||e.onError(new Error("Upload timed out"))}),!n.remoteUrl)return e.onError(new Error("Remote URL is required for URL upload")),{abort(){}};const a={files_urls:[{url:n.remoteUrl,name:n.name}],dir:e.folder};return t.timeout=6e4,t.send(JSON.stringify(a)),{abort(){o=!0,t.abort()}}}function Q(n){return{Accept:"application/json","Content-Type":"application/json","uppy-auth-token":n}}function H(n){return n.replace(/\/+$/,"")}const Te={"google-drive":"drive",dropbox:"dropbox",onedrive:"onedrive",box:"box",instagram:"instagram",facebook:"facebook",unsplash:"unsplash"};function Y(n){return Te[n]??n}function Be(n,e){const t=H(n),o=btoa(JSON.stringify({origin:window.location.origin})),r=Y(e);return`${t}/${r}/connect?state=${encodeURIComponent(o)}`}async function Ae(n,e,t,o=""){const r=H(n),i=o?`/${o}`:"",a=Y(e),l=await fetch(`${r}/${a}/list${i}`,{method:"GET",headers:Q(t),credentials:"same-origin"});if(l.status===401)throw new ee;if(!l.ok){const d=await l.json().catch(()=>null);throw new Error((d==null?void 0:d.message)||`Companion list failed (HTTP ${l.status})`)}return l.json()}async function Ie(n,e,t){const o=H(n),r=await fetch(`${o}/${t}`,{method:"GET",headers:Q(e),credentials:"same-origin"});if(r.status===401)throw new ee;if(!r.ok){const i=await r.json().catch(()=>null);throw new Error((i==null?void 0:i.message)||`Companion list failed (HTTP ${r.status})`)}return r.json()}async function He(n,e,t,o){const r=H(n),i=Y(e),a=o?`q=${encodeURIComponent(t)}&${o}`:`q=${encodeURIComponent(t)}`,l=await fetch(`${r}/search/${i}/list?${a}`,{method:"GET",headers:{Accept:"application/json","Content-Type":"application/json"},credentials:"same-origin"});if(!l.ok){const d=await l.json().catch(()=>null);throw new Error((d==null?void 0:d.message)||`Search failed (HTTP ${l.status})`)}return l.json()}async function qe(n,e,t,o,r,i=!1){const a=H(n),l=Y(e),d=i?`${a}/search/${l}/get/${o}`:`${a}/${l}/get/${o}`,p=i?{Accept:"application/json","Content-Type":"application/json"}:Q(t),h=await fetch(d,{method:"POST",headers:p,credentials:"same-origin",body:JSON.stringify({...r,httpMethod:r.httpMethod??"POST",useFormData:r.useFormData??!0,fieldname:r.fieldname??"files[]"})});if(h.status===401)throw new ee;if(!h.ok){const u=await h.json().catch(()=>null);throw new Error((u==null?void 0:u.message)||`Companion upload failed (HTTP ${h.status})`)}return h.json()}async function Ye(n,e,t){const o=H(n),r=Y(e),i=await fetch(`${o}/${r}/logout`,{method:"GET",headers:Q(t),credentials:"same-origin"});return i.ok?i.json():{ok:!1,revoked:!1}}function Ve(n){var r;const t=((r=/^(?:https?:\/\/|\/\/)?(?:[^@\n]+@)?(?:www\.)?([^\n]+)/i.exec(n))==null?void 0:r[1])??n;return`${location.protocol==="https:"?"wss":"ws"}://${t}`}class ee extends Error{constructor(){super("Authentication expired"),this.name="AuthExpiredError"}}function Ne(n,e){const t=n.remoteInfo;if(!t)return e.onError(new Error("remoteInfo is required for companion upload")),{abort(){}};let o=!1,r=null;const a=`${e.apiBase.replace(/\/+$/,"")}/v4/files?folder=${encodeURIComponent(e.folder)}`,l={};n.meta&&Object.keys(n.meta).length>0&&Object.assign(l,n.meta),n.tags&&n.tags.length>0&&(l.tags=n.tags);const d=!t.token;return qe(t.companionUrl,t.provider,t.token,t.requestPath,{fileId:t.fileId,endpoint:a,headers:e.authHeaders,size:t.size,metadata:Object.keys(l).length>0?l:void 0},d).then(p=>{if(o)return;const u=`${Ve(t.companionUrl)}/api/${p.token}`;try{r=new WebSocket(u)}catch{e.onError(new Error("Failed to connect to upload progress channel"));return}r.onmessage=x=>{var f,v,w;if(!o)try{const b=JSON.parse(x.data);switch(b.action){case"progress":{const m=b.payload,_=m.bytesUploaded??0,E=m.bytesTotal??(t.size||1);e.onProgress(_,E);break}case"success":{const m=b.payload;if(r==null||r.close(),(f=m.response)!=null&&f.responseText)try{const _=JSON.parse(m.response.responseText);if(_.status==="success"){e.onComplete(_);return}e.onError(new Error(_.msg||"Upload failed"));return}catch{}e.onError(new Error("Upload completed but no valid response received"));break}case"error":{r==null||r.close();const m=b.payload;let _=((v=m.error)==null?void 0:v.message)||"Upload failed";if((w=m.response)!=null&&w.responseText)try{const E=JSON.parse(m.response.responseText);_=E.hint||E.msg||E.message||_}catch{}e.onError(new Error(_));break}}}catch{}},r.onerror=()=>{o||e.onError(new Error("Upload progress connection failed"))},r.onclose=()=>{r=null}}).catch(p=>{o||e.onError(p instanceof Error?p:new Error(String(p)))}),{abort(){if(o=!0,r){try{r.send(JSON.stringify({action:"cancel",payload:{}}))}catch{}r.close(),r=null}}}}class ze{constructor(e,t){this.activeUploads=new Map,this.retryTimers=new Map,this.unsubscribe=null,this.store=e,this.config=t}start(){this.unsubscribe||(this.unsubscribe=this.store.subscribe(()=>this.processQueue()),this.processQueue())}uploadAll(){const{files:e}=this.store.getState();let t=!1;for(const o of e.values())o.status==="idle"?(S(this.store,o.id,{status:"queued"}),t=!0):o.status==="queued"&&(t=!0);t&&(this.store.setState({isUploading:!0}),this.processQueue())}retryFile(e){const t=this.store.getState().files.get(e);!t||t.status!=="error"&&t.status!=="failed"||(S(this.store,e,{status:"queued",error:null,progress:0,bytesUploaded:0,speed:0}),this.processQueue())}retryAll(){const{files:e}=this.store.getState();for(const t of e.values())(t.status==="error"||t.status==="failed")&&S(this.store,t.id,{status:"queued",error:null,progress:0,bytesUploaded:0,speed:0});this.processQueue()}cancelFile(e){const t=this.store.getState().files.get(e);!t||!_e(t.status)||(this.abortUpload(e),S(this.store,e,{status:"cancelled"}))}cancelAll(){const{files:e}=this.store.getState();for(const t of e.values())_e(t.status)&&(this.abortUpload(t.id),S(this.store,t.id,{status:"cancelled"}));this.store.setState({isUploading:!1})}updateConfig(e){Object.assign(this.config,e)}destroy(){var e;for(const t of this.activeUploads.keys())this.abortUpload(t);for(const t of this.retryTimers.values())clearTimeout(t);this.retryTimers.clear(),(e=this.unsubscribe)==null||e.call(this),this.unsubscribe=null}processQueue(){const e=this.store.getState();if(e.isPaused)return;const{concurrency:t}=e.queueConfig,o=this.activeUploads.size,r=t-o;if(r<=0)return;const a=[...e.files.values()].filter(l=>l.status==="queued").sort((l,d)=>l.retryCount!==d.retryCount?d.retryCount-l.retryCount:l.addedAt-d.addedAt).slice(0,r);for(const l of a)this.startUpload(l)}startUpload(e){S(this.store,e.id,{status:"uploading",error:null});let t=0,o=Date.now(),r=0;const i={apiBase:this.config.apiBase,authHeaders:this.config.authHeaders,folder:this.store.getState().targetFolder,onComplete:d=>this.handleComplete(e.id,d),onError:d=>this.handleError(e.id,d)},a=(d,p)=>{const h=Date.now(),u=(h-o)/1e3;if(u>0){const f=(d-t)/u;r=r===0?f:.3*f+.7*r}t=d,o=h;const x=p>0?Math.min(d/p*100,100):0;S(this.store,e.id,{progress:x,bytesUploaded:d,speed:r}),this.updateTotalProgress()};let l;e.remoteInfo?l=Ne(e,{...i,onProgress:a}):e.remoteUrl?l=Le(e,i):l=Oe(e,{...i,onProgress:a}),this.activeUploads.set(e.id,l)}handleComplete(e,t){this.activeUploads.delete(e),S(this.store,e,{status:"complete",progress:100,response:t}),this.updateTotalProgress(),this.checkAllComplete(),this.processQueue()}handleError(e,t){this.activeUploads.delete(e);const o=this.store.getState().files.get(e);if(!o)return;const{retryConfig:r}=this.store.getState().queueConfig,i=o.retryCount+1;if(i<=r.maxRetries){const a=Math.min(r.baseDelay*Math.pow(r.backoffFactor,o.retryCount),r.maxDelay);S(this.store,e,{status:"retrying",error:t.message,retryCount:i});const l=setTimeout(()=>{this.retryTimers.delete(e),S(this.store,e,{status:"queued"}),this.processQueue()},a);this.retryTimers.set(e,l)}else S(this.store,e,{status:"failed",error:t.message}),this.checkAllComplete(),this.processQueue()}abortUpload(e){var o;(o=this.activeUploads.get(e))==null||o.abort(),this.activeUploads.delete(e);const t=this.retryTimers.get(e);t&&(clearTimeout(t),this.retryTimers.delete(e))}updateTotalProgress(){const{files:e}=this.store.getState();let t=0,o=0,r=0;for(const i of e.values())(i.status==="queued"||i.status==="uploading"||i.status==="retrying"||i.status==="complete"||i.status==="failed")&&(t+=i.size,o+=i.status==="complete"?i.size:i.bytesUploaded),i.status==="uploading"&&(r+=i.speed);this.store.setState({totalBytes:t,totalBytesUploaded:o,totalSpeed:r,totalProgress:t>0?Math.min(o/t*100,100):0})}checkAllComplete(){const{files:e}=this.store.getState();![...e.values()].some(o=>o.status==="queued"||o.status==="uploading"||o.status==="retrying")&&this.store.getState().isUploading&&this.store.setState({isUploading:!1})}}function _e(n){return n==="queued"||n==="uploading"||n==="retrying"}function te(n){return`https://api.filerobot.com/${n}`}async function De(n,e){const t=`${te(n)}/key/${encodeURIComponent(e)}`,o=new AbortController,r=setTimeout(()=>o.abort(),3e4);try{const i=await fetch(t,{signal:o.signal});if(clearTimeout(r),!i.ok)throw new Error(`SASS key exchange failed (HTTP ${i.status})`);const a=await i.json();if(a.status==="error")throw new Error(`SASS key exchange failed: ${a.msg||"Unknown error"}`);return a.key}catch(i){throw clearTimeout(r),i instanceof DOMException&&i.name==="AbortError"?new Error("SASS key exchange timed out"):i}}function K(n,e){const t={};switch(n.mode){case"security-template":if(!e)throw new Error("[sfx-uploader] Cannot build auth headers for security-template mode: SASS key exchange has not been performed. Call resolveAuth() first or use sass-key mode with a pre-resolved key.");t["X-Filerobot-Key"]=e;break;case"sass-key":t["X-Filerobot-Key"]=n.sassKey;break}return n.airboxPuid&&(t["X-Filerobot-Airbox-Puid"]=n.airboxPuid),t}async function Fe(n){const e=te(n.container);if(n.mode==="security-template"){const t=await De(n.container,n.securityTemplateId);return{apiBase:e,headers:K(n,t),sassKey:t}}return{apiBase:e,headers:K(n)}}const g={FILE_ADDED:"sfx-file-added",FILE_REMOVED:"sfx-file-removed",FILE_REJECTED:"sfx-file-rejected",UPLOAD_STARTED:"sfx-upload-started",UPLOAD_PROGRESS:"sfx-upload-progress",UPLOAD_COMPLETE:"sfx-upload-complete",UPLOAD_ERROR:"sfx-upload-error",UPLOAD_RETRY:"sfx-upload-retry",ALL_COMPLETE:"sfx-all-complete",TOTAL_PROGRESS:"sfx-total-progress",BEFORE_UPLOAD:"sfx-before-upload",OPEN:"sfx-open",CLOSE:"sfx-close",CANCEL:"sfx-cancel",COMPLETE_ACTION:"sfx-complete-action",FILE_PREVIEW:"sfx-file-preview",FILL_METADATA:"sfx-fill-metadata"};let Xe=0;function T(){return`file-${Date.now()}-${++Xe}`}function B(n){if(n<=0)return"0 B";const e=["B","KB","MB","GB"],t=Math.min(Math.floor(Math.log(n)/Math.log(1024)),e.length-1),o=n/Math.pow(1024,t);return`${t===0?o:o.toFixed(1)} ${e[t]}`}function oe(n){if(!isFinite(n)||n<=0)return"0s";const e=Math.round(n);if(e<60)return`${e}s`;const t=Math.floor(e/60),o=e%60;return o>0?`${t}m ${o}s`:`${t}m`}function q(n){var t;const e=((t=n.name.split(".").pop())==null?void 0:t.toLowerCase())??"";return n.type.startsWith("image/")?"image":n.type.startsWith("video/")||["mp4","mov","avi","webm","mkv"].includes(e)?"vid":n.type==="application/pdf"||e==="pdf"?"pdf":["doc","docx","xls","xlsx","ppt","pptx","txt","rtf","odt"].includes(e)?"doc":["zip","rar","7z","tar","gz","bz2"].includes(e)?"zip":"gen"}function We(n){const e=n.lastIndexOf(".");return e>=0?n.slice(e+1).toUpperCase():""}const Ge={jpg:"image/jpeg",jpeg:"image/jpeg",png:"image/png",gif:"image/gif",webp:"image/webp",svg:"image/svg+xml",bmp:"image/bmp",ico:"image/x-icon",mp4:"video/mp4",mov:"video/quicktime",avi:"video/x-msvideo",webm:"video/webm",pdf:"application/pdf",zip:"application/zip",doc:"application/msword",docx:"application/vnd.openxmlformats-officedocument.wordprocessingml.document"};function Ke(n){var t;const e=((t=n.split(".").pop())==null?void 0:t.toLowerCase())??"";return Ge[e]||""}function Ze(n){return new Promise(e=>{const t=document.createElement("video");t.preload="metadata",t.muted=!0,t.playsInline=!0;const o=URL.createObjectURL(n);let r=!1;const i=()=>{r||(r=!0,e(null)),t.removeAttribute("src"),t.load(),URL.revokeObjectURL(o)};t.addEventListener("seeked",()=>{try{const a=document.createElement("canvas");a.width=t.videoWidth||320,a.height=t.videoHeight||240;const l=a.getContext("2d");if(l){l.drawImage(t,0,0,a.width,a.height),a.toBlob(d=>{r||(r=!0,e(d?URL.createObjectURL(d):null),t.removeAttribute("src"),t.load(),URL.revokeObjectURL(o))},"image/jpeg",.7);return}}catch{}i()},{once:!0}),t.addEventListener("error",()=>i(),{once:!0}),setTimeout(()=>i(),5e3),t.src=o,t.addEventListener("loadeddata",()=>{t.currentTime=.1},{once:!0})})}function ie(n,e,t){var o,r;if(e.maxFileSize!=null&&n.size>0&&n.size>e.maxFileSize)return`File exceeds ${(e.maxFileSize/1048576).toFixed(1)} MB limit`;if(e.maxTotalFilesSize!=null&&n.size>0){let i=n.size;for(const a of t.values())a.status!=="rejected"&&a.status!=="cancelled"&&(i+=a.size);if(i>e.maxTotalFilesSize)return"Total file size limit exceeded"}if(e.maxNumberOfFiles!=null){let i=0;for(const a of t.values())a.status!=="rejected"&&a.status!=="cancelled"&&i++;if(i>=e.maxNumberOfFiles)return`Maximum ${e.maxNumberOfFiles} files allowed`}if(e.allowedFileTypes!=null){const i=e.allowedFileTypes,a="."+(((o=n.name.split(".").pop())==null?void 0:o.toLowerCase())??"");if(!i.some(d=>d.startsWith(".")?a===d.toLowerCase():d.endsWith("/*")?n.type.startsWith(d.slice(0,-1)):n.type===d))return"File type not allowed"}if(e.blockedFileTypes!=null){const i=e.blockedFileTypes,a="."+(((r=n.name.split(".").pop())==null?void 0:r.toLowerCase())??"");if(i.some(d=>d.startsWith(".")?a===d.toLowerCase():d.endsWith("/*")?n.type.startsWith(d.slice(0,-1)):n.type===d))return"File type is blocked"}return null}function Je(n,e,t){return ie(n,e,t)}function ke(n){return n.allowedFileTypes?n.allowedFileTypes.join(","):""}const Ce={"google-drive":{id:"google-drive",label:"Google Drive",fillIcon:!0,icon:"",brandHtml:'<span class="brand-ico" style="background:transparent"><svg width="16" height="16" viewBox="0 0 87.3 78"><path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3L27.5 53H0c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/><path d="M43.65 25L29.9 1.2C28.55 2 27.4 3.1 26.6 4.5L1.2 48.5C.4 49.9 0 51.45 0 53h27.5z" fill="#00ac47"/><path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5H59.8l5.65 10.85z" fill="#ea4335"/><path d="M43.65 25L57.4 1.2C56.05.4 54.5 0 52.9 0H34.4c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d"/><path d="M59.8 53H27.5L13.75 76.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc"/><path d="M73.4 26.5l-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25 59.8 53h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00"/></svg></span>'},dropbox:{id:"dropbox",label:"Dropbox",fillIcon:!0,icon:"",brandHtml:'<span class="brand-ico" style="background:#0061ff"><svg width="11" height="11" viewBox="0 0 528 512" fill="white"><path d="M264.4 116.3l-132 84.3 132 84.3-132 84.3L0 284.1l132.3-84.3L0 116.3 132.3 32l132.1 84.3zm-132 284.5l132-84.3 132 84.3-132 84.4-132-84.4zm132-116.6l132.3-84.3-132.3-83.9 131.6-84.3L528 116.3l-132.3 84.1L528 284.7l-132.4 83.9-131.2-84.4z"/></svg></span>'},onedrive:{id:"onedrive",label:"OneDrive",fillIcon:!0,icon:"",brandHtml:'<span class="brand-ico" style="background:#0078d4"><svg width="11" height="11" viewBox="0 0 24 24" fill="white"><path d="M10.5 13.5C10.5 11.57 12.07 10 14 10h6.5c.17 0 .34.01.5.02A6 6 0 009.01 11.6 4 4 0 0010.5 13.5zM12 14.5a5 5 0 00-5-5 5 5 0 00-5 5 3 3 0 003 3h9.5A3.5 3.5 0 0018 14c0-.18-.01-.35-.03-.52A5.48 5.48 0 0112 14.5z"/></svg></span>'},box:{id:"box",label:"Box",fillIcon:!0,icon:"",brandHtml:'<span class="brand-ico" style="background:#0e50a0;font-size:9px;font-weight:800;color:#fff">box</span>'},instagram:{id:"instagram",label:"Instagram",fillIcon:!0,icon:"",brandHtml:'<span class="brand-ico" style="background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)"><svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M12 2.16c2.94 0 3.29.01 4.45.06 1.07.05 1.8.22 2.43.46.66.25 1.21.6 1.77 1.16.55.55.9 1.1 1.16 1.77.25.64.41 1.37.46 2.43.05 1.16.06 1.51.06 4.45s-.01 3.29-.06 4.45c-.05 1.07-.22 1.8-.46 2.43a4.9 4.9 0 01-1.16 1.77c-.55.55-1.1.9-1.77 1.16-.64.25-1.37.41-2.43.46-1.16.05-1.51.06-4.45.06s-3.29-.01-4.45-.06c-1.07-.05-1.8-.22-2.43-.46a4.9 4.9 0 01-1.77-1.16 4.9 4.9 0 01-1.16-1.77c-.25-.64-.41-1.37-.46-2.43C2.17 15.29 2.16 14.94 2.16 12s.01-3.29.06-4.45c.05-1.07.22-1.8.46-2.43a4.9 4.9 0 011.16-1.77A4.9 4.9 0 015.61 2.2c.64-.25 1.37-.41 2.43-.46C9.21 2.17 9.56 2.16 12 2.16zM12 16a4 4 0 110-8 4 4 0 010 8zm6.4-9.85a1.44 1.44 0 100 2.88 1.44 1.44 0 000-2.88z"/></svg></span>'},facebook:{id:"facebook",label:"Facebook",fillIcon:!0,icon:"",brandHtml:'<span class="brand-ico" style="background:#1877f2"><svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M24 12.07C24 5.41 18.63 0 12 0S0 5.41 0 12.07c0 6.02 4.39 11.02 10.12 11.93v-8.44H7.08v-3.49h3.04V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.95.93-1.95 1.89v2.26h3.33l-.53 3.49h-2.8v8.44C19.61 23.09 24 18.09 24 12.07z"/></svg></span>'},unsplash:{id:"unsplash",label:"Unsplash",fillIcon:!0,icon:"",brandHtml:'<span class="brand-ico" style="background:#111"><svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M8.5 11.5v5h7v-5h5.5V21h-18v-9.5h5.5zm7-8v5h-7v-5h7z"/></svg></span>'}};function Re(n){return n.filter(e=>e in Ce).map(e=>Ce[e])}var Qe=Object.defineProperty,et=(n,e,t,o)=>{for(var r=void 0,i=n.length-1,a;i>=0;i--)(a=n[i])&&(r=a(e,t,r)||r);return r&&Qe(e,t,r),r};const tt='<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>',rt='<path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>',ot='<path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/>',it='<rect x="2" y="3" width="20" height="14" rx="2"/><circle cx="12" cy="10" r="1"/><path d="M7 21l5-5 5 5"/>',A=[{id:"device",label:"My Device",icon:tt,iconColor:"#2563eb"},{id:"url",label:"URL link",icon:rt,iconColor:"#16a34a"},{id:"camera",label:"Camera",icon:ot,iconColor:"#7c3aed"},{id:"screen-cast",label:"Screen capture",icon:it,iconColor:"#ea580c"}],pe=class pe extends s.LitElement{constructor(){super(...arguments),this.sources=A}_handleClick(e){this.dispatchEvent(new CustomEvent("source-click",{detail:{source:e.id},bubbles:!0,composed:!0}))}render(){return s.html`
+      ${this.sources.map(e=>s.html`
+          <button @click=${()=>this._handleClick(e)}>
+            ${e.brandHtml?j.unsafeHTML(e.brandHtml):s.svg`<svg viewBox="0 0 24 24" class=${e.fillIcon?"fill-icon":""}>${z.unsafeSVG(e.icon)}</svg>`}
             ${e.label}
           </button>
-        `
-    )}
-    `;
-  }
-};
-he.styles = S`
+        `)}
+    `}};pe.styles=s.css`
     :host {
       display: flex;
       flex-wrap: wrap;
@@ -870,194 +77,51 @@ he.styles = S`
       stroke: none;
       stroke-width: 0;
     }
-  `;
-let ne = he;
-et([
-  b({ type: Array })
-], ne.prototype, "sources");
-function Fe(a) {
-  let e = a;
-  for (; e; ) {
-    if (e instanceof HTMLDialogElement && e.open)
-      return e;
-    e instanceof ShadowRoot ? e = e.host : e = e.parentNode;
-  }
-  return document.body;
-}
-var st = Object.defineProperty, j = (a, e, t, i) => {
-  for (var r = void 0, o = a.length - 1, s; o >= 0; o--)
-    (s = a[o]) && (r = s(e, t, r) || r);
-  return r && st(e, t, r), r;
-};
-const ze = 3, ue = class ue extends U {
-  constructor() {
-    super(...arguments), this.compact = !1, this.externalDragOver = !1, this.accept = "", this.sources = [], this.sourcesLayout = "pills", this._dragOver = !1, this._moreOpen = !1, this._visiblePills = ze, this._dragCounter = 0, this._onDragEnter = (e) => {
-      e.preventDefault(), this._dragCounter++, this._dragCounter === 1 && (this._dragOver = !0);
-    }, this._onDragOver = (e) => {
-      e.preventDefault();
-    }, this._onDragLeave = (e) => {
-      e.preventDefault(), this._dragCounter--, this._dragCounter <= 0 && (this._dragCounter = 0, this._dragOver = !1);
-    }, this._onDrop = (e) => {
-      var i;
-      e.preventDefault(), e.stopPropagation(), this._dragCounter = 0, this._dragOver = !1;
-      const t = Array.from(((i = e.dataTransfer) == null ? void 0 : i.files) ?? []);
-      t.length > 0 && this._emitFiles(t);
-    }, this._onClick = (e) => {
-      const t = this.shadowRoot.querySelector(".drop-zone");
-      if (t && this._rippleEl) {
-        const i = t.getBoundingClientRect();
-        this._rippleEl.style.left = `${e.clientX - i.left}px`, this._rippleEl.style.top = `${e.clientY - i.top}px`, this._rippleEl.classList.remove("go"), this._rippleEl.offsetWidth, this._rippleEl.classList.add("go");
-      }
-      this.browse();
-    }, this._onKeyDown = (e) => {
-      (e.key === "Enter" || e.key === " ") && (e.preventDefault(), this.browse());
-    }, this._onFileChange = (e) => {
-      const t = e.target, i = Array.from(t.files ?? []);
-      i.length > 0 && this._emitFiles(i), t.value = "";
-    }, this._onPaste = (e) => {
-      var r;
-      if (!this.isConnected || this.offsetWidth === 0) return;
-      const t = (r = e.clipboardData) == null ? void 0 : r.items;
-      if (!t) return;
-      const i = [];
-      for (const o of t)
-        if (o.kind === "file") {
-          const s = o.getAsFile();
-          s && i.push(s);
-        }
-      i.length > 0 && (e.preventDefault(), this._emitFiles(i));
-    }, this._portalContainer = null, this._onDocClick = (e) => {
-      var t;
-      this._moreOpen && ((t = this._portalContainer) != null && t.contains(e.target) || (this._moreOpen = !1, this._updateDropdownPortal()));
-    }, this._onDocKeyDown = (e) => {
-      e.key === "Escape" && this._moreOpen && (this._moreOpen = !1, this._updateDropdownPortal());
-    }, this._resizeTimer = null, this._onScrollOrResize = () => {
-      this._moreOpen && this._positionDropdown(), this._resizeTimer && clearTimeout(this._resizeTimer), this._resizeTimer = setTimeout(() => this._updateVisiblePills(), 100);
-    };
-  }
-  /** Programmatically open file browser. */
-  browse() {
-    var e;
-    (e = this.fileInput) == null || e.click();
-  }
-  _onSourceIconClick(e) {
-    this.dispatchEvent(
-      new CustomEvent("source-click", {
-        detail: { source: e.id },
-        bubbles: !0,
-        composed: !0
-      })
-    );
-  }
-  _emitFiles(e) {
-    this.dispatchEvent(
-      new CustomEvent("files-selected", {
-        detail: { files: e },
-        bubbles: !0,
-        composed: !0
-      })
-    );
-  }
-  _toggleMore(e) {
-    e.stopPropagation(), this._moreOpen = !this._moreOpen, this._updateDropdownPortal();
-  }
-  _updateDropdownPortal() {
-    if (this._moreOpen) {
-      const e = this.sources.slice(this._visiblePills);
-      this._portalContainer || (this._portalContainer = document.createElement("div"), this._portalContainer.setAttribute("data-sfx-more-dropdown", ""), this._injectDropdownStyles(), Fe(this).appendChild(this._portalContainer)), T(
-        l`<div class="sfx-more-dropdown open">
-          ${e.map(
-          (t) => l`
-              <button class="sfx-more-item" @click=${(i) => this._onMoreItemClick(t, i)}>
+  `;let Z=pe;et([c.property({type:Array})],Z.prototype,"sources");function je(n){let e=n;for(;e;){if(e instanceof ShadowRoot){e=e.host;continue}if(e instanceof HTMLDialogElement&&e.open)return e;if(e instanceof Element&&e.shadowRoot){const t=e.shadowRoot.querySelector("dialog[open]");if(t instanceof HTMLDialogElement)return t}e=e.parentNode}return document.body}var st=Object.defineProperty,U=(n,e,t,o)=>{for(var r=void 0,i=n.length-1,a;i>=0;i--)(a=n[i])&&(r=a(e,t,r)||r);return r&&st(e,t,r),r};const $e=3,se=new CSSStyleSheet;se.replaceSync(`
+  [data-sfx-more-dropdown] { position:absolute; top:0; left:0; width:0; height:0; overflow:visible; pointer-events:none; }
+  [data-sfx-more-dropdown] .sfx-more-dropdown { position:fixed; background:#fff; border-radius:12px; box-shadow:0 12px 40px rgba(0,0,0,0.14),0 2px 8px rgba(0,0,0,0.06); border:1px solid #e8edf5; padding:6px; min-width:210px; max-height:340px; overflow-y:auto; z-index:99999; opacity:0; visibility:hidden; pointer-events:none; transition:opacity .18s ease,visibility .18s ease,transform .18s ease; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; }
+  [data-sfx-more-dropdown] .sfx-more-dropdown.open { opacity:1; visibility:visible; pointer-events:all; }
+  [data-sfx-more-dropdown] .sfx-more-item { display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:6px; border:none; background:none; width:100%; font-size:13px; font-weight:500; color:#1e293b; cursor:pointer; transition:background .15s; font-family:inherit; white-space:nowrap; }
+  [data-sfx-more-dropdown] .sfx-more-item:hover { background:#f5f7fa; }
+  [data-sfx-more-dropdown] .sfx-more-item-ico { width:32px; height:32px; border-radius:8px; background:#f8fafc; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  [data-sfx-more-dropdown] .sfx-more-item-ico svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; }
+  [data-sfx-more-dropdown] .sfx-more-item .brand-ico { width:20px; height:20px; border-radius:5px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  [data-sfx-more-dropdown] .sfx-more-item .brand-ico svg { fill:white; stroke:none; stroke-width:0; }
+  [data-sfx-more-dropdown] .sfx-more-item .canva-ico { width:22px; height:22px; }
+  [data-sfx-more-dropdown] .sfx-more-item .canva-ico svg { width:22px; height:22px; }
+`);const ce=class ce extends s.LitElement{constructor(){super(...arguments),this.compact=!1,this.externalDragOver=!1,this.accept="",this.sources=[],this.sourcesLayout="pills",this._dragOver=!1,this._moreOpen=!1,this._visiblePills=$e,this._dragCounter=0,this._onDragEnter=e=>{e.preventDefault(),this._dragCounter++,this._dragCounter===1&&(this._dragOver=!0)},this._onDragOver=e=>{e.preventDefault()},this._onDragLeave=e=>{e.preventDefault(),this._dragCounter--,this._dragCounter<=0&&(this._dragCounter=0,this._dragOver=!1)},this._onDrop=e=>{var o;e.preventDefault(),e.stopPropagation(),this._dragCounter=0,this._dragOver=!1;const t=Array.from(((o=e.dataTransfer)==null?void 0:o.files)??[]);t.length>0&&this._emitFiles(t)},this._onClick=e=>{const t=this.shadowRoot.querySelector(".drop-zone");if(t&&this._rippleEl){const o=t.getBoundingClientRect();this._rippleEl.style.left=`${e.clientX-o.left}px`,this._rippleEl.style.top=`${e.clientY-o.top}px`,this._rippleEl.classList.remove("go"),this._rippleEl.offsetWidth,this._rippleEl.classList.add("go")}this.browse()},this._onKeyDown=e=>{(e.key==="Enter"||e.key===" ")&&(e.preventDefault(),this.browse())},this._onFileChange=e=>{const t=e.target,o=Array.from(t.files??[]);o.length>0&&this._emitFiles(o),t.value=""},this._onPaste=e=>{var r;if(!this.isConnected||this.offsetWidth===0)return;const t=(r=e.clipboardData)==null?void 0:r.items;if(!t)return;const o=[];for(const i of t)if(i.kind==="file"){const a=i.getAsFile();a&&o.push(a)}o.length>0&&(e.preventDefault(),this._emitFiles(o))},this._portalContainer=null,this._onDocClick=e=>{var t;this._moreOpen&&((t=this._portalContainer)!=null&&t.contains(e.target)||(this._moreOpen=!1,this._updateDropdownPortal()))},this._onDocKeyDown=e=>{e.key==="Escape"&&this._moreOpen&&(this._moreOpen=!1,this._updateDropdownPortal())},this._resizeTimer=null,this._onScrollOrResize=()=>{this._moreOpen&&this._positionDropdown(),this._resizeTimer&&clearTimeout(this._resizeTimer),this._resizeTimer=setTimeout(()=>this._updateVisiblePills(),100)}}browse(){var e;(e=this.fileInput)==null||e.click()}_onSourceIconClick(e){this.dispatchEvent(new CustomEvent("source-click",{detail:{source:e.id},bubbles:!0,composed:!0}))}_emitFiles(e){this.dispatchEvent(new CustomEvent("files-selected",{detail:{files:e},bubbles:!0,composed:!0}))}_toggleMore(e){e.stopPropagation(),this._moreOpen=!this._moreOpen,this._updateDropdownPortal()}_updateDropdownPortal(){if(this._moreOpen){const e=this.sources.slice(this._visiblePills);this._portalContainer||(this._portalContainer=document.createElement("div"),this._portalContainer.setAttribute("data-sfx-more-dropdown",""),je(this).appendChild(this._portalContainer),this._injectDropdownStyles()),s.render(s.html`<div class="sfx-more-dropdown open">
+          ${e.map(t=>s.html`
+              <button class="sfx-more-item" @click=${o=>this._onMoreItemClick(t,o)}>
                 <div class="sfx-more-item-ico">
-                  ${t.brandHtml ? M(t.brandHtml) : t.iconColor ? l`<svg viewBox="0 0 24 24" style="color:${t.iconColor}">${O(t.icon)}</svg>` : R`<svg viewBox="0 0 24 24">${O(t.icon)}</svg>`}
+                  ${t.brandHtml?j.unsafeHTML(t.brandHtml):t.iconColor?s.html`<svg viewBox="0 0 24 24" style="color:${t.iconColor}">${z.unsafeSVG(t.icon)}</svg>`:s.svg`<svg viewBox="0 0 24 24">${z.unsafeSVG(t.icon)}</svg>`}
                 </div>
                 ${t.label}
               </button>
-            `
-        )}
-        </div>`,
-        this._portalContainer
-      ), requestAnimationFrame(() => this._positionDropdown());
-    } else this._portalContainer && (T(c, this._portalContainer), this._portalContainer.remove(), this._portalContainer = null);
-  }
-  _injectDropdownStyles() {
-    if (document.querySelector("style[data-sfx-more-dropdown-styles]")) return;
-    const e = document.createElement("style");
-    e.setAttribute("data-sfx-more-dropdown-styles", ""), e.textContent = `
-      [data-sfx-more-dropdown] .sfx-more-dropdown { position:fixed; background:#fff; border-radius:12px; box-shadow:0 12px 40px rgba(0,0,0,0.14),0 2px 8px rgba(0,0,0,0.06); border:1px solid #e8edf5; padding:6px; min-width:210px; max-height:340px; overflow-y:auto; z-index:99999; opacity:0; visibility:hidden; pointer-events:none; transition:opacity .18s ease,visibility .18s ease,transform .18s ease; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; }
-      [data-sfx-more-dropdown] .sfx-more-dropdown.open { opacity:1; visibility:visible; pointer-events:all; }
-      [data-sfx-more-dropdown] .sfx-more-item { display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:6px; border:none; background:none; width:100%; font-size:13px; font-weight:500; color:#1e293b; cursor:pointer; transition:background .15s; font-family:inherit; white-space:nowrap; }
-      [data-sfx-more-dropdown] .sfx-more-item:hover { background:#f5f7fa; }
-      [data-sfx-more-dropdown] .sfx-more-item-ico { width:32px; height:32px; border-radius:8px; background:#f8fafc; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-      [data-sfx-more-dropdown] .sfx-more-item-ico svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; }
-      [data-sfx-more-dropdown] .sfx-more-item .brand-ico { width:20px; height:20px; border-radius:5px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-      [data-sfx-more-dropdown] .sfx-more-item .brand-ico svg { fill:white; stroke:none; stroke-width:0; }
-      [data-sfx-more-dropdown] .sfx-more-item .canva-ico { width:22px; height:22px; }
-      [data-sfx-more-dropdown] .sfx-more-item .canva-ico svg { width:22px; height:22px; }
-    `, document.head.appendChild(e);
-  }
-  /** Position the fixed dropdown, choosing above or below based on available space. */
-  _positionDropdown() {
-    var u, x;
-    const e = (u = this.shadowRoot) == null ? void 0 : u.querySelector(".more-wrap > button"), t = (x = this._portalContainer) == null ? void 0 : x.querySelector(".sfx-more-dropdown");
-    if (!e || !t) return;
-    const i = e.getBoundingClientRect(), r = 8, o = t.scrollHeight, s = t.offsetWidth, n = i.top, d = window.innerHeight - i.bottom;
-    n >= o + r || n > d ? t.style.top = `${i.top - o - r}px` : t.style.top = `${i.bottom + r}px`;
-    let h = i.right - s;
-    h = Math.max(8, Math.min(h, window.innerWidth - s - 8)), t.style.left = `${h}px`;
-  }
-  _onMoreItemClick(e, t) {
-    t.stopPropagation(), this._moreOpen = !1, this._onSourceIconClick(e);
-  }
-  _updateVisiblePills() {
-    const e = window.innerWidth;
-    this.sourcesLayout === "cards" ? e <= 480 ? this._visiblePills = 2 : e <= 768 ? this._visiblePills = 3 : this._visiblePills = 5 : e <= 480 ? this._visiblePills = 1 : e <= 768 ? this._visiblePills = 2 : this._visiblePills = ze;
-  }
-  connectedCallback() {
-    super.connectedCallback(), document.addEventListener("paste", this._onPaste), document.addEventListener("click", this._onDocClick), document.addEventListener("keydown", this._onDocKeyDown), window.addEventListener("scroll", this._onScrollOrResize, !0), window.addEventListener("resize", this._onScrollOrResize), this._updateVisiblePills();
-  }
-  updated(e) {
-    e.has("sourcesLayout") && this._updateVisiblePills();
-  }
-  disconnectedCallback() {
-    super.disconnectedCallback(), document.removeEventListener("paste", this._onPaste), document.removeEventListener("click", this._onDocClick), document.removeEventListener("keydown", this._onDocKeyDown), window.removeEventListener("scroll", this._onScrollOrResize, !0), window.removeEventListener("resize", this._onScrollOrResize), this._resizeTimer && clearTimeout(this._resizeTimer), this._portalContainer && (T(c, this._portalContainer), this._portalContainer.remove(), this._portalContainer = null);
-  }
-  _renderPill(e) {
-    return l`
+            `)}
+        </div>`,this._portalContainer),requestAnimationFrame(()=>this._positionDropdown())}else this._portalContainer&&(s.render(s.nothing,this._portalContainer),this._portalContainer.remove(),this._portalContainer=null)}_injectDropdownStyles(){var t;const e=(t=this._portalContainer)==null?void 0:t.getRootNode();e&&(e.adoptedStyleSheets.includes(se)||(e.adoptedStyleSheets=[...e.adoptedStyleSheets,se]))}_positionDropdown(){var u,x;const e=(u=this.shadowRoot)==null?void 0:u.querySelector(".more-wrap > button"),t=(x=this._portalContainer)==null?void 0:x.querySelector(".sfx-more-dropdown");if(!e||!t)return;const o=e.getBoundingClientRect(),r=8,i=t.scrollHeight,a=t.offsetWidth,l=o.top,d=window.innerHeight-o.bottom;l>=i+r||l>d?t.style.top=`${o.top-i-r}px`:t.style.top=`${o.bottom+r}px`;let h=o.right-a;h=Math.max(8,Math.min(h,window.innerWidth-a-8)),t.style.left=`${h}px`}_onMoreItemClick(e,t){t.stopPropagation(),this._moreOpen=!1,this._onSourceIconClick(e)}_updateVisiblePills(){const e=window.innerWidth;this.sourcesLayout==="cards"?e<=480?this._visiblePills=2:e<=768?this._visiblePills=3:this._visiblePills=5:e<=480?this._visiblePills=1:e<=768?this._visiblePills=2:this._visiblePills=$e}connectedCallback(){super.connectedCallback(),document.addEventListener("paste",this._onPaste),document.addEventListener("click",this._onDocClick),document.addEventListener("keydown",this._onDocKeyDown),window.addEventListener("scroll",this._onScrollOrResize,!0),window.addEventListener("resize",this._onScrollOrResize),this._updateVisiblePills()}updated(e){e.has("sourcesLayout")&&this._updateVisiblePills()}disconnectedCallback(){super.disconnectedCallback(),document.removeEventListener("paste",this._onPaste),document.removeEventListener("click",this._onDocClick),document.removeEventListener("keydown",this._onDocKeyDown),window.removeEventListener("scroll",this._onScrollOrResize,!0),window.removeEventListener("resize",this._onScrollOrResize),this._resizeTimer&&clearTimeout(this._resizeTimer),this._portalContainer&&(s.render(s.nothing,this._portalContainer),this._portalContainer.remove(),this._portalContainer=null)}_renderPill(e){return s.html`
       <button
         class="src-pill"
-        @click=${(t) => {
-      t.stopPropagation(), this._onSourceIconClick(e);
-    }}
+        @click=${t=>{t.stopPropagation(),this._onSourceIconClick(e)}}
       >
-        ${e.brandHtml ? M(e.brandHtml) : l`<span class="pill-ico" style=${e.iconColor ? `color:${e.iconColor}` : ""}>
-              ${R`<svg viewBox="0 0 24 24" class=${e.fillIcon ? "fill-icon" : ""}>${O(e.icon)}</svg>`}
+        ${e.brandHtml?j.unsafeHTML(e.brandHtml):s.html`<span class="pill-ico" style=${e.iconColor?`color:${e.iconColor}`:""}>
+              ${s.svg`<svg viewBox="0 0 24 24" class=${e.fillIcon?"fill-icon":""}>${z.unsafeSVG(e.icon)}</svg>`}
             </span>`}
         ${e.label}
       </button>
-    `;
-  }
-  _renderCard(e) {
-    return l`
+    `}_renderCard(e){return s.html`
       <button
         class="src-card"
         aria-label=${e.label}
-        @click=${(t) => {
-      t.stopPropagation(), this._onSourceIconClick(e);
-    }}
+        @click=${t=>{t.stopPropagation(),this._onSourceIconClick(e)}}
       >
-        ${e.brandHtml ? l`<span class="card-ico">${M(e.brandHtml)}</span>` : l`<span class="card-ico" style=${e.iconColor ? `color:${e.iconColor}` : ""}>
-              ${R`<svg viewBox="0 0 24 24" class=${e.fillIcon ? "fill-icon" : ""}>${O(e.icon)}</svg>`}
+        ${e.brandHtml?s.html`<span class="card-ico">${j.unsafeHTML(e.brandHtml)}</span>`:s.html`<span class="card-ico" style=${e.iconColor?`color:${e.iconColor}`:""}>
+              ${s.svg`<svg viewBox="0 0 24 24" class=${e.fillIcon?"fill-icon":""}>${z.unsafeSVG(e.icon)}</svg>`}
             </span>`}
         <span class="card-label">${e.label}</span>
       </button>
-    `;
-  }
-  _renderMoreCard() {
-    return l`
-      <div class="more-wrap ${this._moreOpen ? "open" : ""}">
-        <button class="src-card" @click=${(e) => this._toggleMore(e)}>
+    `}_renderMoreCard(){return s.html`
+      <div class="more-wrap ${this._moreOpen?"open":""}">
+        <button class="src-card" @click=${e=>this._toggleMore(e)}>
           <span class="card-ico" style="color: var(--sfx-up-text-muted, #94a3b8)">
             <svg viewBox="0 0 24 24" style="fill: currentColor; stroke: none">
               <circle cx="5" cy="12" r="2.5"/>
@@ -1068,25 +132,14 @@ const ze = 3, ue = class ue extends U {
           <span class="card-label">More</span>
         </button>
       </div>
-    `;
-  }
-  _renderMoreDropdown() {
-    return l`
-      <div class="more-wrap ${this._moreOpen ? "open" : ""}">
-        <button class="more-pill" @click=${(e) => this._toggleMore(e)}>
+    `}_renderMoreDropdown(){return s.html`
+      <div class="more-wrap ${this._moreOpen?"open":""}">
+        <button class="more-pill" @click=${e=>this._toggleMore(e)}>
           More
           <svg class="more-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
       </div>
-    `;
-  }
-  render() {
-    const e = [
-      "drop-zone",
-      this._dragOver || this.externalDragOver ? "drag-over" : "",
-      this.compact ? "compact" : ""
-    ].filter(Boolean).join(" "), t = this.sources.slice(0, this._visiblePills), i = this.sources.slice(this._visiblePills);
-    return l`
+    `}render(){const e=["drop-zone",this._dragOver||this.externalDragOver?"drag-over":"",this.compact?"compact":""].filter(Boolean).join(" "),t=this.sources.slice(0,this._visiblePills),o=this.sources.slice(this._visiblePills);return s.html`
       <div
         class=${e}
         role="button"
@@ -1115,55 +168,48 @@ const ze = 3, ue = class ue extends U {
         <div class="title">
           Drag & Drop or click to <span>browse</span>
         </div>
-        ${this.compact ? c : l`<div class="subtitle">Drop files anywhere on this page</div>`}
+        ${this.compact?s.nothing:s.html`<div class="subtitle">Drop files anywhere on this page</div>`}
 
-        ${!this.compact && this.sources.length > 0 ? l`
+        ${!this.compact&&this.sources.length>0?s.html`
               <div class="import-divider"><span>or import from</span></div>
-              ${this.sourcesLayout === "cards" ? l`
+              ${this.sourcesLayout==="cards"?s.html`
                     <div class="sources-cards">
-                      ${t.map((r) => this._renderCard(r))}
-                      ${i.length > 0 ? this._renderMoreCard() : c}
+                      ${t.map(r=>this._renderCard(r))}
+                      ${o.length>0?this._renderMoreCard():s.nothing}
                     </div>
-                  ` : l`
+                  `:s.html`
                     <div class="sources-grid">
-                      ${t.map((r) => this._renderPill(r))}
-                      ${i.length > 0 ? this._renderMoreDropdown() : c}
+                      ${t.map(r=>this._renderPill(r))}
+                      ${o.length>0?this._renderMoreDropdown():s.nothing}
                     </div>
                   `}
-            ` : c}
+            `:s.nothing}
 
-        ${this.compact && this.sources.length > 0 ? l`
+        ${this.compact&&this.sources.length>0?s.html`
               <div class="sources-row">
-                ${this.sources.map(
-      (r) => l`
+                ${this.sources.map(r=>s.html`
                     <button
                       class="src-ico"
-                      style=${r.iconColor && !r.brandHtml ? `color:${r.iconColor}` : ""}
+                      style=${r.iconColor&&!r.brandHtml?`color:${r.iconColor}`:""}
                       data-tip=${r.label}
                       aria-label=${r.label}
-                      @click=${(o) => {
-        o.stopPropagation(), this._onSourceIconClick(r);
-      }}
+                      @click=${i=>{i.stopPropagation(),this._onSourceIconClick(r)}}
                     >
-                      ${r.brandHtml ? M(r.brandHtml) : R`<svg viewBox="0 0 24 24" class=${r.fillIcon ? "fill-icon" : ""}>${O(r.icon)}</svg>`}
+                      ${r.brandHtml?j.unsafeHTML(r.brandHtml):s.svg`<svg viewBox="0 0 24 24" class=${r.fillIcon?"fill-icon":""}>${z.unsafeSVG(r.icon)}</svg>`}
                     </button>
-                  `
-    )}
+                  `)}
               </div>
-            ` : c}
+            `:s.nothing}
 
         <div class="ripple"></div>
         <input
           type="file"
           multiple
-          accept=${this.accept || c}
+          accept=${this.accept||s.nothing}
           @change=${this._onFileChange}
         />
       </div>
-    `;
-  }
-};
-ue.styles = S`
+    `}};ce.styles=s.css`
     :host {
       display: flex;
       flex-shrink: 0;
@@ -1945,48 +991,11 @@ ue.styles = S`
         animation: none;
       }
     }
-  `;
-let z = ue;
-j([
-  b({ type: Boolean, reflect: !0 })
-], z.prototype, "compact");
-j([
-  b({ type: Boolean, attribute: "external-drag-over" })
-], z.prototype, "externalDragOver");
-j([
-  b({ type: String })
-], z.prototype, "accept");
-j([
-  b({ type: Array })
-], z.prototype, "sources");
-j([
-  b({ type: String, attribute: "sources-layout" })
-], z.prototype, "sourcesLayout");
-j([
-  g()
-], z.prototype, "_dragOver");
-j([
-  g()
-], z.prototype, "_moreOpen");
-j([
-  g()
-], z.prototype, "_visiblePills");
-j([
-  je(".ripple")
-], z.prototype, "_rippleEl");
-j([
-  je('input[type="file"]')
-], z.prototype, "fileInput");
-const xe = class xe extends U {
-  render() {
-    return l`
+  `;let C=ce;U([c.property({type:Boolean,reflect:!0})],C.prototype,"compact");U([c.property({type:Boolean,attribute:"external-drag-over"})],C.prototype,"externalDragOver");U([c.property({type:String})],C.prototype,"accept");U([c.property({type:Array})],C.prototype,"sources");U([c.property({type:String,attribute:"sources-layout"})],C.prototype,"sourcesLayout");U([c.state()],C.prototype,"_dragOver");U([c.state()],C.prototype,"_moreOpen");U([c.state()],C.prototype,"_visiblePills");U([c.query(".ripple")],C.prototype,"_rippleEl");U([c.query('input[type="file"]')],C.prototype,"fileInput");const fe=class fe extends s.LitElement{render(){return s.html`
       <div class="line"></div>
       <div class="label">or import from</div>
       <div class="line"></div>
-    `;
-  }
-};
-xe.styles = S`
+    `}};fe.styles=s.css`
     :host {
       display: flex;
       align-items: center;
@@ -2008,108 +1017,32 @@ xe.styles = S`
       letter-spacing: 1px;
       white-space: nowrap;
     }
-  `;
-let Pe = xe;
-var at = Object.defineProperty, Z = (a, e, t, i) => {
-  for (var r = void 0, o = a.length - 1, s; o >= 0; o--)
-    (s = a[o]) && (r = s(e, t, r) || r);
-  return r && at(e, t, r), r;
-};
-const ge = class ge extends U {
-  constructor() {
-    super(...arguments), this.files = [], this.showDropTile = !1, this.sources = [], this.accept = "", this._moreOpen = !1, this._portalContainer = null, this._outsideClickHandler = (e) => {
-      var r;
-      if ((r = this._portalContainer) != null && r.contains(e.target)) return;
-      const t = this.renderRoot.querySelector(".drop-tile-more-wrap"), i = e.composedPath();
-      t && i.includes(t) || (this._moreOpen = !1, this._closePortal(), document.removeEventListener("click", this._outsideClickHandler, !0));
-    }, this._onScrollOrResize = () => {
-      this._moreOpen && this._positionPortal();
-    }, this._onKeyDown = (e) => {
-      e.key === "Escape" && this._moreOpen && (this._moreOpen = !1, this._closePortal(), this._removeGlobalListeners());
-    };
-  }
-  _onDropTileClick() {
-    const e = this.renderRoot.querySelector('input[type="file"]');
-    e == null || e.click();
-  }
-  _onFileInput(e) {
-    const t = e.target, i = Array.from(t.files ?? []);
-    i.length > 0 && this.dispatchEvent(new CustomEvent("files-selected", { detail: { files: i }, bubbles: !0, composed: !0 })), t.value = "";
-  }
-  _onSourceClick(e, t) {
-    if (e.stopPropagation(), t.id === "device") {
-      const i = this.renderRoot.querySelector('input[type="file"]');
-      i == null || i.click();
-      return;
-    }
-    this.dispatchEvent(new CustomEvent("source-click", { detail: { source: t }, bubbles: !0, composed: !0 }));
-  }
-  _addGlobalListeners() {
-    requestAnimationFrame(() => document.addEventListener("click", this._outsideClickHandler, !0)), document.addEventListener("keydown", this._onKeyDown), window.addEventListener("scroll", this._onScrollOrResize, !0), window.addEventListener("resize", this._onScrollOrResize);
-  }
-  _removeGlobalListeners() {
-    document.removeEventListener("click", this._outsideClickHandler, !0), document.removeEventListener("keydown", this._onKeyDown), window.removeEventListener("scroll", this._onScrollOrResize, !0), window.removeEventListener("resize", this._onScrollOrResize);
-  }
-  _toggleMore(e) {
-    e.stopPropagation(), this._moreOpen = !this._moreOpen, this._moreOpen ? (this._openPortal(), this._addGlobalListeners()) : (this._closePortal(), this._removeGlobalListeners());
-  }
-  _openPortal() {
-    const e = this.sources.slice(3);
-    this._portalContainer || (this._portalContainer = document.createElement("div"), this._portalContainer.setAttribute("data-sfx-tile-dropdown", ""), this._injectTileDropdownStyles(), Fe(this).appendChild(this._portalContainer)), T(
-      l`<div class="sfx-tile-dropdown">
-        ${e.map((t) => l`
+  `;let ae=fe;var at=Object.defineProperty,V=(n,e,t,o)=>{for(var r=void 0,i=n.length-1,a;i>=0;i--)(a=n[i])&&(r=a(e,t,r)||r);return r&&at(e,t,r),r};const ne=new CSSStyleSheet;ne.replaceSync(`
+  [data-sfx-tile-dropdown] { position:absolute; top:0; left:0; width:0; height:0; overflow:visible; pointer-events:none; }
+  [data-sfx-tile-dropdown] .sfx-tile-dropdown { position:fixed; background:#fff; border:1px solid #e2e8f0; border-radius:10px; box-shadow:0 4px 20px rgba(0,0,0,0.12); padding:6px; z-index:99999; min-width:180px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; animation:sfxTileDropIn .15s ease; }
+  [data-sfx-tile-dropdown] .sfx-tile-dropdown-item { display:flex; align-items:center; gap:10px; width:100%; padding:8px 12px; border:none; background:none; border-radius:6px; cursor:pointer; font-size:13px; font-weight:500; color:#1e293b; white-space:nowrap; transition:background .15s; font-family:inherit; }
+  [data-sfx-tile-dropdown] .sfx-tile-dropdown-item:hover { background:#f5f7fa; }
+  [data-sfx-tile-dropdown] .sfx-tile-dropdown-ico { width:32px; height:32px; border-radius:8px; background:#f8fafc; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  [data-sfx-tile-dropdown] .sfx-tile-dropdown-ico svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+  [data-sfx-tile-dropdown] .sfx-tile-dropdown-ico svg.fill-icon { fill:currentColor; stroke:none; }
+  [data-sfx-tile-dropdown] .sfx-tile-dropdown-ico .brand-ico { width:20px; height:20px; border-radius:5px; display:flex; align-items:center; justify-content:center; }
+  [data-sfx-tile-dropdown] .sfx-tile-dropdown-ico .brand-ico svg { fill:white; stroke:none; stroke-width:0; }
+  [data-sfx-tile-dropdown] .sfx-tile-dropdown-ico .canva-ico { width:22px; height:22px; }
+  [data-sfx-tile-dropdown] .sfx-tile-dropdown-ico .canva-ico svg { width:22px; height:22px; }
+  @keyframes sfxTileDropIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
+`);const he=class he extends s.LitElement{constructor(){super(...arguments),this.files=[],this.showDropTile=!1,this.sources=[],this.accept="",this._moreOpen=!1,this._portalContainer=null,this._outsideClickHandler=e=>{var r;if((r=this._portalContainer)!=null&&r.contains(e.target))return;const t=this.renderRoot.querySelector(".drop-tile-more-wrap"),o=e.composedPath();t&&o.includes(t)||(this._moreOpen=!1,this._closePortal(),document.removeEventListener("click",this._outsideClickHandler,!0))},this._onScrollOrResize=()=>{this._moreOpen&&this._positionPortal()},this._onKeyDown=e=>{e.key==="Escape"&&this._moreOpen&&(this._moreOpen=!1,this._closePortal(),this._removeGlobalListeners())}}_onDropTileClick(){const e=this.renderRoot.querySelector('input[type="file"]');e==null||e.click()}_onFileInput(e){const t=e.target,o=Array.from(t.files??[]);o.length>0&&this.dispatchEvent(new CustomEvent("files-selected",{detail:{files:o},bubbles:!0,composed:!0})),t.value=""}_onSourceClick(e,t){if(e.stopPropagation(),t.id==="device"){const o=this.renderRoot.querySelector('input[type="file"]');o==null||o.click();return}this.dispatchEvent(new CustomEvent("source-click",{detail:{source:t},bubbles:!0,composed:!0}))}_addGlobalListeners(){requestAnimationFrame(()=>document.addEventListener("click",this._outsideClickHandler,!0)),document.addEventListener("keydown",this._onKeyDown),window.addEventListener("scroll",this._onScrollOrResize,!0),window.addEventListener("resize",this._onScrollOrResize)}_removeGlobalListeners(){document.removeEventListener("click",this._outsideClickHandler,!0),document.removeEventListener("keydown",this._onKeyDown),window.removeEventListener("scroll",this._onScrollOrResize,!0),window.removeEventListener("resize",this._onScrollOrResize)}_toggleMore(e){e.stopPropagation(),this._moreOpen=!this._moreOpen,this._moreOpen?(this._openPortal(),this._addGlobalListeners()):(this._closePortal(),this._removeGlobalListeners())}_openPortal(){const e=this.sources.slice(3);this._portalContainer||(this._portalContainer=document.createElement("div"),this._portalContainer.setAttribute("data-sfx-tile-dropdown",""),je(this).appendChild(this._portalContainer),this._injectTileDropdownStyles()),s.render(s.html`<div class="sfx-tile-dropdown">
+        ${e.map(t=>s.html`
           <button
             class="sfx-tile-dropdown-item"
-            @click=${(i) => this._onMoreSourceClick(i, t)}
+            @click=${o=>this._onMoreSourceClick(o,t)}
           >
-            <span class="sfx-tile-dropdown-ico" style=${t.iconColor && !t.brandHtml ? `color:${t.iconColor}` : ""}>
-              ${t.brandHtml ? M(t.brandHtml) : R`<svg viewBox="0 0 24 24" class=${t.fillIcon ? "fill-icon" : ""}>${O(t.icon)}</svg>`}
+            <span class="sfx-tile-dropdown-ico" style=${t.iconColor&&!t.brandHtml?`color:${t.iconColor}`:""}>
+              ${t.brandHtml?j.unsafeHTML(t.brandHtml):s.svg`<svg viewBox="0 0 24 24" class=${t.fillIcon?"fill-icon":""}>${z.unsafeSVG(t.icon)}</svg>`}
             </span>
             ${t.label}
           </button>
         `)}
-      </div>`,
-      this._portalContainer
-    ), requestAnimationFrame(() => this._positionPortal());
-  }
-  _positionPortal() {
-    var u;
-    const e = this.renderRoot.querySelector(".drop-tile-more"), t = (u = this._portalContainer) == null ? void 0 : u.querySelector(".sfx-tile-dropdown");
-    if (!e || !t) return;
-    const i = e.getBoundingClientRect(), r = 6, o = t.scrollHeight, s = t.offsetWidth, n = i.top, d = window.innerHeight - i.bottom;
-    n >= o + r || n > d ? t.style.top = `${i.top - o - r}px` : t.style.top = `${i.bottom + r}px`;
-    let h = i.right - s;
-    h = Math.max(8, Math.min(h, window.innerWidth - s - 8)), t.style.left = `${h}px`;
-  }
-  _closePortal() {
-    this._portalContainer && (T(c, this._portalContainer), this._portalContainer.remove(), this._portalContainer = null);
-  }
-  _injectTileDropdownStyles() {
-    if (document.querySelector("style[data-sfx-tile-dropdown-styles]")) return;
-    const e = document.createElement("style");
-    e.setAttribute("data-sfx-tile-dropdown-styles", ""), e.textContent = `
-      [data-sfx-tile-dropdown] .sfx-tile-dropdown { position:fixed; background:#fff; border:1px solid #e2e8f0; border-radius:10px; box-shadow:0 4px 20px rgba(0,0,0,0.12); padding:6px; z-index:99999; min-width:180px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; animation:sfxTileDropIn .15s ease; }
-      [data-sfx-tile-dropdown] .sfx-tile-dropdown-item { display:flex; align-items:center; gap:10px; width:100%; padding:8px 12px; border:none; background:none; border-radius:6px; cursor:pointer; font-size:13px; font-weight:500; color:#1e293b; white-space:nowrap; transition:background .15s; font-family:inherit; }
-      [data-sfx-tile-dropdown] .sfx-tile-dropdown-item:hover { background:#f5f7fa; }
-      [data-sfx-tile-dropdown] .sfx-tile-dropdown-ico { width:32px; height:32px; border-radius:8px; background:#f8fafc; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-      [data-sfx-tile-dropdown] .sfx-tile-dropdown-ico svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
-      [data-sfx-tile-dropdown] .sfx-tile-dropdown-ico svg.fill-icon { fill:currentColor; stroke:none; }
-      [data-sfx-tile-dropdown] .sfx-tile-dropdown-ico .brand-ico { width:20px; height:20px; border-radius:5px; display:flex; align-items:center; justify-content:center; }
-      [data-sfx-tile-dropdown] .sfx-tile-dropdown-ico .brand-ico svg { fill:white; stroke:none; stroke-width:0; }
-      [data-sfx-tile-dropdown] .sfx-tile-dropdown-ico .canva-ico { width:22px; height:22px; }
-      [data-sfx-tile-dropdown] .sfx-tile-dropdown-ico .canva-ico svg { width:22px; height:22px; }
-      @keyframes sfxTileDropIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
-    `, document.head.appendChild(e);
-  }
-  disconnectedCallback() {
-    super.disconnectedCallback(), this._moreOpen = !1, this._closePortal(), this._removeGlobalListeners();
-  }
-  _onMoreSourceClick(e, t) {
-    this._moreOpen = !1, this._closePortal(), this._removeGlobalListeners(), this._onSourceClick(e, t);
-  }
-  _renderDropTile() {
-    const t = this.sources.slice(0, 3), i = this.sources.slice(3);
-    return l`
+      </div>`,this._portalContainer),requestAnimationFrame(()=>this._positionPortal())}_positionPortal(){var u;const e=this.renderRoot.querySelector(".drop-tile-more"),t=(u=this._portalContainer)==null?void 0:u.querySelector(".sfx-tile-dropdown");if(!e||!t)return;const o=e.getBoundingClientRect(),r=6,i=t.scrollHeight,a=t.offsetWidth,l=o.top,d=window.innerHeight-o.bottom;l>=i+r||l>d?t.style.top=`${o.top-i-r}px`:t.style.top=`${o.bottom+r}px`;let h=o.right-a;h=Math.max(8,Math.min(h,window.innerWidth-a-8)),t.style.left=`${h}px`}_closePortal(){this._portalContainer&&(s.render(s.nothing,this._portalContainer),this._portalContainer.remove(),this._portalContainer=null)}_injectTileDropdownStyles(){var t;const e=(t=this._portalContainer)==null?void 0:t.getRootNode();e&&(e.adoptedStyleSheets.includes(ne)||(e.adoptedStyleSheets=[...e.adoptedStyleSheets,ne]))}disconnectedCallback(){super.disconnectedCallback(),this._moreOpen=!1,this._closePortal(),this._removeGlobalListeners()}_onMoreSourceClick(e,t){this._moreOpen=!1,this._closePortal(),this._removeGlobalListeners(),this._onSourceClick(e,t)}_renderDropTile(){const t=this.sources.slice(0,3),o=this.sources.slice(3);return s.html`
       <div class="drop-tile" @click=${this._onDropTileClick}>
         <div class="drop-tile-rings">
           <div class="drop-tile-ring"></div>
@@ -2123,41 +1056,33 @@ const ge = class ge extends U {
           </div>
         </div>
         <div class="drop-tile-text">Drop files or<br>click to <span>browse</span></div>
-        ${t.length > 0 ? l`
+        ${t.length>0?s.html`
           <div class="drop-tile-sources">
-            ${t.map((r) => l`
+            ${t.map(r=>s.html`
               <button
                 class="drop-tile-src"
-                style=${r.iconColor && !r.brandHtml ? `color:${r.iconColor}` : ""}
+                style=${r.iconColor&&!r.brandHtml?`color:${r.iconColor}`:""}
                 title=${r.label}
-                @click=${(o) => this._onSourceClick(o, r)}
+                @click=${i=>this._onSourceClick(i,r)}
               >
-                ${r.brandHtml ? M(r.brandHtml) : R`<svg viewBox="0 0 24 24" class=${r.fillIcon ? "fill-icon" : ""}>${O(r.icon)}</svg>`}
+                ${r.brandHtml?j.unsafeHTML(r.brandHtml):s.svg`<svg viewBox="0 0 24 24" class=${r.fillIcon?"fill-icon":""}>${z.unsafeSVG(r.icon)}</svg>`}
               </button>
             `)}
-            ${i.length > 0 ? l`
+            ${o.length>0?s.html`
               <div class="drop-tile-more-wrap">
-                <button class="drop-tile-more" title="More sources" @click=${(r) => this._toggleMore(r)}>···</button>
+                <button class="drop-tile-more" title="More sources" @click=${r=>this._toggleMore(r)}>···</button>
               </div>
-            ` : c}
+            `:s.nothing}
           </div>
-        ` : c}
-        <input type="file" multiple accept=${this.accept || c} @change=${this._onFileInput} />
+        `:s.nothing}
+        <input type="file" multiple accept=${this.accept||s.nothing} @change=${this._onFileInput} />
       </div>
-    `;
-  }
-  render() {
-    return l`
+    `}render(){return s.html`
       <div class="grid">
-        ${this.showDropTile ? this._renderDropTile() : c}
-        ${this.files.map(
-      (e, t) => l`<sfx-file-item .file=${e} style="--tile-index:${t}"></sfx-file-item>`
-    )}
+        ${this.showDropTile?this._renderDropTile():s.nothing}
+        ${this.files.map((e,t)=>s.html`<sfx-file-item .file=${e} style="--tile-index:${t}"></sfx-file-item>`)}
       </div>
-    `;
-  }
-};
-ge.styles = S`
+    `}};he.styles=s.css`
     :host {
       display: block;
       flex: 1;
@@ -2458,81 +1383,22 @@ ge.styles = S`
     input[type="file"] {
       display: none;
     }
-  `;
-let B = ge;
-Z([
-  b({ attribute: !1 })
-], B.prototype, "files");
-Z([
-  b({ type: Boolean })
-], B.prototype, "showDropTile");
-Z([
-  b({ attribute: !1 })
-], B.prototype, "sources");
-Z([
-  b({ type: String })
-], B.prototype, "accept");
-Z([
-  g()
-], B.prototype, "_moreOpen");
-var nt = Object.defineProperty, lt = (a, e, t, i) => {
-  for (var r = void 0, o = a.length - 1, s; o >= 0; o--)
-    (s = a[o]) && (r = s(e, t, r) || r);
-  return r && nt(e, t, r), r;
-};
-const ve = class ve extends U {
-  _remove() {
-    this.dispatchEvent(
-      new CustomEvent("file-remove", {
-        detail: { fileId: this.file.id },
-        bubbles: !0,
-        composed: !0
-      })
-    );
-  }
-  _retry() {
-    this.dispatchEvent(
-      new CustomEvent("file-retry", {
-        detail: { fileId: this.file.id },
-        bubbles: !0,
-        composed: !0
-      })
-    );
-  }
-  _preview(e) {
-    e.stopPropagation(), this.dispatchEvent(
-      new CustomEvent("file-preview", {
-        detail: { fileId: this.file.id },
-        bubbles: !0,
-        composed: !0
-      })
-    );
-  }
-  render() {
-    const e = this.file;
-    if (!e) return c;
-    const t = X(e), i = e.status === "complete", r = e.status === "uploading", o = e.status === "error" || e.status === "failed", s = e.status === "rejected", n = Xe(e.name), d = [
-      "tile",
-      i ? "done" : "",
-      r ? "uploading" : "",
-      s ? "rejected" : ""
-    ].filter(Boolean).join(" ");
-    return l`
+  `;let D=he;V([c.property({attribute:!1})],D.prototype,"files");V([c.property({type:Boolean})],D.prototype,"showDropTile");V([c.property({attribute:!1})],D.prototype,"sources");V([c.property({type:String})],D.prototype,"accept");V([c.state()],D.prototype,"_moreOpen");var nt=Object.defineProperty,lt=(n,e,t,o)=>{for(var r=void 0,i=n.length-1,a;i>=0;i--)(a=n[i])&&(r=a(e,t,r)||r);return r&&nt(e,t,r),r};const ue=class ue extends s.LitElement{_remove(){this.dispatchEvent(new CustomEvent("file-remove",{detail:{fileId:this.file.id},bubbles:!0,composed:!0}))}_retry(){this.dispatchEvent(new CustomEvent("file-retry",{detail:{fileId:this.file.id},bubbles:!0,composed:!0}))}_preview(e){e.stopPropagation(),this.dispatchEvent(new CustomEvent("file-preview",{detail:{fileId:this.file.id},bubbles:!0,composed:!0}))}render(){const e=this.file;if(!e)return s.nothing;const t=q(e),o=e.status==="complete",r=e.status==="uploading",i=e.status==="error"||e.status==="failed",a=e.status==="rejected",l=We(e.name),d=["tile",o?"done":"",r?"uploading":"",a?"rejected":""].filter(Boolean).join(" ");return s.html`
       <div class=${d} tabindex="0">
         <!-- Preview area -->
         <div class="preview">
-          ${e.previewUrl ? l`<div class="preview-bg" style="background-image:url(${e.previewUrl})"></div>` : l`
+          ${e.previewUrl?s.html`<div class="preview-bg" style="background-image:url(${e.previewUrl})"></div>`:s.html`
                 <div class="preview-bg ${t}"></div>
                 <div class="type-icon">
                   <div class="type-icon-inner ${t}">
                     ${this._renderTypeIcon(t)}
-                    ${n ? l`<div class="ext-label">${n}</div>` : c}
+                    ${l?s.html`<div class="ext-label">${l}</div>`:s.nothing}
                   </div>
                 </div>
               `}
 
           <!-- Preview button -->
-          ${!i && !r && !o && e.status !== "rejected" ? l`
+          ${!o&&!r&&!i&&e.status!=="rejected"?s.html`
                 <button class="preview-btn" @click=${this._preview} aria-label="Preview file">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
@@ -2540,7 +1406,7 @@ const ve = class ve extends U {
                   </svg>
                   Preview
                 </button>
-              ` : c}
+              `:s.nothing}
 
           <!-- Spinner overlay -->
           <div class="spinner-overlay">
@@ -2548,36 +1414,36 @@ const ve = class ve extends U {
           </div>
 
           <!-- Done badge -->
-          ${i ? l`<div class="done-badge">
+          ${o?s.html`<div class="done-badge">
                 <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round">
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
-              </div>` : c}
+              </div>`:s.nothing}
 
           <!-- Progress bar -->
-          ${e.status === "uploading" ? l`
+          ${e.status==="uploading"?s.html`
                 <div class="progress">
-                  <div class="progress-fill" style="transform:scaleX(${Math.min(e.progress, 100) / 100})"></div>
+                  <div class="progress-fill" style="transform:scaleX(${Math.min(e.progress,100)/100})"></div>
                 </div>
-              ` : c}
+              `:s.nothing}
 
           <!-- Error / rejected badge -->
-          ${(o || s) && e.error ? l`<div class="error-badge" title=${e.error}>${e.error}</div>` : c}
+          ${(i||a)&&e.error?s.html`<div class="error-badge" title=${e.error}>${e.error}</div>`:s.nothing}
 
           <!-- Video duration badge (hidden when error badge is shown to avoid overlap) -->
-          ${!(o || s) && e.duration != null && e.duration > 0 ? l`<div class="duration-badge">${this._formatDuration(e.duration)}</div>` : c}
+          ${!(i||a)&&e.duration!=null&&e.duration>0?s.html`<div class="duration-badge">${this._formatDuration(e.duration)}</div>`:s.nothing}
         </div>
 
         <!-- Action buttons -->
         <div class="actions">
-          ${o ? l`
+          ${i?s.html`
                 <button class="act-btn retry" @click=${this._retry} title="Retry" aria-label="Retry upload">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
                     <polyline points="23 4 23 10 17 10" />
                     <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10" />
                   </svg>
                 </button>
-              ` : c}
+              `:s.nothing}
           <button class="act-btn del" @click=${this._remove} title="Remove" aria-label="Remove file">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="3 6 5 6 21 6" />
@@ -2592,31 +1458,10 @@ const ve = class ve extends U {
         <!-- Info bar -->
         <div class="info">
           <div class="name" title=${e.name}>${e.name}</div>
-          <div class="meta">${n || ""}${e.size ? ` · ${Y(e.size)}` : ""}</div>
+          <div class="meta">${l||""}${e.size?` · ${B(e.size)}`:""}</div>
         </div>
       </div>
-    `;
-  }
-  _formatDuration(e) {
-    const t = Math.floor(e / 60), i = Math.floor(e % 60);
-    return `${t}:${i.toString().padStart(2, "0")}`;
-  }
-  _renderTypeIcon(e) {
-    switch (e) {
-      case "pdf":
-        return l`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
-      case "doc":
-        return l`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`;
-      case "vid":
-        return l`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>`;
-      case "zip":
-        return l`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>`;
-      default:
-        return l`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>`;
-    }
-  }
-};
-ve.styles = S`
+    `}_formatDuration(e){const t=Math.floor(e/60),o=Math.floor(e%60);return`${t}:${o.toString().padStart(2,"0")}`}_renderTypeIcon(e){switch(e){case"pdf":return s.html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;case"doc":return s.html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`;case"vid":return s.html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>`;case"zip":return s.html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>`;default:return s.html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>`}}};ue.styles=s.css`
     :host {
       display: block;
     }
@@ -2997,12 +1842,7 @@ ve.styles = S`
       .tile { animation: none; }
       .spin-ring { animation: none; }
     }
-  `;
-let le = ve;
-lt([
-  b({ attribute: !1 })
-], le.prototype, "file");
-const J = S`
+  `;let J=ue;lt([c.property({attribute:!1})],J.prototype,"file");const N=s.css`
   .btn,
   .btn-ghost,
   .btn-primary,
@@ -3071,103 +1911,61 @@ const J = S`
     opacity: 0.55;
     cursor: not-allowed;
   }
-`, Q = S`
+`,X=s.css`
   button:focus-visible {
     outline: 2px solid var(--sfx-up-ring, oklch(0.578 0.198 268.129 / 0.7));
     outline-offset: 2px;
   }
-`;
-var dt = Object.defineProperty, ee = (a, e, t, i) => {
-  for (var r = void 0, o = a.length - 1, s; o >= 0; o--)
-    (s = a[o]) && (r = s(e, t, r) || r);
-  return r && dt(e, t, r), r;
-};
-const Ue = 7, be = class be extends U {
-  constructor() {
-    super(...arguments), this.fileCount = 0, this.totalSize = 0, this.thumbnails = [], this.primaryLabel = "Done", this.failedFiles = [];
-  }
-  _uploadMore() {
-    this.dispatchEvent(
-      new CustomEvent("upload-more", { bubbles: !0, composed: !0 })
-    );
-  }
-  _primaryAction() {
-    this.dispatchEvent(
-      new CustomEvent("primary-action", { bubbles: !0, composed: !0 })
-    );
-  }
-  _retryFile(e) {
-    this.dispatchEvent(
-      new CustomEvent("file-retry", { bubbles: !0, composed: !0, detail: { fileId: e } })
-    );
-  }
-  _retryAll() {
-    this.dispatchEvent(
-      new CustomEvent("retry-all", { bubbles: !0, composed: !0 })
-    );
-  }
-  _close() {
-    this.dispatchEvent(
-      new CustomEvent("close-uploader", { bubbles: !0, composed: !0 })
-    );
-  }
-  render() {
-    const e = this.thumbnails.slice(0, Ue), t = this.thumbnails.length - Ue, i = this.fileCount > 0, r = this.failedFiles.length > 0, o = r && !i;
-    return l`
+`;var dt=Object.defineProperty,W=(n,e,t,o)=>{for(var r=void 0,i=n.length-1,a;i>=0;i--)(a=n[i])&&(r=a(e,t,r)||r);return r&&dt(e,t,r),r};const Se=7,xe=class xe extends s.LitElement{constructor(){super(...arguments),this.fileCount=0,this.totalSize=0,this.thumbnails=[],this.primaryLabel="Done",this.failedFiles=[]}_uploadMore(){this.dispatchEvent(new CustomEvent("upload-more",{bubbles:!0,composed:!0}))}_primaryAction(){this.dispatchEvent(new CustomEvent("primary-action",{bubbles:!0,composed:!0}))}_retryFile(e){this.dispatchEvent(new CustomEvent("file-retry",{bubbles:!0,composed:!0,detail:{fileId:e}}))}_retryAll(){this.dispatchEvent(new CustomEvent("retry-all",{bubbles:!0,composed:!0}))}_close(){this.dispatchEvent(new CustomEvent("close-uploader",{bubbles:!0,composed:!0}))}render(){const e=this.thumbnails.slice(0,Se),t=this.thumbnails.length-Se,o=this.fileCount>0,r=this.failedFiles.length>0,i=r&&!o;return s.html`
       <button class="close-btn" title="Close" @click=${this._close}>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
       <div class="card" role="status" aria-live="polite">
-        <div class="icon ${o ? "error" : r ? "warning" : ""}">
-          ${o ? l`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <div class="icon ${i?"error":r?"warning":""}">
+          ${i?s.html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-              </svg>` : r ? l`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              </svg>`:r?s.html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-                </svg>` : l`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                </svg>`:s.html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
                   <polyline points="20 6 9 17 4 12" />
                 </svg>`}
         </div>
-        <div class="title">${o ? "Upload failed" : r ? "Partially uploaded" : "Uploaded successfully!"}</div>
-        <div class="subtitle">${o ? `${this.failedFiles.length === 1 ? "File" : "Files"} could not be uploaded` : r ? `${this.fileCount} ${this.fileCount === 1 ? "file" : "files"} uploaded, ${this.failedFiles.length} failed` : "All files are ready for use"}</div>
+        <div class="title">${i?"Upload failed":r?"Partially uploaded":"Uploaded successfully!"}</div>
+        <div class="subtitle">${i?`${this.failedFiles.length===1?"File":"Files"} could not be uploaded`:r?`${this.fileCount} ${this.fileCount===1?"file":"files"} uploaded, ${this.failedFiles.length} failed`:"All files are ready for use"}</div>
 
-        ${e.length > 0 ? l`
+        ${e.length>0?s.html`
               <div class="thumbs">
-                ${e.map(
-      (s) => l`<img class="thumb" src=${s} alt="" />`
-    )}
-                ${t > 0 ? l`<div class="thumb-more">+${t}</div>` : c}
+                ${e.map(a=>s.html`<img class="thumb" src=${a} alt="" />`)}
+                ${t>0?s.html`<div class="thumb-more">+${t}</div>`:s.nothing}
               </div>
-            ` : c}
+            `:s.nothing}
 
-        ${i ? l`<div class="summary">${this.fileCount} ${this.fileCount === 1 ? "file" : "files"} · ${Y(this.totalSize)} uploaded</div>` : c}
+        ${o?s.html`<div class="summary">${this.fileCount} ${this.fileCount===1?"file":"files"} · ${B(this.totalSize)} uploaded</div>`:s.nothing}
 
-        ${r ? l`
+        ${r?s.html`
             <div class="failed-list">
-              ${this.failedFiles.map((s) => l`
+              ${this.failedFiles.map(a=>s.html`
                 <div class="failed-item">
                   <svg class="failed-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Error"><title>Error</title><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                   <div class="failed-info">
-                    <div class="failed-name">${s.name}</div>
-                    <div class="failed-reason">${s.error}</div>
+                    <div class="failed-name">${a.name}</div>
+                    <div class="failed-reason">${a.error}</div>
                   </div>
-                  <button class="failed-retry" title="Retry" @click=${() => this._retryFile(s.id)}>
+                  <button class="failed-retry" title="Retry" @click=${()=>this._retryFile(a.id)}>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
                   </button>
                 </div>
               `)}
             </div>
-          ` : c}
+          `:s.nothing}
 
         <div class="actions">
           <button class="btn-ghost" @click=${this._uploadMore}>Upload more</button>
-          ${r ? l`<button class="btn-retry-all" @click=${this._retryAll}>Retry all (${this.failedFiles.length})</button>` : c}
+          ${r?s.html`<button class="btn-retry-all" @click=${this._retryAll}>Retry all (${this.failedFiles.length})</button>`:s.nothing}
           <button class="btn-primary" @click=${this._primaryAction}>${this.primaryLabel}</button>
         </div>
       </div>
-    `;
-  }
-};
-be.styles = [J, Q, S`
+    `}};xe.styles=[N,X,s.css`
     :host {
       display: flex;
       flex: 1;
@@ -3446,61 +2244,18 @@ be.styles = [J, Q, S`
       .card { animation: none; }
       .icon { animation: none; }
     }
-  `];
-let L = be;
-ee([
-  b({ type: Number })
-], L.prototype, "fileCount");
-ee([
-  b({ type: Number })
-], L.prototype, "totalSize");
-ee([
-  b({ type: Array })
-], L.prototype, "thumbnails");
-ee([
-  b({ type: String })
-], L.prototype, "primaryLabel");
-ee([
-  b({ type: Array })
-], L.prototype, "failedFiles");
-var pt = Object.defineProperty, I = (a, e, t, i) => {
-  for (var r = void 0, o = a.length - 1, s; o >= 0; o--)
-    (s = a[o]) && (r = s(e, t, r) || r);
-  return r && pt(e, t, r), r;
-};
-const me = class me extends U {
-  constructor() {
-    super(...arguments), this.uploadState = "idle", this.fileCount = 0, this.totalSize = 0, this.failedCount = 0, this.showFillMetadata = !1, this.completedCount = 0, this.uploadProgress = 0;
-  }
-  _clear() {
-    this.dispatchEvent(new CustomEvent("clear-all", { bubbles: !0, composed: !0 }));
-  }
-  _addMore() {
-    this.dispatchEvent(new CustomEvent("add-more", { bubbles: !0, composed: !0 }));
-  }
-  _fillMetadata() {
-    this.dispatchEvent(new CustomEvent("fill-metadata", { bubbles: !0, composed: !0 }));
-  }
-  _upload() {
-    this.dispatchEvent(new CustomEvent("upload-start", { bubbles: !0, composed: !0 }));
-  }
-  _retryAll() {
-    this.dispatchEvent(new CustomEvent("retry-all", { bubbles: !0, composed: !0 }));
-  }
-  render() {
-    const e = this.uploadState === "uploading";
-    return l`
-      ${e ? l`
+  `];let F=xe;W([c.property({type:Number})],F.prototype,"fileCount");W([c.property({type:Number})],F.prototype,"totalSize");W([c.property({type:Array})],F.prototype,"thumbnails");W([c.property({type:String})],F.prototype,"primaryLabel");W([c.property({type:Array})],F.prototype,"failedFiles");var pt=Object.defineProperty,O=(n,e,t,o)=>{for(var r=void 0,i=n.length-1,a;i>=0;i--)(a=n[i])&&(r=a(e,t,r)||r);return r&&pt(e,t,r),r};const ge=class ge extends s.LitElement{constructor(){super(...arguments),this.uploadState="idle",this.fileCount=0,this.totalSize=0,this.failedCount=0,this.showFillMetadata=!1,this.completedCount=0,this.uploadProgress=0}_clear(){this.dispatchEvent(new CustomEvent("clear-all",{bubbles:!0,composed:!0}))}_addMore(){this.dispatchEvent(new CustomEvent("add-more",{bubbles:!0,composed:!0}))}_fillMetadata(){this.dispatchEvent(new CustomEvent("fill-metadata",{bubbles:!0,composed:!0}))}_upload(){this.dispatchEvent(new CustomEvent("upload-start",{bubbles:!0,composed:!0}))}_retryAll(){this.dispatchEvent(new CustomEvent("retry-all",{bubbles:!0,composed:!0}))}render(){const e=this.uploadState==="uploading";return s.html`
+      ${e?s.html`
             <div class="progress-row">
               <div class="progress-track" role="progressbar" aria-valuenow=${Math.round(this.uploadProgress)} aria-valuemin="0" aria-valuemax="100" aria-label="Upload progress">
                 <div class="progress-fill" style="width:${this.uploadProgress}%"></div>
               </div>
               <span class="progress-label">${this.completedCount}/${this.fileCount} files</span>
             </div>
-          ` : c}
+          `:s.nothing}
       <div class="buttons-row">
         <div class="left">
-          ${this.showFillMetadata && this.uploadState === "idle" ? l`
+          ${this.showFillMetadata&&this.uploadState==="idle"?s.html`
                 <button class="btn-sec" @click=${this._fillMetadata}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -3511,7 +2266,7 @@ const me = class me extends U {
                   </svg>
                   Fill Metadata
                 </button>
-              ` : c}
+              `:s.nothing}
         </div>
         <div class="right">
           <button class="btn-ghost" @click=${this._clear}>
@@ -3531,7 +2286,7 @@ const me = class me extends U {
             </svg>
             Add more
           </button>
-          ${this.failedCount > 0 ? l`
+          ${this.failedCount>0?s.html`
                 <button class="btn-retry" @click=${this._retryAll}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
                     <polyline points="23 4 23 10 17 10" />
@@ -3539,26 +2294,22 @@ const me = class me extends U {
                   </svg>
                   Retry all (${this.failedCount})
                 </button>
-              ` : c}
+              `:s.nothing}
           ${this._renderUploadButton()}
         </div>
       </div>
-    `;
-  }
-  _renderUploadButton() {
-    const e = this.uploadState === "uploading", t = this.uploadState === "done", i = ["btn-primary", t ? "done-state" : ""].filter(Boolean).join(" ");
-    return l`
+    `}_renderUploadButton(){const e=this.uploadState==="uploading",t=this.uploadState==="done",o=["btn-primary",t?"done-state":""].filter(Boolean).join(" ");return s.html`
       <button
-        class=${i}
+        class=${o}
         @click=${this._upload}
         ?disabled=${e}
       >
-        ${e ? l`<span class="btn-spin"></span> Uploading\u2026` : t ? l`
+        ${e?s.html`<span class="btn-spin"></span> Uploading\u2026`:t?s.html`
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
                 Done!
-              ` : l`
+              `:s.html`
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
                   <polyline points="16 16 12 12 8 16" />
                   <line x1="12" y1="12" x2="12" y2="21" />
@@ -3567,10 +2318,7 @@ const me = class me extends U {
                 Upload
               `}
       </button>
-    `;
-  }
-};
-me.styles = [J, Q, S`
+    `}};ge.styles=[N,X,s.css`
     :host {
       display: flex;
       flex-direction: column;
@@ -3718,113 +2466,7 @@ me.styles = [J, Q, S`
       :host { animation: none; }
       .btn-spin { animation: none; }
     }
-  `];
-let F = me;
-I([
-  b({ type: String })
-], F.prototype, "uploadState");
-I([
-  b({ type: Number })
-], F.prototype, "fileCount");
-I([
-  b({ type: Number })
-], F.prototype, "totalSize");
-I([
-  b({ type: Number })
-], F.prototype, "failedCount");
-I([
-  b({ type: Boolean })
-], F.prototype, "showFillMetadata");
-I([
-  b({ type: Number })
-], F.prototype, "completedCount");
-I([
-  b({ type: Number })
-], F.prototype, "uploadProgress");
-const ct = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
-function ce(a, e) {
-  return (t) => {
-    if (t.key !== "Tab") return;
-    const i = a();
-    if (!i) return;
-    const r = i.querySelector(e);
-    if (!r) return;
-    const o = Array.from(r.querySelectorAll(ct));
-    if (o.length === 0) return;
-    const s = o[0], n = o[o.length - 1], d = i.activeElement;
-    t.shiftKey ? (d === s || !r.contains(d)) && (t.preventDefault(), n.focus()) : (d === n || !r.contains(d)) && (t.preventDefault(), s.focus());
-  };
-}
-var ft = Object.defineProperty, fe = (a, e, t, i) => {
-  for (var r = void 0, o = a.length - 1, s; o >= 0; o--)
-    (s = a[o]) && (r = s(e, t, r) || r);
-  return r && ft(e, t, r), r;
-};
-const we = class we extends U {
-  constructor() {
-    super(...arguments), this._url = "", this._name = "", this._error = "", this._onBackdropClick = (e) => {
-      e.target === e.currentTarget && this._cancel();
-    }, this._onUrlInput = (e) => {
-      this._url = e.target.value, this._error = "", this._autoName();
-    }, this._onNameInput = (e) => {
-      this._name = e.target.value;
-    }, this._focusTrap = ce(() => this.shadowRoot, ".card"), this._onKeyDown = (e) => {
-      var t;
-      e.key === "Escape" && this._cancel(), e.key === "Enter" && ((t = e.target) == null ? void 0 : t.tagName) === "INPUT" && this._submit(), this._focusTrap(e);
-    };
-  }
-  _autoName() {
-    var e;
-    if (!this._name)
-      try {
-        const t = new URL(this._url).pathname.split("/"), i = t[t.length - 1];
-        if (i) {
-          const r = (e = this.shadowRoot) == null ? void 0 : e.querySelector("#nameInput");
-          r && (r.placeholder = i);
-        }
-      } catch {
-      }
-  }
-  _cancel() {
-    this.dispatchEvent(new CustomEvent("url-cancel", { bubbles: !0, composed: !0 }));
-  }
-  _submit() {
-    const e = this._url.trim();
-    if (!e) {
-      this._error = "Please enter a URL";
-      return;
-    }
-    try {
-      new URL(e);
-    } catch {
-      this._error = "Please enter a valid URL";
-      return;
-    }
-    this._error = "";
-    let t = this._name.trim();
-    if (!t)
-      try {
-        const i = new URL(e).pathname.split("/");
-        t = i[i.length - 1] || "imported-file";
-      } catch {
-        t = "imported-file";
-      }
-    this.dispatchEvent(
-      new CustomEvent("url-submit", {
-        detail: { url: e, name: t },
-        bubbles: !0,
-        composed: !0
-      })
-    );
-  }
-  connectedCallback() {
-    super.connectedCallback(), this.updateComplete.then(() => {
-      var e, t;
-      (t = (e = this.shadowRoot) == null ? void 0 : e.querySelector("#urlInput")) == null || t.focus();
-    });
-  }
-  render() {
-    return l`
+  `];let P=ge;O([c.property({type:String})],P.prototype,"uploadState");O([c.property({type:Number})],P.prototype,"fileCount");O([c.property({type:Number})],P.prototype,"totalSize");O([c.property({type:Number})],P.prototype,"failedCount");O([c.property({type:Boolean})],P.prototype,"showFillMetadata");O([c.property({type:Number})],P.prototype,"completedCount");O([c.property({type:Number})],P.prototype,"uploadProgress");const ct='button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';function le(n,e){return t=>{if(t.key!=="Tab")return;const o=n();if(!o)return;const r=o.querySelector(e);if(!r)return;const i=Array.from(r.querySelectorAll(ct));if(i.length===0)return;const a=i[0],l=i[i.length-1],d=o.activeElement;t.shiftKey?(d===a||!r.contains(d))&&(t.preventDefault(),l.focus()):(d===l||!r.contains(d))&&(t.preventDefault(),a.focus())}}var ft=Object.defineProperty,de=(n,e,t,o)=>{for(var r=void 0,i=n.length-1,a;i>=0;i--)(a=n[i])&&(r=a(e,t,r)||r);return r&&ft(e,t,r),r};const ve=class ve extends s.LitElement{constructor(){super(...arguments),this._url="",this._name="",this._error="",this._onBackdropClick=e=>{e.target===e.currentTarget&&this._cancel()},this._onUrlInput=e=>{this._url=e.target.value,this._error="",this._autoName()},this._onNameInput=e=>{this._name=e.target.value},this._focusTrap=le(()=>this.shadowRoot,".card"),this._onKeyDown=e=>{var t;e.key==="Escape"&&this._cancel(),e.key==="Enter"&&((t=e.target)==null?void 0:t.tagName)==="INPUT"&&this._submit(),this._focusTrap(e)}}_autoName(){var e;if(!this._name)try{const t=new URL(this._url).pathname.split("/"),o=t[t.length-1];if(o){const r=(e=this.shadowRoot)==null?void 0:e.querySelector("#nameInput");r&&(r.placeholder=o)}}catch{}}_cancel(){this.dispatchEvent(new CustomEvent("url-cancel",{bubbles:!0,composed:!0}))}_submit(){const e=this._url.trim();if(!e){this._error="Please enter a URL";return}try{new URL(e)}catch{this._error="Please enter a valid URL";return}this._error="";let t=this._name.trim();if(!t)try{const o=new URL(e).pathname.split("/");t=o[o.length-1]||"imported-file"}catch{t="imported-file"}this.dispatchEvent(new CustomEvent("url-submit",{detail:{url:e,name:t},bubbles:!0,composed:!0}))}connectedCallback(){super.connectedCallback(),this.updateComplete.then(()=>{var e,t;(t=(e=this.shadowRoot)==null?void 0:e.querySelector("#urlInput"))==null||t.focus()})}render(){return s.html`
       <div class="backdrop" @click=${this._onBackdropClick} @keydown=${this._onKeyDown}>
         <div class="card">
           <div class="head">
@@ -3858,7 +2500,7 @@ const we = class we extends U {
                 @input=${this._onNameInput}
               />
             </div>
-            ${this._error ? l`<div class="error">${this._error}</div>` : ""}
+            ${this._error?s.html`<div class="error">${this._error}</div>`:""}
             <div class="actions">
               <button class="btn btn-ghost" @click=${this._cancel}>Cancel</button>
               <button class="btn btn-primary" @click=${this._submit}>
@@ -3868,10 +2510,7 @@ const we = class we extends U {
           </div>
         </div>
       </div>
-    `;
-  }
-};
-we.styles = [J, Q, S`
+    `}};ve.styles=[N,X,s.css`
     :host {
       display: block;
     }
@@ -4044,68 +2683,7 @@ we.styles = [J, Q, S`
       outline: none;
     }
 
-  `];
-let K = we;
-fe([
-  g()
-], K.prototype, "_url");
-fe([
-  g()
-], K.prototype, "_name");
-fe([
-  g()
-], K.prototype, "_error");
-var ht = Object.defineProperty, ie = (a, e, t, i) => {
-  for (var r = void 0, o = a.length - 1, s; o >= 0; o--)
-    (s = a[o]) && (r = s(e, t, r) || r);
-  return r && ht(e, t, r), r;
-};
-const ye = class ye extends U {
-  constructor() {
-    super(...arguments), this._stream = null, this._error = "", this._captured = null, this._previewUrl = "", this._onBackdropClick = (e) => {
-      e.target === e.currentTarget && this._cancel();
-    }, this._focusTrap = ce(() => this.shadowRoot, ".card"), this._onKeyDown = (e) => {
-      e.key === "Escape" && this._cancel(), this._focusTrap(e);
-    }, this._capture = () => {
-      var r, o;
-      const e = (r = this.shadowRoot) == null ? void 0 : r.querySelector("video"), t = (o = this.shadowRoot) == null ? void 0 : o.querySelector("canvas");
-      if (!e || !t) return;
-      t.width = e.videoWidth, t.height = e.videoHeight, t.getContext("2d").drawImage(e, 0, 0), t.toBlob((s) => {
-        s && (this._captured = s, this._previewUrl = URL.createObjectURL(s), this._stopStream());
-      }, "image/jpeg", 0.92);
-    }, this._retake = () => {
-      this._previewUrl && URL.revokeObjectURL(this._previewUrl), this._captured = null, this._previewUrl = "", this._startCamera();
-    }, this._usePhoto = () => {
-      if (!this._captured) return;
-      const e = (/* @__PURE__ */ new Date()).toISOString().replace(/[:.]/g, "-").slice(0, 19), t = new File([this._captured], `camera-${e}.jpg`, { type: "image/jpeg" });
-      this.dispatchEvent(new CustomEvent("camera-capture", { detail: { file: t }, bubbles: !0, composed: !0 }));
-    };
-  }
-  connectedCallback() {
-    super.connectedCallback(), this._startCamera();
-  }
-  disconnectedCallback() {
-    super.disconnectedCallback(), this._stopStream(), this._previewUrl && URL.revokeObjectURL(this._previewUrl);
-  }
-  async _startCamera() {
-    var e;
-    try {
-      this._stream = await navigator.mediaDevices.getUserMedia({ video: !0, audio: !1 }), await this.updateComplete;
-      const t = (e = this.shadowRoot) == null ? void 0 : e.querySelector("video");
-      t && (t.srcObject = this._stream);
-    } catch {
-      this._error = "Could not access camera. Please check your permissions.";
-    }
-  }
-  _stopStream() {
-    var e;
-    (e = this._stream) == null || e.getTracks().forEach((t) => t.stop()), this._stream = null;
-  }
-  _cancel() {
-    this._stopStream(), this.dispatchEvent(new CustomEvent("camera-cancel", { bubbles: !0, composed: !0 }));
-  }
-  render() {
-    return l`
+  `];let I=ve;de([c.state()],I.prototype,"_url");de([c.state()],I.prototype,"_name");de([c.state()],I.prototype,"_error");var ht=Object.defineProperty,re=(n,e,t,o)=>{for(var r=void 0,i=n.length-1,a;i>=0;i--)(a=n[i])&&(r=a(e,t,r)||r);return r&&ht(e,t,r),r};const be=class be extends s.LitElement{constructor(){super(...arguments),this._stream=null,this._error="",this._captured=null,this._previewUrl="",this._onBackdropClick=e=>{e.target===e.currentTarget&&this._cancel()},this._focusTrap=le(()=>this.shadowRoot,".card"),this._onKeyDown=e=>{e.key==="Escape"&&this._cancel(),this._focusTrap(e)},this._capture=()=>{var r,i;const e=(r=this.shadowRoot)==null?void 0:r.querySelector("video"),t=(i=this.shadowRoot)==null?void 0:i.querySelector("canvas");if(!e||!t)return;t.width=e.videoWidth,t.height=e.videoHeight,t.getContext("2d").drawImage(e,0,0),t.toBlob(a=>{a&&(this._captured=a,this._previewUrl=URL.createObjectURL(a),this._stopStream())},"image/jpeg",.92)},this._retake=()=>{this._previewUrl&&URL.revokeObjectURL(this._previewUrl),this._captured=null,this._previewUrl="",this._startCamera()},this._usePhoto=()=>{if(!this._captured)return;const e=new Date().toISOString().replace(/[:.]/g,"-").slice(0,19),t=new File([this._captured],`camera-${e}.jpg`,{type:"image/jpeg"});this.dispatchEvent(new CustomEvent("camera-capture",{detail:{file:t},bubbles:!0,composed:!0}))}}connectedCallback(){super.connectedCallback(),this._startCamera()}disconnectedCallback(){super.disconnectedCallback(),this._stopStream(),this._previewUrl&&URL.revokeObjectURL(this._previewUrl)}async _startCamera(){var e;try{this._stream=await navigator.mediaDevices.getUserMedia({video:!0,audio:!1}),await this.updateComplete;const t=(e=this.shadowRoot)==null?void 0:e.querySelector("video");t&&(t.srcObject=this._stream)}catch{this._error="Could not access camera. Please check your permissions."}}_stopStream(){var e;(e=this._stream)==null||e.getTracks().forEach(t=>t.stop()),this._stream=null}_cancel(){this._stopStream(),this.dispatchEvent(new CustomEvent("camera-cancel",{bubbles:!0,composed:!0}))}render(){return s.html`
       <div class="backdrop" @click=${this._onBackdropClick} @keydown=${this._onKeyDown}>
         <div class="card">
           <div class="head">
@@ -4119,13 +2697,13 @@ const ye = class ye extends U {
             <button class="close-btn" aria-label="Close" @click=${this._cancel}>\u2715</button>
           </div>
           <div class="body">
-            ${this._error ? l`<div class="error">${this._error}</div>` : this._captured ? l`
+            ${this._error?s.html`<div class="error">${this._error}</div>`:this._captured?s.html`
                     <img class="preview-img" src=${this._previewUrl} alt="Captured photo" />
                     <div class="actions">
                       <button class="btn btn-ghost" @click=${this._retake}>Retake</button>
                       <button class="btn btn-primary" @click=${this._usePhoto}>Use photo</button>
                     </div>
-                  ` : l`
+                  `:s.html`
                     <video autoplay playsinline muted></video>
                     <canvas></canvas>
                     <div class="actions">
@@ -4135,10 +2713,7 @@ const ye = class ye extends U {
           </div>
         </div>
       </div>
-    `;
-  }
-};
-ye.styles = [J, Q, S`
+    `}};be.styles=[N,X,s.css`
     :host { display: block; }
 
     .backdrop {
@@ -4218,76 +2793,7 @@ ye.styles = [J, Q, S`
 
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes slideUp { from { transform: translateY(18px) scale(0.97); } to { transform: translateY(0) scale(1); } }
-  `];
-let V = ye;
-ie([
-  g()
-], V.prototype, "_stream");
-ie([
-  g()
-], V.prototype, "_error");
-ie([
-  g()
-], V.prototype, "_captured");
-ie([
-  g()
-], V.prototype, "_previewUrl");
-var ut = Object.defineProperty, te = (a, e, t, i) => {
-  for (var r = void 0, o = a.length - 1, s; o >= 0; o--)
-    (s = a[o]) && (r = s(e, t, r) || r);
-  return r && ut(e, t, r), r;
-};
-const _e = class _e extends U {
-  constructor() {
-    super(...arguments), this._stream = null, this._recording = !1, this._error = "", this._recordedBlob = null, this._previewUrl = "", this._recorder = null, this._chunks = [], this._onBackdropClick = (e) => {
-      e.target === e.currentTarget && this._cancel();
-    }, this._focusTrap = ce(() => this.shadowRoot, ".card"), this._onKeyDown = (e) => {
-      e.key === "Escape" && this._cancel(), this._focusTrap(e);
-    }, this._startRecording = async () => {
-      var e;
-      try {
-        this._stream = await navigator.mediaDevices.getDisplayMedia({
-          video: { width: 1280, height: 720, frameRate: 5 },
-          audio: !0
-        }), this._stream.getVideoTracks()[0].addEventListener("ended", () => {
-          this._stopRecording();
-        }), this._recording = !0, await this.updateComplete;
-        const t = (e = this.shadowRoot) == null ? void 0 : e.querySelector("video");
-        t && (t.srcObject = this._stream), this._chunks = [];
-        const i = MediaRecorder.isTypeSupported("video/webm;codecs=vp9") ? "video/webm;codecs=vp9" : "video/webm";
-        this._recorder = new MediaRecorder(this._stream, { mimeType: i }), this._recorder.ondataavailable = (r) => {
-          r.data.size > 0 && this._chunks.push(r.data);
-        }, this._recorder.onstop = () => {
-          var o;
-          const r = new Blob(this._chunks, { type: "video/webm" });
-          this._recordedBlob = r, this._previewUrl = URL.createObjectURL(r), (o = this._stream) == null || o.getTracks().forEach((s) => s.stop()), this._stream = null;
-        }, this._recorder.start();
-      } catch {
-        this._error = "Could not start screen capture. Please check your permissions.";
-      }
-    }, this._stopRecording = () => {
-      var e;
-      this._recording = !1, ((e = this._recorder) == null ? void 0 : e.state) === "recording" && this._recorder.stop(), this._recorder = null;
-    }, this._useRecording = () => {
-      if (!this._recordedBlob) return;
-      const e = (/* @__PURE__ */ new Date()).toISOString().replace(/[:.]/g, "-").slice(0, 19), t = new File([this._recordedBlob], `screencap-${e}.webm`, { type: "video/webm" });
-      this.dispatchEvent(new CustomEvent("screencast-capture", { detail: { file: t }, bubbles: !0, composed: !0 }));
-    }, this._discard = () => {
-      this._previewUrl && URL.revokeObjectURL(this._previewUrl), this._recordedBlob = null, this._previewUrl = "";
-    };
-  }
-  disconnectedCallback() {
-    super.disconnectedCallback(), this._stopAll(), this._previewUrl && URL.revokeObjectURL(this._previewUrl);
-  }
-  _stopAll() {
-    var e, t;
-    (e = this._recorder) == null || e.stop(), this._recorder = null, (t = this._stream) == null || t.getTracks().forEach((i) => i.stop()), this._stream = null;
-  }
-  _cancel() {
-    this._stopAll(), this.dispatchEvent(new CustomEvent("screencast-cancel", { bubbles: !0, composed: !0 }));
-  }
-  render() {
-    return l`
+  `];let M=be;re([c.state()],M.prototype,"_stream");re([c.state()],M.prototype,"_error");re([c.state()],M.prototype,"_captured");re([c.state()],M.prototype,"_previewUrl");var ut=Object.defineProperty,G=(n,e,t,o)=>{for(var r=void 0,i=n.length-1,a;i>=0;i--)(a=n[i])&&(r=a(e,t,r)||r);return r&&ut(e,t,r),r};const me=class me extends s.LitElement{constructor(){super(...arguments),this._stream=null,this._recording=!1,this._error="",this._recordedBlob=null,this._previewUrl="",this._recorder=null,this._chunks=[],this._onBackdropClick=e=>{e.target===e.currentTarget&&this._cancel()},this._focusTrap=le(()=>this.shadowRoot,".card"),this._onKeyDown=e=>{e.key==="Escape"&&this._cancel(),this._focusTrap(e)},this._startRecording=async()=>{var e;try{this._stream=await navigator.mediaDevices.getDisplayMedia({video:{width:1280,height:720,frameRate:5},audio:!0}),this._stream.getVideoTracks()[0].addEventListener("ended",()=>{this._stopRecording()}),this._recording=!0,await this.updateComplete;const t=(e=this.shadowRoot)==null?void 0:e.querySelector("video");t&&(t.srcObject=this._stream),this._chunks=[];const o=MediaRecorder.isTypeSupported("video/webm;codecs=vp9")?"video/webm;codecs=vp9":"video/webm";this._recorder=new MediaRecorder(this._stream,{mimeType:o}),this._recorder.ondataavailable=r=>{r.data.size>0&&this._chunks.push(r.data)},this._recorder.onstop=()=>{var i;const r=new Blob(this._chunks,{type:"video/webm"});this._recordedBlob=r,this._previewUrl=URL.createObjectURL(r),(i=this._stream)==null||i.getTracks().forEach(a=>a.stop()),this._stream=null},this._recorder.start()}catch{this._error="Could not start screen capture. Please check your permissions."}},this._stopRecording=()=>{var e;this._recording=!1,((e=this._recorder)==null?void 0:e.state)==="recording"&&this._recorder.stop(),this._recorder=null},this._useRecording=()=>{if(!this._recordedBlob)return;const e=new Date().toISOString().replace(/[:.]/g,"-").slice(0,19),t=new File([this._recordedBlob],`screencap-${e}.webm`,{type:"video/webm"});this.dispatchEvent(new CustomEvent("screencast-capture",{detail:{file:t},bubbles:!0,composed:!0}))},this._discard=()=>{this._previewUrl&&URL.revokeObjectURL(this._previewUrl),this._recordedBlob=null,this._previewUrl=""}}disconnectedCallback(){super.disconnectedCallback(),this._stopAll(),this._previewUrl&&URL.revokeObjectURL(this._previewUrl)}_stopAll(){var e,t;(e=this._recorder)==null||e.stop(),this._recorder=null,(t=this._stream)==null||t.getTracks().forEach(o=>o.stop()),this._stream=null}_cancel(){this._stopAll(),this.dispatchEvent(new CustomEvent("screencast-cancel",{bubbles:!0,composed:!0}))}render(){return s.html`
       <div class="backdrop" @click=${this._onBackdropClick} @keydown=${this._onKeyDown}>
         <div class="card">
           <div class="head">
@@ -4302,19 +2808,19 @@ const _e = class _e extends U {
             <button class="close-btn" aria-label="Close" @click=${this._cancel}>\u2715</button>
           </div>
           <div class="body">
-            ${this._error ? l`<div class="error">${this._error}</div>` : this._recordedBlob ? l`
+            ${this._error?s.html`<div class="error">${this._error}</div>`:this._recordedBlob?s.html`
                     <video src=${this._previewUrl} controls></video>
                     <div class="actions">
                       <button class="btn btn-ghost" @click=${this._discard}>Discard</button>
                       <button class="btn btn-primary" @click=${this._useRecording}>Use recording</button>
                     </div>
-                  ` : this._recording ? l`
+                  `:this._recording?s.html`
                       <video autoplay playsinline muted></video>
                       <div class="status"><div class="rec-dot"></div> Recording...</div>
                       <div class="actions">
                         <button class="btn btn-danger" @click=${this._stopRecording}>Stop recording</button>
                       </div>
-                    ` : l`
+                    `:s.html`
                       <div class="start-view">
                         <div class="start-icon">
                           <svg viewBox="0 0 24 24">
@@ -4333,10 +2839,7 @@ const _e = class _e extends U {
           </div>
         </div>
       </div>
-    `;
-  }
-};
-_e.styles = [J, Q, S`
+    `}};me.styles=[N,X,s.css`
     :host { display: block; }
 
     .backdrop {
@@ -4434,447 +2937,7 @@ _e.styles = [J, Q, S`
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes slideUp { from { transform: translateY(18px) scale(0.97); } to { transform: translateY(0) scale(1); } }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-  `];
-let A = _e;
-te([
-  g()
-], A.prototype, "_stream");
-te([
-  g()
-], A.prototype, "_recording");
-te([
-  g()
-], A.prototype, "_error");
-te([
-  g()
-], A.prototype, "_recordedBlob");
-te([
-  g()
-], A.prototype, "_previewUrl");
-var xt = Object.defineProperty, $ = (a, e, t, i) => {
-  for (var r = void 0, o = a.length - 1, s; o >= 0; o--)
-    (s = a[o]) && (r = s(e, t, r) || r);
-  return r && xt(e, t, r), r;
-};
-const De = /* @__PURE__ */ new Set(["unsplash"]);
-var E;
-const k = (E = class extends U {
-  constructor() {
-    super(), this.config = null, this._isOpen = !1, this._activeConnector = null, this._showUrlDialog = !1, this._showCameraDialog = !1, this._showScreenCastDialog = !1, this._previewFileId = null, this._previewDims = "—", this._splitPct = 68, this._isResizing = !1, this._splitRafId = 0, this._fullscreenPreviewUrl = null, this._fullscreenVideoFile = null, this._fullscreenZoomed = !1, this._fsPanX = 0, this._fsPanY = 0, this._fsDragging = !1, this._fsDragStartX = 0, this._fsDragStartY = 0, this._fsPanStartX = 0, this._fsPanStartY = 0, this._bodyDragOver = !1, this._isMinimized = !1, this._isPillExpanded = !1, this._bodyDragCounter = 0, this._videoBlobUrls = /* @__PURE__ */ new Map(), this._engine = null, this._cachedSources = W, this._cachedSourcesConfig = void 0, this._rejectedTimers = /* @__PURE__ */ new Map(), this._closeOnCompleteTimer = null, this._apiBase = null, this._authHeaders = null, this._authResolveId = 0, this._prevStoreState = null, this._unsubStoreEvents = null, this._portalContainer = null, this._onFilesSelected = (e) => {
-      this._processIncomingFiles(e.detail.files);
-    }, this._onDropTileSourceClick = (e) => {
-      this._handleSourceActivation(e.detail.source.id);
-    }, this._onSourceClick = async (e) => {
-      this._handleSourceActivation(e.detail.source);
-    }, this._handleSourceActivation = async (e) => {
-      var r, o;
-      const t = this._mergedSources.find((s) => s.id === e);
-      if (t != null && t.onActivate) {
-        try {
-          t.onActivate(this);
-        } catch (s) {
-          console.error(`[sfx-uploader] onActivate for custom source "${e}" threw:`, s);
-        }
-        return;
-      }
-      if (e === "device") {
-        const s = this.shadowRoot.querySelector("sfx-drop-zone");
-        s == null || s.browse();
-        return;
-      }
-      if (e === "url") {
-        this._showUrlDialog = !0;
-        return;
-      }
-      if (e === "camera") {
-        this._showCameraDialog = !0;
-        return;
-      }
-      if (e === "screen-cast") {
-        this._showScreenCastDialog = !0;
-        return;
-      }
-      if ((((o = (r = this.config) == null ? void 0 : r.connectors) == null ? void 0 : o.providers) ?? []).includes(e)) {
-        if (De.has(e)) {
-          if (!customElements.get("sfx-search-provider-browser")) {
-            const { SfxSearchProviderBrowser: n } = await import("./search-provider-browser-Cn0v6Gcq.js");
-            customElements.define("sfx-search-provider-browser", n);
-          }
-        } else if (!customElements.get("sfx-provider-browser")) {
-          const { SfxProviderBrowser: n } = await import("./provider-browser-DcYDZQos.js");
-          customElements.define("sfx-provider-browser", n);
-        }
-        this._activeConnector = e;
-      }
-    }, this._onUrlSubmit = (e) => {
-      var h, u, x;
-      this._showUrlDialog = !1;
-      const { url: t, name: i } = e.detail, r = (h = this.config) == null ? void 0 : h.callbacks, o = Ke(i), s = o.startsWith("image/"), n = this._store.getState(), d = ae({ name: i, size: 0, type: o }, n.restrictions, n.files);
-      if (d) {
-        const f = {
-          id: q(),
-          status: "rejected",
-          file: null,
-          remoteUrl: t,
-          name: i,
-          size: 0,
-          type: o,
-          previewUrl: null,
-          duration: null,
-          progress: 0,
-          speed: 0,
-          bytesUploaded: 0,
-          error: d,
-          retryCount: 0,
-          response: null,
-          addedAt: Date.now(),
-          meta: {},
-          tags: [],
-          remoteInfo: null
-        };
-        H(this._store, f), this._dispatchPublic(v.FILE_REJECTED, { file: f, reason: d }), (u = r == null ? void 0 : r.onFileRejected) == null || u.call(r, f, d);
-        return;
-      }
-      const p = {
-        id: q(),
-        status: "idle",
-        file: null,
-        remoteUrl: t,
-        name: i,
-        size: 0,
-        type: o,
-        previewUrl: s ? t : null,
-        duration: null,
-        progress: 0,
-        speed: 0,
-        bytesUploaded: 0,
-        error: null,
-        retryCount: 0,
-        response: null,
-        addedAt: Date.now(),
-        meta: {},
-        tags: [],
-        remoteInfo: null
-      };
-      H(this._store, p), this._dispatchPublic(v.FILE_ADDED, { file: p }), (x = r == null ? void 0 : r.onFileAdded) == null || x.call(r, p), this._store.getState().queueConfig.autoProceed && this.upload();
-    }, this._onUrlCancel = () => {
-      this._showUrlDialog = !1;
-    }, this._onCameraCapture = (e) => {
-      this._showCameraDialog = !1, this._processIncomingFiles([e.detail.file]);
-    }, this._onCameraCancel = () => {
-      this._showCameraDialog = !1;
-    }, this._onScreenCastCapture = (e) => {
-      this._showScreenCastDialog = !1, this._processIncomingFiles([e.detail.file]);
-    }, this._onScreenCastCancel = () => {
-      this._showScreenCastDialog = !1;
-    }, this._onFileRemove = (e) => {
-      this._removeFile(e.detail.fileId);
-    }, this._onFilePreview = (e) => {
-      var i, r, o;
-      const t = this._store.getState().files.get(e.detail.fileId);
-      t && (this._previewFileId = t.id, this._dispatchPublic(v.FILE_PREVIEW, { file: t }), (o = (r = (i = this.config) == null ? void 0 : i.callbacks) == null ? void 0 : r.onFilePreview) == null || o.call(r, t));
-    }, this._onFillMetadata = () => {
-      var t, i, r;
-      const e = [...this._store.getState().files.values()].filter(
-        (o) => E._MODIFIABLE_STATUSES.has(o.status)
-      );
-      this._dispatchPublic(v.FILL_METADATA, { files: e }), (r = (i = (t = this.config) == null ? void 0 : t.callbacks) == null ? void 0 : i.onFillMetadata) == null || r.call(i, e);
-    }, this._onFileRetry = (e) => {
-      var t;
-      this._ensureEngine(), (t = this._engine) == null || t.retryFile(e.detail.fileId);
-    }, this._onRetryAll = () => {
-      var e;
-      this._ensureEngine(), (e = this._engine) == null || e.retryAll();
-    }, this._onClearAll = () => {
-      var i, r, o;
-      const e = (i = this.config) == null ? void 0 : i.callbacks;
-      this._closeOnCompleteTimer && (clearTimeout(this._closeOnCompleteTimer), this._closeOnCompleteTimer = null), (r = this._engine) == null || r.cancelAll();
-      const t = [...this._store.getState().files.values()];
-      for (const s of t)
-        s.previewUrl && URL.revokeObjectURL(s.previewUrl), this._dispatchPublic(v.FILE_REMOVED, { file: s }), (o = e == null ? void 0 : e.onFileRemoved) == null || o.call(e, s);
-      this._revokeVideoBlobUrls();
-      for (const s of this._rejectedTimers.values()) clearTimeout(s);
-      this._rejectedTimers.clear(), this._dimCache.clear(), this._previewFileId = null, this._fullscreenPreviewUrl = null, this._fullscreenVideoFile = null, this._store.setState({
-        files: /* @__PURE__ */ new Map(),
-        isUploading: !1,
-        totalProgress: 0,
-        totalSpeed: 0,
-        totalBytesUploaded: 0,
-        totalBytes: 0
-      });
-    }, this._onAddMore = () => {
-      var r;
-      const e = this.shadowRoot.querySelector("sfx-drop-zone");
-      if (e) {
-        e.browse();
-        return;
-      }
-      const t = this.shadowRoot.querySelector("sfx-file-list"), i = (r = t == null ? void 0 : t.shadowRoot) == null ? void 0 : r.querySelector('input[type="file"]');
-      i == null || i.click();
-    }, this._onUploadStart = () => {
-      var e;
-      if (this._phase === "complete") {
-        ((e = this.config) == null ? void 0 : e.clearOnComplete) !== !1 && this._onClearAll();
-        return;
-      }
-      this.upload();
-    }, this._onUploadMore = () => {
-      this._onClearAll();
-    }, this._onConnectorFilesSelected = (e) => {
-      var i, r, o;
-      const t = (i = this.config) == null ? void 0 : i.callbacks;
-      for (const s of e.detail.files) {
-        const n = this._store.getState(), d = ae(
-          { name: s.name, size: s.size, type: s.mimeType },
-          n.restrictions,
-          n.files
-        );
-        if (d) {
-          const h = {
-            id: q(),
-            status: "rejected",
-            file: null,
-            remoteUrl: null,
-            name: s.name,
-            size: s.size,
-            type: s.mimeType,
-            previewUrl: s.thumbnail,
-            duration: null,
-            progress: 0,
-            speed: 0,
-            bytesUploaded: 0,
-            error: d,
-            retryCount: 0,
-            response: null,
-            addedAt: Date.now(),
-            meta: {},
-            tags: [],
-            remoteInfo: s
-          };
-          H(this._store, h), this._dispatchPublic(v.FILE_REJECTED, { file: h, reason: d }), (r = t == null ? void 0 : t.onFileRejected) == null || r.call(t, h, d);
-          continue;
-        }
-        const p = {
-          id: q(),
-          status: "idle",
-          file: null,
-          remoteUrl: null,
-          name: s.name,
-          size: s.size,
-          type: s.mimeType,
-          previewUrl: s.thumbnail,
-          duration: null,
-          progress: 0,
-          speed: 0,
-          bytesUploaded: 0,
-          error: null,
-          retryCount: 0,
-          response: null,
-          addedAt: Date.now(),
-          meta: {},
-          tags: [],
-          remoteInfo: s
-        };
-        H(this._store, p), this._dispatchPublic(v.FILE_ADDED, { file: p }), (o = t == null ? void 0 : t.onFileAdded) == null || o.call(t, p);
-      }
-      this._activeConnector = null, this._store.getState().queueConfig.autoProceed && this.upload();
-    }, this._onConnectorClose = () => {
-      this._activeConnector = null;
-    }, this._onConnectorBackdropClick = (e) => {
-      e.target === e.currentTarget && (this._activeConnector = null);
-    }, this._onPrimaryAction = () => {
-      var e, t, i, r, o;
-      this._dispatchPublic(v.COMPLETE_ACTION, {}), (i = (t = (e = this.config) == null ? void 0 : e.callbacks) == null ? void 0 : t.onCompleteAction) == null || i.call(t), ((r = this.config) == null ? void 0 : r.mode) === "modal" ? this.close() : ((o = this.config) == null ? void 0 : o.clearOnComplete) !== !1 && this._onClearAll();
-    }, this._onInlineDismiss = () => {
-      var e, t, i;
-      (i = (t = (e = this.config) == null ? void 0 : e.callbacks) == null ? void 0 : t.onCancel) == null || i.call(t), this._dispatchPublic(v.CANCEL, {});
-    }, this._onSuccessCardClose = () => {
-      var e, t, i, r;
-      ((e = this.config) == null ? void 0 : e.mode) === "inline" ? (this._dispatchPublic(v.COMPLETE_ACTION, {}), (r = (i = (t = this.config) == null ? void 0 : t.callbacks) == null ? void 0 : i.onCompleteAction) == null || r.call(i), this._onClearAll()) : this._onModalDismiss();
-    }, this._onModalDismiss = () => {
-      var e, t, i, r;
-      this._phase === "uploading" && ((e = this._engine) == null || e.cancelAll()), (r = (i = (t = this.config) == null ? void 0 : t.callbacks) == null ? void 0 : i.onCancel) == null || r.call(i), this._dispatchPublic(v.CANCEL, {}), this.close();
-    }, this._onMinimize = () => {
-      this._isMinimized = !0, this._isPillExpanded = !0, this.requestUpdate();
-    }, this._onPillClick = () => {
-      this._isPillExpanded = !this._isPillExpanded, this.requestUpdate();
-    }, this._onPillExpand = () => {
-      this._isMinimized = !1, this._isPillExpanded = !1, this._isOpen = !0, this.requestUpdate();
-    }, this._onPillDismiss = () => {
-      var e, t, i, r;
-      this._isMinimized = !1, this._isPillExpanded = !1, this._phase === "uploading" && ((e = this._engine) == null || e.cancelAll()), (r = (i = (t = this.config) == null ? void 0 : t.callbacks) == null ? void 0 : i.onCancel) == null || r.call(i), this._dispatchPublic(v.CANCEL, {}), this.close();
-    }, this._onModalBackdropClick = (e) => {
-      e.target === e.currentTarget && this._onModalDismiss();
-    }, this._onBodyDragEnter = (e) => {
-      e.preventDefault(), this._bodyDragCounter++, this._bodyDragCounter === 1 && (this._bodyDragOver = !0);
-    }, this._onBodyDragOver = (e) => {
-      e.preventDefault();
-    }, this._onBodyDragLeave = (e) => {
-      e.preventDefault(), this._bodyDragCounter--, this._bodyDragCounter <= 0 && (this._bodyDragCounter = 0, this._bodyDragOver = !1);
-    }, this._onBodyDrop = (e) => {
-      var i;
-      e.preventDefault(), this._bodyDragCounter = 0, this._bodyDragOver = !1;
-      const t = Array.from(((i = e.dataTransfer) == null ? void 0 : i.files) ?? []);
-      t.length > 0 && this._onFilesSelected(
-        new CustomEvent("files-selected", { detail: { files: t } })
-      );
-    }, this._onKeyDown = (e) => {
-      var t, i;
-      if (e.key === "Escape") {
-        if (this._fullscreenPreviewUrl || this._fullscreenVideoFile) {
-          this._onFsClose();
-          return;
-        }
-        this._isOpen && ((t = this.config) == null ? void 0 : t.mode) === "modal" && (((i = this.config) == null ? void 0 : i.headerButton) ?? "close") !== "none" && this._onModalDismiss();
-      }
-    }, this._dimCache = /* @__PURE__ */ new Map(), this._onSplitPointerDown = (e) => {
-      var i;
-      e.preventDefault(), this._isResizing = !0;
-      const t = (i = this.shadowRoot) == null ? void 0 : i.querySelector(".preview-layout");
-      t == null || t.classList.add("resizing"), e.target.setPointerCapture(e.pointerId);
-    }, this._onSplitPointerMove = (e) => {
-      if (!this._isResizing || this._splitRafId) return;
-      const t = e.clientX;
-      this._splitRafId = requestAnimationFrame(() => {
-        var s;
-        this._splitRafId = 0;
-        const i = (s = this.shadowRoot) == null ? void 0 : s.querySelector(".preview-layout");
-        if (!i) return;
-        const r = i.getBoundingClientRect(), o = (t - r.left) / r.width * 100;
-        this._splitPct = Math.max(25, Math.min(75, o));
-      });
-    }, this._onSplitPointerUp = () => {
-      var t;
-      this._isResizing = !1, this._splitRafId && (cancelAnimationFrame(this._splitRafId), this._splitRafId = 0);
-      const e = (t = this.shadowRoot) == null ? void 0 : t.querySelector(".preview-layout");
-      e == null || e.classList.remove("resizing");
-    }, this._onFsToggleZoom = (e) => {
-      e == null || e.stopPropagation(), this._fullscreenZoomed = !this._fullscreenZoomed, this._fullscreenZoomed || (this._fsPanX = 0, this._fsPanY = 0);
-    }, this._onFsOverlayClick = (e) => {
-      this._fsDragDidMove || this._onFsToggleZoom(e);
-    }, this._fsDragDidMove = !1, this._onFsPanStart = (e) => {
-      this._fullscreenZoomed && (this._fsDragging = !0, this._fsDragDidMove = !1, this._fsDragStartX = e.clientX, this._fsDragStartY = e.clientY, this._fsPanStartX = this._fsPanX, this._fsPanStartY = this._fsPanY, e.preventDefault());
-    }, this._onFsPanMove = (e) => {
-      if (!this._fsDragging) return;
-      const t = e.clientX - this._fsDragStartX, i = e.clientY - this._fsDragStartY;
-      (Math.abs(t) > 3 || Math.abs(i) > 3) && (this._fsDragDidMove = !0), this._fsPanX = this._fsPanStartX + t, this._fsPanY = this._fsPanStartY + i, this.requestUpdate();
-    }, this._onFsPanEnd = () => {
-      this._fsDragging = !1, requestAnimationFrame(() => {
-        this._fsDragDidMove = !1;
-      });
-    }, this._onFsTouchStart = (e) => {
-      if (!this._fullscreenZoomed || e.touches.length !== 1) return;
-      const t = e.touches[0];
-      this._fsDragging = !0, this._fsDragDidMove = !1, this._fsDragStartX = t.clientX, this._fsDragStartY = t.clientY, this._fsPanStartX = this._fsPanX, this._fsPanStartY = this._fsPanY;
-    }, this._onFsTouchMove = (e) => {
-      if (!this._fsDragging || e.touches.length !== 1) return;
-      const t = e.touches[0], i = t.clientX - this._fsDragStartX, r = t.clientY - this._fsDragStartY;
-      (Math.abs(i) > 3 || Math.abs(r) > 3) && (this._fsDragDidMove = !0), this._fsPanX = this._fsPanStartX + i, this._fsPanY = this._fsPanStartY + r, this.requestUpdate(), e.preventDefault();
-    }, this._onFsClose = (e) => {
-      e == null || e.stopPropagation(), this._fullscreenPreviewUrl = null, this._fullscreenVideoFile = null, this._fullscreenZoomed = !1, this._fsPanX = 0, this._fsPanY = 0;
-    }, this._store = Re(), this._storeCtrl = new Me(this, this._store);
-  }
-  // --- Public API ---
-  /** Open the uploader (modal mode). */
-  open() {
-    var e, t, i;
-    this._isMinimized && (this._isMinimized = !1, this._isPillExpanded = !1), !this._isOpen && (this._isOpen = !0, (i = (t = (e = this.config) == null ? void 0 : e.callbacks) == null ? void 0 : t.onOpen) == null || i.call(t), this._dispatchPublic(v.OPEN, {}), this.requestUpdate());
-  }
-  /** Close the uploader (modal mode). Optionally clears all files (controlled by clearOnClose config). */
-  close() {
-    var e, t, i, r;
-    this._isOpen && (this._isOpen = !1, this._closeOnCompleteTimer && (clearTimeout(this._closeOnCompleteTimer), this._closeOnCompleteTimer = null), ((e = this.config) == null ? void 0 : e.clearOnClose) !== !1 && this._onClearAll(), this._previewFileId = null, (r = (i = (t = this.config) == null ? void 0 : t.callbacks) == null ? void 0 : i.onClose) == null || r.call(i), this._dispatchPublic(v.CLOSE, {}), this.requestUpdate());
-  }
-  /** Start uploading all queued files. */
-  upload() {
-    var r, o, s, n, d, p, h;
-    if (this._ensureEngine(), !this._engine) {
-      console.warn("[sfx-uploader] Cannot upload: auth not resolved yet");
-      return;
-    }
-    const e = [...this._store.getState().files.values()].filter(
-      (u) => u.status === "idle" || u.status === "queued"
-    );
-    if ((o = (r = this.config) == null ? void 0 : r.callbacks) != null && o.onBeforeUpload && this.config.callbacks.onBeforeUpload(e) === !1)
-      return;
-    const t = new CustomEvent(v.BEFORE_UPLOAD, {
-      bubbles: !0,
-      composed: !0,
-      cancelable: !0,
-      detail: { files: e }
-    });
-    this.dispatchEvent(t) && (this._dispatchPublic(v.UPLOAD_STARTED, { files: e }), (d = (n = (s = this.config) == null ? void 0 : s.callbacks) == null ? void 0 : n.onUploadStarted) == null || d.call(n, e), this._engine.uploadAll(), (p = this.config) != null && p.minimizeOnUpload && ((h = this.config) == null ? void 0 : h.mode) !== "inline" && (this._isMinimized = !0, this._isPillExpanded = !0, this.requestUpdate()));
-  }
-  /** Programmatically add files. */
-  addFiles(e) {
-    this._processIncomingFiles(e);
-  }
-  /** Resume a paused upload (spec §13.2). */
-  resumeUpload(e) {
-    var t;
-    if (e && e.length > 0) {
-      const i = this._store.getState().files, r = new Map(i);
-      let o = !1;
-      for (const s of e) {
-        const n = i.get(s.id);
-        n && (r.set(s.id, { ...n, ...s }), o = !0);
-      }
-      o && this._store.setState({ files: r });
-    }
-    this._ensureEngine(), (t = this._engine) == null || t.uploadAll();
-  }
-  /** Cancel a paused upload (spec §13.2). */
-  cancelUpload() {
-    var e;
-    (e = this._engine) == null || e.cancelAll();
-  }
-  /** Get a snapshot of all current files. */
-  getFiles() {
-    return [...this._store.getState().files.values()];
-  }
-  /** Get a single file by ID. */
-  getFile(e) {
-    return this._store.getState().files.get(e);
-  }
-  /** Update metadata and/or tags for a single file. */
-  updateFileMeta(e, t, i) {
-    const r = this._store.getState().files, o = r.get(e);
-    if (!o || !E._MODIFIABLE_STATUSES.has(o.status)) return;
-    const s = new Map(r);
-    s.set(e, {
-      ...o,
-      meta: t != null ? { ...o.meta, ...t } : o.meta,
-      tags: i ?? o.tags
-    }), this._store.setState({ files: s });
-  }
-  /** Batch-update metadata and/or tags for multiple files. */
-  updateFilesMeta(e) {
-    const t = this._store.getState().files, i = new Map(t);
-    let r = !1;
-    for (const { fileId: o, meta: s, tags: n } of e) {
-      const d = t.get(o);
-      !d || !E._MODIFIABLE_STATUSES.has(d.status) || (i.set(o, {
-        ...d,
-        meta: s != null ? { ...d.meta, ...s } : d.meta,
-        tags: n ?? d.tags
-      }), r = !0);
-    }
-    r && this._store.setState({ files: i });
-  }
-  // --- Lifecycle ---
-  updated(e) {
-    if (e.has("config") && this.config && this._applyConfig(this.config), e.has("_previewFileId") && this._previewFileId) {
-      const t = this._previewFileId, i = this._store.getState().files.get(t);
-      i ? this._getImageDimensions(i).then((r) => {
-        this._previewFileId === t && (this._previewDims = r ? `${r.w} × ${r.h}` : "—");
-      }) : this._previewDims = "—";
-    }
-    this._updateFloatingPortal();
-  }
-  _injectFloatStyles() {
-    if (document.querySelector("style[data-sfx-upload-float-styles]")) return;
-    const e = document.createElement("style");
-    e.setAttribute("data-sfx-upload-float-styles", ""), e.textContent = `
+  `];let R=me;G([c.state()],R.prototype,"_stream");G([c.state()],R.prototype,"_recording");G([c.state()],R.prototype,"_error");G([c.state()],R.prototype,"_recordedBlob");G([c.state()],R.prototype,"_previewUrl");var xt=Object.defineProperty,k=(n,e,t,o)=>{for(var r=void 0,i=n.length-1,a;i>=0;i--)(a=n[i])&&(r=a(e,t,r)||r);return r&&xt(e,t,r),r};const Ee=new Set(["unsplash"]);var $;const y=($=class extends s.LitElement{constructor(){super(),this.config=null,this._isOpen=!1,this._activeConnector=null,this._showUrlDialog=!1,this._showCameraDialog=!1,this._showScreenCastDialog=!1,this._previewFileId=null,this._previewDims="—",this._splitPct=68,this._isResizing=!1,this._splitRafId=0,this._fullscreenPreviewUrl=null,this._fullscreenVideoFile=null,this._fullscreenZoomed=!1,this._fsPanX=0,this._fsPanY=0,this._fsDragging=!1,this._fsDragStartX=0,this._fsDragStartY=0,this._fsPanStartX=0,this._fsPanStartY=0,this._bodyDragOver=!1,this._isMinimized=!1,this._isPillExpanded=!1,this._bodyDragCounter=0,this._videoBlobUrls=new Map,this._engine=null,this._cachedSources=A,this._cachedSourcesConfig=void 0,this._rejectedTimers=new Map,this._closeOnCompleteTimer=null,this._apiBase=null,this._authHeaders=null,this._authResolveId=0,this._prevStoreState=null,this._unsubStoreEvents=null,this._portalContainer=null,this._onFilesSelected=e=>{this._processIncomingFiles(e.detail.files)},this._onDropTileSourceClick=e=>{this._handleSourceActivation(e.detail.source.id)},this._onSourceClick=async e=>{this._handleSourceActivation(e.detail.source)},this._handleSourceActivation=async e=>{var r,i;const t=this._mergedSources.find(a=>a.id===e);if(t!=null&&t.onActivate){try{t.onActivate(this)}catch(a){console.error(`[sfx-uploader] onActivate for custom source "${e}" threw:`,a)}return}if(e==="device"){const a=this.shadowRoot.querySelector("sfx-drop-zone");a==null||a.browse();return}if(e==="url"){this._showUrlDialog=!0;return}if(e==="camera"){this._showCameraDialog=!0;return}if(e==="screen-cast"){this._showScreenCastDialog=!0;return}if((((i=(r=this.config)==null?void 0:r.connectors)==null?void 0:i.providers)??[]).includes(e)){if(Ee.has(e)){if(!customElements.get("sfx-search-provider-browser")){const{SfxSearchProviderBrowser:l}=await Promise.resolve().then(()=>require("./search-provider-browser-CIRU1j5X.cjs"));customElements.define("sfx-search-provider-browser",l)}}else if(!customElements.get("sfx-provider-browser")){const{SfxProviderBrowser:l}=await Promise.resolve().then(()=>require("./provider-browser-CXFOnoRc.cjs"));customElements.define("sfx-provider-browser",l)}this._activeConnector=e}},this._onUrlSubmit=e=>{var h,u,x;this._showUrlDialog=!1;const{url:t,name:o}=e.detail,r=(h=this.config)==null?void 0:h.callbacks,i=Ke(o),a=i.startsWith("image/"),l=this._store.getState(),d=ie({name:o,size:0,type:i},l.restrictions,l.files);if(d){const f={id:T(),status:"rejected",file:null,remoteUrl:t,name:o,size:0,type:i,previewUrl:null,duration:null,progress:0,speed:0,bytesUploaded:0,error:d,retryCount:0,response:null,addedAt:Date.now(),meta:{},tags:[],remoteInfo:null};L(this._store,f),this._dispatchPublic(g.FILE_REJECTED,{file:f,reason:d}),(u=r==null?void 0:r.onFileRejected)==null||u.call(r,f,d);return}const p={id:T(),status:"idle",file:null,remoteUrl:t,name:o,size:0,type:i,previewUrl:a?t:null,duration:null,progress:0,speed:0,bytesUploaded:0,error:null,retryCount:0,response:null,addedAt:Date.now(),meta:{},tags:[],remoteInfo:null};L(this._store,p),this._dispatchPublic(g.FILE_ADDED,{file:p}),(x=r==null?void 0:r.onFileAdded)==null||x.call(r,p),this._store.getState().queueConfig.autoProceed&&this.upload()},this._onUrlCancel=()=>{this._showUrlDialog=!1},this._onCameraCapture=e=>{this._showCameraDialog=!1,this._processIncomingFiles([e.detail.file])},this._onCameraCancel=()=>{this._showCameraDialog=!1},this._onScreenCastCapture=e=>{this._showScreenCastDialog=!1,this._processIncomingFiles([e.detail.file])},this._onScreenCastCancel=()=>{this._showScreenCastDialog=!1},this._onFileRemove=e=>{this._removeFile(e.detail.fileId)},this._onFilePreview=e=>{var o,r,i;const t=this._store.getState().files.get(e.detail.fileId);t&&(this._previewFileId=t.id,this._dispatchPublic(g.FILE_PREVIEW,{file:t}),(i=(r=(o=this.config)==null?void 0:o.callbacks)==null?void 0:r.onFilePreview)==null||i.call(r,t))},this._onFillMetadata=()=>{var t,o,r;const e=[...this._store.getState().files.values()].filter(i=>$._MODIFIABLE_STATUSES.has(i.status));this._dispatchPublic(g.FILL_METADATA,{files:e}),(r=(o=(t=this.config)==null?void 0:t.callbacks)==null?void 0:o.onFillMetadata)==null||r.call(o,e)},this._onFileRetry=e=>{var t;this._ensureEngine(),(t=this._engine)==null||t.retryFile(e.detail.fileId)},this._onRetryAll=()=>{var e;this._ensureEngine(),(e=this._engine)==null||e.retryAll()},this._onClearAll=()=>{var o,r,i;const e=(o=this.config)==null?void 0:o.callbacks;this._closeOnCompleteTimer&&(clearTimeout(this._closeOnCompleteTimer),this._closeOnCompleteTimer=null),(r=this._engine)==null||r.cancelAll();const t=[...this._store.getState().files.values()];for(const a of t)a.previewUrl&&URL.revokeObjectURL(a.previewUrl),this._dispatchPublic(g.FILE_REMOVED,{file:a}),(i=e==null?void 0:e.onFileRemoved)==null||i.call(e,a);this._revokeVideoBlobUrls();for(const a of this._rejectedTimers.values())clearTimeout(a);this._rejectedTimers.clear(),this._dimCache.clear(),this._previewFileId=null,this._fullscreenPreviewUrl=null,this._fullscreenVideoFile=null,this._store.setState({files:new Map,isUploading:!1,totalProgress:0,totalSpeed:0,totalBytesUploaded:0,totalBytes:0})},this._onAddMore=()=>{var r;const e=this.shadowRoot.querySelector("sfx-drop-zone");if(e){e.browse();return}const t=this.shadowRoot.querySelector("sfx-file-list"),o=(r=t==null?void 0:t.shadowRoot)==null?void 0:r.querySelector('input[type="file"]');o==null||o.click()},this._onUploadStart=()=>{var e;if(this._phase==="complete"){((e=this.config)==null?void 0:e.clearOnComplete)!==!1&&this._onClearAll();return}this.upload()},this._onUploadMore=()=>{this._onClearAll()},this._onConnectorFilesSelected=e=>{var o,r,i;const t=(o=this.config)==null?void 0:o.callbacks;for(const a of e.detail.files){const l=this._store.getState(),d=ie({name:a.name,size:a.size,type:a.mimeType},l.restrictions,l.files);if(d){const h={id:T(),status:"rejected",file:null,remoteUrl:null,name:a.name,size:a.size,type:a.mimeType,previewUrl:a.thumbnail,duration:null,progress:0,speed:0,bytesUploaded:0,error:d,retryCount:0,response:null,addedAt:Date.now(),meta:{},tags:[],remoteInfo:a};L(this._store,h),this._dispatchPublic(g.FILE_REJECTED,{file:h,reason:d}),(r=t==null?void 0:t.onFileRejected)==null||r.call(t,h,d);continue}const p={id:T(),status:"idle",file:null,remoteUrl:null,name:a.name,size:a.size,type:a.mimeType,previewUrl:a.thumbnail,duration:null,progress:0,speed:0,bytesUploaded:0,error:null,retryCount:0,response:null,addedAt:Date.now(),meta:{},tags:[],remoteInfo:a};L(this._store,p),this._dispatchPublic(g.FILE_ADDED,{file:p}),(i=t==null?void 0:t.onFileAdded)==null||i.call(t,p)}this._activeConnector=null,this._store.getState().queueConfig.autoProceed&&this.upload()},this._onConnectorClose=()=>{this._activeConnector=null},this._onConnectorBackdropClick=e=>{e.target===e.currentTarget&&(this._activeConnector=null)},this._onPrimaryAction=()=>{var e,t,o,r,i;this._dispatchPublic(g.COMPLETE_ACTION,{}),(o=(t=(e=this.config)==null?void 0:e.callbacks)==null?void 0:t.onCompleteAction)==null||o.call(t),((r=this.config)==null?void 0:r.mode)==="modal"?this.close():((i=this.config)==null?void 0:i.clearOnComplete)!==!1&&this._onClearAll()},this._onInlineDismiss=()=>{var e,t,o;(o=(t=(e=this.config)==null?void 0:e.callbacks)==null?void 0:t.onCancel)==null||o.call(t),this._dispatchPublic(g.CANCEL,{})},this._onSuccessCardClose=()=>{var e,t,o,r;((e=this.config)==null?void 0:e.mode)==="inline"?(this._dispatchPublic(g.COMPLETE_ACTION,{}),(r=(o=(t=this.config)==null?void 0:t.callbacks)==null?void 0:o.onCompleteAction)==null||r.call(o),this._onClearAll()):this._onModalDismiss()},this._onModalDismiss=()=>{var e,t,o,r;this._phase==="uploading"&&((e=this._engine)==null||e.cancelAll()),(r=(o=(t=this.config)==null?void 0:t.callbacks)==null?void 0:o.onCancel)==null||r.call(o),this._dispatchPublic(g.CANCEL,{}),this.close()},this._onMinimize=()=>{this._isMinimized=!0,this._isPillExpanded=!0,this.requestUpdate()},this._onPillClick=()=>{this._isPillExpanded=!this._isPillExpanded,this.requestUpdate()},this._onPillExpand=()=>{this._isMinimized=!1,this._isPillExpanded=!1,this._isOpen=!0,this.requestUpdate()},this._onPillDismiss=()=>{var e,t,o,r;this._isMinimized=!1,this._isPillExpanded=!1,this._phase==="uploading"&&((e=this._engine)==null||e.cancelAll()),(r=(o=(t=this.config)==null?void 0:t.callbacks)==null?void 0:o.onCancel)==null||r.call(o),this._dispatchPublic(g.CANCEL,{}),this.close()},this._onModalBackdropClick=e=>{e.target===e.currentTarget&&this._onModalDismiss()},this._onBodyDragEnter=e=>{e.preventDefault(),this._bodyDragCounter++,this._bodyDragCounter===1&&(this._bodyDragOver=!0)},this._onBodyDragOver=e=>{e.preventDefault()},this._onBodyDragLeave=e=>{e.preventDefault(),this._bodyDragCounter--,this._bodyDragCounter<=0&&(this._bodyDragCounter=0,this._bodyDragOver=!1)},this._onBodyDrop=e=>{var o;e.preventDefault(),this._bodyDragCounter=0,this._bodyDragOver=!1;const t=Array.from(((o=e.dataTransfer)==null?void 0:o.files)??[]);t.length>0&&this._onFilesSelected(new CustomEvent("files-selected",{detail:{files:t}}))},this._onKeyDown=e=>{var t,o;if(e.key==="Escape"){if(this._fullscreenPreviewUrl||this._fullscreenVideoFile){this._onFsClose();return}this._isOpen&&((t=this.config)==null?void 0:t.mode)==="modal"&&(((o=this.config)==null?void 0:o.headerButton)??"close")!=="none"&&this._onModalDismiss()}},this._dimCache=new Map,this._onSplitPointerDown=e=>{var o;e.preventDefault(),this._isResizing=!0;const t=(o=this.shadowRoot)==null?void 0:o.querySelector(".preview-layout");t==null||t.classList.add("resizing"),e.target.setPointerCapture(e.pointerId)},this._onSplitPointerMove=e=>{if(!this._isResizing||this._splitRafId)return;const t=e.clientX;this._splitRafId=requestAnimationFrame(()=>{var a;this._splitRafId=0;const o=(a=this.shadowRoot)==null?void 0:a.querySelector(".preview-layout");if(!o)return;const r=o.getBoundingClientRect(),i=(t-r.left)/r.width*100;this._splitPct=Math.max(25,Math.min(75,i))})},this._onSplitPointerUp=()=>{var t;this._isResizing=!1,this._splitRafId&&(cancelAnimationFrame(this._splitRafId),this._splitRafId=0);const e=(t=this.shadowRoot)==null?void 0:t.querySelector(".preview-layout");e==null||e.classList.remove("resizing")},this._onFsToggleZoom=e=>{e==null||e.stopPropagation(),this._fullscreenZoomed=!this._fullscreenZoomed,this._fullscreenZoomed||(this._fsPanX=0,this._fsPanY=0)},this._onFsOverlayClick=e=>{this._fsDragDidMove||this._onFsToggleZoom(e)},this._fsDragDidMove=!1,this._onFsPanStart=e=>{this._fullscreenZoomed&&(this._fsDragging=!0,this._fsDragDidMove=!1,this._fsDragStartX=e.clientX,this._fsDragStartY=e.clientY,this._fsPanStartX=this._fsPanX,this._fsPanStartY=this._fsPanY,e.preventDefault())},this._onFsPanMove=e=>{if(!this._fsDragging)return;const t=e.clientX-this._fsDragStartX,o=e.clientY-this._fsDragStartY;(Math.abs(t)>3||Math.abs(o)>3)&&(this._fsDragDidMove=!0),this._fsPanX=this._fsPanStartX+t,this._fsPanY=this._fsPanStartY+o,this.requestUpdate()},this._onFsPanEnd=()=>{this._fsDragging=!1,requestAnimationFrame(()=>{this._fsDragDidMove=!1})},this._onFsTouchStart=e=>{if(!this._fullscreenZoomed||e.touches.length!==1)return;const t=e.touches[0];this._fsDragging=!0,this._fsDragDidMove=!1,this._fsDragStartX=t.clientX,this._fsDragStartY=t.clientY,this._fsPanStartX=this._fsPanX,this._fsPanStartY=this._fsPanY},this._onFsTouchMove=e=>{if(!this._fsDragging||e.touches.length!==1)return;const t=e.touches[0],o=t.clientX-this._fsDragStartX,r=t.clientY-this._fsDragStartY;(Math.abs(o)>3||Math.abs(r)>3)&&(this._fsDragDidMove=!0),this._fsPanX=this._fsPanStartX+o,this._fsPanY=this._fsPanStartY+r,this.requestUpdate(),e.preventDefault()},this._onFsClose=e=>{e==null||e.stopPropagation(),this._fullscreenPreviewUrl=null,this._fullscreenVideoFile=null,this._fullscreenZoomed=!1,this._fsPanX=0,this._fsPanY=0},this._store=Ue(),this._storeCtrl=new Me(this,this._store)}open(){var e,t,o;this._isMinimized&&(this._isMinimized=!1,this._isPillExpanded=!1),!this._isOpen&&(this._isOpen=!0,(o=(t=(e=this.config)==null?void 0:e.callbacks)==null?void 0:t.onOpen)==null||o.call(t),this._dispatchPublic(g.OPEN,{}),this.requestUpdate())}close(){var e,t,o,r;this._isOpen&&(this._isOpen=!1,this._closeOnCompleteTimer&&(clearTimeout(this._closeOnCompleteTimer),this._closeOnCompleteTimer=null),((e=this.config)==null?void 0:e.clearOnClose)!==!1&&this._onClearAll(),this._previewFileId=null,(r=(o=(t=this.config)==null?void 0:t.callbacks)==null?void 0:o.onClose)==null||r.call(o),this._dispatchPublic(g.CLOSE,{}),this.requestUpdate())}upload(){var r,i,a,l,d,p,h;if(this._ensureEngine(),!this._engine){console.warn("[sfx-uploader] Cannot upload: auth not resolved yet");return}const e=[...this._store.getState().files.values()].filter(u=>u.status==="idle"||u.status==="queued");if((i=(r=this.config)==null?void 0:r.callbacks)!=null&&i.onBeforeUpload&&this.config.callbacks.onBeforeUpload(e)===!1)return;const t=new CustomEvent(g.BEFORE_UPLOAD,{bubbles:!0,composed:!0,cancelable:!0,detail:{files:e}});this.dispatchEvent(t)&&(this._dispatchPublic(g.UPLOAD_STARTED,{files:e}),(d=(l=(a=this.config)==null?void 0:a.callbacks)==null?void 0:l.onUploadStarted)==null||d.call(l,e),this._engine.uploadAll(),(p=this.config)!=null&&p.minimizeOnUpload&&((h=this.config)==null?void 0:h.mode)!=="inline"&&(this._isMinimized=!0,this._isPillExpanded=!0,this.requestUpdate()))}addFiles(e){this._processIncomingFiles(e)}resumeUpload(e){var t;if(e&&e.length>0){const o=this._store.getState().files,r=new Map(o);let i=!1;for(const a of e){const l=o.get(a.id);l&&(r.set(a.id,{...l,...a}),i=!0)}i&&this._store.setState({files:r})}this._ensureEngine(),(t=this._engine)==null||t.uploadAll()}cancelUpload(){var e;(e=this._engine)==null||e.cancelAll()}getFiles(){return[...this._store.getState().files.values()]}getFile(e){return this._store.getState().files.get(e)}updateFileMeta(e,t,o){const r=this._store.getState().files,i=r.get(e);if(!i||!$._MODIFIABLE_STATUSES.has(i.status))return;const a=new Map(r);a.set(e,{...i,meta:t!=null?{...i.meta,...t}:i.meta,tags:o??i.tags}),this._store.setState({files:a})}updateFilesMeta(e){const t=this._store.getState().files,o=new Map(t);let r=!1;for(const{fileId:i,meta:a,tags:l}of e){const d=t.get(i);!d||!$._MODIFIABLE_STATUSES.has(d.status)||(o.set(i,{...d,meta:a!=null?{...d.meta,...a}:d.meta,tags:l??d.tags}),r=!0)}r&&this._store.setState({files:o})}updated(e){if(e.has("config")&&this.config&&this._applyConfig(this.config),e.has("_previewFileId")&&this._previewFileId){const t=this._previewFileId,o=this._store.getState().files.get(t);o?this._getImageDimensions(o).then(r=>{this._previewFileId===t&&(this._previewDims=r?`${r.w} × ${r.h}`:"—")}):this._previewDims="—"}this._updateFloatingPortal()}_injectFloatStyles(){if(document.querySelector("style[data-sfx-upload-float-styles]"))return;const e=document.createElement("style");e.setAttribute("data-sfx-upload-float-styles",""),e.textContent=`
       [data-sfx-upload-float] .upload-float { position:fixed; bottom:24px; right:24px; z-index:10000; width:470px; border-radius:12px; background:#fff; box-shadow:0 8px 32px rgba(0,0,0,0.12),0 2px 8px rgba(0,0,0,0.06); overflow:hidden; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; animation:sfxFloatIn .3s ease both; }
       [data-sfx-upload-float] .float-header { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-bottom:1px solid #e8edf5; }
       [data-sfx-upload-float] .float-header-left { display:flex; align-items:center; gap:8px; }
@@ -4936,362 +2999,72 @@ const k = (E = class extends U {
       [data-sfx-upload-float] .float-collapsed-actions button svg { width:14px; height:14px; }
       @keyframes sfxFloatIn { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
       @keyframes sfxSpin { to{transform:rotate(360deg)} }
-    `, document.head.appendChild(e);
-  }
-  _updateFloatingPortal() {
-    const e = [...this._storeCtrl.state.files.values()];
-    this._isMinimized && e.length > 0 ? (this._injectFloatStyles(), this._portalContainer || (this._portalContainer = document.createElement("div"), this._portalContainer.setAttribute("data-sfx-upload-float", ""), document.body.appendChild(this._portalContainer)), T(this._renderFloatingPill(e), this._portalContainer)) : this._portalContainer && (T(c, this._portalContainer), this._portalContainer.remove(), this._portalContainer = null);
-  }
-  connectedCallback() {
-    super.connectedCallback(), document.addEventListener("keydown", this._onKeyDown), this._prevStoreState = this._store.getState(), this._unsubStoreEvents = this._store.subscribe(() => this._onStoreChange());
-  }
-  disconnectedCallback() {
-    var e, t, i, r;
-    super.disconnectedCallback(), document.removeEventListener("keydown", this._onKeyDown), (e = this._unsubStoreEvents) == null || e.call(this), this._unsubStoreEvents = null, this._prevStoreState = null, (t = this._portalContainer) == null || t.remove(), this._portalContainer = null, document.querySelector("[data-sfx-upload-float]") || (i = document.querySelector("style[data-sfx-upload-float-styles]")) == null || i.remove(), this._revokeVideoBlobUrls();
-    for (const o of this._rejectedTimers.values()) clearTimeout(o);
-    this._rejectedTimers.clear(), this._closeOnCompleteTimer && (clearTimeout(this._closeOnCompleteTimer), this._closeOnCompleteTimer = null);
-    for (const o of this._store.getState().files.values())
-      o.previewUrl && URL.revokeObjectURL(o.previewUrl);
-    (r = this._engine) == null || r.destroy(), this._engine = null;
-  }
-  // --- Config ---
-  _applyConfig(e) {
-    const t = {};
-    if (e.targetFolder && (t.targetFolder = e.targetFolder), e.restrictions && (t.restrictions = {
-      ...this._store.getState().restrictions,
-      ...e.restrictions
-    }), e.concurrency != null) {
-      const i = this._store.getState().queueConfig;
-      t.queueConfig = { ...i, concurrency: e.concurrency };
-    }
-    if (e.autoProceed != null) {
-      const i = t.queueConfig ?? this._store.getState().queueConfig;
-      t.queueConfig = { ...i, autoProceed: e.autoProceed };
-    }
-    Object.keys(t).length > 0 && this._store.setState(t), this._resolveAuthAndEngine(e), (e.mode === "inline" || !e.mode) && (this._isOpen = !0);
-  }
-  async _resolveAuthAndEngine(e) {
-    var r, o;
-    const t = e.auth;
-    if (t.mode === "sass-key") {
-      this._apiBase = pe(t.container), this._authHeaders = se(t), this._ensureEngine(), (r = this._engine) == null || r.updateConfig({
-        apiBase: this._apiBase,
-        authHeaders: this._authHeaders
-      });
-      return;
-    }
-    const i = ++this._authResolveId;
-    try {
-      const s = await Ve(t);
-      if (i !== this._authResolveId) return;
-      this._apiBase = s.apiBase, this._authHeaders = s.headers, this._ensureEngine(), (o = this._engine) == null || o.updateConfig({
-        apiBase: this._apiBase,
-        authHeaders: this._authHeaders
-      });
-    } catch (s) {
-      if (i !== this._authResolveId) return;
-      console.error("[sfx-uploader] Auth resolution failed:", s);
-    }
-  }
-  _ensureEngine() {
-    !this._engine && this._apiBase && this._authHeaders && (this._engine = new qe(this._store, {
-      apiBase: this._apiBase,
-      authHeaders: this._authHeaders
-    }), this._engine.start());
-  }
-  // --- Public event dispatching (spec §13.1) ---
-  _dispatchPublic(e, t) {
-    this.dispatchEvent(
-      new CustomEvent(e, { bubbles: !0, composed: !0, detail: t })
-    );
-  }
-  /**
-   * React to store changes and dispatch public events + callbacks
-   * for file status transitions.
-   */
-  _onStoreChange() {
-    var r, o, s, n, d, p, h, u;
-    const e = this._store.getState(), t = this._prevStoreState;
-    if (this._prevStoreState = e, !t) return;
-    const i = (r = this.config) == null ? void 0 : r.callbacks;
-    for (const [x, f] of e.files) {
-      const m = t.files.get(x);
-      if (m) {
-        if (m.status !== f.status)
-          switch (f.status) {
-            case "uploading":
-              break;
-            case "complete":
-              f.response && (this._dispatchPublic(v.UPLOAD_COMPLETE, { file: f, response: f.response }), (o = i == null ? void 0 : i.onUploadComplete) == null || o.call(i, f, f.response));
-              break;
-            case "error":
-            case "failed": {
-              const _ = new Error(f.error ?? "Upload failed");
-              this._dispatchPublic(v.UPLOAD_ERROR, { file: f, error: _ }), (s = i == null ? void 0 : i.onUploadError) == null || s.call(i, f, _);
-              break;
-            }
-            case "retrying":
-              this._dispatchPublic(v.UPLOAD_RETRY, { file: f, attempt: f.retryCount }), (n = i == null ? void 0 : i.onUploadRetry) == null || n.call(i, f, f.retryCount);
-              break;
-          }
-        f.status === "uploading" && m.progress !== f.progress && (this._dispatchPublic(v.UPLOAD_PROGRESS, { file: f, progress: f.progress, speed: f.speed }), (d = i == null ? void 0 : i.onUploadProgress) == null || d.call(i, f, f.progress, f.speed));
-      }
-    }
-    if (e.totalProgress !== t.totalProgress || e.totalSpeed !== t.totalSpeed) {
-      const x = e.totalSpeed > 0 ? (e.totalBytes - e.totalBytesUploaded) / e.totalSpeed : 0;
-      this._dispatchPublic(v.TOTAL_PROGRESS, {
-        percentage: e.totalProgress,
-        speed: e.totalSpeed,
-        eta: x
-      }), (p = i == null ? void 0 : i.onTotalProgress) == null || p.call(i, e.totalProgress, e.totalSpeed, x);
-    }
-    if (t.isUploading && !e.isUploading) {
-      const x = [...e.files.values()];
-      if (!x.some((m) => m.status === "cancelled")) {
-        const m = x.filter((y) => y.status === "complete"), _ = x.filter((y) => y.status === "failed" || y.status === "error");
-        this._dispatchPublic(v.ALL_COMPLETE, { successful: m, failed: _ }), (h = i == null ? void 0 : i.onAllComplete) == null || h.call(i, m, _);
-        const w = (u = this.config) == null ? void 0 : u.closeOnComplete;
-        if (w) {
-          const y = typeof w == "number" ? w : 1500;
-          this._closeOnCompleteTimer = setTimeout(() => {
-            var C, D, ke;
-            this._closeOnCompleteTimer = null, this._phase === "complete" && (this._dispatchPublic(v.COMPLETE_ACTION, {}), (ke = (D = (C = this.config) == null ? void 0 : C.callbacks) == null ? void 0 : D.onCompleteAction) == null || ke.call(D), this.close());
-          }, y);
-        }
-      }
-    }
-  }
-  get _mergedSources() {
-    var d;
-    const e = (d = this.config) == null ? void 0 : d.connectors;
-    if (e === this._cachedSourcesConfig) return this._cachedSources;
-    if (this._cachedSourcesConfig = e, !e)
-      return this._cachedSources = W, this._cachedSources;
-    const t = e.providers.length > 0 ? Je(e.providers) : [], i = e.customSources ?? [], r = W.filter((p) => p.id === "device" || p.id === "url"), o = W.filter((p) => p.id !== "device" && p.id !== "url"), s = /* @__PURE__ */ new Set(), n = [];
-    for (const p of [...r, ...t, ...o, ...i])
-      if (!s.has(p.id)) {
-        if (E._RESERVED_IDS.has(p.id) && p.onActivate) {
-          console.warn(`[sfx-uploader] Custom source id "${p.id}" conflicts with a built-in source and was skipped.`);
-          continue;
-        }
-        s.add(p.id), n.push(p);
-      }
-    return this._cachedSources = n, this._cachedSources;
-  }
-  // --- Phase computation ---
-  get _phase() {
-    const e = this._storeCtrl.state, t = [...e.files.values()];
-    if (t.length === 0) return "empty";
-    if (e.isUploading) return "uploading";
-    const i = /* @__PURE__ */ new Set(["complete", "rejected", "cancelled", "failed"]);
-    return t.every((r) => i.has(r.status)) && t.some((r) => r.status === "complete" || r.status === "failed") ? "complete" : "ready";
-  }
-  // --- File handling ---
-  _processIncomingFiles(e) {
-    var i, r, o, s;
-    const t = (i = this.config) == null ? void 0 : i.callbacks;
-    for (const n of e) {
-      const d = this._store.getState(), p = Ze(n, d.restrictions, d.files);
-      if (p) {
-        const x = n.type.startsWith("image/") ? URL.createObjectURL(n) : null, f = {
-          id: q(),
-          status: "rejected",
-          file: n,
-          remoteUrl: null,
-          name: n.name,
-          size: n.size,
-          type: n.type,
-          previewUrl: x,
-          duration: null,
-          progress: 0,
-          speed: 0,
-          bytesUploaded: 0,
-          error: p,
-          retryCount: 0,
-          response: null,
-          addedAt: Date.now(),
-          meta: {},
-          tags: [],
-          remoteInfo: null
-        };
-        H(this._store, f), this._dispatchPublic(v.FILE_REJECTED, { file: f, reason: p }), (r = t == null ? void 0 : t.onFileRejected) == null || r.call(t, f, p);
-        const m = (o = this.config) == null ? void 0 : o.rejectedFileAutoRemoveDelay, _ = m === !1 || m === 0 || m === void 0 ? 0 : m;
-        if (_ > 0) {
-          const w = f.id, y = setTimeout(() => {
-            this._rejectedTimers.delete(w);
-            const C = this._store.getState().files.get(w);
-            C && C.status === "rejected" && Ce(this._store, w);
-          }, _);
-          this._rejectedTimers.set(w, y);
-        }
-        continue;
-      }
-      let h = null;
-      n.type.startsWith("image/") && (h = URL.createObjectURL(n));
-      const u = {
-        id: q(),
-        status: "idle",
-        file: n,
-        remoteUrl: null,
-        name: n.name,
-        size: n.size,
-        type: n.type,
-        previewUrl: h,
-        duration: null,
-        progress: 0,
-        speed: 0,
-        bytesUploaded: 0,
-        error: null,
-        retryCount: 0,
-        response: null,
-        addedAt: Date.now(),
-        meta: {},
-        tags: [],
-        remoteInfo: null
-      };
-      if (H(this._store, u), this._dispatchPublic(v.FILE_ADDED, { file: u }), (s = t == null ? void 0 : t.onFileAdded) == null || s.call(t, u), n.type.startsWith("video/")) {
-        Ge(n).then((f) => {
-          if (!f) return;
-          const m = this._store.getState(), _ = m.files.get(u.id);
-          if (_) {
-            const w = new Map(m.files);
-            w.set(u.id, { ..._, previewUrl: f }), this._store.setState({ files: w });
-          } else
-            URL.revokeObjectURL(f);
-        });
-        const x = document.createElement("video");
-        x.preload = "metadata", x.src = URL.createObjectURL(n), x.onerror = () => {
-          URL.revokeObjectURL(x.src);
-        }, x.onloadedmetadata = () => {
-          const f = x.duration;
-          if (URL.revokeObjectURL(x.src), !isFinite(f)) return;
-          const m = this._store.getState(), _ = m.files.get(u.id);
-          if (_) {
-            const w = new Map(m.files);
-            w.set(u.id, { ..._, duration: f }), this._store.setState({ files: w });
-          }
-        };
-      }
-    }
-    this._store.getState().queueConfig.autoProceed && this.upload();
-  }
-  _removeFile(e) {
-    var o, s, n, d;
-    const t = this._store.getState().files.get(e);
-    if (!t) return;
-    const i = { ...t };
-    if ((this._fullscreenPreviewUrl && this._fullscreenPreviewUrl === t.previewUrl || this._fullscreenVideoFile && this._fullscreenVideoFile === t.file) && (this._fullscreenPreviewUrl = null, this._fullscreenVideoFile = null), t.previewUrl && URL.revokeObjectURL(t.previewUrl), t.file) {
-      const p = this._videoBlobUrls.get(t.file);
-      p && (URL.revokeObjectURL(p), this._videoBlobUrls.delete(t.file));
-    }
-    (t.status === "uploading" || t.status === "queued" || t.status === "retrying") && ((o = this._engine) == null || o.cancelFile(e)), Ce(this._store, e), this._dimCache.delete(e);
-    const r = this._rejectedTimers.get(e);
-    if (r && (clearTimeout(r), this._rejectedTimers.delete(e)), this._previewFileId === e) {
-      const p = [...this._store.getState().files.values()];
-      this._previewFileId = p.length > 0 ? p[0].id : null;
-    }
-    this._dispatchPublic(v.FILE_REMOVED, { file: i }), (d = (n = (s = this.config) == null ? void 0 : s.callbacks) == null ? void 0 : n.onFileRemoved) == null || d.call(n, i);
-  }
-  // --- Render ---
-  render() {
-    var t;
-    const e = ((t = this.config) == null ? void 0 : t.mode) ?? "modal";
-    return [...this._storeCtrl.state.files.values()], e === "modal" ? l`
-        ${this._isOpen && !this._isMinimized ? l`
+    `,document.head.appendChild(e)}_updateFloatingPortal(){const e=[...this._storeCtrl.state.files.values()];this._isMinimized&&e.length>0?(this._injectFloatStyles(),this._portalContainer||(this._portalContainer=document.createElement("div"),this._portalContainer.setAttribute("data-sfx-upload-float",""),document.body.appendChild(this._portalContainer)),s.render(this._renderFloatingPill(e),this._portalContainer)):this._portalContainer&&(s.render(s.nothing,this._portalContainer),this._portalContainer.remove(),this._portalContainer=null)}connectedCallback(){super.connectedCallback(),document.addEventListener("keydown",this._onKeyDown),this._prevStoreState=this._store.getState(),this._unsubStoreEvents=this._store.subscribe(()=>this._onStoreChange())}disconnectedCallback(){var e,t,o,r;super.disconnectedCallback(),document.removeEventListener("keydown",this._onKeyDown),(e=this._unsubStoreEvents)==null||e.call(this),this._unsubStoreEvents=null,this._prevStoreState=null,(t=this._portalContainer)==null||t.remove(),this._portalContainer=null,document.querySelector("[data-sfx-upload-float]")||(o=document.querySelector("style[data-sfx-upload-float-styles]"))==null||o.remove(),this._revokeVideoBlobUrls();for(const i of this._rejectedTimers.values())clearTimeout(i);this._rejectedTimers.clear(),this._closeOnCompleteTimer&&(clearTimeout(this._closeOnCompleteTimer),this._closeOnCompleteTimer=null);for(const i of this._store.getState().files.values())i.previewUrl&&URL.revokeObjectURL(i.previewUrl);(r=this._engine)==null||r.destroy(),this._engine=null}_applyConfig(e){const t={};if(e.targetFolder&&(t.targetFolder=e.targetFolder),e.restrictions&&(t.restrictions={...this._store.getState().restrictions,...e.restrictions}),e.concurrency!=null){const o=this._store.getState().queueConfig;t.queueConfig={...o,concurrency:e.concurrency}}if(e.autoProceed!=null){const o=t.queueConfig??this._store.getState().queueConfig;t.queueConfig={...o,autoProceed:e.autoProceed}}Object.keys(t).length>0&&this._store.setState(t),this._resolveAuthAndEngine(e),(e.mode==="inline"||!e.mode)&&(this._isOpen=!0)}async _resolveAuthAndEngine(e){var r,i;const t=e.auth;if(t.mode==="sass-key"){this._apiBase=te(t.container),this._authHeaders=K(t),this._ensureEngine(),(r=this._engine)==null||r.updateConfig({apiBase:this._apiBase,authHeaders:this._authHeaders});return}const o=++this._authResolveId;try{const a=await Fe(t);if(o!==this._authResolveId)return;this._apiBase=a.apiBase,this._authHeaders=a.headers,this._ensureEngine(),(i=this._engine)==null||i.updateConfig({apiBase:this._apiBase,authHeaders:this._authHeaders})}catch(a){if(o!==this._authResolveId)return;console.error("[sfx-uploader] Auth resolution failed:",a)}}_ensureEngine(){!this._engine&&this._apiBase&&this._authHeaders&&(this._engine=new ze(this._store,{apiBase:this._apiBase,authHeaders:this._authHeaders}),this._engine.start())}_dispatchPublic(e,t){this.dispatchEvent(new CustomEvent(e,{bubbles:!0,composed:!0,detail:t}))}_onStoreChange(){var r,i,a,l,d,p,h,u;const e=this._store.getState(),t=this._prevStoreState;if(this._prevStoreState=e,!t)return;const o=(r=this.config)==null?void 0:r.callbacks;for(const[x,f]of e.files){const v=t.files.get(x);if(v){if(v.status!==f.status)switch(f.status){case"uploading":break;case"complete":f.response&&(this._dispatchPublic(g.UPLOAD_COMPLETE,{file:f,response:f.response}),(i=o==null?void 0:o.onUploadComplete)==null||i.call(o,f,f.response));break;case"error":case"failed":{const w=new Error(f.error??"Upload failed");this._dispatchPublic(g.UPLOAD_ERROR,{file:f,error:w}),(a=o==null?void 0:o.onUploadError)==null||a.call(o,f,w);break}case"retrying":this._dispatchPublic(g.UPLOAD_RETRY,{file:f,attempt:f.retryCount}),(l=o==null?void 0:o.onUploadRetry)==null||l.call(o,f,f.retryCount);break}f.status==="uploading"&&v.progress!==f.progress&&(this._dispatchPublic(g.UPLOAD_PROGRESS,{file:f,progress:f.progress,speed:f.speed}),(d=o==null?void 0:o.onUploadProgress)==null||d.call(o,f,f.progress,f.speed))}}if(e.totalProgress!==t.totalProgress||e.totalSpeed!==t.totalSpeed){const x=e.totalSpeed>0?(e.totalBytes-e.totalBytesUploaded)/e.totalSpeed:0;this._dispatchPublic(g.TOTAL_PROGRESS,{percentage:e.totalProgress,speed:e.totalSpeed,eta:x}),(p=o==null?void 0:o.onTotalProgress)==null||p.call(o,e.totalProgress,e.totalSpeed,x)}if(t.isUploading&&!e.isUploading){const x=[...e.files.values()];if(!x.some(v=>v.status==="cancelled")){const v=x.filter(m=>m.status==="complete"),w=x.filter(m=>m.status==="failed"||m.status==="error");this._dispatchPublic(g.ALL_COMPLETE,{successful:v,failed:w}),(h=o==null?void 0:o.onAllComplete)==null||h.call(o,v,w);const b=(u=this.config)==null?void 0:u.closeOnComplete;if(b){const m=typeof b=="number"?b:1500;this._closeOnCompleteTimer=setTimeout(()=>{var _,E,we;this._closeOnCompleteTimer=null,this._phase==="complete"&&(this._dispatchPublic(g.COMPLETE_ACTION,{}),(we=(E=(_=this.config)==null?void 0:_.callbacks)==null?void 0:E.onCompleteAction)==null||we.call(E),this.close())},m)}}}}get _mergedSources(){var d;const e=(d=this.config)==null?void 0:d.connectors;if(e===this._cachedSourcesConfig)return this._cachedSources;if(this._cachedSourcesConfig=e,!e)return this._cachedSources=A,this._cachedSources;const t=e.providers.length>0?Re(e.providers):[],o=e.customSources??[],r=A.filter(p=>p.id==="device"||p.id==="url"),i=A.filter(p=>p.id!=="device"&&p.id!=="url"),a=new Set,l=[];for(const p of[...r,...t,...i,...o])if(!a.has(p.id)){if($._RESERVED_IDS.has(p.id)&&p.onActivate){console.warn(`[sfx-uploader] Custom source id "${p.id}" conflicts with a built-in source and was skipped.`);continue}a.add(p.id),l.push(p)}return this._cachedSources=l,this._cachedSources}get _phase(){const e=this._storeCtrl.state,t=[...e.files.values()];if(t.length===0)return"empty";if(e.isUploading)return"uploading";const o=new Set(["complete","rejected","cancelled","failed"]);return t.every(r=>o.has(r.status))&&t.some(r=>r.status==="complete"||r.status==="failed")?"complete":"ready"}_processIncomingFiles(e){var o,r,i,a;const t=(o=this.config)==null?void 0:o.callbacks;for(const l of e){const d=this._store.getState(),p=Je(l,d.restrictions,d.files);if(p){const x=l.type.startsWith("image/")?URL.createObjectURL(l):null,f={id:T(),status:"rejected",file:l,remoteUrl:null,name:l.name,size:l.size,type:l.type,previewUrl:x,duration:null,progress:0,speed:0,bytesUploaded:0,error:p,retryCount:0,response:null,addedAt:Date.now(),meta:{},tags:[],remoteInfo:null};L(this._store,f),this._dispatchPublic(g.FILE_REJECTED,{file:f,reason:p}),(r=t==null?void 0:t.onFileRejected)==null||r.call(t,f,p);const v=(i=this.config)==null?void 0:i.rejectedFileAutoRemoveDelay,w=v===!1||v===0||v===void 0?0:v;if(w>0){const b=f.id,m=setTimeout(()=>{this._rejectedTimers.delete(b);const _=this._store.getState().files.get(b);_&&_.status==="rejected"&&ye(this._store,b)},w);this._rejectedTimers.set(b,m)}continue}let h=null;l.type.startsWith("image/")&&(h=URL.createObjectURL(l));const u={id:T(),status:"idle",file:l,remoteUrl:null,name:l.name,size:l.size,type:l.type,previewUrl:h,duration:null,progress:0,speed:0,bytesUploaded:0,error:null,retryCount:0,response:null,addedAt:Date.now(),meta:{},tags:[],remoteInfo:null};if(L(this._store,u),this._dispatchPublic(g.FILE_ADDED,{file:u}),(a=t==null?void 0:t.onFileAdded)==null||a.call(t,u),l.type.startsWith("video/")){Ze(l).then(f=>{if(!f)return;const v=this._store.getState(),w=v.files.get(u.id);if(w){const b=new Map(v.files);b.set(u.id,{...w,previewUrl:f}),this._store.setState({files:b})}else URL.revokeObjectURL(f)});const x=document.createElement("video");x.preload="metadata",x.src=URL.createObjectURL(l),x.onerror=()=>{URL.revokeObjectURL(x.src)},x.onloadedmetadata=()=>{const f=x.duration;if(URL.revokeObjectURL(x.src),!isFinite(f))return;const v=this._store.getState(),w=v.files.get(u.id);if(w){const b=new Map(v.files);b.set(u.id,{...w,duration:f}),this._store.setState({files:b})}}}}this._store.getState().queueConfig.autoProceed&&this.upload()}_removeFile(e){var i,a,l,d;const t=this._store.getState().files.get(e);if(!t)return;const o={...t};if((this._fullscreenPreviewUrl&&this._fullscreenPreviewUrl===t.previewUrl||this._fullscreenVideoFile&&this._fullscreenVideoFile===t.file)&&(this._fullscreenPreviewUrl=null,this._fullscreenVideoFile=null),t.previewUrl&&URL.revokeObjectURL(t.previewUrl),t.file){const p=this._videoBlobUrls.get(t.file);p&&(URL.revokeObjectURL(p),this._videoBlobUrls.delete(t.file))}(t.status==="uploading"||t.status==="queued"||t.status==="retrying")&&((i=this._engine)==null||i.cancelFile(e)),ye(this._store,e),this._dimCache.delete(e);const r=this._rejectedTimers.get(e);if(r&&(clearTimeout(r),this._rejectedTimers.delete(e)),this._previewFileId===e){const p=[...this._store.getState().files.values()];this._previewFileId=p.length>0?p[0].id:null}this._dispatchPublic(g.FILE_REMOVED,{file:o}),(d=(l=(a=this.config)==null?void 0:a.callbacks)==null?void 0:l.onFileRemoved)==null||d.call(l,o)}render(){var t;const e=((t=this.config)==null?void 0:t.mode)??"modal";return[...this._storeCtrl.state.files.values()],e==="modal"?s.html`
+        ${this._isOpen&&!this._isMinimized?s.html`
           <div class="modal-backdrop" @click=${this._onModalBackdropClick}>
             <div class="modal-card">
               ${this._renderHeader()}
               ${this._renderBody()}
             </div>
           </div>
-        ` : c}
-      ` : l`
+        `:s.nothing}
+      `:s.html`
       <div class="inline">
         ${this._renderHeader()}
         ${this._renderBody()}
       </div>
-    `;
-  }
-  _renderHeader() {
-    var s, n;
-    if (this._phase === "complete") return c;
-    if (this._phase === "uploading") {
-      const d = this._storeCtrl.state, p = [...d.files.values()], h = p.filter((x) => x.status === "complete").length, u = d.totalSpeed > 0 ? (d.totalBytes - d.totalBytesUploaded) / d.totalSpeed : 0;
-      return l`
+    `}_renderHeader(){var a,l;if(this._phase==="complete")return s.nothing;if(this._phase==="uploading"){const d=this._storeCtrl.state,p=[...d.files.values()],h=p.filter(x=>x.status==="complete").length,u=d.totalSpeed>0?(d.totalBytes-d.totalBytesUploaded)/d.totalSpeed:0;return s.html`
         <div class="header upload-header">
           <div class="float-header-left">
             <div class="float-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>
             </div>
             <div>
-              <div class="float-title">Uploading ${p.length} ${p.length === 1 ? "file" : "files"}</div>
-              <div class="float-subtitle">${h} of ${p.length}${u > 0 ? ` · ~${oe(u)} left` : ""}</div>
+              <div class="float-title">Uploading ${p.length} ${p.length===1?"file":"files"}</div>
+              <div class="float-subtitle">${h} of ${p.length}${u>0?` · ~${oe(u)} left`:""}</div>
             </div>
           </div>
         </div>
-      `;
-    }
-    const e = ((s = this.config) == null ? void 0 : s.mode) ?? "modal", t = ((n = this.config) == null ? void 0 : n.headerButton) ?? (e === "modal" ? "close" : "none"), i = e === "modal" ? this._onModalDismiss : this._onInlineDismiss, r = t === "back" ? l`<button class="header-btn header-btn-back" aria-label="Back to Asset Picker" @click=${i}>
+      `}const e=((a=this.config)==null?void 0:a.mode)??"modal",t=((l=this.config)==null?void 0:l.headerButton)??(e==="modal"?"close":"none"),o=e==="modal"?this._onModalDismiss:this._onInlineDismiss,r=t==="back"?s.html`<button class="header-btn header-btn-back" aria-label="Back to Asset Picker" @click=${o}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="15 18 9 12 15 6"/>
           </svg>
-        </button>` : c, o = t === "close" ? l`<button class="header-btn header-btn-close" aria-label="Close" @click=${i}>
+        </button>`:s.nothing,i=t==="close"?s.html`<button class="header-btn header-btn-close" aria-label="Close" @click=${o}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
-        </button>` : c;
-    return l`
+        </button>`:s.nothing;return s.html`
       <div class="header">
         ${r}
-        ${t !== "back" ? l`
+        ${t!=="back"?s.html`
         <div class="header-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
             <polyline points="16 16 12 12 8 16" />
             <line x1="12" y1="12" x2="12" y2="21" />
             <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
           </svg>
-        </div>` : c}
+        </div>`:s.nothing}
         <div class="header-title">Upload Files</div>
-        ${o}
+        ${i}
       </div>
-    `;
-  }
-  _getImageDimensions(e) {
-    return e.previewUrl ? this._dimCache.has(e.id) ? Promise.resolve(this._dimCache.get(e.id)) : new Promise((t) => {
-      const i = new Image();
-      i.onload = () => {
-        const r = { w: i.naturalWidth, h: i.naturalHeight };
-        this._dimCache.set(e.id, r), t(r);
-      }, i.onerror = () => {
-        this._dimCache.set(e.id, null), t(null);
-      }, i.src = e.previewUrl;
-    }) : Promise.resolve(null);
-  }
-  _renderUploadOverlay(e) {
-    var s;
-    const t = this._storeCtrl.state, i = Math.round(t.totalProgress ?? 0), r = e.filter((n) => n.status === "complete").length, o = t.totalSpeed > 0 ? (t.totalBytes - t.totalBytesUploaded) / t.totalSpeed : 0;
-    return l`
+    `}_getImageDimensions(e){return e.previewUrl?this._dimCache.has(e.id)?Promise.resolve(this._dimCache.get(e.id)):new Promise(t=>{const o=new Image;o.onload=()=>{const r={w:o.naturalWidth,h:o.naturalHeight};this._dimCache.set(e.id,r),t(r)},o.onerror=()=>{this._dimCache.set(e.id,null),t(null)},o.src=e.previewUrl}):Promise.resolve(null)}_renderUploadOverlay(e){var a;const t=this._storeCtrl.state,o=Math.round(t.totalProgress??0),r=e.filter(l=>l.status==="complete").length,i=t.totalSpeed>0?(t.totalBytes-t.totalBytesUploaded)/t.totalSpeed:0;return s.html`
       <div class="upload-overlay">
         <div class="upload-overlay-spinner"></div>
-        <div class="upload-overlay-percent">${i}%</div>
-        <div class="upload-overlay-title">Uploading ${e.length} ${e.length === 1 ? "file" : "files"}</div>
-        <div class="upload-overlay-subtitle">${r} of ${e.length} complete${o > 0 ? l` · ~${oe(o)} left` : c}</div>
+        <div class="upload-overlay-percent">${o}%</div>
+        <div class="upload-overlay-title">Uploading ${e.length} ${e.length===1?"file":"files"}</div>
+        <div class="upload-overlay-subtitle">${r} of ${e.length} complete${i>0?s.html` · ~${oe(i)} left`:s.nothing}</div>
         <div class="upload-overlay-bar">
-          <div class="upload-overlay-bar-fill" style="width:${i}%"></div>
+          <div class="upload-overlay-bar-fill" style="width:${o}%"></div>
         </div>
-        ${(s = this.config) != null && s.minimizeOnUpload ? l`<button class="upload-overlay-minimize" @click=${this._onMinimize}>Minimize & continue in background</button>` : c}
+        ${(a=this.config)!=null&&a.minimizeOnUpload?s.html`<button class="upload-overlay-minimize" @click=${this._onMinimize}>Minimize & continue in background</button>`:s.nothing}
       </div>
-    `;
-  }
-  _renderFloatingPill(e) {
-    const t = this._storeCtrl.state, i = Math.round(t.totalProgress ?? 0), r = this._phase === "complete", o = e.filter((d) => d.status === "complete").length, s = e.filter((d) => d.status === "failed").length, n = t.totalSpeed > 0 ? (t.totalBytes - t.totalBytesUploaded) / t.totalSpeed : 0;
-    return this._isPillExpanded === !1 ? l`
+    `}_renderFloatingPill(e){const t=this._storeCtrl.state,o=Math.round(t.totalProgress??0),r=this._phase==="complete",i=e.filter(d=>d.status==="complete").length,a=e.filter(d=>d.status==="failed").length,l=t.totalSpeed>0?(t.totalBytes-t.totalBytesUploaded)/t.totalSpeed:0;return this._isPillExpanded===!1?s.html`
         <div class="upload-float float-collapsed">
           <div class="float-collapsed-left">
-            ${r ? s > 0 ? o > 0 ? l`<div class="float-collapsed-icon warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>` : l`<div class="float-collapsed-icon error"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>` : l`<div class="float-collapsed-icon done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>` : l`<div class="float-collapsed-spinner"></div>`}
-            <span class="float-collapsed-text">${r ? s > 0 ? o > 0 ? "Partially uploaded" : "Upload failed" : "Upload complete" : `Uploading ${e.length} ${e.length === 1 ? "file" : "files"}`}</span>
-            ${r ? c : l`<span class="float-collapsed-pct">${i}%</span>`}
+            ${r?a>0?i>0?s.html`<div class="float-collapsed-icon warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>`:s.html`<div class="float-collapsed-icon error"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>`:s.html`<div class="float-collapsed-icon done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>`:s.html`<div class="float-collapsed-spinner"></div>`}
+            <span class="float-collapsed-text">${r?a>0?i>0?"Partially uploaded":"Upload failed":"Upload complete":`Uploading ${e.length} ${e.length===1?"file":"files"}`}</span>
+            ${r?s.nothing:s.html`<span class="float-collapsed-pct">${o}%</span>`}
           </div>
           <div class="float-collapsed-actions">
             <button title="Open uploader" @click=${this._onPillExpand}>
@@ -5305,16 +3078,16 @@ const k = (E = class extends U {
             </button>
           </div>
         </div>
-      ` : l`
+      `:s.html`
       <div class="upload-float">
         <div class="float-header">
           <div class="float-header-left">
-            <div class="float-icon ${r ? s > 0 ? o > 0 ? "warn" : "error" : "done" : ""}">
-              ${r ? s > 0 ? o > 0 ? l`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>` : l`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>` : l`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>` : l`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>`}
+            <div class="float-icon ${r?a>0?i>0?"warn":"error":"done":""}">
+              ${r?a>0?i>0?s.html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`:s.html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`:s.html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>`:s.html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>`}
             </div>
             <div>
-              <div class="float-title">${r ? s > 0 ? o > 0 ? "Partially uploaded" : "Upload failed" : "Upload complete" : `Uploading ${e.length} ${e.length === 1 ? "file" : "files"}`}</div>
-              <div class="float-subtitle">${r ? `${o} ${o === 1 ? "file" : "files"} uploaded${s > 0 ? `, ${s} failed` : ""}` : `${o} of ${e.length}${n > 0 ? ` · ~${oe(n)} left` : ""}`}</div>
+              <div class="float-title">${r?a>0?i>0?"Partially uploaded":"Upload failed":"Upload complete":`Uploading ${e.length} ${e.length===1?"file":"files"}`}</div>
+              <div class="float-subtitle">${r?`${i} ${i===1?"file":"files"} uploaded${a>0?`, ${a} failed`:""}`:`${i} of ${e.length}${l>0?` · ~${oe(l)} left`:""}`}</div>
             </div>
           </div>
           <div class="float-actions">
@@ -5332,58 +3105,46 @@ const k = (E = class extends U {
         <div class="float-progress">
           <div class="float-progress-top">
             <span class="float-progress-label">Overall progress</span>
-            <span class="float-progress-pct ${r ? s > 0 ? o > 0 ? "warn" : "error" : "done" : ""}">${r ? "Done" : `${i}%`}</span>
+            <span class="float-progress-pct ${r?a>0?i>0?"warn":"error":"done":""}">${r?"Done":`${o}%`}</span>
           </div>
-          <div class="float-bar"><div class="float-bar-fill ${r ? s > 0 ? o > 0 ? "warn" : "error" : "done" : ""}" style="width:${r ? 100 : i}%"></div></div>
+          <div class="float-bar"><div class="float-bar-fill ${r?a>0?i>0?"warn":"error":"done":""}" style="width:${r?100:o}%"></div></div>
         </div>
         <div class="float-items">
-          ${e.map((d) => {
-      const p = d.status === "failed" || d.status === "error";
-      return l`
+          ${e.map(d=>{const p=d.status==="failed"||d.status==="error";return s.html`
             <div class="float-item">
-              <div class="float-item-thumb" style=${d.previewUrl ? `background-image:url(${d.previewUrl});background-size:cover;background-position:center` : ""}>
-                ${d.previewUrl ? c : l`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>`}
+              <div class="float-item-thumb" style=${d.previewUrl?`background-image:url(${d.previewUrl});background-size:cover;background-position:center`:""}>
+                ${d.previewUrl?s.nothing:s.html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>`}
               </div>
               <div class="float-item-info">
                 <div class="float-item-name">${d.name}</div>
-                <div class="float-item-size">${Y(d.size)}</div>
+                <div class="float-item-size">${B(d.size)}</div>
               </div>
               <div class="float-item-status">
-                ${d.status === "complete" ? l`<div class="float-item-done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>` : p ? l`
+                ${d.status==="complete"?s.html`<div class="float-item-done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>`:p?s.html`
                         <div class="float-item-error-wrap">
                           <svg class="float-item-error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                          <span class="float-item-tooltip">${d.error || "Upload failed"}</span>
+                          <span class="float-item-tooltip">${d.error||"Upload failed"}</span>
                         </div>
-                        <button class="float-item-retry" @click=${() => {
-        var h;
-        this._ensureEngine(), (h = this._engine) == null || h.retryFile(d.id);
-      }}>
+                        <button class="float-item-retry" @click=${()=>{var h;this._ensureEngine(),(h=this._engine)==null||h.retryFile(d.id)}}>
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
-                        </button>` : l`<div class="float-item-spinner"></div>`}
+                        </button>`:s.html`<div class="float-item-spinner"></div>`}
               </div>
             </div>
-          `;
-    })}
+          `})}
         </div>
       </div>
-    `;
-  }
-  _renderPreviewLayout(e) {
-    var n;
-    if (e.length === 0) return c;
-    const t = e.find((d) => d.id === this._previewFileId) ?? e[0], i = ((n = t.name.split(".").pop()) == null ? void 0 : n.toUpperCase()) || "", r = new Date(t.addedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }), o = this._store.getState().targetFolder, s = e.reduce((d, p) => d + (p.size || 0), 0);
-    return l`
+    `}_renderPreviewLayout(e){var l;if(e.length===0)return s.nothing;const t=e.find(d=>d.id===this._previewFileId)??e[0],o=((l=t.name.split(".").pop())==null?void 0:l.toUpperCase())||"",r=new Date(t.addedAt).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}),i=this._store.getState().targetFolder,a=e.reduce((d,p)=>d+(p.size||0),0);return s.html`
       <div class="preview-topbar"></div>
       <div class="preview-layout">
         <div class="file-grid-side" style="flex:${this._splitPct}">
           <div class="file-grid-header">
-            <span class="file-grid-header-text">${e.length} ${e.length === 1 ? "asset" : "assets"} · ${Y(s)}</span>
+            <span class="file-grid-header-text">${e.length} ${e.length===1?"asset":"assets"} · ${B(a)}</span>
           </div>
           <sfx-file-list
             .files=${e}
             .showDropTile=${!0}
             .sources=${this._mergedSources}
-            .accept=${Se(this._storeCtrl.state.restrictions)}
+            .accept=${ke(this._storeCtrl.state.restrictions)}
             @source-click=${this._onDropTileSourceClick}
           ></sfx-file-list>
         </div>
@@ -5393,14 +3154,12 @@ const k = (E = class extends U {
           @pointerup=${this._onSplitPointerUp}
           @lostpointercapture=${this._onSplitPointerUp}
         ></div>
-        <div class="preview-panel" style="flex:${100 - this._splitPct}">
+        <div class="preview-panel" style="flex:${100-this._splitPct}">
           <div class="preview-panel-header">
             <span class="preview-panel-filename" title=${t.name}>${t.name}</span>
             <div class="preview-header-actions">
-              ${t.previewUrl || t.type.startsWith("video/") && t.file ? l`
-                <button @click=${() => {
-      this._fullscreenPreviewUrl = t.previewUrl, this._fullscreenVideoFile = t.type.startsWith("video/") && t.file ? t.file : null, this._fullscreenZoomed = !1;
-    }} title="Fullscreen">
+              ${t.previewUrl||t.type.startsWith("video/")&&t.file?s.html`
+                <button @click=${()=>{this._fullscreenPreviewUrl=t.previewUrl,this._fullscreenVideoFile=t.type.startsWith("video/")&&t.file?t.file:null,this._fullscreenZoomed=!1}} title="Fullscreen">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="15 3 21 3 21 9" />
                     <polyline points="9 21 3 21 3 15" />
@@ -5408,10 +3167,8 @@ const k = (E = class extends U {
                     <line x1="3" y1="21" x2="10" y2="14" />
                   </svg>
                 </button>
-              ` : c}
-              <button @click=${() => {
-      this._previewFileId = null;
-    }} title="Close">
+              `:s.nothing}
+              <button @click=${()=>{this._previewFileId=null}} title="Close">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
                   <line x1="18" y1="6" x2="6" y2="18" />
                   <line x1="6" y1="6" x2="18" y2="18" />
@@ -5419,36 +3176,36 @@ const k = (E = class extends U {
               </button>
             </div>
           </div>
-          ${t.type.startsWith("video/") && t.file ? l`
+          ${t.type.startsWith("video/")&&t.file?s.html`
                 <div class="preview-img-wrap">
                   <video class="preview-image" src=${this._getVideoBlobUrl(t.file)} controls playsinline></video>
-                  <button class="preview-nav prev" ?disabled=${e.indexOf(t) === 0} @click=${() => this._navigatePreview(e, -1)}>
+                  <button class="preview-nav prev" ?disabled=${e.indexOf(t)===0} @click=${()=>this._navigatePreview(e,-1)}>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
                   </button>
-                  <button class="preview-nav next" ?disabled=${e.indexOf(t) === e.length - 1} @click=${() => this._navigatePreview(e, 1)}>
+                  <button class="preview-nav next" ?disabled=${e.indexOf(t)===e.length-1} @click=${()=>this._navigatePreview(e,1)}>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 6 15 12 9 18"/></svg>
                   </button>
                 </div>
-              ` : t.previewUrl ? l`
+              `:t.previewUrl?s.html`
                 <div class="preview-img-wrap">
                   <img class="preview-image" src=${t.previewUrl} alt=${t.name} />
-                  <button class="preview-nav prev" ?disabled=${e.indexOf(t) === 0} @click=${() => this._navigatePreview(e, -1)}>
+                  <button class="preview-nav prev" ?disabled=${e.indexOf(t)===0} @click=${()=>this._navigatePreview(e,-1)}>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
                   </button>
-                  <button class="preview-nav next" ?disabled=${e.indexOf(t) === e.length - 1} @click=${() => this._navigatePreview(e, 1)}>
+                  <button class="preview-nav next" ?disabled=${e.indexOf(t)===e.length-1} @click=${()=>this._navigatePreview(e,1)}>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 6 15 12 9 18"/></svg>
                   </button>
                 </div>
-              ` : l`
-                <div class="preview-doc-wrap ${X(t)}">
-                  <div class="preview-doc-icon ${X(t)}">
-                    ${this._renderDocTypeIcon(X(t))}
-                    <span class="preview-doc-ext ${X(t)}">${i}</span>
+              `:s.html`
+                <div class="preview-doc-wrap ${q(t)}">
+                  <div class="preview-doc-icon ${q(t)}">
+                    ${this._renderDocTypeIcon(q(t))}
+                    <span class="preview-doc-ext ${q(t)}">${o}</span>
                   </div>
-                  <button class="preview-nav prev" ?disabled=${e.indexOf(t) === 0} @click=${() => this._navigatePreview(e, -1)}>
+                  <button class="preview-nav prev" ?disabled=${e.indexOf(t)===0} @click=${()=>this._navigatePreview(e,-1)}>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
                   </button>
-                  <button class="preview-nav next" ?disabled=${e.indexOf(t) === e.length - 1} @click=${() => this._navigatePreview(e, 1)}>
+                  <button class="preview-nav next" ?disabled=${e.indexOf(t)===e.length-1} @click=${()=>this._navigatePreview(e,1)}>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 6 15 12 9 18"/></svg>
                   </button>
                 </div>
@@ -5456,11 +3213,11 @@ const k = (E = class extends U {
           <div class="preview-meta-list">
             <div class="preview-meta-row">
               <span class="preview-meta-label">Type</span>
-              <span class="preview-meta-value">${i}</span>
+              <span class="preview-meta-value">${o}</span>
             </div>
             <div class="preview-meta-row">
               <span class="preview-meta-label">Size</span>
-              <span class="preview-meta-value">${Y(t.size)}</span>
+              <span class="preview-meta-value">${B(t.size)}</span>
             </div>
             <div class="preview-meta-row">
               <span class="preview-meta-label">Dimensions</span>
@@ -5470,11 +3227,11 @@ const k = (E = class extends U {
               <span class="preview-meta-label">Name</span>
               <span class="preview-meta-value truncate" title=${t.name}>${t.name}</span>
             </div>
-            ${o ? l`
+            ${i?s.html`
             <div class="preview-meta-row">
               <span class="preview-meta-label">Folder</span>
-              <span class="preview-meta-value">${o}</span>
-            </div>` : l`
+              <span class="preview-meta-value">${i}</span>
+            </div>`:s.html`
             <div class="preview-meta-row">
               <span class="preview-meta-label">Added</span>
               <span class="preview-meta-value">${r}</span>
@@ -5482,34 +3239,7 @@ const k = (E = class extends U {
           </div>
         </div>
       </div>
-    `;
-  }
-  _renderDocTypeIcon(e) {
-    switch (e) {
-      case "pdf":
-        return l`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
-      case "doc":
-        return l`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`;
-      case "vid":
-        return l`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>`;
-      case "zip":
-        return l`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>`;
-      default:
-        return l`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>`;
-    }
-  }
-  _navigatePreview(e, t) {
-    var o;
-    const r = e.findIndex((s) => s.id === this._previewFileId) + t;
-    if (r >= 0 && r < e.length) {
-      const s = (o = this.shadowRoot) == null ? void 0 : o.querySelector(".preview-image[controls]");
-      s && (s.pause(), s.removeAttribute("src"), s.load()), this._previewFileId = e[r].id;
-    }
-  }
-  _renderBody() {
-    var s, n, d;
-    const e = this._storeCtrl.state, t = [...e.files.values()], i = this._phase, r = Se(e.restrictions), o = t.length > 0;
-    return l`
+    `}_renderDocTypeIcon(e){switch(e){case"pdf":return s.html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;case"doc":return s.html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`;case"vid":return s.html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>`;case"zip":return s.html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>`;default:return s.html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>`}}_navigatePreview(e,t){var i;const r=e.findIndex(a=>a.id===this._previewFileId)+t;if(r>=0&&r<e.length){const a=(i=this.shadowRoot)==null?void 0:i.querySelector(".preview-image[controls]");a&&(a.pause(),a.removeAttribute("src"),a.load()),this._previewFileId=e[r].id}}_renderBody(){var a,l,d;const e=this._storeCtrl.state,t=[...e.files.values()],o=this._phase,r=ke(e.restrictions),i=t.length>0;return s.html`
       <div class="content"
         @files-selected=${this._onFilesSelected}
         @source-click=${this._onSourceClick}
@@ -5533,33 +3263,33 @@ const k = (E = class extends U {
         @screencast-cancel=${this._onScreenCastCancel}
       >
         <div
-          class="body ${o ? "has-files" : ""} ${this._bodyDragOver ? "body-drag-over" : ""}"
-          @dragenter=${o ? this._onBodyDragEnter : c}
-          @dragover=${o ? this._onBodyDragOver : c}
-          @dragleave=${o ? this._onBodyDragLeave : c}
-          @drop=${o ? this._onBodyDrop : c}
+          class="body ${i?"has-files":""} ${this._bodyDragOver?"body-drag-over":""}"
+          @dragenter=${i?this._onBodyDragEnter:s.nothing}
+          @dragover=${i?this._onBodyDragOver:s.nothing}
+          @dragleave=${i?this._onBodyDragLeave:s.nothing}
+          @drop=${i?this._onBodyDrop:s.nothing}
         >
-          ${i === "complete" ? l`
+          ${o==="complete"?s.html`
                   <sfx-success-card
-                    .fileCount=${t.filter((p) => p.status === "complete").length}
-                    .totalSize=${t.filter((p) => p.status === "complete").reduce((p, h) => p + (h.size || 0), 0)}
-                    .thumbnails=${t.filter((p) => p.status === "complete" && p.previewUrl).map((p) => p.previewUrl)}
-                    .failedFiles=${t.filter((p) => p.status === "failed").map((p) => ({ id: p.id, name: p.name, error: p.error || "Upload failed" }))}
+                    .fileCount=${t.filter(p=>p.status==="complete").length}
+                    .totalSize=${t.filter(p=>p.status==="complete").reduce((p,h)=>p+(h.size||0),0)}
+                    .thumbnails=${t.filter(p=>p.status==="complete"&&p.previewUrl).map(p=>p.previewUrl)}
+                    .failedFiles=${t.filter(p=>p.status==="failed").map(p=>({id:p.id,name:p.name,error:p.error||"Upload failed"}))}
                     @close-uploader=${this._onSuccessCardClose}
                     @file-retry=${this._onFileRetry}
                     @retry-all=${this._onRetryAll}
                   ></sfx-success-card>
-                ` : i === "uploading" ? this._renderUploadOverlay(t) : l`
-                  ${o ? c : l`<sfx-drop-zone
-                        .compact=${o}
+                `:o==="uploading"?this._renderUploadOverlay(t):s.html`
+                  ${i?s.nothing:s.html`<sfx-drop-zone
+                        .compact=${i}
                         .externalDragOver=${this._bodyDragOver}
                         .accept=${r}
                         .sources=${this._mergedSources}
-                        .sourcesLayout=${((s = this.config) == null ? void 0 : s.sourcesLayout) ?? "pills"}
+                        .sourcesLayout=${((a=this.config)==null?void 0:a.sourcesLayout)??"pills"}
                       ></sfx-drop-zone>`}
 
-                  ${o ? this._previewFileId ? this._renderPreviewLayout(t) : l`
-                          <div class="asset-count">${t.length} ${t.length === 1 ? "file" : "files"} · ${Y(t.reduce((p, h) => p + (h.size || 0), 0))}</div>
+                  ${i?this._previewFileId?this._renderPreviewLayout(t):s.html`
+                          <div class="asset-count">${t.length} ${t.length===1?"file":"files"} · ${B(t.reduce((p,h)=>p+(h.size||0),0))}</div>
                           <sfx-file-list
                             .files=${t}
                             .showDropTile=${!0}
@@ -5567,34 +3297,34 @@ const k = (E = class extends U {
                             .accept=${r}
                             @source-click=${this._onDropTileSourceClick}
                           ></sfx-file-list>
-                        ` : c}
+                        `:s.nothing}
                 `}
         </div>
 
-        ${o && i !== "complete" && i !== "uploading" ? l`
+        ${i&&o!=="complete"&&o!=="uploading"?s.html`
               <sfx-actions-bar
                 .uploadState=${"idle"}
                 .fileCount=${t.length}
-                .totalSize=${t.reduce((p, h) => p + (h.size || 0), 0)}
-                .failedCount=${t.filter((p) => p.status === "failed" || p.status === "error").length}
-                .completedCount=${t.filter((p) => p.status === "complete").length}
-                .uploadProgress=${e.totalProgress ?? 0}
-                .showFillMetadata=${!!((n = this.config) != null && n.showFillMetadata)}
+                .totalSize=${t.reduce((p,h)=>p+(h.size||0),0)}
+                .failedCount=${t.filter(p=>p.status==="failed"||p.status==="error").length}
+                .completedCount=${t.filter(p=>p.status==="complete").length}
+                .uploadProgress=${e.totalProgress??0}
+                .showFillMetadata=${!!((l=this.config)!=null&&l.showFillMetadata)}
               ></sfx-actions-bar>
-            ` : c}
+            `:s.nothing}
 
-        ${this._showUrlDialog ? l`<sfx-url-dialog></sfx-url-dialog>` : c}
-        ${this._showCameraDialog ? l`<sfx-camera-dialog></sfx-camera-dialog>` : c}
-        ${this._showScreenCastDialog ? l`<sfx-screen-cast-dialog></sfx-screen-cast-dialog>` : c}
-        ${this._activeConnector && ((d = this.config) != null && d.connectors) ? l`
+        ${this._showUrlDialog?s.html`<sfx-url-dialog></sfx-url-dialog>`:s.nothing}
+        ${this._showCameraDialog?s.html`<sfx-camera-dialog></sfx-camera-dialog>`:s.nothing}
+        ${this._showScreenCastDialog?s.html`<sfx-screen-cast-dialog></sfx-screen-cast-dialog>`:s.nothing}
+        ${this._activeConnector&&((d=this.config)!=null&&d.connectors)?s.html`
               <div class="connector-modal-backdrop" @click=${this._onConnectorBackdropClick}>
                 <div class="connector-modal">
-                  ${De.has(this._activeConnector) ? l`
+                  ${Ee.has(this._activeConnector)?s.html`
                         <sfx-search-provider-browser
                           .provider=${this._activeConnector}
                           .companionUrl=${this.config.connectors.companionUrl}
                         ></sfx-search-provider-browser>
-                      ` : l`
+                      `:s.html`
                         <sfx-provider-browser
                           .provider=${this._activeConnector}
                           .companionUrl=${this.config.connectors.companionUrl}
@@ -5602,11 +3332,11 @@ const k = (E = class extends U {
                       `}
                 </div>
               </div>
-            ` : c}
+            `:s.nothing}
 
-        ${this._fullscreenPreviewUrl || this._fullscreenVideoFile ? l`
+        ${this._fullscreenPreviewUrl||this._fullscreenVideoFile?s.html`
               <div
-                class="fs-overlay ${this._fullscreenZoomed ? "zoomed" : ""} ${this._fsDragging ? "panning" : ""}"
+                class="fs-overlay ${this._fullscreenZoomed?"zoomed":""} ${this._fsDragging?"panning":""}"
                 @click=${this._onFsOverlayClick}
                 @mousedown=${this._onFsPanStart}
                 @mousemove=${this._onFsPanMove}
@@ -5616,9 +3346,9 @@ const k = (E = class extends U {
                 @touchmove=${this._onFsTouchMove}
                 @touchend=${this._onFsPanEnd}
               >
-                <div class="fs-toolbar" @click=${(p) => p.stopPropagation()}>
-                  <button class="fs-btn" @click=${this._onFsToggleZoom} title="${this._fullscreenZoomed ? "Zoom out" : "Zoom in"}">
-                    ${this._fullscreenZoomed ? l`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>` : l`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>`}
+                <div class="fs-toolbar" @click=${p=>p.stopPropagation()}>
+                  <button class="fs-btn" @click=${this._onFsToggleZoom} title="${this._fullscreenZoomed?"Zoom out":"Zoom in"}">
+                    ${this._fullscreenZoomed?s.html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>`:s.html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>`}
                   </button>
                   <button class="fs-btn" @click=${this._onFsClose} title="Close">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -5626,54 +3356,29 @@ const k = (E = class extends U {
                     </svg>
                   </button>
                 </div>
-                ${this._fullscreenVideoFile ? l`<video
+                ${this._fullscreenVideoFile?s.html`<video
                       class="fs-img"
                       src=${this._getVideoBlobUrl(this._fullscreenVideoFile)}
                       controls playsinline
                       draggable="false"
-                      @click=${(p) => p.stopPropagation()}
-                    ></video>` : l`<img
+                      @click=${p=>p.stopPropagation()}
+                    ></video>`:s.html`<img
                       class="fs-img"
                       src=${this._fullscreenPreviewUrl}
                       alt=""
-                      style=${this._fullscreenZoomed ? `transform: scale(2) translate(${this._fsPanX}px, ${this._fsPanY}px)` : ""}
+                      style=${this._fullscreenZoomed?`transform: scale(2) translate(${this._fsPanX}px, ${this._fsPanY}px)`:""}
                       draggable="false"
                     />`}
-                <button class="fs-nav prev" @click=${(p) => {
-      p.stopPropagation(), this._navigateFs(-1);
-    }}>
+                <button class="fs-nav prev" @click=${p=>{p.stopPropagation(),this._navigateFs(-1)}}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
                 </button>
-                <button class="fs-nav next" @click=${(p) => {
-      p.stopPropagation(), this._navigateFs(1);
-    }}>
+                <button class="fs-nav next" @click=${p=>{p.stopPropagation(),this._navigateFs(1)}}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 6 15 12 9 18"/></svg>
                 </button>
               </div>
-            ` : c}
+            `:s.nothing}
       </div>
-    `;
-  }
-  _navigateFs(e) {
-    const t = [...this._store.getState().files.values()].filter(
-      (o) => o.previewUrl || o.type.startsWith("video/") && o.file
-    ), i = t.findIndex((o) => o.id === this._previewFileId);
-    if (i === -1) return;
-    const r = i + e;
-    if (r >= 0 && r < t.length) {
-      const o = t[r];
-      this._fullscreenPreviewUrl = o.previewUrl, this._fullscreenVideoFile = o.type.startsWith("video/") && o.file ? o.file : null, this._previewFileId = o.id, this._fullscreenZoomed = !1, this._fsPanX = 0, this._fsPanY = 0;
-    }
-  }
-  _getVideoBlobUrl(e) {
-    let t = this._videoBlobUrls.get(e);
-    return t || (t = URL.createObjectURL(e), this._videoBlobUrls.set(e, t)), t;
-  }
-  _revokeVideoBlobUrls() {
-    for (const e of this._videoBlobUrls.values()) URL.revokeObjectURL(e);
-    this._videoBlobUrls.clear();
-  }
-}, E.styles = S`
+    `}_navigateFs(e){const t=[...this._store.getState().files.values()].filter(i=>i.previewUrl||i.type.startsWith("video/")&&i.file),o=t.findIndex(i=>i.id===this._previewFileId);if(o===-1)return;const r=o+e;if(r>=0&&r<t.length){const i=t[r];this._fullscreenPreviewUrl=i.previewUrl,this._fullscreenVideoFile=i.type.startsWith("video/")&&i.file?i.file:null,this._previewFileId=i.id,this._fullscreenZoomed=!1,this._fsPanX=0,this._fsPanY=0}}_getVideoBlobUrl(e){let t=this._videoBlobUrls.get(e);return t||(t=URL.createObjectURL(e),this._videoBlobUrls.set(e,t)),t}_revokeVideoBlobUrls(){for(const e of this._videoBlobUrls.values())URL.revokeObjectURL(e);this._videoBlobUrls.clear()}},$.styles=s.css`
     :host {
       display: block;
       font-family: var(--sfx-up-font, 'Inter', system-ui, -apple-system, sans-serif);
@@ -6941,83 +4646,4 @@ const k = (E = class extends U {
       .modal-card { min-height: auto; }
       .inline { min-height: auto; }
     }
-  `, E._MODIFIABLE_STATUSES = /* @__PURE__ */ new Set([
-  "idle",
-  "queued",
-  "rejected"
-]), E._RESERVED_IDS = /* @__PURE__ */ new Set(["device", "camera", "url", "screen-cast"]), E);
-$([
-  b({ attribute: !1 })
-], k.prototype, "config");
-$([
-  g()
-], k.prototype, "_isOpen");
-$([
-  g()
-], k.prototype, "_activeConnector");
-$([
-  g()
-], k.prototype, "_showUrlDialog");
-$([
-  g()
-], k.prototype, "_showCameraDialog");
-$([
-  g()
-], k.prototype, "_showScreenCastDialog");
-$([
-  g()
-], k.prototype, "_previewFileId");
-$([
-  g()
-], k.prototype, "_previewDims");
-$([
-  g()
-], k.prototype, "_splitPct");
-$([
-  g()
-], k.prototype, "_fullscreenPreviewUrl");
-$([
-  g()
-], k.prototype, "_fullscreenVideoFile");
-$([
-  g()
-], k.prototype, "_fullscreenZoomed");
-$([
-  g()
-], k.prototype, "_bodyDragOver");
-$([
-  g()
-], k.prototype, "_isMinimized");
-$([
-  g()
-], k.prototype, "_isPillExpanded");
-let $t = k;
-export {
-  de as A,
-  W as C,
-  v as P,
-  F as S,
-  qe as U,
-  z as a,
-  le as b,
-  B as c,
-  Pe as d,
-  ne as e,
-  L as f,
-  $t as g,
-  Oe as h,
-  se as i,
-  Re as j,
-  Ye as k,
-  pe as l,
-  Je as m,
-  K as n,
-  V as o,
-  A as p,
-  wt as q,
-  Ve as r,
-  kt as s,
-  Ct as t,
-  yt as u,
-  _t as v
-};
+  `,$._MODIFIABLE_STATUSES=new Set(["idle","queued","rejected"]),$._RESERVED_IDS=new Set(["device","camera","url","screen-cast"]),$);k([c.property({attribute:!1})],y.prototype,"config");k([c.state()],y.prototype,"_isOpen");k([c.state()],y.prototype,"_activeConnector");k([c.state()],y.prototype,"_showUrlDialog");k([c.state()],y.prototype,"_showCameraDialog");k([c.state()],y.prototype,"_showScreenCastDialog");k([c.state()],y.prototype,"_previewFileId");k([c.state()],y.prototype,"_previewDims");k([c.state()],y.prototype,"_splitPct");k([c.state()],y.prototype,"_fullscreenPreviewUrl");k([c.state()],y.prototype,"_fullscreenVideoFile");k([c.state()],y.prototype,"_fullscreenZoomed");k([c.state()],y.prototype,"_bodyDragOver");k([c.state()],y.prototype,"_isMinimized");k([c.state()],y.prototype,"_isPillExpanded");let gt=y;exports.AuthExpiredError=ee;exports.CORE_SOURCES=A;exports.PublicEvents=g;exports.SfxActionsBar=P;exports.SfxCameraDialog=M;exports.SfxDropZone=C;exports.SfxFileItem=J;exports.SfxFileList=D;exports.SfxImportDivider=ae;exports.SfxScreenCastDialog=R;exports.SfxSourcePills=Z;exports.SfxSuccessCard=F;exports.SfxUploader=gt;exports.SfxUrlDialog=I;exports.Store=Pe;exports.UploadEngine=ze;exports.buildAuthHeaders=K;exports.createStore=Ue;exports.exchangeSassKey=De;exports.getApiBase=te;exports.getAuthUrl=Be;exports.getProviderSources=Re;exports.listFiles=Ae;exports.listNextPage=Ie;exports.logout=Ye;exports.resolveAuth=Fe;exports.searchProvider=He;
