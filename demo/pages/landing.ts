@@ -264,8 +264,10 @@ export function App() {
           </div>
           <div class="demo-footer-col">
             <h4>Resources</h4>
+            <a href="https://scaleflex.github.io/uploader/" target="_blank" rel="noopener">Demo & Docs</a>
             <a href="https://github.com/scaleflex/uploader" target="_blank" rel="noopener">GitHub</a>
             <a href="https://www.npmjs.com/package/@scaleflex/uploader" target="_blank" rel="noopener">npm</a>
+            <a href="https://cdn.scaleflex.com/uploader/0.2.5/sfx-uploader.min.js" target="_blank" rel="noopener">CDN</a>
           </div>
           <div class="demo-footer-col">
             <h4>Scaleflex</h4>
