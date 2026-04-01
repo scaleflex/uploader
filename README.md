@@ -50,7 +50,7 @@ npm install @scaleflex/uploader
 Or use the CDN for a no-bundler setup:
 
 ```html
-<script src="https://scaleflex.cloudimg.io/v7/plugins/scaleflex/uploader/0.2.1/sfx-uploader.min.js"></script>
+<script src="https://cdn.scaleflex.com/uploader/0.2.5/sfx-uploader.min.js"></script>
 ```
 
 ## Quick start

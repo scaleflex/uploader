@@ -38,7 +38,7 @@ const page: Page = {
 
         <h3>CDN (no bundler)</h3>
         <p>Load the self-contained bundle via script tag. All custom elements are registered automatically.</p>
-        ${code('html', `<script src="https://scaleflex.cloudimg.io/v7/plugins/scaleflex/uploader/0.2.1/sfx-uploader.min.js"></script>`)}
+        ${code('html', `<script src="https://cdn.scaleflex.com/uploader/0.2.5/sfx-uploader.min.js"></script>`)}
 
         <h2>Package exports</h2>
         <table>

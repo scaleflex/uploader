@@ -40,10 +40,10 @@ For React, `react` and `react-dom` (v18+) must already be installed (they're opt
 ### CDN (no bundler)
 
 ```html
-<script src="https://scaleflex.cloudimg.io/v7/plugins/scaleflex/uploader/0.2.1/sfx-uploader.min.js"></script>
+<script src="https://cdn.scaleflex.com/uploader/0.2.5/sfx-uploader.min.js"></script>
 ```
 
-This registers `<sfx-uploader>` and all sub-components automatically. Replace `0.2.1` with the desired version.
+This registers `<sfx-uploader>` and all sub-components automatically. Replace `0.2.5` with the desired version.
 
 ## Step 3 — Add the Uploader
 
