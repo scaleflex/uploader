@@ -1500,6 +1500,39 @@ body:not(.has-sidebar) #content {
   color: var(--sf-text-primary);
 }
 
+/* ── Radio control ────────────────────────────── */
+.radio-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.radio-control input[type="radio"] {
+  accent-color: var(--sf-primary, #2563eb);
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  cursor: pointer;
+}
+
+.radio-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--sf-text-primary);
+}
+
+.radio-text code {
+  font-size: 13px;
+}
+
+.config-controls:has(.radio-control) {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
 /* ── Doc content ───────────────────────────────── */
 .doc-content {
   max-width: 800px;
