@@ -9,6 +9,21 @@ import { getPortalTarget } from '../utils/portal-target';
 /** Number of source pills shown directly; the rest go into "More" dropdown. */
 const VISIBLE_PILLS = 3;
 
+const moreDropdownSheet = new CSSStyleSheet();
+moreDropdownSheet.replaceSync(`
+  [data-sfx-more-dropdown] { position:absolute; top:0; left:0; width:0; height:0; overflow:visible; pointer-events:none; }
+  [data-sfx-more-dropdown] .sfx-more-dropdown { position:fixed; background:#fff; border-radius:12px; box-shadow:0 12px 40px rgba(0,0,0,0.14),0 2px 8px rgba(0,0,0,0.06); border:1px solid #e8edf5; padding:6px; min-width:210px; max-height:340px; overflow-y:auto; z-index:99999; opacity:0; visibility:hidden; pointer-events:none; transition:opacity .18s ease,visibility .18s ease,transform .18s ease; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; }
+  [data-sfx-more-dropdown] .sfx-more-dropdown.open { opacity:1; visibility:visible; pointer-events:all; }
+  [data-sfx-more-dropdown] .sfx-more-item { display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:6px; border:none; background:none; width:100%; font-size:13px; font-weight:500; color:#1e293b; cursor:pointer; transition:background .15s; font-family:inherit; white-space:nowrap; }
+  [data-sfx-more-dropdown] .sfx-more-item:hover { background:#f5f7fa; }
+  [data-sfx-more-dropdown] .sfx-more-item-ico { width:32px; height:32px; border-radius:8px; background:#f8fafc; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  [data-sfx-more-dropdown] .sfx-more-item-ico svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; }
+  [data-sfx-more-dropdown] .sfx-more-item .brand-ico { width:20px; height:20px; border-radius:5px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  [data-sfx-more-dropdown] .sfx-more-item .brand-ico svg { fill:white; stroke:none; stroke-width:0; }
+  [data-sfx-more-dropdown] .sfx-more-item .canva-ico { width:22px; height:22px; }
+  [data-sfx-more-dropdown] .sfx-more-item .canva-ico svg { width:22px; height:22px; }
+`);
+
 export class SfxDropZone extends LitElement {
   static styles = css`
     :host {
@@ -939,8 +954,8 @@ export class SfxDropZone extends LitElement {
       if (!this._portalContainer) {
         this._portalContainer = document.createElement('div');
         this._portalContainer.setAttribute('data-sfx-more-dropdown', '');
-        this._injectDropdownStyles();
         getPortalTarget(this).appendChild(this._portalContainer);
+        this._injectDropdownStyles();
       }
       litRender(
         html`<div class="sfx-more-dropdown open">
@@ -970,22 +985,10 @@ export class SfxDropZone extends LitElement {
   }
 
   private _injectDropdownStyles() {
-    if (document.querySelector('style[data-sfx-more-dropdown-styles]')) return;
-    const style = document.createElement('style');
-    style.setAttribute('data-sfx-more-dropdown-styles', '');
-    style.textContent = `
-      [data-sfx-more-dropdown] .sfx-more-dropdown { position:fixed; background:#fff; border-radius:12px; box-shadow:0 12px 40px rgba(0,0,0,0.14),0 2px 8px rgba(0,0,0,0.06); border:1px solid #e8edf5; padding:6px; min-width:210px; max-height:340px; overflow-y:auto; z-index:99999; opacity:0; visibility:hidden; pointer-events:none; transition:opacity .18s ease,visibility .18s ease,transform .18s ease; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; }
-      [data-sfx-more-dropdown] .sfx-more-dropdown.open { opacity:1; visibility:visible; pointer-events:all; }
-      [data-sfx-more-dropdown] .sfx-more-item { display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:6px; border:none; background:none; width:100%; font-size:13px; font-weight:500; color:#1e293b; cursor:pointer; transition:background .15s; font-family:inherit; white-space:nowrap; }
-      [data-sfx-more-dropdown] .sfx-more-item:hover { background:#f5f7fa; }
-      [data-sfx-more-dropdown] .sfx-more-item-ico { width:32px; height:32px; border-radius:8px; background:#f8fafc; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-      [data-sfx-more-dropdown] .sfx-more-item-ico svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; }
-      [data-sfx-more-dropdown] .sfx-more-item .brand-ico { width:20px; height:20px; border-radius:5px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-      [data-sfx-more-dropdown] .sfx-more-item .brand-ico svg { fill:white; stroke:none; stroke-width:0; }
-      [data-sfx-more-dropdown] .sfx-more-item .canva-ico { width:22px; height:22px; }
-      [data-sfx-more-dropdown] .sfx-more-item .canva-ico svg { width:22px; height:22px; }
-    `;
-    document.head.appendChild(style);
+    const root = this._portalContainer?.getRootNode() as Document | ShadowRoot | undefined;
+    if (!root) return;
+    if (root.adoptedStyleSheets.includes(moreDropdownSheet)) return;
+    root.adoptedStyleSheets = [...root.adoptedStyleSheets, moreDropdownSheet];
   }
 
   /** Position the fixed dropdown, choosing above or below based on available space. */
