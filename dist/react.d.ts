@@ -9,6 +9,14 @@ export interface UploaderRef {
     addFiles(files: File[]): void;
     resumeUpload(files?: UploadFile[]): void;
     cancelUpload(): void;
+    getFiles(): UploadFile[];
+    getFile(fileId: string): UploadFile | undefined;
+    updateFileMeta(fileId: string, meta?: Record<string, unknown>, tags?: string[]): void;
+    updateFilesMeta(updates: Array<{
+        fileId: string;
+        meta?: Record<string, unknown>;
+        tags?: string[];
+    }>): void;
 }
 export interface UploaderProps {
     config: UploaderConfig;
@@ -26,6 +34,10 @@ export interface UploaderProps {
     onOpen?: () => void;
     onClose?: () => void;
     onCancel?: () => void;
+    onBeforeUpload?: (files: UploadFile[]) => boolean | void;
+    onFilePreview?: (file: UploadFile) => void;
+    onFillMetadata?: (files: UploadFile[]) => void;
+    onCompleteAction?: () => void;
     className?: string;
     style?: CSSProperties;
 }

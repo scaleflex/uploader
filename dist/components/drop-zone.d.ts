@@ -25,7 +25,10 @@ export declare class SfxDropZone extends LitElement {
     private _onPaste;
     private _onSourceIconClick;
     private _emitFiles;
+    private _portalContainer;
     private _toggleMore;
+    private _updateDropdownPortal;
+    private _injectDropdownStyles;
     /** Position the fixed dropdown, choosing above or below based on available space. */
     private _positionDropdown;
     private _onMoreItemClick;
@@ -35,6 +38,7 @@ export declare class SfxDropZone extends LitElement {
     private _onScrollOrResize;
     private _updateVisiblePills;
     connectedCallback(): void;
+    updated(changed: Map<string, unknown>): void;
     disconnectedCallback(): void;
     private _renderPill;
     private _renderCard;

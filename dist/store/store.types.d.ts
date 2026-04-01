@@ -9,6 +9,7 @@ export interface UploadFile {
     size: number;
     type: string;
     previewUrl: string | null;
+    duration: number | null;
     progress: number;
     speed: number;
     bytesUploaded: number;
@@ -42,6 +43,7 @@ export interface UploadResponse {
         modified_at: string;
     };
     msg?: string;
+    hint?: string;
 }
 export interface RetryConfig {
     maxRetries: number;

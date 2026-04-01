@@ -1,10 +1,18 @@
-import{b as f}from"./index-BIQyzLcq.js";import{r as u}from"./code-block-Bk3NnwHF.js";const a={render(){return`
+import{b as f}from"./index-DiBLSo6t.js";const d={render(){return`
       <section class="hero">
         <div class="hero-inner">
           <div class="hero-badge">@scaleflex/uploader</div>
           <h1><span class="gradient-text">Uploader</span></h1>
           <p>A framework-agnostic Web Component for uploading files to Scaleflex VXP. Drag & drop, URL, webcam, screen capture, and cloud providers — in a single HTML tag.</p>
           <div class="hero-actions">
+            <a href="#quick-start" class="btn-primary">
+              Get Started
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            </a>
+            <a href="https://github.com/scaleflex/uploader" target="_blank" rel="noopener" class="btn-secondary">
+              <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+              GitHub
+            </a>
             <a href="https://www.npmjs.com/package/@scaleflex/uploader" target="_blank" rel="noopener" class="btn-secondary">
               <svg width="16" height="16" viewBox="0 0 256 256" fill="currentColor"><path d="M0 256V0h256v256H0zm41-41h59.2v-133H141v133h33.4V41H41v174z"/></svg>
               npm
@@ -33,47 +41,85 @@ import{b as f}from"./index-BIQyzLcq.js";import{r as u}from"./code-block-Bk3NnwHF
         </div>
       </section>
 
-      <section class="quick-start-section">
+      <section class="quick-start-section" id="quick-start">
         <div class="section-inner">
           <div class="section-header">
             <div class="section-label">Quick Start</div>
             <h2>Up and running in under a minute</h2>
-            <p>Install from npm, import the custom element, and start uploading with a few lines of code.</p>
+            <p>Pick your integration method and paste the code.</p>
           </div>
-          <div class="quick-start-steps">
-            <div class="quick-start-step">
-              <div class="step-header">
-                <div class="step-number">1</div>
-                <h3>Install</h3>
-              </div>
-              <div class="step-code">
+          <div class="qs-card">
+            <div class="qs-tabs">
+              <button class="qs-tab active" data-tab="npm">npm</button>
+              <button class="qs-tab" data-tab="cdn">CDN</button>
+              <button class="qs-tab" data-tab="react">React</button>
+            </div>
+
+            <div class="qs-panel active" data-panel="npm">
+              <div class="qs-install-bar">
                 <code>npm install @scaleflex/uploader</code>
                 <button class="step-copy" data-code="npm install @scaleflex/uploader" aria-label="Copy to clipboard">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                 </button>
               </div>
+              <div class="qs-code" data-code-npm><pre><code class="language-markup">&lt;script type="module"&gt;
+  import '@scaleflex/uploader/define';
+&lt;/script&gt;
+
+&lt;sfx-uploader id="uploader"&gt;&lt;/sfx-uploader&gt;
+
+&lt;script&gt;
+  document.getElementById('uploader').config = {
+    auth: {
+      mode: 'security-template',
+      container: 'YOUR_CONTAINER',
+      securityTemplateId: 'YOUR_TEMPLATE_ID',
+    },
+  };
+&lt;/script&gt;</code></pre></div>
             </div>
-            <div class="quick-start-step">
-              <div class="step-header">
-                <div class="step-number">2</div>
-                <h3>Import</h3>
-              </div>
-              <div class="step-code">
-                <code>import '@scaleflex/uploader/define';</code>
-                <button class="step-copy" data-code="import '@scaleflex/uploader/define';" aria-label="Copy to clipboard">
+
+            <div class="qs-panel" data-panel="cdn">
+              <div class="qs-code" data-code-cdn><pre><code class="language-markup">&lt;script src="https://cdn.scaleflex.com/uploader/0.2.5/sfx-uploader.min.js"&gt;&lt;/script&gt;
+
+&lt;sfx-uploader id="uploader"&gt;&lt;/sfx-uploader&gt;
+
+&lt;script&gt;
+  document.getElementById('uploader').config = {
+    auth: {
+      mode: 'security-template',
+      container: 'YOUR_CONTAINER',
+      securityTemplateId: 'YOUR_TEMPLATE_ID',
+    },
+  };
+&lt;/script&gt;</code></pre></div>
+            </div>
+
+            <div class="qs-panel" data-panel="react">
+              <div class="qs-install-bar">
+                <code>npm install @scaleflex/uploader</code>
+                <button class="step-copy" data-code="npm install @scaleflex/uploader" aria-label="Copy to clipboard">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                 </button>
               </div>
-            </div>
-            <div class="quick-start-step">
-              <div class="step-header">
-                <div class="step-number">3</div>
-                <h3>Use</h3>
-              </div>
-              <p class="step-description">Add <code>&lt;sfx-uploader&gt;</code> to your HTML, set config, and call <code>.open()</code> or use inline mode.</p>
+              <div class="qs-code" data-code-react><pre><code class="language-tsx">import { Uploader } from '@scaleflex/uploader/react';
+
+export function App() {
+  return (
+    &lt;Uploader
+      config={{
+        auth: {
+          mode: 'security-template',
+          container: 'YOUR_CONTAINER',
+          securityTemplateId: 'YOUR_TEMPLATE_ID',
+        },
+      }}
+      onAllComplete={(files) =&gt; console.log(files)}
+    /&gt;
+  );
+}</code></pre></div>
             </div>
           </div>
-          <div id="quick-start-code"></div>
         </div>
       </section>
 
@@ -210,6 +256,7 @@ import{b as f}from"./index-BIQyzLcq.js";import{r as u}from"./code-block-Bk3NnwHF
           </div>
           <div class="demo-footer-col">
             <h4>Resources</h4>
+            <a href="https://github.com/scaleflex/uploader" target="_blank" rel="noopener">GitHub</a>
             <a href="https://www.npmjs.com/package/@scaleflex/uploader" target="_blank" rel="noopener">npm</a>
           </div>
           <div class="demo-footer-col">
@@ -229,57 +276,4 @@ import{b as f}from"./index-BIQyzLcq.js";import{r as u}from"./code-block-Bk3NnwHF
           <p>Made with care by the <a href="https://www.scaleflex.com" target="_blank" rel="noopener">Scaleflex</a> team</p>
         </div>
       </footer>
-    `},init(c){const l=document.getElementById("demo-inline-uploader");l.config=f({mode:"inline",targetFolder:"/uploads",connectors:{companionUrl:"https://eu-on-24001.connector.filerobot.com",providers:["google-drive","dropbox","onedrive","unsplash"]}}),document.querySelectorAll(".step-copy").forEach(e=>{e.addEventListener("click",async()=>{const d=e.dataset.code??"";try{await navigator.clipboard.writeText(d),e.classList.add("copied"),e.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>'}catch{}setTimeout(()=>{e.classList.remove("copied"),e.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>'},1500)})}),u("#quick-start-code",[{label:"HTML",lang:"markup",code:`
-<script type="module">
-  import '@scaleflex/uploader/define';
-<\/script>
-
-<sfx-uploader id="uploader"></sfx-uploader>
-
-<button onclick="document.getElementById('uploader').open()">
-  Upload files
-</button>
-
-<script>
-  const uploader = document.getElementById('uploader');
-  uploader.config = {
-    auth: {
-      mode: 'security-template',
-      container: 'YOUR_CONTAINER',
-      securityTemplateId: 'YOUR_TEMPLATE_ID',
-    },
-    mode: 'modal',
-    targetFolder: '/uploads',
-  };
-
-  uploader.addEventListener('sfx-all-complete', (e) => {
-    console.log('Uploaded:', e.detail.successful);
-  });
-<\/script>`},{label:"React",lang:"tsx",code:`
-import { useRef } from 'react';
-import { Uploader, type UploaderRef } from '@scaleflex/uploader/react';
-
-export function App() {
-  const ref = useRef<UploaderRef>(null);
-
-  return (
-    <>
-      <button onClick={() => ref.current?.open()}>Upload files</button>
-      <Uploader
-        ref={ref}
-        config={{
-          auth: {
-            mode: 'security-template',
-            container: 'YOUR_CONTAINER',
-            securityTemplateId: 'YOUR_TEMPLATE_ID',
-          },
-          mode: 'modal',
-          targetFolder: '/uploads',
-        }}
-        onAllComplete={(successful, failed) => {
-          console.log('Done:', successful.length, 'uploaded');
-        }}
-      />
-    </>
-  );
-}`}]);const s=document.querySelectorAll(".demo-also-slide"),n=document.getElementById("also-dots");if(s.length&&n){let e=function(i){if(i===r||p)return;p=!0;const t=i>r?"left":"right",o=s[r],g=s[i];o.classList.add(`slide-out-${t}`),g.classList.add(`slide-in-${t}`,"active"),g.addEventListener("animationend",()=>{o.classList.remove("active",`slide-out-${t}`),g.classList.remove(`slide-in-${t}`),v[r].classList.remove("active"),v[i].classList.add("active"),r=i,p=!1},{once:!0}),d()},d=function(){clearInterval(h),h=setInterval(()=>e((r+1)%s.length),5e3)},r=0,p=!1,h;s.forEach((i,t)=>{const o=document.createElement("button");o.className=`demo-also-dot${t===0?" active":""}`,o.setAttribute("aria-label",`Slide ${t+1}`),o.addEventListener("click",()=>e(t)),n.appendChild(o)});const v=n.querySelectorAll(".demo-also-dot");d(),a._cleanupSlider=()=>clearInterval(h)}},destroy(){var l;const c=document.getElementById("demo-inline-uploader");c&&c.close(),(l=a._cleanupSlider)==null||l.call(a),delete a._cleanupSlider}};export{a as default};
+    `},init(n){const c=document.getElementById("demo-inline-uploader");c.config=f({mode:"inline",targetFolder:"/uploads",connectors:{companionUrl:"https://eu-on-24001.connector.filerobot.com",providers:["google-drive","dropbox","onedrive","unsplash"]}}),document.querySelectorAll(".step-copy").forEach(e=>{e.addEventListener("click",async()=>{const a=e.dataset.code??"";try{await navigator.clipboard.writeText(a),e.classList.add("copied"),e.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>'}catch{}setTimeout(()=>{e.classList.remove("copied"),e.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>'},1500)})}),document.querySelectorAll(".qs-tab").forEach(e=>{e.addEventListener("click",()=>{var t;const a=e.dataset.tab;document.querySelectorAll(".qs-tab").forEach(o=>o.classList.remove("active")),document.querySelectorAll(".qs-panel").forEach(o=>o.classList.remove("active")),e.classList.add("active"),(t=document.querySelector(`.qs-panel[data-panel="${a}"]`))==null||t.classList.add("active")})}),requestAnimationFrame(()=>{document.querySelectorAll('.qs-code code[class*="language-"]').forEach(e=>{typeof Prism<"u"&&Prism.highlightElement(e)})}),document.querySelectorAll(".qs-code").forEach(e=>{const a=e.querySelector("pre");if(!a)return;const t=document.createElement("button");t.className="qs-copy-code",t.textContent="Copy",t.addEventListener("click",async()=>{var o;try{await navigator.clipboard.writeText(((o=a.textContent)==null?void 0:o.trim())??""),t.textContent="Copied!"}catch{t.textContent="Failed"}setTimeout(()=>t.textContent="Copy",1500)}),e.prepend(t)});const l=document.querySelectorAll(".demo-also-slide"),p=document.getElementById("also-dots");if(l.length&&p){let e=function(i){if(i===t||o)return;o=!0;const r=i>t?"left":"right",s=l[t],g=l[i];s.classList.add(`slide-out-${r}`),g.classList.add(`slide-in-${r}`,"active"),g.addEventListener("animationend",()=>{s.classList.remove("active",`slide-out-${r}`),g.classList.remove(`slide-in-${r}`),v[t].classList.remove("active"),v[i].classList.add("active"),t=i,o=!1},{once:!0}),a()},a=function(){clearInterval(h),h=setInterval(()=>e((t+1)%l.length),5e3)},t=0,o=!1,h;l.forEach((i,r)=>{const s=document.createElement("button");s.className=`demo-also-dot${r===0?" active":""}`,s.setAttribute("aria-label",`Slide ${r+1}`),s.addEventListener("click",()=>e(r)),p.appendChild(s)});const v=p.querySelectorAll(".demo-also-dot");a(),d._cleanupSlider=()=>clearInterval(h)}},destroy(){var c;const n=document.getElementById("demo-inline-uploader");n&&n.close(),(c=d._cleanupSlider)==null||c.call(d),delete d._cleanupSlider}};export{d as default};

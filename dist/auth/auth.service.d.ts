@@ -10,7 +10,7 @@ export declare function getApiBase(container: string): string;
  */
 export declare function exchangeSassKey(container: string, securityTemplateId: string): Promise<string>;
 /**
- * Build auth headers from a resolved SASS key or session tokens.
+ * Build auth headers from a resolved SASS key.
  */
 export declare function buildAuthHeaders(auth: AuthConfig, resolvedSassKey?: string): AuthHeaders;
 /**

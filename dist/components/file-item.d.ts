@@ -7,6 +7,7 @@ export declare class SfxFileItem extends LitElement {
     private _retry;
     private _preview;
     render(): typeof nothing | import('lit-html').TemplateResult<1>;
+    private _formatDuration;
     private _renderTypeIcon;
 }
 //# sourceMappingURL=file-item.d.ts.map

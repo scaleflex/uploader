@@ -3,7 +3,7 @@ export { createStore, Store } from './store';
 export { UploadEngine, type UploadEngineConfig } from './engine';
 export { PublicEvents } from './events/public-events';
 export type { UploaderState, UploadFile, FileStatus, UploadResponse, QueueConfig, RetryConfig, UploadRestrictions, } from './store';
-export type { AuthConfig, SecurityTemplateAuth, SassKeyAuth, SessionAuth, AuthHeaders, } from './auth';
+export type { AuthConfig, SecurityTemplateAuth, SassKeyAuth, AuthHeaders, } from './auth';
 export { resolveAuth, exchangeSassKey, getApiBase, buildAuthHeaders } from './auth';
 export type { ProviderId, ConnectorConfig, RemoteFileInfo } from './connectors';
 export { getProviderSources } from './connectors';

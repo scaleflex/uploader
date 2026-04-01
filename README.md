@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://www.scaleflex.com">
-    <img src="https://scaleflex.cloudimg.io/v7/plugins/js-cloudimage-360-view/logo_scaleflex_on_white_bg.jpg?vh=91b12d&w=700" alt="Scaleflex" width="350">
+    <img src="https://scaleflex.cloudimg.io/v7/plugins/scaleflex/logo.png?vh=b0a502&radius=25&w=700" alt="Scaleflex" width="350">
   </a>
 </p>
 
@@ -45,6 +45,12 @@
 
 ```bash
 npm install @scaleflex/uploader
+```
+
+Or use the CDN for a no-bundler setup:
+
+```html
+<script src="https://cdn.scaleflex.com/uploader/0.2.5/sfx-uploader.min.js"></script>
 ```
 
 ## Quick start
@@ -113,6 +119,30 @@ function App() {
 | Chrome / Edge | 90+ |
 | Firefox | 100+ |
 | Safari | 15.4+ |
+
+## Claude Code Integration
+
+If you use [Claude Code](https://docs.anthropic.com/en/docs/claude-code), this package ships with a ready-made skill that helps Claude add the uploader to your project — detecting your framework, wiring auth, events, theming, and restrictions automatically.
+
+**Per-project** (recommended — share with your team via version control):
+
+```bash
+mkdir -p .claude/skills/integrate-uploader
+cp node_modules/@scaleflex/uploader/.claude/skills/integrate-uploader/SKILL.md \
+   .claude/skills/integrate-uploader/SKILL.md
+```
+
+Commit the `.claude/skills/` directory to version control. The skill is now available to everyone on the team.
+
+**Per-user** (available across all your projects):
+
+```bash
+mkdir -p ~/.claude/skills/integrate-uploader
+cp node_modules/@scaleflex/uploader/.claude/skills/integrate-uploader/SKILL.md \
+   ~/.claude/skills/integrate-uploader/SKILL.md
+```
+
+Then type `/integrate-uploader` in Claude Code and it will walk you through the full integration — install, config, events, and theming — tailored to your stack (React, Vue, vanilla JS, etc.).
 
 ## Documentation
 

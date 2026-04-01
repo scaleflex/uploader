@@ -1,7 +1,7 @@
 import{h as t,c as e,d as o}from"./doc-utils-XkOyWBCy.js";const a={render(){return`
       <div class="doc-content">
         <h1>Getting started</h1>
-        <p class="doc-lead">Add a production-ready file upload widget to any web app in minutes.</p>
+        <p class="doc-lead"><code>@scaleflex/uploader</code> is a drop-in modal component that connects to a <a href="https://www.scaleflex.com">Scaleflex VXP</a> DAM project and lets users drag &amp; drop, paste, import from URL, capture from webcam, and upload files to their cloud storage.</p>
 
         <h2>Features</h2>
         <ul>
@@ -19,8 +19,8 @@ import{h as t,c as e,d as o}from"./doc-utils-XkOyWBCy.js";const a={render(){retu
 
         <h2>Requirements</h2>
         <ul>
-          <li>A <a href="https://www.scaleflex.com">Scaleflex</a> account with a container</li>
-          <li>A <strong>security template ID</strong> (recommended) or session credentials</li>
+          <li>A <a href="https://www.scaleflex.com">Scaleflex VXP</a> DAM account with a project token</li>
+          <li>Either a <strong>security template key</strong> or a <strong>SASS key</strong> for authentication</li>
           <li>Any modern browser (Chrome, Firefox, Safari, Edge — last 2 versions)</li>
         </ul>
 
@@ -30,6 +30,10 @@ import{h as t,c as e,d as o}from"./doc-utils-XkOyWBCy.js";const a={render(){retu
         ${e("bash","yarn add @scaleflex/uploader")}
         <p>Or with pnpm:</p>
         ${e("bash","pnpm add @scaleflex/uploader")}
+
+        <h3>CDN (no bundler)</h3>
+        <p>Load the self-contained bundle via script tag. All custom elements are registered automatically.</p>
+        ${e("html",'<script src="https://cdn.scaleflex.com/uploader/0.2.5/sfx-uploader.min.js"><\/script>')}
 
         <h2>Package exports</h2>
         <table>

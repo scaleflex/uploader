@@ -1,4 +1,4 @@
-import { LitElement, nothing } from 'lit';
+import { LitElement } from 'lit';
 import { UploadFile, UploadRestrictions, UploadResponse } from './store/store.types';
 import { AuthConfig } from './auth/auth.types';
 import { ConnectorConfig } from './connectors/connector.types';
@@ -19,6 +19,7 @@ export interface UploaderCallbacks {
     onCancel?: () => void;
     onFilePreview?: (file: UploadFile) => void;
     onFillMetadata?: (files: UploadFile[]) => void;
+    onCompleteAction?: () => void;
 }
 export interface UploaderConfig {
     auth: AuthConfig;
@@ -45,6 +46,23 @@ export interface UploaderConfig {
     /** Whether the "Done" action clears all files (inline mode resets, modal mode closes). Default: true. */
     clearOnComplete?: boolean;
     /**
+     * Show the "Minimize & continue in background" button during uploads.
+     * When clicked, the modal collapses to a floating progress pill in the corner
+     * so the user can keep working while uploads finish.
+     * Default: false (button hidden).
+     */
+    minimizeOnUpload?: boolean;
+    /**
+     * Automatically close the uploader when all uploads complete.
+     * - `true`  — closes after a 1.5 s delay so the user briefly sees the success state.
+     * - number — custom delay in milliseconds (e.g. `2000` for 2 s).
+     * - `false` / omitted — disabled (default).
+     *
+     * Fires `onCompleteAction` + `onClose` callbacks and the corresponding public
+     * events before closing, same as if the user clicked "Done".
+     */
+    closeOnComplete?: boolean | number;
+    /**
      * Auto-remove rejected files after this delay in milliseconds.
      * Default: 4000 (4 seconds). Set to 0 or false to disable auto-removal.
      */
@@ -60,7 +78,11 @@ export declare class SfxUploader extends LitElement {
     private _showScreenCastDialog;
     private _previewFileId;
     private _previewDims;
+    private _splitPct;
+    private _isResizing;
+    private _splitRafId;
     private _fullscreenPreviewUrl;
+    private _fullscreenVideoFile;
     private _fullscreenZoomed;
     private _fsPanX;
     private _fsPanY;
@@ -70,13 +92,17 @@ export declare class SfxUploader extends LitElement {
     private _fsPanStartX;
     private _fsPanStartY;
     private _bodyDragOver;
+    private _isMinimized;
+    private _isPillExpanded;
     private _bodyDragCounter;
+    private _videoBlobUrls;
     private _store;
     private _storeCtrl;
     private _engine;
     private _cachedSources;
     private _cachedSourcesConfig;
     private _rejectedTimers;
+    private _closeOnCompleteTimer;
     private _apiBase;
     private _authHeaders;
     private _authResolveId;
@@ -110,6 +136,9 @@ export declare class SfxUploader extends LitElement {
         tags?: string[];
     }>): void;
     updated(changed: Map<string, unknown>): void;
+    private _injectFloatStyles;
+    private _updateFloatingPortal;
+    private _portalContainer;
     connectedCallback(): void;
     disconnectedCallback(): void;
     private _applyConfig;
@@ -127,7 +156,9 @@ export declare class SfxUploader extends LitElement {
     private get _phase();
     private _processIncomingFiles;
     private _onFilesSelected;
+    private _onDropTileSourceClick;
     private _onSourceClick;
+    private _handleSourceActivation;
     private _onUrlSubmit;
     private _onUrlCancel;
     private _onCameraCapture;
@@ -150,21 +181,32 @@ export declare class SfxUploader extends LitElement {
     private _onPrimaryAction;
     /** Dismiss handler for inline mode X button */
     private _onInlineDismiss;
+    /** Close button on the success card — route to the right dismiss based on mode */
+    private _onSuccessCardClose;
     /** Shared dismiss handler for X button, backdrop click, Escape */
     private _onModalDismiss;
+    private _onMinimize;
+    private _onPillClick;
+    private _onPillExpand;
+    private _onPillDismiss;
     private _onModalBackdropClick;
     private _onBodyDragEnter;
     private _onBodyDragOver;
     private _onBodyDragLeave;
     private _onBodyDrop;
     private _onKeyDown;
-    render(): typeof nothing | import('lit-html').TemplateResult<1>;
+    render(): import('lit-html').TemplateResult<1>;
     private _renderHeader;
     private _dimCache;
     private _getImageDimensions;
+    private _renderUploadOverlay;
+    private _renderFloatingPill;
+    private _onSplitPointerDown;
+    private _onSplitPointerMove;
+    private _onSplitPointerUp;
     private _renderPreviewLayout;
+    private _renderDocTypeIcon;
     private _navigatePreview;
-    private _onFileRemoveById;
     private _renderBody;
     private _onFsToggleZoom;
     private _onFsOverlayClick;
@@ -174,8 +216,10 @@ export declare class SfxUploader extends LitElement {
     private _onFsPanEnd;
     private _onFsTouchStart;
     private _onFsTouchMove;
+    private _navigateFs;
     private _onFsClose;
-    private _getFullscreenFilename;
+    private _getVideoBlobUrl;
+    private _revokeVideoBlobUrls;
 }
 declare global {
     interface HTMLElementTagNameMap {

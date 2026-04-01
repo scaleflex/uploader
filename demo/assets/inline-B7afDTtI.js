@@ -1,4 +1,4 @@
-import{b as l}from"./index-BIQyzLcq.js";import{r as d}from"./code-block-Bk3NnwHF.js";const i={render(){return`
+import{b as l}from"./index-DiBLSo6t.js";import{r as d}from"./code-block-Bk3NnwHF.js";const i={render(){return`
       <div class="page-header">
         <h1>Inline &amp; modal display</h1>
         <p>Embed the uploader directly in the page flow with <code>mode: 'inline'</code>, or open it as a modal overlay (the default). Both can coexist on the same page.</p>

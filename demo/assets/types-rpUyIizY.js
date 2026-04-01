@@ -9,7 +9,6 @@ import{h as r,c as e,d as t}from"./doc-utils-XkOyWBCy.js";const s={render(){retu
   AuthConfig,
   SecurityTemplateAuth,
   SassKeyAuth,
-  SessionAuth,
   UploadFile,
   FileStatus,
   UploadRestrictions,

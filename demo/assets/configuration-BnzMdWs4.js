@@ -4,9 +4,9 @@ import{h as t,c as e,d as o}from"./doc-utils-XkOyWBCy.js";const a={render(){retu
         <p class="doc-lead">All configuration is passed via the <code>config</code> property on the <code>&lt;sfx-uploader&gt;</code> element.</p>
 
         <h2>Authentication</h2>
-        <p>The uploader supports three authentication modes:</p>
+        <p>The uploader supports two authentication modes:</p>
 
-        <h3>Security template (recommended)</h3>
+        <h3>Security template (external / public apps)</h3>
         <p>Use for client-side integrations. The uploader exchanges the security template ID for a SASS key on init.</p>
         ${e("typescript",`{
   auth: {
@@ -16,7 +16,7 @@ import{h as t,c as e,d as o}from"./doc-utils-XkOyWBCy.js";const a={render(){retu
   }
 }`)}
 
-        <h3>SASS key (direct)</h3>
+        <h3>SASS key (internal / Scaleflex apps)</h3>
         <p>Use when you already have a SASS key (e.g. from your backend).</p>
         ${e("typescript",`{
   auth: {
@@ -26,36 +26,56 @@ import{h as t,c as e,d as o}from"./doc-utils-XkOyWBCy.js";const a={render(){retu
   }
 }`)}
 
-        <h3>Session (internal / Scaleflex apps)</h3>
-        <p>Use when your backend manages Scaleflex sessions.</p>
-        ${e("typescript",`{
-  auth: {
-    mode: 'session',
-    container: string,        // Scaleflex container name
-    sessionToken: string,     // X-Session-Token
-    companyToken?: string,    // X-Company-Token (optional)
-    projectToken?: string,    // X-Project-Token (optional)
-  }
-}`)}
-
         <h2>Config options</h2>
+
+        <h3>Required</h3>
         <table>
           <thead><tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
           <tbody>
             <tr><td><code>auth</code></td><td><code>AuthConfig</code></td><td><strong>required</strong></td><td>Authentication credentials (see above)</td></tr>
-            <tr><td><code>targetFolder</code></td><td><code>string</code></td><td><code>'/'</code></td><td>Destination folder path in Scaleflex</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Display</h3>
+        <table>
+          <thead><tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>headerButton</code></td><td><code>'none' | 'close' | 'back'</code></td><td><code>'close'</code> (modal) / <code>'none'</code> (inline)</td><td>Header navigation button. Use <code>'back'</code> with modal for step/wizard flows.</td></tr>
             <tr><td><code>mode</code></td><td><code>'modal' | 'inline'</code></td><td><code>'modal'</code></td><td>Display mode</td></tr>
-            <tr><td><code>headerButton</code></td><td><code>'none' | 'close' | 'back'</code></td><td><code>auto</code></td><td>Header navigation button. Defaults to <code>'close'</code> for modal, <code>'none'</code> for inline. Use <code>'back'</code> with modal for step/wizard flows.</td></tr>
-            <tr><td><code>concurrency</code></td><td><code>number</code></td><td><code>3</code></td><td>Maximum concurrent uploads</td></tr>
-            <tr><td><code>autoProceed</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Start uploading immediately after files are added</td></tr>
-            <tr><td><code>showFillMetadata</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Show "Fill Metadata" button in the actions bar</td></tr>
-            <tr><td><code>restrictions</code></td><td><code>UploadRestrictions</code></td><td><code>undefined</code></td><td>File validation rules (see below)</td></tr>
-            <tr><td><code>connectors</code></td><td><code>ConnectorConfig</code></td><td><code>undefined</code></td><td>Cloud provider configuration (see below)</td></tr>
             <tr><td><code>sourcesLayout</code></td><td><code>'pills' | 'cards'</code></td><td><code>'pills'</code></td><td>Layout for the import-from sources section. <code>'pills'</code> shows compact horizontal buttons; <code>'cards'</code> shows a grid of square cards with large icons.</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Upload behavior</h3>
+        <table>
+          <thead><tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>autoProceed</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Start uploading immediately after files are added</td></tr>
+            <tr><td><code>concurrency</code></td><td><code>number</code></td><td><code>3</code></td><td>Maximum concurrent uploads</td></tr>
+            <tr><td><code>showFillMetadata</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Show "Fill Metadata" button in the actions bar</td></tr>
+            <tr><td><code>targetFolder</code></td><td><code>string</code></td><td><code>'/'</code></td><td>Destination folder path in Scaleflex</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Lifecycle</h3>
+        <table>
+          <thead><tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+          <tbody>
             <tr><td><code>clearOnClose</code></td><td><code>boolean</code></td><td><code>true</code></td><td>Whether closing the modal clears all files. Set to <code>false</code> to preserve files across open/close cycles.</td></tr>
             <tr><td><code>clearOnComplete</code></td><td><code>boolean</code></td><td><code>true</code></td><td>Whether the "Done" action clears all files. In modal mode this also closes the uploader. Set to <code>false</code> to keep files after completion.</td></tr>
-            <tr><td><code>rejectedFileAutoRemoveDelay</code></td><td><code>number | false</code></td><td><code>4000</code></td><td>Auto-remove rejected files after this delay in milliseconds. Set to <code>0</code> or <code>false</code> to disable auto-removal.</td></tr>
+            <tr><td><code>closeOnComplete</code></td><td><code>boolean | number</code></td><td><code>false</code></td><td>Automatically close the uploader after all uploads finish. <code>true</code> uses a 1.5 s delay; pass a number for a custom delay in ms. Pairs well with <code>autoProceed</code> for a fully hands-off flow.</td></tr>
+            <tr><td><code>minimizeOnUpload</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Show a "Minimize & continue in background" button during uploads. When clicked, the modal collapses to a floating progress pill so the user can keep working.</td></tr>
+            <tr><td><code>rejectedFileAutoRemoveDelay</code></td><td><code>number | false</code></td><td><code>false</code></td><td>Auto-remove rejected files after this delay in milliseconds. Set to a number (e.g. <code>4000</code>) to enable auto-removal.</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Advanced</h3>
+        <table>
+          <thead><tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+          <tbody>
             <tr><td><code>callbacks</code></td><td><code>UploaderCallbacks</code></td><td><code>undefined</code></td><td>Lifecycle callbacks (see <a href="#/docs/api">API</a>)</td></tr>
+            <tr><td><code>connectors</code></td><td><code>ConnectorConfig</code></td><td><code>undefined</code></td><td>Cloud provider configuration (see below)</td></tr>
+            <tr><td><code>restrictions</code></td><td><code>UploadRestrictions</code></td><td><code>undefined</code></td><td>File validation rules (see below)</td></tr>
           </tbody>
         </table>
 
@@ -123,13 +143,31 @@ uploader.open();`)}
   clearOnComplete: false, // files remain after "Done" is clicked
 };`)}
 
-        <h3>Rejected file auto-removal</h3>
-        <p>Rejected files are auto-removed from the list after a configurable delay (default: 4 seconds). Set to <code>0</code> or <code>false</code> to keep rejected files visible until manually removed.</p>
+        <h3>Auto-close on complete</h3>
+        <p>Set <code>closeOnComplete: true</code> to automatically close the uploader after all uploads finish. The modal stays visible for 1.5 seconds so the user briefly sees the success state before it closes. Pairs naturally with <code>autoProceed</code> for a fully hands-off upload flow.</p>
         ${e("typescript",`uploader.config = {
   auth: { /* ... */ },
-  rejectedFileAutoRemoveDelay: 6000, // 6 seconds (default: 4000)
-  // rejectedFileAutoRemoveDelay: 0,  // disable auto-removal
+  autoProceed: true,      // start uploading immediately
+  closeOnComplete: true,  // auto-close after uploads finish
 };`)}
+
+        <h3>Minimize to background</h3>
+        <p>Set <code>minimizeOnUpload: true</code> to show a "Minimize & continue in background" button on the upload overlay. When clicked, the modal collapses into a small floating progress pill in the bottom-right corner, letting the user continue working while uploads finish in the background.</p>
+        ${e("typescript",`uploader.config = {
+  auth: { /* ... */ },
+  minimizeOnUpload: true, // show minimize button during uploads
+};`)}
+
+        <h3>Rejected file auto-removal</h3>
+        <p>By default, rejected files stay visible in the list. Set <code>rejectedFileAutoRemoveDelay</code> to a number to auto-remove them after that delay in milliseconds.</p>
+        ${e("typescript",`uploader.config = {
+  auth: { /* ... */ },
+  rejectedFileAutoRemoveDelay: 4000, // auto-remove after 4 seconds
+};`)}
+
+        <h3>Resizable preview panel</h3>
+        <p>When you click a file to preview it, the uploader splits into a <strong>file grid</strong> on the left and a <strong>preview panel</strong> on the right (420 px wide by default). Drag the vertical divider between them to resize — the file grid automatically adapts its column count (e.g. 3 → 4 columns) as you give it more space. The split range is clamped to 25 %–75 %.</p>
+        <p>Images with transparency (PNG, WebP) display a <strong>checkerboard background</strong> in both the grid thumbnails and the preview panel so you can instantly see alpha areas.</p>
 
         <h2>Upload restrictions</h2>
         <p>Restrict which files users can add via the <code>restrictions</code> config option.</p>

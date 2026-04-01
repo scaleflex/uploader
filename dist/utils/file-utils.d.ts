@@ -2,6 +2,8 @@
 export declare function generateFileId(): string;
 /** Format bytes into human-readable string. */
 export declare function formatFileSize(bytes: number): string;
+/** Format seconds into a human-readable ETA string. */
+export declare function formatEta(seconds: number): string;
 /** Detect file type category for icon/color styling. */
 export declare function getFileCategory(file: {
     name: string;
