@@ -355,19 +355,37 @@ export class SfxFileList extends LitElement {
     if (this._moreOpen) this._positionPortal();
   };
 
+  private _onKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'Escape' && this._moreOpen) {
+      this._moreOpen = false;
+      this._closePortal();
+      this._removeGlobalListeners();
+    }
+  };
+
+  private _addGlobalListeners() {
+    requestAnimationFrame(() => document.addEventListener('click', this._outsideClickHandler, true));
+    document.addEventListener('keydown', this._onKeyDown);
+    window.addEventListener('scroll', this._onScrollOrResize, true);
+    window.addEventListener('resize', this._onScrollOrResize);
+  }
+
+  private _removeGlobalListeners() {
+    document.removeEventListener('click', this._outsideClickHandler, true);
+    document.removeEventListener('keydown', this._onKeyDown);
+    window.removeEventListener('scroll', this._onScrollOrResize, true);
+    window.removeEventListener('resize', this._onScrollOrResize);
+  }
+
   private _toggleMore(e: Event) {
     e.stopPropagation();
     this._moreOpen = !this._moreOpen;
     if (this._moreOpen) {
       this._openPortal();
-      requestAnimationFrame(() => document.addEventListener('click', this._outsideClickHandler, true));
-      window.addEventListener('scroll', this._onScrollOrResize, true);
-      window.addEventListener('resize', this._onScrollOrResize);
+      this._addGlobalListeners();
     } else {
       this._closePortal();
-      document.removeEventListener('click', this._outsideClickHandler, true);
-      window.removeEventListener('scroll', this._onScrollOrResize, true);
-      window.removeEventListener('resize', this._onScrollOrResize);
+      this._removeGlobalListeners();
     }
   }
 
@@ -457,15 +475,13 @@ export class SfxFileList extends LitElement {
     super.disconnectedCallback();
     this._moreOpen = false;
     this._closePortal();
-    document.removeEventListener('click', this._outsideClickHandler, true);
-    window.removeEventListener('scroll', this._onScrollOrResize, true);
-    window.removeEventListener('resize', this._onScrollOrResize);
+    this._removeGlobalListeners();
   }
 
   private _onMoreSourceClick(e: Event, source: SourceDef) {
     this._moreOpen = false;
     this._closePortal();
-    document.removeEventListener('click', this._outsideClickHandler, true);
+    this._removeGlobalListeners();
     this._onSourceClick(e, source);
   }
 

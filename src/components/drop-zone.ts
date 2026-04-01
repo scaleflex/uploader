@@ -1140,7 +1140,7 @@ export class SfxDropZone extends LitElement {
     `;
   }
 
-  private _renderMoreCard(_overflowSources: SourceDef[]) {
+  private _renderMoreCard() {
     return html`
       <div class="more-wrap ${this._moreOpen ? 'open' : ''}">
         <button class="src-card" @click=${(e: MouseEvent) => this._toggleMore(e)}>
@@ -1157,7 +1157,7 @@ export class SfxDropZone extends LitElement {
     `;
   }
 
-  private _renderMoreDropdown(_overflowSources: SourceDef[]) {
+  private _renderMoreDropdown() {
     return html`
       <div class="more-wrap ${this._moreOpen ? 'open' : ''}">
         <button class="more-pill" @click=${(e: MouseEvent) => this._toggleMore(e)}>
@@ -1221,7 +1221,7 @@ export class SfxDropZone extends LitElement {
                     <div class="sources-cards">
                       ${visibleSources.map((s) => this._renderCard(s))}
                       ${overflowSources.length > 0
-                        ? this._renderMoreCard(overflowSources)
+                        ? this._renderMoreCard()
                         : nothing}
                     </div>
                   `
@@ -1229,7 +1229,7 @@ export class SfxDropZone extends LitElement {
                     <div class="sources-grid">
                       ${visibleSources.map((s) => this._renderPill(s))}
                       ${overflowSources.length > 0
-                        ? this._renderMoreDropdown(overflowSources)
+                        ? this._renderMoreDropdown()
                         : nothing}
                     </div>
                   `}

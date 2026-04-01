@@ -129,6 +129,8 @@ export class SfxUploader extends LitElement {
       --sfx-up-backdrop: rgba(0, 0, 0, 0.45);
       --sfx-up-ring: var(--ring, oklch(0.578 0.198 268.129 / 0.7));
       --sfx-up-max-height: 88vh;
+      --sfx-up-checker-bg: #fff;
+      --sfx-up-checker-tile: #f0f0f0;
     }
 
     /* --- Modal overlay --- */
@@ -389,7 +391,7 @@ export class SfxUploader extends LitElement {
     }
 
     .preview-layout .file-grid-side {
-      flex: 1;
+      flex: 68;
       min-width: 0;
       min-height: 100%;
       overflow: hidden;
@@ -494,8 +496,7 @@ export class SfxUploader extends LitElement {
     }
 
     .preview-panel {
-      width: 420px;
-      flex-shrink: 0;
+      flex: 32;
       min-width: 0;
       display: flex;
       flex-direction: column;
@@ -630,12 +631,12 @@ export class SfxUploader extends LitElement {
       position: relative;
       flex: 1;
       min-height: 0;
-      background-color: #fff;
+      background-color: var(--sfx-up-checker-bg);
       background-image:
-        linear-gradient(45deg, #f0f0f0 25%, transparent 25%),
-        linear-gradient(-45deg, #f0f0f0 25%, transparent 25%),
-        linear-gradient(45deg, transparent 75%, #f0f0f0 75%),
-        linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
+        linear-gradient(45deg, var(--sfx-up-checker-tile) 25%, transparent 25%),
+        linear-gradient(-45deg, var(--sfx-up-checker-tile) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, var(--sfx-up-checker-tile) 75%),
+        linear-gradient(-45deg, transparent 75%, var(--sfx-up-checker-tile) 75%);
       background-size: 16px 16px;
       background-position: 0 0, 0 8px, 8px -8px, -8px 0;
     }
@@ -1383,6 +1384,7 @@ export class SfxUploader extends LitElement {
   @state() private _previewDims: string = '—';
   @state() private _splitPct = 68; // file-grid-side percentage
   private _isResizing = false;
+  private _splitRafId = 0;
   @state() private _fullscreenPreviewUrl: string | null = null;
   @state() private _fullscreenVideoFile: File | null = null;
   @state() private _fullscreenZoomed = false;
@@ -2791,15 +2793,24 @@ export class SfxUploader extends LitElement {
 
   private _onSplitPointerMove = (e: PointerEvent) => {
     if (!this._isResizing) return;
-    const layout = this.shadowRoot?.querySelector('.preview-layout') as HTMLElement;
-    if (!layout) return;
-    const rect = layout.getBoundingClientRect();
-    const pct = ((e.clientX - rect.left) / rect.width) * 100;
-    this._splitPct = Math.max(25, Math.min(75, pct));
+    if (this._splitRafId) return;
+    const clientX = e.clientX;
+    this._splitRafId = requestAnimationFrame(() => {
+      this._splitRafId = 0;
+      const layout = this.shadowRoot?.querySelector('.preview-layout') as HTMLElement;
+      if (!layout) return;
+      const rect = layout.getBoundingClientRect();
+      const pct = ((clientX - rect.left) / rect.width) * 100;
+      this._splitPct = Math.max(25, Math.min(75, pct));
+    });
   };
 
   private _onSplitPointerUp = () => {
     this._isResizing = false;
+    if (this._splitRafId) {
+      cancelAnimationFrame(this._splitRafId);
+      this._splitRafId = 0;
+    }
     const layout = this.shadowRoot?.querySelector('.preview-layout') as HTMLElement;
     layout?.classList.remove('resizing');
   };
@@ -2815,7 +2826,7 @@ export class SfxUploader extends LitElement {
     return html`
       <div class="preview-topbar"></div>
       <div class="preview-layout">
-        <div class="file-grid-side" style=${this._splitPct !== 68 ? `flex:${this._splitPct}` : ''}>
+        <div class="file-grid-side" style="flex:${this._splitPct}">
           <div class="file-grid-header">
             <span class="file-grid-header-text">${files.length} ${files.length === 1 ? 'asset' : 'assets'} · ${formatFileSize(totalSize)}</span>
           </div>
@@ -2833,7 +2844,7 @@ export class SfxUploader extends LitElement {
           @pointerup=${this._onSplitPointerUp}
           @lostpointercapture=${this._onSplitPointerUp}
         ></div>
-        <div class="preview-panel" style=${this._splitPct !== 68 ? `width:auto;flex:${100 - this._splitPct}` : ''}>
+        <div class="preview-panel" style="flex:${100 - this._splitPct}">
           <div class="preview-panel-header">
             <span class="preview-panel-filename" title=${previewFile.name}>${previewFile.name}</span>
             <div class="preview-header-actions">

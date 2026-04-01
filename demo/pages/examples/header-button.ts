@@ -10,9 +10,13 @@ function updateCode() {
   if (!container) return;
   container.innerHTML = '';
 
+  const headerButtonLine = selectedHeaderButton === 'close'
+    ? '\n    // headerButton: \'close\' // default for modal, can be omitted'
+    : `\n    headerButton: '${selectedHeaderButton}',`;
+
   renderCodeBlock('#code-container', [
     {
-      label: 'HTML',
+      label: 'HTML (modal)',
       lang: 'markup',
       code: `
 <sfx-uploader id="uploader"></sfx-uploader>
@@ -26,10 +30,32 @@ function updateCode() {
       mode: 'security-template',
       container: 'YOUR_CONTAINER',
       securityTemplateId: 'SECU_...',
-    },
-    headerButton: '${selectedHeaderButton}',
+    },${headerButtonLine}
   };
   uploader.open();
+</script>`,
+    },
+    {
+      label: 'HTML (inline)',
+      lang: 'markup',
+      code: `
+<div style="height: 500px;">
+  <sfx-uploader id="uploader"></sfx-uploader>
+</div>
+
+<script type="module">
+  import '@scaleflex/uploader/define';
+
+  const uploader = document.getElementById('uploader');
+  uploader.config = {
+    auth: {
+      mode: 'security-template',
+      container: 'YOUR_CONTAINER',
+      securityTemplateId: 'SECU_...',
+    },
+    mode: 'inline',
+    headerButton: 'back', // 'none' (default for inline), 'close', or 'back'
+  };
 </script>`,
     },
     {
@@ -52,8 +78,7 @@ export function App() {
             mode: 'security-template',
             container: 'YOUR_CONTAINER',
             securityTemplateId: 'SECU_...',
-          },
-          headerButton: '${selectedHeaderButton}',
+          },${headerButtonLine}
         }}
         onAllComplete={(ok, failed) => console.log('Done:', ok, failed)}
         onClose={() => setOpen(false)}
@@ -87,7 +112,7 @@ const page: Page = {
           </label>
           <label class="radio-control">
             <input type="radio" name="header-button" value="none" />
-            <span class="radio-text"><code>none</code> — no button (default for inline)</span>
+            <span class="radio-text"><code>none</code> — no button; Escape is also disabled (click backdrop to close)</span>
           </label>
         </div>
         <button class="btn-primary open-btn-spacing" id="open-modal-btn">Open uploader in modal</button>
@@ -157,6 +182,8 @@ const page: Page = {
   destroy() {
     const inlineUploader = document.getElementById('inline-uploader') as SfxUploader | null;
     if (inlineUploader) inlineUploader.close();
+    const uploader = document.getElementById('uploader') as SfxUploader | null;
+    if (uploader) uploader.close();
   },
 };
 
