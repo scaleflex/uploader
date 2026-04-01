@@ -630,7 +630,14 @@ export class SfxUploader extends LitElement {
       position: relative;
       flex: 1;
       min-height: 0;
-      background: var(--sfx-up-surface, #f1f5f9);
+      background-color: #fff;
+      background-image:
+        linear-gradient(45deg, #f0f0f0 25%, transparent 25%),
+        linear-gradient(-45deg, #f0f0f0 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #f0f0f0 75%),
+        linear-gradient(-45deg, transparent 75%, #f0f0f0 75%);
+      background-size: 16px 16px;
+      background-position: 0 0, 0 8px, 8px -8px, -8px 0;
     }
 
     .preview-image {

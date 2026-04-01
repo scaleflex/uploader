@@ -206,6 +206,10 @@ uploader.open();`,
 };`,
         )}
 
+        <h3>Resizable preview panel</h3>
+        <p>When you click a file to preview it, the uploader splits into a <strong>file grid</strong> on the left and a <strong>preview panel</strong> on the right (420 px wide by default). Drag the vertical divider between them to resize — the file grid automatically adapts its column count (e.g. 3 → 4 columns) as you give it more space. The split range is clamped to 25 %–75 %.</p>
+        <p>Images with transparency (PNG, WebP) display a <strong>checkerboard background</strong> in both the grid thumbnails and the preview panel so you can instantly see alpha areas.</p>
+
         <h2>Upload restrictions</h2>
         <p>Restrict which files users can add via the <code>restrictions</code> config option.</p>
         ${code(
