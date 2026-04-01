@@ -1,4 +1,4 @@
-import { LitElement, html, css, nothing } from 'lit';
+import { LitElement, html, css, nothing, render as litRender } from 'lit';
 import { property, state, query } from 'lit/decorators.js';
 import { unsafeSVG } from 'lit/directives/unsafe-svg.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
@@ -924,18 +924,73 @@ export class SfxDropZone extends LitElement {
     );
   }
 
+  private _portalContainer: HTMLDivElement | null = null;
+
   private _toggleMore(e: MouseEvent) {
     e.stopPropagation();
     this._moreOpen = !this._moreOpen;
+    this._updateDropdownPortal();
+  }
+
+  private _updateDropdownPortal() {
     if (this._moreOpen) {
+      const overflowSources = this.sources.slice(this._visiblePills);
+      if (!this._portalContainer) {
+        this._portalContainer = document.createElement('div');
+        this._portalContainer.setAttribute('data-sfx-more-dropdown', '');
+        this._injectDropdownStyles();
+        document.body.appendChild(this._portalContainer);
+      }
+      litRender(
+        html`<div class="sfx-more-dropdown open">
+          ${overflowSources.map(
+            (s) => html`
+              <button class="sfx-more-item" @click=${(e: MouseEvent) => this._onMoreItemClick(s, e)}>
+                <div class="sfx-more-item-ico">
+                  ${s.brandHtml
+                    ? unsafeHTML(s.brandHtml)
+                    : s.iconColor
+                      ? html`<svg viewBox="0 0 24 24" style="color:${s.iconColor}">${unsafeSVG(s.icon)}</svg>`
+                      : svgTag`<svg viewBox="0 0 24 24">${unsafeSVG(s.icon)}</svg>`}
+                </div>
+                ${s.label}
+              </button>
+            `,
+          )}
+        </div>`,
+        this._portalContainer,
+      );
       requestAnimationFrame(() => this._positionDropdown());
+    } else if (this._portalContainer) {
+      litRender(nothing, this._portalContainer);
+      this._portalContainer.remove();
+      this._portalContainer = null;
     }
+  }
+
+  private _injectDropdownStyles() {
+    if (document.querySelector('style[data-sfx-more-dropdown-styles]')) return;
+    const style = document.createElement('style');
+    style.setAttribute('data-sfx-more-dropdown-styles', '');
+    style.textContent = `
+      [data-sfx-more-dropdown] .sfx-more-dropdown { position:fixed; background:#fff; border-radius:12px; box-shadow:0 12px 40px rgba(0,0,0,0.14),0 2px 8px rgba(0,0,0,0.06); border:1px solid #e8edf5; padding:6px; min-width:210px; max-height:340px; overflow-y:auto; z-index:99999; opacity:0; visibility:hidden; pointer-events:none; transition:opacity .18s ease,visibility .18s ease,transform .18s ease; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; }
+      [data-sfx-more-dropdown] .sfx-more-dropdown.open { opacity:1; visibility:visible; pointer-events:all; }
+      [data-sfx-more-dropdown] .sfx-more-item { display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:6px; border:none; background:none; width:100%; font-size:13px; font-weight:500; color:#1e293b; cursor:pointer; transition:background .15s; font-family:inherit; white-space:nowrap; }
+      [data-sfx-more-dropdown] .sfx-more-item:hover { background:#f5f7fa; }
+      [data-sfx-more-dropdown] .sfx-more-item-ico { width:32px; height:32px; border-radius:8px; background:#f8fafc; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+      [data-sfx-more-dropdown] .sfx-more-item-ico svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; }
+      [data-sfx-more-dropdown] .sfx-more-item .brand-ico { width:20px; height:20px; border-radius:5px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+      [data-sfx-more-dropdown] .sfx-more-item .brand-ico svg { fill:white; stroke:none; stroke-width:0; }
+      [data-sfx-more-dropdown] .sfx-more-item .canva-ico { width:22px; height:22px; }
+      [data-sfx-more-dropdown] .sfx-more-item .canva-ico svg { width:22px; height:22px; }
+    `;
+    document.head.appendChild(style);
   }
 
   /** Position the fixed dropdown, choosing above or below based on available space. */
   private _positionDropdown() {
     const pill = this.shadowRoot?.querySelector('.more-wrap > button') as HTMLElement;
-    const dropdown = this.shadowRoot?.querySelector('.more-dropdown') as HTMLElement;
+    const dropdown = this._portalContainer?.querySelector('.sfx-more-dropdown') as HTMLElement;
     if (!pill || !dropdown) return;
 
     const pillRect = pill.getBoundingClientRect();
@@ -952,12 +1007,8 @@ export class SfxDropZone extends LitElement {
     const openAbove = spaceAbove >= ddHeight + gap || spaceAbove > spaceBelow;
 
     if (openAbove) {
-      dropdown.classList.add('above');
-      dropdown.classList.remove('below');
       dropdown.style.top = `${pillRect.top - ddHeight - gap}px`;
     } else {
-      dropdown.classList.add('below');
-      dropdown.classList.remove('above');
       dropdown.style.top = `${pillRect.bottom + gap}px`;
     }
 
@@ -973,13 +1024,18 @@ export class SfxDropZone extends LitElement {
     this._onSourceIconClick(source);
   }
 
-  private _onDocClick = () => {
-    if (this._moreOpen) this._moreOpen = false;
+  private _onDocClick = (e: MouseEvent) => {
+    if (!this._moreOpen) return;
+    // Don't close if clicking inside the portal dropdown
+    if (this._portalContainer?.contains(e.target as Node)) return;
+    this._moreOpen = false;
+    this._updateDropdownPortal();
   };
 
   private _onDocKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Escape' && this._moreOpen) {
       this._moreOpen = false;
+      this._updateDropdownPortal();
     }
   };
 
@@ -1038,6 +1094,11 @@ export class SfxDropZone extends LitElement {
     window.removeEventListener('scroll', this._onScrollOrResize, true);
     window.removeEventListener('resize', this._onScrollOrResize);
     if (this._resizeTimer) clearTimeout(this._resizeTimer);
+    if (this._portalContainer) {
+      litRender(nothing, this._portalContainer);
+      this._portalContainer.remove();
+      this._portalContainer = null;
+    }
   }
 
   private _renderPill(s: SourceDef) {
@@ -1079,7 +1140,7 @@ export class SfxDropZone extends LitElement {
     `;
   }
 
-  private _renderMoreCard(overflowSources: SourceDef[]) {
+  private _renderMoreCard(_overflowSources: SourceDef[]) {
     return html`
       <div class="more-wrap ${this._moreOpen ? 'open' : ''}">
         <button class="src-card" @click=${(e: MouseEvent) => this._toggleMore(e)}>
@@ -1092,49 +1153,17 @@ export class SfxDropZone extends LitElement {
           </span>
           <span class="card-label">More</span>
         </button>
-        <div class="more-dropdown">
-          ${overflowSources.map(
-            (s) => html`
-              <button class="more-item" @click=${(e: MouseEvent) => this._onMoreItemClick(s, e)}>
-                <div class="more-item-ico">
-                  ${s.brandHtml
-                    ? unsafeHTML(s.brandHtml)
-                    : s.iconColor
-                      ? html`<svg viewBox="0 0 24 24" style="color:${s.iconColor}">${unsafeSVG(s.icon)}</svg>`
-                      : svgTag`<svg viewBox="0 0 24 24">${unsafeSVG(s.icon)}</svg>`}
-                </div>
-                ${s.label}
-              </button>
-            `,
-          )}
-        </div>
       </div>
     `;
   }
 
-  private _renderMoreDropdown(overflowSources: SourceDef[]) {
+  private _renderMoreDropdown(_overflowSources: SourceDef[]) {
     return html`
       <div class="more-wrap ${this._moreOpen ? 'open' : ''}">
         <button class="more-pill" @click=${(e: MouseEvent) => this._toggleMore(e)}>
           More
           <svg class="more-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
-        <div class="more-dropdown">
-          ${overflowSources.map(
-            (s) => html`
-              <button class="more-item" @click=${(e: MouseEvent) => this._onMoreItemClick(s, e)}>
-                <div class="more-item-ico">
-                  ${s.brandHtml
-                    ? unsafeHTML(s.brandHtml)
-                    : s.iconColor
-                      ? html`<svg viewBox="0 0 24 24" style="color:${s.iconColor}">${unsafeSVG(s.icon)}</svg>`
-                      : svgTag`<svg viewBox="0 0 24 24">${unsafeSVG(s.icon)}</svg>`}
-                </div>
-                ${s.label}
-              </button>
-            `,
-          )}
-        </div>
       </div>
     `;
   }
