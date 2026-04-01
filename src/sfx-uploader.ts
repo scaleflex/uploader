@@ -389,14 +389,14 @@ export class SfxUploader extends LitElement {
     }
 
     .preview-layout .file-grid-side {
-      flex: 54;
+      flex: 1;
       min-width: 0;
       min-height: 100%;
       overflow: hidden;
       display: flex;
       flex-direction: column;
       position: relative;
-      --sfx-up-grid-min: max(48%, 140px);
+      --sfx-up-grid-min: max(30%, 140px);
     }
 
     .preview-layout .file-grid-side::after {
@@ -442,21 +442,60 @@ export class SfxUploader extends LitElement {
     }
 
     .preview-divider {
-      width: 1px;
-      background: var(--sfx-up-border, #e8edf5);
+      width: 9px;
       flex-shrink: 0;
       position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
+      cursor: col-resize;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .preview-divider::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 4px;
+      width: 1px;
+      background: var(--sfx-up-border, #e8edf5);
     }
 
     .preview-divider::after {
-      display: none;
+      content: '';
+      width: 3px;
+      height: 28px;
+      border-radius: 2px;
+      background: var(--sfx-up-border, #d0d7e2);
+      opacity: 0;
+      transition: opacity 0.15s;
+      z-index: 1;
+    }
+
+    .preview-divider:hover::after,
+    .preview-layout.resizing .preview-divider::after {
+      opacity: 1;
+    }
+
+    .preview-layout.resizing {
+      cursor: col-resize;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .preview-layout.resizing * {
+      pointer-events: none;
+    }
+
+    .preview-layout.resizing .preview-divider {
+      pointer-events: auto;
     }
 
     .preview-panel {
-      flex: 46;
+      width: 420px;
+      flex-shrink: 0;
       min-width: 0;
       display: flex;
       flex-direction: column;
@@ -1335,6 +1374,8 @@ export class SfxUploader extends LitElement {
   @state() private _showScreenCastDialog = false;
   @state() private _previewFileId: string | null = null;
   @state() private _previewDims: string = '—';
+  @state() private _splitPct = 68; // file-grid-side percentage
+  private _isResizing = false;
   @state() private _fullscreenPreviewUrl: string | null = null;
   @state() private _fullscreenVideoFile: File | null = null;
   @state() private _fullscreenZoomed = false;
@@ -2733,6 +2774,29 @@ export class SfxUploader extends LitElement {
     `;
   }
 
+  private _onSplitPointerDown = (e: PointerEvent) => {
+    e.preventDefault();
+    this._isResizing = true;
+    const layout = this.shadowRoot?.querySelector('.preview-layout') as HTMLElement;
+    layout?.classList.add('resizing');
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  };
+
+  private _onSplitPointerMove = (e: PointerEvent) => {
+    if (!this._isResizing) return;
+    const layout = this.shadowRoot?.querySelector('.preview-layout') as HTMLElement;
+    if (!layout) return;
+    const rect = layout.getBoundingClientRect();
+    const pct = ((e.clientX - rect.left) / rect.width) * 100;
+    this._splitPct = Math.max(25, Math.min(75, pct));
+  };
+
+  private _onSplitPointerUp = () => {
+    this._isResizing = false;
+    const layout = this.shadowRoot?.querySelector('.preview-layout') as HTMLElement;
+    layout?.classList.remove('resizing');
+  };
+
   private _renderPreviewLayout(files: UploadFile[]) {
     if (files.length === 0) return nothing;
     const previewFile = files.find((f) => f.id === this._previewFileId) ?? files[0];
@@ -2744,7 +2808,7 @@ export class SfxUploader extends LitElement {
     return html`
       <div class="preview-topbar"></div>
       <div class="preview-layout">
-        <div class="file-grid-side">
+        <div class="file-grid-side" style=${this._splitPct !== 68 ? `flex:${this._splitPct}` : ''}>
           <div class="file-grid-header">
             <span class="file-grid-header-text">${files.length} ${files.length === 1 ? 'asset' : 'assets'} · ${formatFileSize(totalSize)}</span>
           </div>
@@ -2756,8 +2820,13 @@ export class SfxUploader extends LitElement {
             @source-click=${this._onDropTileSourceClick}
           ></sfx-file-list>
         </div>
-        <div class="preview-divider"></div>
-        <div class="preview-panel">
+        <div class="preview-divider"
+          @pointerdown=${this._onSplitPointerDown}
+          @pointermove=${this._onSplitPointerMove}
+          @pointerup=${this._onSplitPointerUp}
+          @lostpointercapture=${this._onSplitPointerUp}
+        ></div>
+        <div class="preview-panel" style=${this._splitPct !== 68 ? `width:auto;flex:${100 - this._splitPct}` : ''}>
           <div class="preview-panel-header">
             <span class="preview-panel-filename" title=${previewFile.name}>${previewFile.name}</span>
             <div class="preview-header-actions">

@@ -58,10 +58,10 @@ export class SfxFileList extends LitElement {
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: 6px;
       cursor: pointer;
       transition: all 0.18s ease;
-      padding: 16px 12px;
+      padding: 12px 10px;
       position: relative;
       z-index: 1;
       min-height: 0;
@@ -74,8 +74,8 @@ export class SfxFileList extends LitElement {
     }
 
     .drop-tile-rings {
-      width: clamp(48px, 8vw, 72px);
-      height: clamp(48px, 8vw, 72px);
+      width: clamp(40px, 6vw, 60px);
+      height: clamp(40px, 6vw, 60px);
       position: relative;
       display: flex;
       align-items: center;
@@ -104,8 +104,8 @@ export class SfxFileList extends LitElement {
     }
 
     .drop-tile-core {
-      width: clamp(28px, 5vw, 40px);
-      height: clamp(28px, 5vw, 40px);
+      width: clamp(24px, 4vw, 34px);
+      height: clamp(24px, 4vw, 34px);
       border-radius: 50%;
       background: var(--sfx-up-primary-bg, #eff6ff);
       color: var(--sfx-up-primary, #2563eb);
@@ -123,16 +123,16 @@ export class SfxFileList extends LitElement {
     }
 
     .drop-tile-core svg {
-      width: 20px;
-      height: 20px;
+      width: 16px;
+      height: 16px;
     }
 
     .drop-tile-text {
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 500;
       color: var(--sfx-up-text-secondary, #475569);
       text-align: center;
-      line-height: 1.4;
+      line-height: 1.3;
     }
 
     .drop-tile-text span {
@@ -142,8 +142,8 @@ export class SfxFileList extends LitElement {
 
     .drop-tile-sources {
       display: flex;
-      gap: 4px;
-      margin-top: 4px;
+      gap: 3px;
+      margin-top: 2px;
     }
 
     .drop-tile-src {
