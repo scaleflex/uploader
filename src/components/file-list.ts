@@ -351,15 +351,23 @@ export class SfxFileList extends LitElement {
     this.dispatchEvent(new CustomEvent('source-click', { detail: { source }, bubbles: true, composed: true }));
   }
 
+  private _onScrollOrResize = () => {
+    if (this._moreOpen) this._positionPortal();
+  };
+
   private _toggleMore(e: Event) {
     e.stopPropagation();
     this._moreOpen = !this._moreOpen;
     if (this._moreOpen) {
       this._openPortal();
       requestAnimationFrame(() => document.addEventListener('click', this._outsideClickHandler, true));
+      window.addEventListener('scroll', this._onScrollOrResize, true);
+      window.addEventListener('resize', this._onScrollOrResize);
     } else {
       this._closePortal();
       document.removeEventListener('click', this._outsideClickHandler, true);
+      window.removeEventListener('scroll', this._onScrollOrResize, true);
+      window.removeEventListener('resize', this._onScrollOrResize);
     }
   }
 
@@ -450,6 +458,8 @@ export class SfxFileList extends LitElement {
     this._moreOpen = false;
     this._closePortal();
     document.removeEventListener('click', this._outsideClickHandler, true);
+    window.removeEventListener('scroll', this._onScrollOrResize, true);
+    window.removeEventListener('resize', this._onScrollOrResize);
   }
 
   private _onMoreSourceClick(e: Event, source: SourceDef) {
