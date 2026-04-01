@@ -1,4 +1,4 @@
-import { LitElement, html, css, nothing, svg as svgTag } from 'lit';
+import { LitElement, html, css, nothing, svg as svgTag, render as litRender } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { unsafeSVG } from 'lit/directives/unsafe-svg.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
@@ -58,10 +58,10 @@ export class SfxFileList extends LitElement {
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: 6px;
       cursor: pointer;
       transition: all 0.18s ease;
-      padding: 16px 12px;
+      padding: 12px 10px;
       position: relative;
       z-index: 1;
       min-height: 0;
@@ -74,8 +74,8 @@ export class SfxFileList extends LitElement {
     }
 
     .drop-tile-rings {
-      width: clamp(48px, 8vw, 72px);
-      height: clamp(48px, 8vw, 72px);
+      width: clamp(40px, 6vw, 60px);
+      height: clamp(40px, 6vw, 60px);
       position: relative;
       display: flex;
       align-items: center;
@@ -104,8 +104,8 @@ export class SfxFileList extends LitElement {
     }
 
     .drop-tile-core {
-      width: clamp(28px, 5vw, 40px);
-      height: clamp(28px, 5vw, 40px);
+      width: clamp(24px, 4vw, 34px);
+      height: clamp(24px, 4vw, 34px);
       border-radius: 50%;
       background: var(--sfx-up-primary-bg, #eff6ff);
       color: var(--sfx-up-primary, #2563eb);
@@ -123,16 +123,16 @@ export class SfxFileList extends LitElement {
     }
 
     .drop-tile-core svg {
-      width: 20px;
-      height: 20px;
+      width: 16px;
+      height: 16px;
     }
 
     .drop-tile-text {
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 500;
       color: var(--sfx-up-text-secondary, #475569);
       text-align: center;
-      line-height: 1.4;
+      line-height: 1.3;
     }
 
     .drop-tile-text span {
@@ -142,8 +142,8 @@ export class SfxFileList extends LitElement {
 
     .drop-tile-sources {
       display: flex;
-      gap: 4px;
-      margin-top: 4px;
+      gap: 3px;
+      margin-top: 2px;
     }
 
     .drop-tile-src {
@@ -315,13 +315,16 @@ export class SfxFileList extends LitElement {
   @property({ type: String }) accept = '';
 
   @state() private _moreOpen = false;
+  private _portalContainer: HTMLDivElement | null = null;
+
   private _outsideClickHandler = (e: MouseEvent) => {
-    const path = e.composedPath();
+    if (this._portalContainer?.contains(e.target as Node)) return;
     const moreWrap = this.renderRoot.querySelector('.drop-tile-more-wrap');
-    if (moreWrap && !path.includes(moreWrap)) {
-      this._moreOpen = false;
-      document.removeEventListener('click', this._outsideClickHandler, true);
-    }
+    const path = e.composedPath();
+    if (moreWrap && path.includes(moreWrap)) return;
+    this._moreOpen = false;
+    this._closePortal();
+    document.removeEventListener('click', this._outsideClickHandler, true);
   };
 
   private _onDropTileClick() {
@@ -348,24 +351,120 @@ export class SfxFileList extends LitElement {
     this.dispatchEvent(new CustomEvent('source-click', { detail: { source }, bubbles: true, composed: true }));
   }
 
+  private _onScrollOrResize = () => {
+    if (this._moreOpen) this._positionPortal();
+  };
+
   private _toggleMore(e: Event) {
     e.stopPropagation();
     this._moreOpen = !this._moreOpen;
     if (this._moreOpen) {
+      this._openPortal();
       requestAnimationFrame(() => document.addEventListener('click', this._outsideClickHandler, true));
+      window.addEventListener('scroll', this._onScrollOrResize, true);
+      window.addEventListener('resize', this._onScrollOrResize);
     } else {
+      this._closePortal();
       document.removeEventListener('click', this._outsideClickHandler, true);
+      window.removeEventListener('scroll', this._onScrollOrResize, true);
+      window.removeEventListener('resize', this._onScrollOrResize);
     }
+  }
+
+  private _openPortal() {
+    const overflowSources = this.sources.slice(3);
+    if (!this._portalContainer) {
+      this._portalContainer = document.createElement('div');
+      this._portalContainer.setAttribute('data-sfx-tile-dropdown', '');
+      this._injectTileDropdownStyles();
+      document.body.appendChild(this._portalContainer);
+    }
+    litRender(
+      html`<div class="sfx-tile-dropdown">
+        ${overflowSources.map((s) => html`
+          <button
+            class="sfx-tile-dropdown-item"
+            @click=${(e: Event) => this._onMoreSourceClick(e, s)}
+          >
+            <span class="sfx-tile-dropdown-ico" style=${s.iconColor && !s.brandHtml ? `color:${s.iconColor}` : ''}>
+              ${s.brandHtml
+                ? unsafeHTML(s.brandHtml)
+                : svgTag`<svg viewBox="0 0 24 24" class=${s.fillIcon ? 'fill-icon' : ''}>${unsafeSVG(s.icon)}</svg>`}
+            </span>
+            ${s.label}
+          </button>
+        `)}
+      </div>`,
+      this._portalContainer,
+    );
+    requestAnimationFrame(() => this._positionPortal());
+  }
+
+  private _positionPortal() {
+    const btn = this.renderRoot.querySelector('.drop-tile-more') as HTMLElement;
+    const dropdown = this._portalContainer?.querySelector('.sfx-tile-dropdown') as HTMLElement;
+    if (!btn || !dropdown) return;
+
+    const btnRect = btn.getBoundingClientRect();
+    const gap = 6;
+    const ddHeight = dropdown.scrollHeight;
+    const ddWidth = dropdown.offsetWidth;
+
+    const spaceAbove = btnRect.top;
+    const spaceBelow = window.innerHeight - btnRect.bottom;
+    const openAbove = spaceAbove >= ddHeight + gap || spaceAbove > spaceBelow;
+
+    if (openAbove) {
+      dropdown.style.top = `${btnRect.top - ddHeight - gap}px`;
+    } else {
+      dropdown.style.top = `${btnRect.bottom + gap}px`;
+    }
+
+    let left = btnRect.right - ddWidth;
+    left = Math.max(8, Math.min(left, window.innerWidth - ddWidth - 8));
+    dropdown.style.left = `${left}px`;
+  }
+
+  private _closePortal() {
+    if (this._portalContainer) {
+      litRender(nothing, this._portalContainer);
+      this._portalContainer.remove();
+      this._portalContainer = null;
+    }
+  }
+
+  private _injectTileDropdownStyles() {
+    if (document.querySelector('style[data-sfx-tile-dropdown-styles]')) return;
+    const style = document.createElement('style');
+    style.setAttribute('data-sfx-tile-dropdown-styles', '');
+    style.textContent = `
+      [data-sfx-tile-dropdown] .sfx-tile-dropdown { position:fixed; background:#fff; border:1px solid #e2e8f0; border-radius:10px; box-shadow:0 4px 20px rgba(0,0,0,0.12); padding:6px; z-index:99999; min-width:180px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; animation:sfxTileDropIn .15s ease; }
+      [data-sfx-tile-dropdown] .sfx-tile-dropdown-item { display:flex; align-items:center; gap:10px; width:100%; padding:8px 12px; border:none; background:none; border-radius:6px; cursor:pointer; font-size:13px; font-weight:500; color:#1e293b; white-space:nowrap; transition:background .15s; font-family:inherit; }
+      [data-sfx-tile-dropdown] .sfx-tile-dropdown-item:hover { background:#f5f7fa; }
+      [data-sfx-tile-dropdown] .sfx-tile-dropdown-ico { width:32px; height:32px; border-radius:8px; background:#f8fafc; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+      [data-sfx-tile-dropdown] .sfx-tile-dropdown-ico svg { width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+      [data-sfx-tile-dropdown] .sfx-tile-dropdown-ico svg.fill-icon { fill:currentColor; stroke:none; }
+      [data-sfx-tile-dropdown] .sfx-tile-dropdown-ico .brand-ico { width:20px; height:20px; border-radius:5px; display:flex; align-items:center; justify-content:center; }
+      [data-sfx-tile-dropdown] .sfx-tile-dropdown-ico .brand-ico svg { fill:white; stroke:none; stroke-width:0; }
+      [data-sfx-tile-dropdown] .sfx-tile-dropdown-ico .canva-ico { width:22px; height:22px; }
+      [data-sfx-tile-dropdown] .sfx-tile-dropdown-ico .canva-ico svg { width:22px; height:22px; }
+      @keyframes sfxTileDropIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
+    `;
+    document.head.appendChild(style);
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
     this._moreOpen = false;
+    this._closePortal();
     document.removeEventListener('click', this._outsideClickHandler, true);
+    window.removeEventListener('scroll', this._onScrollOrResize, true);
+    window.removeEventListener('resize', this._onScrollOrResize);
   }
 
   private _onMoreSourceClick(e: Event, source: SourceDef) {
     this._moreOpen = false;
+    this._closePortal();
     document.removeEventListener('click', this._outsideClickHandler, true);
     this._onSourceClick(e, source);
   }
@@ -405,23 +504,6 @@ export class SfxFileList extends LitElement {
             ${overflowSources.length > 0 ? html`
               <div class="drop-tile-more-wrap">
                 <button class="drop-tile-more" title="More sources" @click=${(e: Event) => this._toggleMore(e)}>···</button>
-                ${this._moreOpen ? html`
-                  <div class="more-dropdown">
-                    ${overflowSources.map((s) => html`
-                      <button
-                        class="more-dropdown-item"
-                        @click=${(e: Event) => this._onMoreSourceClick(e, s)}
-                      >
-                        <span class="more-dropdown-ico" style=${s.iconColor && !s.brandHtml ? `color:${s.iconColor}` : ''}>
-                          ${s.brandHtml
-                            ? unsafeHTML(s.brandHtml)
-                            : svgTag`<svg viewBox="0 0 24 24" class=${s.fillIcon ? 'fill-icon' : ''}>${unsafeSVG(s.icon)}</svg>`}
-                        </span>
-                        ${s.label}
-                      </button>
-                    `)}
-                  </div>
-                ` : nothing}
               </div>
             ` : nothing}
           </div>

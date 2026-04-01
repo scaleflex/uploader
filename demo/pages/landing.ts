@@ -88,7 +88,7 @@ const page: Page = {
             </div>
 
             <div class="qs-panel" data-panel="cdn">
-              <div class="qs-code" data-code-cdn><pre><code class="language-markup">&lt;script src="https://scaleflex.cloudimg.io/v7/plugins/scaleflex/uploader/0.2.1/sfx-uploader.min.js"&gt;&lt;/script&gt;
+              <div class="qs-code" data-code-cdn><pre><code class="language-markup">&lt;script src="https://scaleflex.cloudimg.io/v7/plugins/scaleflex/uploader/0.2.3/sfx-uploader.min.js"&gt;&lt;/script&gt;
 
 &lt;sfx-uploader id="uploader"&gt;&lt;/sfx-uploader&gt;
 
