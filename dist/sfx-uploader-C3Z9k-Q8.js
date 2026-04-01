@@ -2,7 +2,7 @@ import { LitElement as U, css as S, svg as R, html as l, render as T, nothing as
 import { property as b, state as g, query as je } from "lit/decorators.js";
 import { unsafeSVG as O } from "lit/directives/unsafe-svg.js";
 import { unsafeHTML as M } from "lit/directives/unsafe-html.js";
-class Fe {
+class Oe {
   constructor(e) {
     this.listeners = /* @__PURE__ */ new Set(), this._notifying = !1, this._pendingState = null, this.state = e;
   }
@@ -49,8 +49,8 @@ function Ce(a, e) {
   const i = new Map(t);
   i.delete(e), a.setState({ files: i });
 }
-function Oe() {
-  return new Fe({
+function Re() {
+  return new Oe({
     files: /* @__PURE__ */ new Map(),
     queueConfig: {
       concurrency: 3,
@@ -79,7 +79,7 @@ function Oe() {
     isUploading: !1
   });
 }
-class Re {
+class Me {
   constructor(e, t) {
     this.host = e, this.store = t, e.addController(this);
   }
@@ -99,7 +99,7 @@ class Re {
     (e = this.unsubscribe) == null || e.call(this);
   }
 }
-function Me(a, e) {
+function Te(a, e) {
   const t = new XMLHttpRequest();
   let i = !1;
   const o = `${e.apiBase.replace(/\/+$/, "")}/v4/files?folder=${encodeURIComponent(e.folder)}`;
@@ -137,7 +137,7 @@ function Me(a, e) {
     }
   };
 }
-function Te(a, e) {
+function Be(a, e) {
   const t = new XMLHttpRequest();
   let i = !1;
   const o = `${e.apiBase.replace(/\/+$/, "")}/v4/files/upload_url`;
@@ -181,7 +181,7 @@ function re(a) {
 function N(a) {
   return a.replace(/\/+$/, "");
 }
-const Be = {
+const Le = {
   "google-drive": "drive",
   dropbox: "dropbox",
   onedrive: "onedrive",
@@ -191,13 +191,13 @@ const Be = {
   unsplash: "unsplash"
 };
 function G(a) {
-  return Be[a] ?? a;
+  return Le[a] ?? a;
 }
-function mt(a, e) {
+function wt(a, e) {
   const t = N(a), i = btoa(JSON.stringify({ origin: window.location.origin })), r = G(e);
   return `${t}/${r}/connect?state=${encodeURIComponent(i)}`;
 }
-async function wt(a, e, t, i = "") {
+async function yt(a, e, t, i = "") {
   const r = N(a), o = i ? `/${i}` : "", s = G(e), n = await fetch(`${r}/${s}/list${o}`, {
     method: "GET",
     headers: re(t),
@@ -211,7 +211,7 @@ async function wt(a, e, t, i = "") {
   }
   return n.json();
 }
-async function yt(a, e, t) {
+async function _t(a, e, t) {
   const i = N(a), r = await fetch(`${i}/${t}`, {
     method: "GET",
     headers: re(e),
@@ -225,7 +225,7 @@ async function yt(a, e, t) {
   }
   return r.json();
 }
-async function _t(a, e, t, i) {
+async function kt(a, e, t, i) {
   const r = N(a), o = G(e), s = i ? `q=${encodeURIComponent(t)}&${i}` : `q=${encodeURIComponent(t)}`, n = await fetch(`${r}/search/${o}/list?${s}`, {
     method: "GET",
     headers: {
@@ -240,7 +240,7 @@ async function _t(a, e, t, i) {
   }
   return n.json();
 }
-async function Le(a, e, t, i, r, o = !1) {
+async function Ae(a, e, t, i, r, o = !1) {
   const s = N(a), n = G(e), d = o ? `${s}/search/${n}/get/${i}` : `${s}/${n}/get/${i}`, p = o ? { Accept: "application/json", "Content-Type": "application/json" } : re(t), h = await fetch(d, {
     method: "POST",
     headers: p,
@@ -260,7 +260,7 @@ async function Le(a, e, t, i, r, o = !1) {
   }
   return h.json();
 }
-async function kt(a, e, t) {
+async function Ct(a, e, t) {
   const i = N(a), r = G(e), o = await fetch(`${i}/${r}/logout`, {
     method: "GET",
     headers: re(t),
@@ -268,7 +268,7 @@ async function kt(a, e, t) {
   });
   return o.ok ? o.json() : { ok: !1, revoked: !1 };
 }
-function Ae(a) {
+function Ie(a) {
   var r;
   const t = ((r = /^(?:https?:\/\/|\/\/)?(?:[^@\n]+@)?(?:www\.)?([^\n]+)/i.exec(a)) == null ? void 0 : r[1]) ?? a;
   return `${location.protocol === "https:" ? "wss" : "ws"}://${t}`;
@@ -278,7 +278,7 @@ class de extends Error {
     super("Authentication expired"), this.name = "AuthExpiredError";
   }
 }
-function Ie(a, e) {
+function He(a, e) {
   const t = a.remoteInfo;
   if (!t)
     return e.onError(new Error("remoteInfo is required for companion upload")), { abort() {
@@ -287,7 +287,7 @@ function Ie(a, e) {
   const s = `${e.apiBase.replace(/\/+$/, "")}/v4/files?folder=${encodeURIComponent(e.folder)}`, n = {};
   a.meta && Object.keys(a.meta).length > 0 && Object.assign(n, a.meta), a.tags && a.tags.length > 0 && (n.tags = a.tags);
   const d = !t.token;
-  return Le(t.companionUrl, t.provider, t.token, t.requestPath, {
+  return Ae(t.companionUrl, t.provider, t.token, t.requestPath, {
     fileId: t.fileId,
     endpoint: s,
     headers: e.authHeaders,
@@ -295,7 +295,7 @@ function Ie(a, e) {
     metadata: Object.keys(n).length > 0 ? n : void 0
   }, d).then((p) => {
     if (i) return;
-    const u = `${Ae(t.companionUrl)}/api/${p.token}`;
+    const u = `${Ie(t.companionUrl)}/api/${p.token}`;
     try {
       r = new WebSocket(u);
     } catch {
@@ -364,7 +364,7 @@ function Ie(a, e) {
     }
   };
 }
-class He {
+class qe {
   constructor(e, t) {
     this.activeUploads = /* @__PURE__ */ new Map(), this.retryTimers = /* @__PURE__ */ new Map(), this.unsubscribe = null, this.store = e, this.config = t;
   }
@@ -476,7 +476,7 @@ class He {
       P(this.store, e.id, { progress: x, bytesUploaded: d, speed: r }), this.updateTotalProgress();
     };
     let n;
-    e.remoteInfo ? n = Ie(e, { ...o, onProgress: s }) : e.remoteUrl ? n = Te(e, o) : n = Me(e, { ...o, onProgress: s }), this.activeUploads.set(e.id, n);
+    e.remoteInfo ? n = He(e, { ...o, onProgress: s }) : e.remoteUrl ? n = Be(e, o) : n = Te(e, { ...o, onProgress: s }), this.activeUploads.set(e.id, n);
   }
   handleComplete(e, t) {
     this.activeUploads.delete(e), P(this.store, e, {
@@ -541,7 +541,7 @@ function $e(a) {
 function pe(a) {
   return `https://api.filerobot.com/${a}`;
 }
-async function qe(a, e) {
+async function Ye(a, e) {
   const t = `${pe(a)}/key/${encodeURIComponent(e)}`, i = new AbortController(), r = setTimeout(() => i.abort(), 3e4);
   try {
     const o = await fetch(t, { signal: i.signal });
@@ -571,10 +571,10 @@ function se(a, e) {
   }
   return a.airboxPuid && (t["X-Filerobot-Airbox-Puid"] = a.airboxPuid), t;
 }
-async function Ye(a) {
+async function Ve(a) {
   const e = pe(a.container);
   if (a.mode === "security-template") {
-    const t = await qe(a.container, a.securityTemplateId);
+    const t = await Ye(a.container, a.securityTemplateId);
     return { apiBase: e, headers: se(a, t), sassKey: t };
   }
   return { apiBase: e, headers: se(a) };
@@ -598,9 +598,9 @@ const v = {
   FILE_PREVIEW: "sfx-file-preview",
   FILL_METADATA: "sfx-fill-metadata"
 };
-let Ve = 0;
+let Ne = 0;
 function q() {
-  return `file-${Date.now()}-${++Ve}`;
+  return `file-${Date.now()}-${++Ne}`;
 }
 function Y(a) {
   if (a <= 0) return "0 B";
@@ -619,11 +619,11 @@ function X(a) {
   const e = ((t = a.name.split(".").pop()) == null ? void 0 : t.toLowerCase()) ?? "";
   return a.type.startsWith("image/") ? "image" : a.type.startsWith("video/") || ["mp4", "mov", "avi", "webm", "mkv"].includes(e) ? "vid" : a.type === "application/pdf" || e === "pdf" ? "pdf" : ["doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "rtf", "odt"].includes(e) ? "doc" : ["zip", "rar", "7z", "tar", "gz", "bz2"].includes(e) ? "zip" : "gen";
 }
-function Ne(a) {
+function Xe(a) {
   const e = a.lastIndexOf(".");
   return e >= 0 ? a.slice(e + 1).toUpperCase() : "";
 }
-const Xe = {
+const We = {
   jpg: "image/jpeg",
   jpeg: "image/jpeg",
   png: "image/png",
@@ -641,12 +641,12 @@ const Xe = {
   doc: "application/msword",
   docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 };
-function We(a) {
+function Ke(a) {
   var t;
   const e = ((t = a.split(".").pop()) == null ? void 0 : t.toLowerCase()) ?? "";
-  return Xe[e] || "";
+  return We[e] || "";
 }
-function Ke(a) {
+function Ge(a) {
   return new Promise((e) => {
     const t = document.createElement("video");
     t.preload = "metadata", t.muted = !0, t.playsInline = !0;
@@ -702,7 +702,7 @@ function ae(a, e, t) {
   }
   return null;
 }
-function Ge(a, e, t) {
+function Ze(a, e, t) {
   return ae(a, e, t);
 }
 function Se(a) {
@@ -759,19 +759,19 @@ const Ee = {
     brandHtml: '<span class="brand-ico" style="background:#111"><svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M8.5 11.5v5h7v-5h5.5V21h-18v-9.5h5.5zm7-8v5h-7v-5h7z"/></svg></span>'
   }
 };
-function Ze(a) {
+function Je(a) {
   return a.filter((e) => e in Ee).map((e) => Ee[e]);
 }
-var Je = Object.defineProperty, Qe = (a, e, t, i) => {
+var Qe = Object.defineProperty, et = (a, e, t, i) => {
   for (var r = void 0, o = a.length - 1, s; o >= 0; o--)
     (s = a[o]) && (r = s(e, t, r) || r);
-  return r && Je(e, t, r), r;
+  return r && Qe(e, t, r), r;
 };
-const et = '<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>', tt = '<path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>', rt = '<path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/>', it = '<rect x="2" y="3" width="20" height="14" rx="2"/><circle cx="12" cy="10" r="1"/><path d="M7 21l5-5 5 5"/>', W = [
-  { id: "device", label: "My Device", icon: et, iconColor: "#2563eb" },
-  { id: "url", label: "URL link", icon: tt, iconColor: "#16a34a" },
-  { id: "camera", label: "Camera", icon: rt, iconColor: "#7c3aed" },
-  { id: "screen-cast", label: "Screen capture", icon: it, iconColor: "#ea580c" }
+const tt = '<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>', rt = '<path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>', it = '<path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/>', ot = '<rect x="2" y="3" width="20" height="14" rx="2"/><circle cx="12" cy="10" r="1"/><path d="M7 21l5-5 5 5"/>', W = [
+  { id: "device", label: "My Device", icon: tt, iconColor: "#2563eb" },
+  { id: "url", label: "URL link", icon: rt, iconColor: "#16a34a" },
+  { id: "camera", label: "Camera", icon: it, iconColor: "#7c3aed" },
+  { id: "screen-cast", label: "Screen capture", icon: ot, iconColor: "#ea580c" }
 ], he = class he extends U {
   constructor() {
     super(...arguments), this.sources = W;
@@ -872,13 +872,22 @@ he.styles = S`
     }
   `;
 let ne = he;
-Qe([
+et([
   b({ type: Array })
 ], ne.prototype, "sources");
-var ot = Object.defineProperty, j = (a, e, t, i) => {
+function Fe(a) {
+  let e = a;
+  for (; e; ) {
+    if (e instanceof HTMLDialogElement && e.open)
+      return e;
+    e instanceof ShadowRoot ? e = e.host : e = e.parentNode;
+  }
+  return document.body;
+}
+var st = Object.defineProperty, j = (a, e, t, i) => {
   for (var r = void 0, o = a.length - 1, s; o >= 0; o--)
     (s = a[o]) && (r = s(e, t, r) || r);
-  return r && ot(e, t, r), r;
+  return r && st(e, t, r), r;
 };
 const ze = 3, ue = class ue extends U {
   constructor() {
@@ -955,7 +964,7 @@ const ze = 3, ue = class ue extends U {
   _updateDropdownPortal() {
     if (this._moreOpen) {
       const e = this.sources.slice(this._visiblePills);
-      this._portalContainer || (this._portalContainer = document.createElement("div"), this._portalContainer.setAttribute("data-sfx-more-dropdown", ""), this._injectDropdownStyles(), document.body.appendChild(this._portalContainer)), T(
+      this._portalContainer || (this._portalContainer = document.createElement("div"), this._portalContainer.setAttribute("data-sfx-more-dropdown", ""), this._injectDropdownStyles(), Fe(this).appendChild(this._portalContainer)), T(
         l`<div class="sfx-more-dropdown open">
           ${e.map(
           (t) => l`
@@ -2001,10 +2010,10 @@ xe.styles = S`
     }
   `;
 let Pe = xe;
-var st = Object.defineProperty, Z = (a, e, t, i) => {
+var at = Object.defineProperty, Z = (a, e, t, i) => {
   for (var r = void 0, o = a.length - 1, s; o >= 0; o--)
     (s = a[o]) && (r = s(e, t, r) || r);
-  return r && st(e, t, r), r;
+  return r && at(e, t, r), r;
 };
 const ge = class ge extends U {
   constructor() {
@@ -2046,7 +2055,7 @@ const ge = class ge extends U {
   }
   _openPortal() {
     const e = this.sources.slice(3);
-    this._portalContainer || (this._portalContainer = document.createElement("div"), this._portalContainer.setAttribute("data-sfx-tile-dropdown", ""), this._injectTileDropdownStyles(), document.body.appendChild(this._portalContainer)), T(
+    this._portalContainer || (this._portalContainer = document.createElement("div"), this._portalContainer.setAttribute("data-sfx-tile-dropdown", ""), this._injectTileDropdownStyles(), Fe(this).appendChild(this._portalContainer)), T(
       l`<div class="sfx-tile-dropdown">
         ${e.map((t) => l`
           <button
@@ -2466,10 +2475,10 @@ Z([
 Z([
   g()
 ], B.prototype, "_moreOpen");
-var at = Object.defineProperty, nt = (a, e, t, i) => {
+var nt = Object.defineProperty, lt = (a, e, t, i) => {
   for (var r = void 0, o = a.length - 1, s; o >= 0; o--)
     (s = a[o]) && (r = s(e, t, r) || r);
-  return r && at(e, t, r), r;
+  return r && nt(e, t, r), r;
 };
 const ve = class ve extends U {
   _remove() {
@@ -2502,7 +2511,7 @@ const ve = class ve extends U {
   render() {
     const e = this.file;
     if (!e) return c;
-    const t = X(e), i = e.status === "complete", r = e.status === "uploading", o = e.status === "error" || e.status === "failed", s = e.status === "rejected", n = Ne(e.name), d = [
+    const t = X(e), i = e.status === "complete", r = e.status === "uploading", o = e.status === "error" || e.status === "failed", s = e.status === "rejected", n = Xe(e.name), d = [
       "tile",
       i ? "done" : "",
       r ? "uploading" : "",
@@ -2990,7 +2999,7 @@ ve.styles = S`
     }
   `;
 let le = ve;
-nt([
+lt([
   b({ attribute: !1 })
 ], le.prototype, "file");
 const J = S`
@@ -3068,10 +3077,10 @@ const J = S`
     outline-offset: 2px;
   }
 `;
-var lt = Object.defineProperty, ee = (a, e, t, i) => {
+var dt = Object.defineProperty, ee = (a, e, t, i) => {
   for (var r = void 0, o = a.length - 1, s; o >= 0; o--)
     (s = a[o]) && (r = s(e, t, r) || r);
-  return r && lt(e, t, r), r;
+  return r && dt(e, t, r), r;
 };
 const Ue = 7, be = class be extends U {
   constructor() {
@@ -3454,10 +3463,10 @@ ee([
 ee([
   b({ type: Array })
 ], L.prototype, "failedFiles");
-var dt = Object.defineProperty, I = (a, e, t, i) => {
+var pt = Object.defineProperty, I = (a, e, t, i) => {
   for (var r = void 0, o = a.length - 1, s; o >= 0; o--)
     (s = a[o]) && (r = s(e, t, r) || r);
-  return r && dt(e, t, r), r;
+  return r && pt(e, t, r), r;
 };
 const me = class me extends U {
   constructor() {
@@ -3732,7 +3741,7 @@ I([
 I([
   b({ type: Number })
 ], F.prototype, "uploadProgress");
-const pt = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+const ct = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 function ce(a, e) {
   return (t) => {
     if (t.key !== "Tab") return;
@@ -3740,16 +3749,16 @@ function ce(a, e) {
     if (!i) return;
     const r = i.querySelector(e);
     if (!r) return;
-    const o = Array.from(r.querySelectorAll(pt));
+    const o = Array.from(r.querySelectorAll(ct));
     if (o.length === 0) return;
     const s = o[0], n = o[o.length - 1], d = i.activeElement;
     t.shiftKey ? (d === s || !r.contains(d)) && (t.preventDefault(), n.focus()) : (d === n || !r.contains(d)) && (t.preventDefault(), s.focus());
   };
 }
-var ct = Object.defineProperty, fe = (a, e, t, i) => {
+var ft = Object.defineProperty, fe = (a, e, t, i) => {
   for (var r = void 0, o = a.length - 1, s; o >= 0; o--)
     (s = a[o]) && (r = s(e, t, r) || r);
-  return r && ct(e, t, r), r;
+  return r && ft(e, t, r), r;
 };
 const we = class we extends U {
   constructor() {
@@ -4046,10 +4055,10 @@ fe([
 fe([
   g()
 ], K.prototype, "_error");
-var ft = Object.defineProperty, ie = (a, e, t, i) => {
+var ht = Object.defineProperty, ie = (a, e, t, i) => {
   for (var r = void 0, o = a.length - 1, s; o >= 0; o--)
     (s = a[o]) && (r = s(e, t, r) || r);
-  return r && ft(e, t, r), r;
+  return r && ht(e, t, r), r;
 };
 const ye = class ye extends U {
   constructor() {
@@ -4223,10 +4232,10 @@ ie([
 ie([
   g()
 ], V.prototype, "_previewUrl");
-var ht = Object.defineProperty, te = (a, e, t, i) => {
+var ut = Object.defineProperty, te = (a, e, t, i) => {
   for (var r = void 0, o = a.length - 1, s; o >= 0; o--)
     (s = a[o]) && (r = s(e, t, r) || r);
-  return r && ht(e, t, r), r;
+  return r && ut(e, t, r), r;
 };
 const _e = class _e extends U {
   constructor() {
@@ -4442,10 +4451,10 @@ te([
 te([
   g()
 ], A.prototype, "_previewUrl");
-var ut = Object.defineProperty, $ = (a, e, t, i) => {
+var xt = Object.defineProperty, $ = (a, e, t, i) => {
   for (var r = void 0, o = a.length - 1, s; o >= 0; o--)
     (s = a[o]) && (r = s(e, t, r) || r);
-  return r && ut(e, t, r), r;
+  return r && xt(e, t, r), r;
 };
 const De = /* @__PURE__ */ new Set(["unsplash"]);
 var E;
@@ -4488,11 +4497,11 @@ const k = (E = class extends U {
       if ((((o = (r = this.config) == null ? void 0 : r.connectors) == null ? void 0 : o.providers) ?? []).includes(e)) {
         if (De.has(e)) {
           if (!customElements.get("sfx-search-provider-browser")) {
-            const { SfxSearchProviderBrowser: n } = await import("./search-provider-browser-BYkWbFar.js");
+            const { SfxSearchProviderBrowser: n } = await import("./search-provider-browser-Cn0v6Gcq.js");
             customElements.define("sfx-search-provider-browser", n);
           }
         } else if (!customElements.get("sfx-provider-browser")) {
-          const { SfxProviderBrowser: n } = await import("./provider-browser-CWEFYWp6.js");
+          const { SfxProviderBrowser: n } = await import("./provider-browser-DcYDZQos.js");
           customElements.define("sfx-provider-browser", n);
         }
         this._activeConnector = e;
@@ -4500,7 +4509,7 @@ const k = (E = class extends U {
     }, this._onUrlSubmit = (e) => {
       var h, u, x;
       this._showUrlDialog = !1;
-      const { url: t, name: i } = e.detail, r = (h = this.config) == null ? void 0 : h.callbacks, o = We(i), s = o.startsWith("image/"), n = this._store.getState(), d = ae({ name: i, size: 0, type: o }, n.restrictions, n.files);
+      const { url: t, name: i } = e.detail, r = (h = this.config) == null ? void 0 : h.callbacks, o = Ke(i), s = o.startsWith("image/"), n = this._store.getState(), d = ae({ name: i, size: 0, type: o }, n.restrictions, n.files);
       if (d) {
         const f = {
           id: q(),
@@ -4763,7 +4772,7 @@ const k = (E = class extends U {
       (Math.abs(i) > 3 || Math.abs(r) > 3) && (this._fsDragDidMove = !0), this._fsPanX = this._fsPanStartX + i, this._fsPanY = this._fsPanStartY + r, this.requestUpdate(), e.preventDefault();
     }, this._onFsClose = (e) => {
       e == null || e.stopPropagation(), this._fullscreenPreviewUrl = null, this._fullscreenVideoFile = null, this._fullscreenZoomed = !1, this._fsPanX = 0, this._fsPanY = 0;
-    }, this._store = Oe(), this._storeCtrl = new Re(this, this._store);
+    }, this._store = Re(), this._storeCtrl = new Me(this, this._store);
   }
   // --- Public API ---
   /** Open the uploader (modal mode). */
@@ -4973,7 +4982,7 @@ const k = (E = class extends U {
     }
     const i = ++this._authResolveId;
     try {
-      const s = await Ye(t);
+      const s = await Ve(t);
       if (i !== this._authResolveId) return;
       this._apiBase = s.apiBase, this._authHeaders = s.headers, this._ensureEngine(), (o = this._engine) == null || o.updateConfig({
         apiBase: this._apiBase,
@@ -4985,7 +4994,7 @@ const k = (E = class extends U {
     }
   }
   _ensureEngine() {
-    !this._engine && this._apiBase && this._authHeaders && (this._engine = new He(this._store, {
+    !this._engine && this._apiBase && this._authHeaders && (this._engine = new qe(this._store, {
       apiBase: this._apiBase,
       authHeaders: this._authHeaders
     }), this._engine.start());
@@ -5058,7 +5067,7 @@ const k = (E = class extends U {
     if (e === this._cachedSourcesConfig) return this._cachedSources;
     if (this._cachedSourcesConfig = e, !e)
       return this._cachedSources = W, this._cachedSources;
-    const t = e.providers.length > 0 ? Ze(e.providers) : [], i = e.customSources ?? [], r = W.filter((p) => p.id === "device" || p.id === "url"), o = W.filter((p) => p.id !== "device" && p.id !== "url"), s = /* @__PURE__ */ new Set(), n = [];
+    const t = e.providers.length > 0 ? Je(e.providers) : [], i = e.customSources ?? [], r = W.filter((p) => p.id === "device" || p.id === "url"), o = W.filter((p) => p.id !== "device" && p.id !== "url"), s = /* @__PURE__ */ new Set(), n = [];
     for (const p of [...r, ...t, ...o, ...i])
       if (!s.has(p.id)) {
         if (E._RESERVED_IDS.has(p.id) && p.onActivate) {
@@ -5082,7 +5091,7 @@ const k = (E = class extends U {
     var i, r, o, s;
     const t = (i = this.config) == null ? void 0 : i.callbacks;
     for (const n of e) {
-      const d = this._store.getState(), p = Ge(n, d.restrictions, d.files);
+      const d = this._store.getState(), p = Ze(n, d.restrictions, d.files);
       if (p) {
         const x = n.type.startsWith("image/") ? URL.createObjectURL(n) : null, f = {
           id: q(),
@@ -5141,7 +5150,7 @@ const k = (E = class extends U {
         remoteInfo: null
       };
       if (H(this._store, u), this._dispatchPublic(v.FILE_ADDED, { file: u }), (s = t == null ? void 0 : t.onFileAdded) == null || s.call(t, u), n.type.startsWith("video/")) {
-        Ke(n).then((f) => {
+        Ge(n).then((f) => {
           if (!f) return;
           const m = this._store.getState(), _ = m.files.get(u.id);
           if (_) {
@@ -6982,33 +6991,33 @@ $([
 $([
   g()
 ], k.prototype, "_isPillExpanded");
-let Ct = k;
+let $t = k;
 export {
   de as A,
   W as C,
   v as P,
   F as S,
-  He as U,
+  qe as U,
   z as a,
   le as b,
   B as c,
   Pe as d,
   ne as e,
   L as f,
-  Ct as g,
-  Fe as h,
+  $t as g,
+  Oe as h,
   se as i,
-  Oe as j,
-  qe as k,
+  Re as j,
+  Ye as k,
   pe as l,
-  Ze as m,
+  Je as m,
   K as n,
   V as o,
   A as p,
-  mt as q,
-  Ye as r,
-  _t as s,
-  kt as t,
-  wt as u,
-  yt as v
+  wt as q,
+  Ve as r,
+  kt as s,
+  Ct as t,
+  yt as u,
+  _t as v
 };
