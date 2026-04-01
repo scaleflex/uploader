@@ -4,6 +4,7 @@ import { unsafeSVG } from 'lit/directives/unsafe-svg.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { svg as svgTag } from 'lit';
 import type { SourceDef } from './source-pills';
+import { getPortalTarget } from '../utils/portal-target';
 
 /** Number of source pills shown directly; the rest go into "More" dropdown. */
 const VISIBLE_PILLS = 3;
@@ -939,7 +940,7 @@ export class SfxDropZone extends LitElement {
         this._portalContainer = document.createElement('div');
         this._portalContainer.setAttribute('data-sfx-more-dropdown', '');
         this._injectDropdownStyles();
-        document.body.appendChild(this._portalContainer);
+        getPortalTarget(this).appendChild(this._portalContainer);
       }
       litRender(
         html`<div class="sfx-more-dropdown open">

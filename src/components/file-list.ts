@@ -4,6 +4,7 @@ import { unsafeSVG } from 'lit/directives/unsafe-svg.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import type { UploadFile } from '../store/store.types';
 import type { SourceDef } from '../types/source.types';
+import { getPortalTarget } from '../utils/portal-target';
 
 export class SfxFileList extends LitElement {
   static styles = css`
@@ -395,7 +396,7 @@ export class SfxFileList extends LitElement {
       this._portalContainer = document.createElement('div');
       this._portalContainer.setAttribute('data-sfx-tile-dropdown', '');
       this._injectTileDropdownStyles();
-      document.body.appendChild(this._portalContainer);
+      getPortalTarget(this).appendChild(this._portalContainer);
     }
     litRender(
       html`<div class="sfx-tile-dropdown">
