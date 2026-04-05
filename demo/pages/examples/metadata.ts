@@ -3,6 +3,36 @@ import type { SfxUploader } from '../../../src/sfx-uploader';
 import { buildConfig } from '../../lib/auth';
 import { renderCodeBlock } from '../../lib/code-block';
 
+const META_STORAGE_KEY = 'sfx-uploader-demo-meta';
+
+interface MetaCreds {
+  projectUuid: string;
+  enforceRequired: string;
+  sessionToken: string;
+  companyToken: string;
+  projectToken: string;
+}
+
+const META_DEFAULTS: MetaCreds = {
+  projectUuid: '',
+  enforceRequired: 'auto',
+  sessionToken: '',
+  companyToken: '',
+  projectToken: '',
+};
+
+function getMetaCreds(): MetaCreds {
+  try {
+    const stored = localStorage.getItem(META_STORAGE_KEY);
+    if (stored) return { ...META_DEFAULTS, ...JSON.parse(stored) };
+  } catch { /* ignore */ }
+  return { ...META_DEFAULTS };
+}
+
+function saveMetaCreds(creds: MetaCreds) {
+  localStorage.setItem(META_STORAGE_KEY, JSON.stringify(creds));
+}
+
 let logEl: HTMLElement | null = null;
 
 function escapeHtml(str: string): string {
@@ -34,7 +64,7 @@ const page: Page = {
         <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: end; margin-bottom: 12px;">
           <div>
             <label style="display: block; font-size: 13px; color: #64748b; margin-bottom: 4px;">Project UUID</label>
-            <input id="project-uuid" type="text" value="5389c69a-de9c-4ce4-a02f-167ae4a5e822"
+            <input id="project-uuid" type="text" placeholder="Enter project UUID"
               style="width: 340px; height: 36px; padding: 0 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; font-family: inherit;" />
           </div>
           <div>
@@ -293,12 +323,29 @@ uploader.config = {
       if (logEl) logEl.innerHTML = '<div><span class="log-time">--:--:--</span> Log cleared.</div>';
     });
 
+    // Load saved metadata config into form fields
+    const saved = getMetaCreds();
+    const projectUuidInput = document.getElementById('project-uuid') as HTMLInputElement;
+    const enforceSelect = document.getElementById('enforce-required') as HTMLSelectElement;
+    const hubSessionInput = document.getElementById('hub-session') as HTMLInputElement;
+    const hubCompanyInput = document.getElementById('hub-company') as HTMLInputElement;
+    const hubProjectInput = document.getElementById('hub-project') as HTMLInputElement;
+
+    if (saved.projectUuid) projectUuidInput.value = saved.projectUuid;
+    if (saved.enforceRequired) enforceSelect.value = saved.enforceRequired;
+    if (saved.sessionToken) hubSessionInput.value = saved.sessionToken;
+    if (saved.companyToken) hubCompanyInput.value = saved.companyToken;
+    if (saved.projectToken) hubProjectInput.value = saved.projectToken;
+
     document.getElementById('open-btn')!.addEventListener('click', () => {
-      const projectUuid = (document.getElementById('project-uuid') as HTMLInputElement).value.trim();
-      const enforceVal = (document.getElementById('enforce-required') as HTMLSelectElement).value;
-      const sessionToken = (document.getElementById('hub-session') as HTMLInputElement).value.trim();
-      const companyToken = (document.getElementById('hub-company') as HTMLInputElement).value.trim();
-      const projectToken = (document.getElementById('hub-project') as HTMLInputElement).value.trim() || projectUuid;
+      const projectUuid = projectUuidInput.value.trim();
+      const enforceVal = enforceSelect.value;
+      const sessionToken = hubSessionInput.value.trim();
+      const companyToken = hubCompanyInput.value.trim();
+      const projectToken = hubProjectInput.value.trim() || projectUuid;
+
+      // Save to localStorage for next visit
+      saveMetaCreds({ projectUuid, enforceRequired: enforceVal, sessionToken, companyToken, projectToken });
 
       if (!projectUuid) {
         alert('Please enter a project UUID');

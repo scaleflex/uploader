@@ -8,8 +8,8 @@ interface AuthCreds {
 }
 
 const DEFAULTS: AuthCreds = {
-  container: 'fbmjmuoeb',
-  securityTemplateId: 'SECU_A850ED0F0E254CB8A3AD3E1297CF204E',
+  container: '',
+  securityTemplateId: '',
 };
 
 export function getAuth(): AuthCreds {
@@ -60,8 +60,8 @@ export function initAuthUI() {
 
   saveBtn.addEventListener('click', () => {
     saveAuth({
-      container: containerInput.value.trim() || DEFAULTS.container,
-      securityTemplateId: secTemplateInput.value.trim() || DEFAULTS.securityTemplateId,
+      container: containerInput.value.trim(),
+      securityTemplateId: secTemplateInput.value.trim(),
     });
     popover.classList.add('hidden');
   });
