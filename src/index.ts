@@ -33,3 +33,6 @@ export { SfxFileList } from './components/file-list';
 export { SfxFileItem } from './components/file-item';
 export { SfxSuccessCard } from './components/success-card';
 export { SfxActionsBar, type UploadButtonState } from './components/actions-bar';
+
+// Metadata (types only — actual code is lazy-loaded)
+export type { MetadataConfig, MetadataSchema, MetadataField, MetadataGroup } from './metadata/schema/schema.types';

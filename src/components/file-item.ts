@@ -1,5 +1,5 @@
 import { LitElement, html, css, nothing } from 'lit';
-import { property } from 'lit/decorators.js';
+import { property, state } from 'lit/decorators.js';
 import type { UploadFile } from '../store/store.types';
 import { formatFileSize, getFileCategory, getFileExtension } from '../utils/file-utils';
 
@@ -48,14 +48,15 @@ export class SfxFileItem extends LitElement {
     .preview-bg {
       position: absolute;
       inset: 0;
-      background-size: contain;
-      background-position: center;
-      background-repeat: no-repeat;
-      transition: transform 0.4s ease;
     }
 
-    .tile:hover .preview-bg {
-      transform: none;
+    .preview-img {
+      position: absolute;
+      inset: 0;
+      margin: auto;
+      display: block;
+      max-width: 100%;
+      max-height: 100%;
     }
 
     .preview-bg.pdf { background: linear-gradient(135deg, var(--destructive-10, #fef2f2), var(--destructive-10, #fee2e2)); }
@@ -124,15 +125,30 @@ export class SfxFileItem extends LitElement {
       min-width: 0;
     }
 
-    .name {
+    .name-input {
+      margin-bottom: 2px;
+      flex: 1;
+      min-width: 0;
       font-size: 14px;
       font-weight: 400;
       color: var(--foreground, var(--sfx-up-text, #111827));
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      margin-bottom: 2px;
+      border: 1px solid transparent;
+      border-radius: 3px;
+      padding: 1px 4px;
+      background: transparent;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s, background 0.15s;
     }
+    .name-input:hover {
+      border-color: var(--sfx-up-border, #e2e8f0);
+      background: var(--sfx-up-bg, #fff);
+    }
+    .name-input:focus {
+      border-color: var(--sfx-up-primary, #2563eb);
+      background: var(--sfx-up-bg, #fff);
+    }
+
 
     .meta {
       font-size: 12px;
@@ -388,6 +404,19 @@ export class SfxFileItem extends LitElement {
   `;
 
   @property({ attribute: false }) file!: UploadFile;
+  @state() private _dims = '';
+
+  updated(changed: Map<string, unknown>) {
+    if (changed.has('file')) {
+      this._dims = '';
+      if (this.file?.previewUrl) {
+        const url = this.file.previewUrl;
+        const img = new Image();
+        img.onload = () => { if (this.file?.previewUrl === url) this._dims = `${img.naturalWidth}\u00D7${img.naturalHeight}`; };
+        img.src = url;
+      }
+    }
+  }
 
   private _remove() {
     this.dispatchEvent(
@@ -403,6 +432,18 @@ export class SfxFileItem extends LitElement {
     this.dispatchEvent(
       new CustomEvent('file-retry', {
         detail: { fileId: this.file.id },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
+  private _rename(e: Event) {
+    const name = (e.target as HTMLInputElement).value.trim();
+    if (!name) return;
+    this.dispatchEvent(
+      new CustomEvent('file-rename', {
+        detail: { fileId: this.file.id, name },
         bubbles: true,
         composed: true,
       }),
@@ -443,7 +484,7 @@ export class SfxFileItem extends LitElement {
         <!-- Preview area -->
         <div class="preview">
           ${f.previewUrl
-            ? html`<div class="preview-bg" style="background-image:url(${f.previewUrl})"></div>`
+            ? html`<img class="preview-img" src=${f.previewUrl} alt="" />`
             : html`
                 <div class="preview-bg ${category}"></div>
                 <div class="type-icon">
@@ -526,8 +567,10 @@ export class SfxFileItem extends LitElement {
 
         <!-- Info bar -->
         <div class="info">
-          <div class="name" title=${f.name}>${f.name}</div>
-          <div class="meta">${ext || ''}${f.size ? ` \u00B7 ${formatFileSize(f.size)}` : ''}</div>
+          <input class="name-input" type="text" .value=${f.name} title=${f.name}
+            aria-label="File name"
+            @change=${this._rename} @click=${(e: Event) => e.stopPropagation()} />
+          <div class="meta">${ext || ''}${f.size ? ` \u00B7 ${formatFileSize(f.size)}` : ''}${this._dims ? ` \u00B7 ${this._dims}` : ''}</div>
         </div>
       </div>
     `;

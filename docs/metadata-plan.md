@@ -39,12 +39,13 @@ The metadata model is **not** fetched via a dedicated endpoint. It comes from tw
    - Called via `adaptProjectDataMetadata(projectData)` — detects format, transforms if needed
    - Enriches with `regional_variants_groups` in metadata.store
 
-**For the plugin**: The metadata model is **exclusively** available from `GET /project/{uuid}`. The `/settings` endpoint does NOT return metadata. Since the plugin already has auth (SASS key or security template) which identifies the project, we need to either:
-- Derive the project UUID from the SASS key (the API may resolve this internally)
-- Add a `projectUuid` option to `metadataConfig` for cases where it's needed
-- Investigate if `GET /v4/settings` or similar endpoint returns metadata model when authenticated with a SASS key (the SASS key is already project-scoped)
+**For the plugin**: The metadata schema can come from two sources:
 
-This is the **primary unresolved question** for implementation.
+1. **Hub API** — `GET /project/{uuid}` with Hub session auth headers (`hubHeaders`). Used when the consumer has Hub session tokens.
+
+2. **Airbox / Sharebox API (preferred for airbox integrations)** — The airbox config response (`GET /v3/a/{puid}/{title}?format=json`) already includes the full metadata schema at `airbox.metadata` with the same `{ model, store }` shape. When available, pass it as `metadataConfig.rawMetadata` to skip the Hub API call entirely — no Hub session tokens needed.
+
+The `rawMetadata` approach is preferred whenever the schema is already available from an existing API call (airbox, sharebox, or any other source that returns the same `{ model[], store }` structure).
 
 #### Schema shape (exact from API)
 
@@ -2024,15 +2025,10 @@ For comparison:
 
 4. **xhr-upload.ts**: **No changes needed.** The existing FormData construction already reads `file.meta` and `file.tags` and sends them correctly. Metadata editing only writes to the store — the upload path remains unchanged.
 
-## Open Questions
+## Open Questions (All Resolved)
 
-1. **Schema endpoint** (CRITICAL — blocks Phase 1):
-   The v5 app gets metadata exclusively from `GET /project/{uuid}` — the `/settings` endpoint does NOT return `metadata.model[]`. For the plugin, which endpoint gives us the schema?
-   - Option A: Add `projectUuid` to `metadataConfig` → call `GET /project/{uuid}`
-   - Option B: Investigate if the SASS key (already project-scoped) can resolve project data via another endpoint
-   - Option C: A dedicated `GET /metadata/model` endpoint if available
-   - **Action**: Test API calls with SASS key auth to find what's available.
+1. **Schema endpoint** — **RESOLVED**: Uses `GET https://hub.scaleflex.com/api/project/{projectUuid}` with `X-Filerobot-Key` header. Response at `project.data.metadata.model[]` and `project.data.metadata.store`. The `projectUuid` is required in `metadataConfig` — the integrating app provides it from its session data (`session_company.projects_roles[].project_uuid`). The Hub API base URL is configurable via `metadataConfig.hubApiBase` for dev/staging environments.
 
-2. **Post-upload metadata editing**: Should the panel work for already-uploaded files (calling `PUT /v5/file/{uuid}/meta`)? This allows "upload then edit" workflows. Adds API call complexity but reuses the same form. **Recommendation**: Defer to Phase 6 or later — pre-upload only is sufficient for MVP.
+2. **Post-upload metadata editing** — **DEFERRED**: MVP is pre-upload only. The form writes to the local store; metadata is sent with the upload FormData. Post-upload `PUT /v5/file/{uuid}/meta` can be added later without architectural changes.
 
-3. **File navigation in panel**: Prev/Next buttons to navigate between files — include in Phase 5 or defer? Useful for filling metadata across many files without closing/reopening.
+3. **File navigation in panel** — **IMPLEMENTED**: Prev/Next buttons are included in the panel footer for single-file mode. Navigation saves current file's meta before switching.

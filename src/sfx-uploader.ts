@@ -14,6 +14,7 @@ import { validateFile, validateFileInfo, buildAcceptString } from './utils/valid
 import type { ProviderId, ConnectorConfig, RemoteFileInfo } from './connectors/connector.types';
 import { getProviderSources } from './connectors/provider-registry';
 import { CORE_SOURCES, type SourceDef } from './components/source-pills';
+import type { MetadataConfig, MetadataSchema } from './metadata/schema/schema.types';
 
 /** Providers that use search instead of OAuth file browsing. */
 const SEARCH_PROVIDERS = new Set<ProviderId>(['unsplash']);
@@ -70,6 +71,8 @@ export interface UploaderConfig {
   connectors?: ConnectorConfig;
   /** Show "Fill Metadata" button in the actions bar. */
   showFillMetadata?: boolean;
+  /** Metadata editing configuration. When provided, enables the built-in metadata form. */
+  metadataConfig?: MetadataConfig;
   /** Layout for the import-from sources section: horizontal pills (default) or cards grid. */
   sourcesLayout?: 'pills' | 'cards';
   /** Whether closing the modal clears all files. Default: true. Set to false to preserve files across open/close. */
@@ -152,7 +155,7 @@ export class SfxUploader extends LitElement {
       border-radius: 16px;
       box-shadow: 0 28px 80px rgba(0, 0, 0, 0.2), 0 4px 16px rgba(0, 0, 0, 0.06);
       width: 100%;
-      max-width: 912px;
+      max-width: 1100px;
       min-height: var(--sfx-up-min-height, 660px);
       max-height: var(--sfx-up-max-height, 88vh);
       display: flex;
@@ -500,7 +503,8 @@ export class SfxUploader extends LitElement {
       min-width: 0;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
+      overflow-y: auto;
+      overflow-x: hidden;
       padding: 0;
     }
 
@@ -525,15 +529,30 @@ export class SfxUploader extends LitElement {
       flex-shrink: 0;
     }
 
-    .preview-panel-filename {
+    .preview-header-name {
+      flex: 1;
+      min-width: 0;
       font-size: 16px;
       font-weight: 400;
       color: var(--sfx-up-text, #1e293b);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      min-width: 0;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      padding: 2px 6px;
+      background: transparent;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s, background 0.15s;
     }
+    .preview-header-name:hover {
+      border-color: var(--sfx-up-border, #e2e8f0);
+      background: var(--sfx-up-bg, #fff);
+    }
+    .preview-header-name:focus {
+      border-color: var(--sfx-up-primary, #2563eb);
+      background: var(--sfx-up-bg, #fff);
+      box-shadow: 0 0 0 3px var(--sfx-up-ring, oklch(0.578 0.198 268.129 / 0.15));
+    }
+
 
     .preview-panel-header button {
       width: 28px;
@@ -582,8 +601,8 @@ export class SfxUploader extends LitElement {
 
     .preview-doc-wrap {
       position: relative;
-      flex: 1;
-      min-height: 0;
+      min-height: 200px;
+      flex-shrink: 0;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -629,8 +648,12 @@ export class SfxUploader extends LitElement {
 
     .preview-img-wrap {
       position: relative;
-      flex: 1;
-      min-height: 0;
+      min-height: 200px;
+      max-height: 380px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       background-color: var(--sfx-up-checker-bg);
       background-image:
         linear-gradient(45deg, var(--sfx-up-checker-tile) 25%, transparent 25%),
@@ -642,10 +665,9 @@ export class SfxUploader extends LitElement {
     }
 
     .preview-image {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
       display: block;
+      max-width: 100%;
+      max-height: 380px;
       border: none;
     }
 
@@ -701,37 +723,21 @@ export class SfxUploader extends LitElement {
       display: flex;
       flex-direction: column;
       flex-shrink: 0;
-      padding: 0 16px 12px;
+      padding: 0 16px 4px;
     }
 
-    .preview-meta-row {
-      display: flex;
-      align-items: baseline;
-      padding: 12px 0;
+    .preview-metadata {
+      padding: 0 12px 16px;
+      border-top: 1px solid var(--sfx-up-border-light, #f1f5f9);
     }
 
-    .preview-meta-label {
-      width: 110px;
-      flex-shrink: 0;
-      font-size: 14px;
+    .preview-file-info {
+      font-size: 12px;
       font-weight: 400;
-      color: var(--sfx-up-text-muted, #94a3b8);
+      color: var(--sfx-up-text-muted, #9ca3af);
+      padding: 2px 0;
     }
 
-    .preview-meta-value {
-      font-size: 14px;
-      font-weight: 400;
-      color: var(--foreground, var(--sfx-up-text, #1e293b));
-      word-break: break-all;
-      min-width: 0;
-    }
-
-    .preview-meta-value.truncate {
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      word-break: normal;
-    }
 
     /* --- Upload overlay (in-modal) --- */
     .upload-overlay {
@@ -1352,9 +1358,6 @@ export class SfxUploader extends LitElement {
 
       .preview-layout .file-grid-side { max-height: 100px; }
       .preview-panel { padding: 0 0 12px; }
-      .preview-meta-row { padding: 6px 0; }
-      .preview-meta-label { width: 90px; font-size: 12px; }
-      .preview-meta-value { font-size: 12px; }
 
       .inline { max-height: 100vh; border-radius: 8px; box-shadow: none; }
 
@@ -1382,7 +1385,7 @@ export class SfxUploader extends LitElement {
   @state() private _showScreenCastDialog = false;
   @state() private _previewFileId: string | null = null;
   @state() private _previewDims: string = '—';
-  @state() private _splitPct = 68; // file-grid-side percentage
+  @state() private _splitPct = 58; // file-grid-side percentage
   private _isResizing = false;
   private _splitRafId = 0;
   @state() private _fullscreenPreviewUrl: string | null = null;
@@ -1398,6 +1401,9 @@ export class SfxUploader extends LitElement {
   @state() private _bodyDragOver = false;
   @state() private _isMinimized = false;
   @state() private _isPillExpanded = false;
+  @state() private _metadataSchema: MetadataSchema | null = null;
+  @state() private _bulkMetadataOpen = false;
+  private _metadataAutocomplete: any = null;
   private _bodyDragCounter = 0;
   private _videoBlobUrls = new Map<File, string>();
 
@@ -1778,6 +1784,7 @@ export class SfxUploader extends LitElement {
         apiBase: this._apiBase,
         authHeaders: this._authHeaders,
       });
+      this._preloadMetadataSchema(cfg);
       return;
     }
 
@@ -1794,6 +1801,7 @@ export class SfxUploader extends LitElement {
         apiBase: this._apiBase,
         authHeaders: this._authHeaders,
       });
+      this._preloadMetadataSchema(cfg);
     } catch (err) {
       if (resolveId !== this._authResolveId) return;
       console.error('[sfx-uploader] Auth resolution failed:', err);
@@ -1808,6 +1816,83 @@ export class SfxUploader extends LitElement {
       });
       this._engine.start();
     }
+  }
+
+  // --- Metadata schema preloading ---
+
+  private async _preloadMetadataSchema(cfg: UploaderConfig) {
+    const mc = cfg.metadataConfig;
+    if (!mc || !this._apiBase || !this._authHeaders) return;
+
+    try {
+      const { fetchMetadataSchema, createTagsAutocomplete } = await import('./metadata');
+      this._metadataSchema = await fetchMetadataSchema(
+        this._apiBase,
+        this._authHeaders,
+        mc.projectUuid,
+        mc,
+      );
+      this._metadataAutocomplete = createTagsAutocomplete(this._apiBase, this._authHeaders);
+    } catch (err) {
+      console.error('[sfx-uploader] Failed to load metadata schema:', err);
+    }
+  }
+
+  private _onFileRename = (e: CustomEvent<{ fileId: string; name: string }>) => {
+    this._onPreviewRename(e.detail.fileId, e.detail.name);
+  };
+
+  /** Handle file rename from the preview sidebar or thumbnail. */
+  private _onPreviewRename(fileId: string, newName: string) {
+    const trimmed = newName.trim();
+    if (!trimmed) return;
+    const existing = this._store.getState().files.get(fileId);
+    if (!existing || existing.name === trimmed) return;
+    const next = new Map(this._store.getState().files);
+    next.set(fileId, { ...existing, name: trimmed });
+    this._store.setState({ files: next });
+  }
+
+  /** Handle field-blur from inline metadata form in the preview sidebar. */
+  private _onPreviewMetadataBlur = (e: CustomEvent<{ key: string; value: unknown }>) => {
+    const fileId = this._previewFileId;
+    if (!fileId) return;
+    const { key, value } = e.detail;
+    const existing = this._store.getState().files.get(fileId);
+    if (!existing) return;
+    const next = new Map(this._store.getState().files);
+    next.set(fileId, { ...existing, meta: { ...existing.meta, [key]: value } });
+    this._store.setState({ files: next });
+  };
+
+  private get _metadataEnforcing(): boolean {
+    const mc = this.config?.metadataConfig;
+    if (!mc || !this._metadataSchema) return false;
+    if (mc.enforceRequiredBeforeUpload === true) return true;
+    if (mc.enforceRequiredBeforeUpload === 'auto') return this._metadataSchema.forceFillingOnUpload;
+    return false;
+  }
+
+  private get _hasUnfilledRequiredMetadata(): boolean {
+    if (!this._metadataEnforcing || !this._metadataSchema) return false;
+    const requiredFields = this._metadataSchema.fields.filter(f => {
+      const mc = this.config?.metadataConfig;
+      if (mc?.requiredFields) return mc.requiredFields.includes(f.ckey);
+      return f.required === 1;
+    });
+    if (requiredFields.length === 0) return false;
+    const files = [...this._store.getState().files.values()].filter(
+      f => f.status === 'idle' || f.status === 'queued' || f.status === 'rejected',
+    );
+    return requiredFields.some(field =>
+      files.some(file => {
+        const val = file.meta[field.key];
+        if (val == null) return true;
+        if (Array.isArray(val)) return val.length === 0;
+        if (typeof val === 'string') return val.length === 0;
+        return !val;
+      }),
+    );
   }
 
   // --- Public event dispatching (spec §13.1) ---
@@ -2289,8 +2374,28 @@ export class SfxUploader extends LitElement {
     const files = [...this._store.getState().files.values()].filter(
       (f) => SfxUploader._MODIFIABLE_STATUSES.has(f.status),
     );
+    // Open built-in bulk modal if metadata schema is available
+    if (this.config?.metadataConfig && this._metadataSchema) {
+      this._bulkMetadataOpen = true;
+    }
     this._dispatchPublic(PublicEvents.FILL_METADATA, { files });
     this.config?.callbacks?.onFillMetadata?.(files);
+  };
+
+  private _onBulkMetadataSaveBatch = (e: CustomEvent<{ changes: Array<{ fileId: string; meta: Record<string, unknown> }> }>) => {
+    const { changes } = e.detail;
+    if (!changes.length) return;
+    const next = new Map(this._store.getState().files);
+    for (const { fileId, meta } of changes) {
+      const existing = next.get(fileId);
+      if (!existing) continue;
+      next.set(fileId, { ...existing, meta: { ...existing.meta, ...meta } });
+    }
+    this._store.setState({ files: next });
+  };
+
+  private _onBulkMetadataClose = () => {
+    this._bulkMetadataOpen = false;
   };
 
   private _onFileRetry = (e: CustomEvent<{ fileId: string }>) => {
@@ -2357,6 +2462,7 @@ export class SfxUploader extends LitElement {
       }
       return;
     }
+    if (this._hasUnfilledRequiredMetadata) return; // blocked by metadata enforcement
     this.upload();
   };
 
@@ -2846,7 +2952,12 @@ export class SfxUploader extends LitElement {
         ></div>
         <div class="preview-panel" style="flex:${100 - this._splitPct}">
           <div class="preview-panel-header">
-            <span class="preview-panel-filename" title=${previewFile.name}>${previewFile.name}</span>
+            <input class="preview-header-name" type="text"
+              .value=${previewFile.name}
+              title=${previewFile.name}
+              aria-label="File name"
+              @change=${(e: Event) => this._onPreviewRename(previewFile.id, (e.target as HTMLInputElement).value)}
+            />
             <div class="preview-header-actions">
               ${previewFile.previewUrl || (previewFile.type.startsWith('video/') && previewFile.file) ? html`
                 <button @click=${() => { this._fullscreenPreviewUrl = previewFile.previewUrl; this._fullscreenVideoFile = previewFile.type.startsWith('video/') && previewFile.file ? previewFile.file : null; this._fullscreenZoomed = false; }} title="Fullscreen">
@@ -2905,32 +3016,20 @@ export class SfxUploader extends LitElement {
                 </div>
               `}
           <div class="preview-meta-list">
-            <div class="preview-meta-row">
-              <span class="preview-meta-label">Type</span>
-              <span class="preview-meta-value">${ext}</span>
-            </div>
-            <div class="preview-meta-row">
-              <span class="preview-meta-label">Size</span>
-              <span class="preview-meta-value">${formatFileSize(previewFile.size)}</span>
-            </div>
-            <div class="preview-meta-row">
-              <span class="preview-meta-label">Dimensions</span>
-              <span class="preview-meta-value">${this._previewDims}</span>
-            </div>
-            <div class="preview-meta-row">
-              <span class="preview-meta-label">Name</span>
-              <span class="preview-meta-value truncate" title=${previewFile.name}>${previewFile.name}</span>
-            </div>
-            ${targetFolder ? html`
-            <div class="preview-meta-row">
-              <span class="preview-meta-label">Folder</span>
-              <span class="preview-meta-value">${targetFolder}</span>
-            </div>` : html`
-            <div class="preview-meta-row">
-              <span class="preview-meta-label">Added</span>
-              <span class="preview-meta-value">${addedDate}</span>
-            </div>`}
+            <div class="preview-file-info">${ext}${previewFile.size ? ` \u00B7 ${formatFileSize(previewFile.size)}` : ''}${this._previewDims !== '\u2014' ? ` \u00B7 ${this._previewDims}` : ''}</div>
           </div>
+          ${this._metadataSchema && this.config?.metadataConfig
+            ? html`
+                <div class="preview-metadata" @field-blur=${this._onPreviewMetadataBlur}>
+                  <sfx-metadata-form
+                    .schema=${this._metadataSchema}
+                    .meta=${previewFile.meta}
+                    .config=${this.config.metadataConfig}
+                    .autocomplete=${this._metadataAutocomplete}
+                  ></sfx-metadata-form>
+                </div>
+              `
+            : nothing}
         </div>
       </div>
     `;
@@ -2976,6 +3075,7 @@ export class SfxUploader extends LitElement {
         @file-remove=${this._onFileRemove}
         @file-preview=${this._onFilePreview}
         @file-retry=${this._onFileRetry}
+        @file-rename=${this._onFileRename}
         @fill-metadata=${this._onFillMetadata}
         @retry-all=${this._onRetryAll}
         @clear-all=${this._onClearAll}
@@ -3050,7 +3150,9 @@ export class SfxUploader extends LitElement {
                 .failedCount=${files.filter((f) => f.status === 'failed' || f.status === 'error').length}
                 .completedCount=${files.filter((f) => f.status === 'complete').length}
                 .uploadProgress=${s.totalProgress ?? 0}
-                .showFillMetadata=${!!this.config?.showFillMetadata}
+                .showFillMetadata=${!!(this.config?.showFillMetadata ?? this.config?.metadataConfig)}
+                .uploadDisabled=${this._hasUnfilledRequiredMetadata}
+                .uploadDisabledReason=${this._hasUnfilledRequiredMetadata ? 'Fill required metadata first' : ''}
               ></sfx-actions-bar>
             `
           : nothing}
@@ -3077,6 +3179,22 @@ export class SfxUploader extends LitElement {
                       `}
                 </div>
               </div>
+            `
+          : nothing}
+
+
+        ${this._bulkMetadataOpen && this._metadataSchema
+          ? html`
+              <sfx-bulk-metadata-modal
+                .schema=${this._metadataSchema}
+                .files=${[...this._store.getState().files.values()].filter(f =>
+                  SfxUploader._MODIFIABLE_STATUSES.has(f.status)
+                )}
+                .config=${this.config?.metadataConfig ?? null}
+                .autocomplete=${this._metadataAutocomplete}
+                @metadata-save-batch=${this._onBulkMetadataSaveBatch}
+                @metadata-close=${this._onBulkMetadataClose}
+              ></sfx-bulk-metadata-modal>
             `
           : nothing}
 

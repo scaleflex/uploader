@@ -1,0 +1,408 @@
+import { LitElement, html, nothing } from 'lit';
+import { property, state } from 'lit/decorators.js';
+import type {
+  MetadataSchema,
+  MetadataField,
+  MetadataConfig,
+} from '../schema/schema.types';
+import type { UploadFile } from '../../store/store.types';
+import { mapValueToBackend } from '../schema/value-transforms';
+import { isEmpty } from '../schema/validation';
+import { applyBulkOperation, type BulkOperation } from './bulk-operations';
+import { bulkModalStyles } from './bulk-metadata.styles';
+
+/**
+ * Full-screen overlay modal for bulk metadata editing.
+ * Orchestrates sidebar, op-bar, and file table.
+ */
+export class SfxBulkMetadataModal extends LitElement {
+  static styles = [bulkModalStyles];
+
+  // --- Props from parent ---
+  @property({ attribute: false }) schema!: MetadataSchema;
+  @property({ attribute: false }) files: UploadFile[] = [];
+  @property({ attribute: false }) config: MetadataConfig | null = null;
+  @property({ attribute: false }) autocomplete: unknown;
+
+  // --- Internal state ---
+  @state() private _activeFieldKey = '';
+  @state() private _staged: Map<string, Map<string, unknown>> = new Map();
+  @state() private _selected: Set<string> = new Set();
+  @state() private _sortAsc = true;
+
+  // Snapshot of original files for diff on save
+  private _originalFiles: Map<string, UploadFile> = new Map();
+
+  connectedCallback() {
+    super.connectedCallback();
+    this._initStaged();
+    document.addEventListener('keydown', this._onKeyDown);
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    document.removeEventListener('keydown', this._onKeyDown);
+  }
+
+  private _onKeyDown = (e: KeyboardEvent) => {
+    if (e.key !== 'Escape') return;
+
+    // Don't close modal if user is typing in a form field — let the field
+    // handle Escape first (e.g., closing a dropdown). The native KeyboardEvent
+    // fires independently of the field-escape CustomEvent.
+    const path = e.composedPath();
+    const fromInput = path.some(
+      (el) =>
+        el instanceof HTMLInputElement ||
+        el instanceof HTMLTextAreaElement ||
+        el instanceof HTMLSelectElement,
+    );
+    if (fromInput) return;
+
+    this._emitClose();
+  };
+
+  private _initStaged() {
+    const staged = new Map<string, Map<string, unknown>>();
+    const selected = new Set<string>();
+    const originals = new Map<string, UploadFile>();
+
+    for (const file of this.files) {
+      const fileMap = new Map<string, unknown>();
+      if (file.meta) {
+        for (const [k, v] of Object.entries(file.meta)) {
+          fileMap.set(k, v);
+        }
+      }
+      staged.set(file.id, fileMap);
+      selected.add(file.id);
+      originals.set(file.id, file);
+    }
+
+    this._staged = staged;
+    this._selected = selected;
+    this._originalFiles = originals;
+
+    // Set first field as active
+    if (this.schema?.fields?.length > 0) {
+      this._activeFieldKey = this.schema.fields[0].key;
+    }
+  }
+
+  // -----------------------------------------------------------------------
+  // Immutability helpers
+  // -----------------------------------------------------------------------
+
+  private _setStagedValue(fileId: string, fieldKey: string, value: unknown): void {
+    const next = new Map(this._staged);
+    const fileMap = new Map(next.get(fileId) ?? new Map());
+    fileMap.set(fieldKey, value);
+    next.set(fileId, fileMap);
+    this._staged = next;
+  }
+
+  private _setStagedBulk(updates: Array<[string, string, unknown]>): void {
+    const next = new Map(this._staged);
+    for (const [fileId, fieldKey, value] of updates) {
+      const fileMap = new Map(next.get(fileId) ?? new Map());
+      fileMap.set(fieldKey, value);
+      next.set(fileId, fileMap);
+    }
+    this._staged = next;
+  }
+
+  // -----------------------------------------------------------------------
+  // Active field + filled fields
+  // -----------------------------------------------------------------------
+
+  private get _activeField(): MetadataField | undefined {
+    return this.schema?.fieldsByKey?.get(this._activeFieldKey);
+  }
+
+  /** Fields where ANY file has a non-empty staged value that differs from original. */
+  private get _filledFields(): Set<string> {
+    const filled = new Set<string>();
+    for (const field of this.schema?.fields ?? []) {
+      for (const [fileId, fileMap] of this._staged) {
+        const stagedVal = fileMap.get(field.key);
+        const origVal = this._originalFiles.get(fileId)?.meta[field.key];
+        if (
+          stagedVal !== undefined &&
+          !isEmpty(stagedVal) &&
+          JSON.stringify(stagedVal) !== JSON.stringify(origVal)
+        ) {
+          filled.add(field.key);
+          break; // one file is enough to mark the field
+        }
+      }
+    }
+    return filled;
+  }
+
+  // -----------------------------------------------------------------------
+  // Event handlers
+  // -----------------------------------------------------------------------
+
+  private _onFieldSelect = (e: CustomEvent<{ fieldKey: string }>) => {
+    this._activeFieldKey = e.detail.fieldKey;
+  };
+
+  private _onBulkApply = (
+    e: CustomEvent<{ operation: BulkOperation; value: unknown }>,
+  ) => {
+    const field = this._activeField;
+    if (!field) return;
+
+    const { operation, value: frontendValue } = e.detail;
+    const language = this.config?.language;
+    const updates: Array<[string, string, unknown]> = [];
+
+    for (const fileId of this._selected) {
+      const fileStaged = this._staged.get(fileId);
+
+      // Build a fake file for mapValueToBackend to preserve regional variants
+      const fakeFile = {
+        meta: fileStaged ? Object.fromEntries(fileStaged) : {},
+      } as UploadFile;
+
+      const backendValue = mapValueToBackend(
+        field,
+        frontendValue,
+        fakeFile,
+        language,
+      );
+
+      const currentStaged = fileStaged?.get(field.key);
+      const result = applyBulkOperation(
+        operation,
+        currentStaged,
+        backendValue,
+        field.type,
+      );
+
+      updates.push([fileId, field.key, result]);
+    }
+
+    this._setStagedBulk(updates);
+  };
+
+  private _onRowFieldChange = (
+    e: CustomEvent<{ fileId: string; value: unknown }>,
+  ) => {
+    const field = this._activeField;
+    if (!field) return;
+    this._setStagedValue(e.detail.fileId, field.key, e.detail.value);
+  };
+
+  private _onRowToggle = (e: CustomEvent<{ fileId: string }>) => {
+    const next = new Set(this._selected);
+    if (next.has(e.detail.fileId)) {
+      next.delete(e.detail.fileId);
+    } else {
+      next.add(e.detail.fileId);
+    }
+    this._selected = next;
+  };
+
+  private _onSelectAll = () => {
+    if (this._selected.size === this.files.length) {
+      this._selected = new Set();
+    } else {
+      this._selected = new Set(this.files.map((f) => f.id));
+    }
+  };
+
+  private _onSortToggle = () => {
+    this._sortAsc = !this._sortAsc;
+  };
+
+  // -----------------------------------------------------------------------
+  // Save / Cancel / Close
+  // -----------------------------------------------------------------------
+
+  private _onSave = () => {
+    const changes: Array<{ fileId: string; meta: Record<string, unknown> }> = [];
+
+    for (const [fileId, fileStagedMap] of this._staged) {
+      const originalFile = this._originalFiles.get(fileId);
+      if (!originalFile) continue;
+
+      const changedMeta: Record<string, unknown> = {};
+      for (const [fieldKey, stagedVal] of fileStagedMap) {
+        if (
+          JSON.stringify(stagedVal) !==
+          JSON.stringify(originalFile.meta[fieldKey])
+        ) {
+          changedMeta[fieldKey] = stagedVal;
+        }
+      }
+
+      if (Object.keys(changedMeta).length > 0) {
+        changes.push({ fileId, meta: changedMeta });
+      }
+    }
+
+    this.dispatchEvent(
+      new CustomEvent('metadata-save-batch', {
+        detail: { changes },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+
+    this._emitClose();
+  };
+
+  private _onCancel = () => {
+    this._emitClose();
+  };
+
+  private _onClose = () => {
+    this._emitClose();
+  };
+
+  private _emitClose() {
+    this.dispatchEvent(
+      new CustomEvent('metadata-close', {
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
+  // -----------------------------------------------------------------------
+  // Sorted files
+  // -----------------------------------------------------------------------
+
+  private get _sortedFiles(): UploadFile[] {
+    const sorted = [...this.files];
+    sorted.sort((a, b) => {
+      const cmp = a.name.localeCompare(b.name) || a.id.localeCompare(b.id);
+      return this._sortAsc ? cmp : -cmp;
+    });
+    return sorted;
+  }
+
+  // -----------------------------------------------------------------------
+  // Render
+  // -----------------------------------------------------------------------
+
+  render() {
+    if (!this.schema?.fields?.length) {
+      return html`
+        <div class="fm-overlay" @click=${this._onClose}>
+          <div class="fm-modal" @click=${(e: Event) => e.stopPropagation()}>
+            <div class="fm-topbar">
+              <span class="fm-topbar-title">Fill multiple assets</span>
+              <button class="fm-topbar-close" @click=${this._onClose} title="Close">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+            <div class="fm-empty">No metadata fields configured</div>
+          </div>
+        </div>
+      `;
+    }
+
+    const field = this._activeField;
+    const sortedFiles = this._sortedFiles;
+    const allSelected = this._selected.size === this.files.length && this.files.length > 0;
+    const someSelected = this._selected.size > 0 && !allSelected;
+
+    return html`
+      <div class="fm-overlay" @click=${this._onClose}>
+        <div class="fm-modal" @click=${(e: Event) => e.stopPropagation()}>
+          <!-- Top bar -->
+          <div class="fm-topbar">
+            <span class="fm-topbar-title">Fill multiple assets</span>
+            <button class="fm-topbar-close" @click=${this._onClose} title="Close">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Body -->
+          <div class="fm-body">
+            <!-- Sidebar -->
+            <sfx-bulk-meta-sidebar
+              .schema=${this.schema}
+              .activeFieldKey=${this._activeFieldKey}
+              .filledFields=${this._filledFields}
+              .config=${this.config}
+              @field-select=${this._onFieldSelect}
+            ></sfx-bulk-meta-sidebar>
+
+            <!-- Main area -->
+            <div class="fm-main">
+              <!-- Op bar -->
+              ${field
+                ? html`
+                    <sfx-bulk-meta-op-bar
+                      .field=${field}
+                      .autocomplete=${this.autocomplete}
+                      .config=${this.config}
+                      .selectedCount=${this._selected.size}
+                      @bulk-apply=${this._onBulkApply}
+                    ></sfx-bulk-meta-op-bar>
+                  `
+                : nothing}
+
+              <!-- Table header -->
+              <div class="fm-table-header">
+                <div class="fm-th-check">
+                  <input
+                    type="checkbox"
+                    class="fm-checkbox"
+                    .checked=${allSelected}
+                    .indeterminate=${someSelected}
+                    @change=${this._onSelectAll}
+                  />
+                </div>
+                <div class="fm-th-thumb">Thumb</div>
+                <div class="fm-th-name" @click=${this._onSortToggle}>
+                  Name
+                  <span class="fm-sort-arrow">${this._sortAsc ? '\u2191' : '\u2193'}</span>
+                </div>
+                <div class="fm-th-size">Size</div>
+                <div class="fm-th-field">${field?.title ?? ''}</div>
+              </div>
+
+              <!-- Table body -->
+              <div class="fm-table-body">
+                ${field
+                  ? html`
+                      <sfx-bulk-meta-table
+                        .files=${sortedFiles}
+                        .field=${field}
+                        .staged=${this._staged}
+                        .selected=${this._selected}
+                        .config=${this.config}
+                        .autocomplete=${this.autocomplete}
+                        @row-field-change=${this._onRowFieldChange}
+                        @row-toggle=${this._onRowToggle}
+                      ></sfx-bulk-meta-table>
+                    `
+                  : nothing}
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="fm-footer">
+            <button class="btn-back" @click=${this._onCancel}>
+              \u2190 Back
+            </button>
+            <div class="spacer"></div>
+            <button class="btn-ghost" @click=${this._onCancel}>Cancel</button>
+            <button class="btn-primary" @click=${this._onSave}>Save</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+}
+
+customElements.define('sfx-bulk-metadata-modal', SfxBulkMetadataModal);

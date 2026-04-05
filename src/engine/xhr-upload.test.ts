@@ -162,7 +162,7 @@ describe('xhrUploadFile', () => {
     expect(mockXhr.abort).toHaveBeenCalled();
   });
 
-  it('includes meta and tags in FormData info', () => {
+  it('sends meta and tags as separate FormData fields', () => {
     const file = makeUploadFile({
       file: new File(['data'], 'test.png', { type: 'image/png' }),
       meta: { author: 'test' },
@@ -173,8 +173,28 @@ describe('xhrUploadFile', () => {
 
     const sentFormData = mockXhr.send.mock.calls[0][0] as FormData;
     const info = JSON.parse(sentFormData.get('info[files[]]') as string);
-    expect(info.meta).toEqual({ author: 'test' });
-    expect(info.tags).toEqual(['photo', 'nature']);
+    expect(info.meta).toBeUndefined();
+    expect(info.tags).toBeUndefined();
+
+    const meta = JSON.parse(sentFormData.get('meta[files[]]') as string);
+    expect(meta).toEqual({ author: 'test' });
+
+    const tags = JSON.parse(sentFormData.get('tags[files[]]') as string);
+    expect(tags).toEqual(['photo', 'nature']);
+  });
+
+  it('omits meta[files[]] and tags[files[]] when empty', () => {
+    const file = makeUploadFile({
+      file: new File(['data'], 'test.png', { type: 'image/png' }),
+      meta: {},
+      tags: [],
+    });
+    const opts = freshOpts();
+    xhrUploadFile(file, opts);
+
+    const sentFormData = mockXhr.send.mock.calls[0][0] as FormData;
+    expect(sentFormData.get('meta[files[]]')).toBeNull();
+    expect(sentFormData.get('tags[files[]]')).toBeNull();
   });
 });
 

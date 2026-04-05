@@ -28,6 +28,7 @@ const routes: RouteEntry[] = [
   { pattern: '/examples/header-button', load: () => import('../pages/examples/header-button').then((m) => m.default) },
   { pattern: '/examples/minimize-to-background', load: () => import('../pages/examples/minimize-to-background').then((m) => m.default) },
   { pattern: '/examples/react-wrapper', load: () => import('../pages/examples/react-wrapper').then((m) => m.default) },
+  { pattern: '/examples/metadata', load: () => import('../pages/examples/metadata').then((m) => m.default) },
 ];
 
 let currentPage: Page | null = null;

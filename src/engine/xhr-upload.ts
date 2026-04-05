@@ -72,7 +72,9 @@ export function xhrUploadFile(
   });
 
   // Build FormData — matches Scaleflex multipart format:
-  //   info[files[]] = JSON with {name, type} (+ optional meta/tags)
+  //   info[files[]] = JSON with {name, type}
+  //   meta[files[]] = JSON with metadata values (optional)
+  //   tags[files[]] = JSON with tags array (optional)
   //   files[]       = the actual file blob
   const formData = new FormData();
 
@@ -82,13 +84,13 @@ export function xhrUploadFile(
       name: uploadFile.name,
       type: uploadFile.type,
     };
+    formData.append('info[files[]]', JSON.stringify(info));
     if (Object.keys(uploadFile.meta).length > 0) {
-      info.meta = uploadFile.meta;
+      formData.append('meta[files[]]', JSON.stringify(uploadFile.meta));
     }
     if (uploadFile.tags.length > 0) {
-      info.tags = uploadFile.tags;
+      formData.append('tags[files[]]', JSON.stringify(uploadFile.tags));
     }
-    formData.append('info[files[]]', JSON.stringify(info));
     formData.append('files[]', uploadFile.file, uploadFile.name);
   }
 

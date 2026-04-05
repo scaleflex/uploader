@@ -160,6 +160,8 @@ export class SfxActionsBar extends LitElement {
   @property({ type: Number }) totalSize = 0;
   @property({ type: Number }) failedCount = 0;
   @property({ type: Boolean }) showFillMetadata = false;
+  @property({ type: Boolean }) uploadDisabled = false;
+  @property({ type: String }) uploadDisabledReason = '';
   @property({ type: Number }) completedCount = 0;
   @property({ type: Number }) uploadProgress = 0;
 
@@ -259,7 +261,8 @@ export class SfxActionsBar extends LitElement {
       <button
         class=${cls}
         @click=${this._upload}
-        ?disabled=${isUploading}
+        ?disabled=${isUploading || this.uploadDisabled}
+        title=${this.uploadDisabled ? this.uploadDisabledReason : ''}
       >
         ${isUploading
           ? html`<span class="btn-spin"></span> Uploading\u2026`
