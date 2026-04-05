@@ -15,6 +15,7 @@ import type { ProviderId, ConnectorConfig, RemoteFileInfo } from './connectors/c
 import { getProviderSources } from './connectors/provider-registry';
 import { CORE_SOURCES, type SourceDef } from './components/source-pills';
 import type { MetadataConfig, MetadataSchema } from './metadata/schema/schema.types';
+import type { SfxToast } from './components/toast';
 
 /** Providers that use search instead of OAuth file browsing. */
 const SEARCH_PROVIDERS = new Set<ProviderId>(['unsplash']);
@@ -30,6 +31,7 @@ import './components/actions-bar';
 import './components/url-dialog';
 import './components/camera-dialog';
 import './components/screen-cast-dialog';
+import './components/toast';
 
 // --- Config callbacks (spec §13.1) ---
 
@@ -373,6 +375,7 @@ export class SfxUploader extends LitElement {
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      position: relative;
       height: 100%;
       min-height: var(--sfx-up-min-height, 660px);
       max-height: var(--sfx-up-max-height, 88vh);
@@ -1805,7 +1808,15 @@ export class SfxUploader extends LitElement {
     } catch (err) {
       if (resolveId !== this._authResolveId) return;
       console.error('[sfx-uploader] Auth resolution failed:', err);
+      this._showToast(
+        err instanceof Error ? err.message : 'Authentication failed',
+      );
     }
+  }
+
+  private _showToast(message: string, type: 'error' | 'warning' | 'info' = 'error') {
+    const toast = this.shadowRoot?.querySelector('sfx-toast') as SfxToast | null;
+    toast?.show(message, type);
   }
 
   private _ensureEngine() {
@@ -1835,6 +1846,7 @@ export class SfxUploader extends LitElement {
       this._metadataAutocomplete = createTagsAutocomplete(this._apiBase, this._authHeaders);
     } catch (err) {
       console.error('[sfx-uploader] Failed to load metadata schema:', err);
+      this._showToast('Failed to load metadata schema', 'warning');
     }
   }
 
@@ -1938,6 +1950,9 @@ export class SfxUploader extends LitElement {
             const err = new Error(file.error ?? 'Upload failed');
             this._dispatchPublic(PublicEvents.UPLOAD_ERROR, { file, error: err });
             callbacks?.onUploadError?.(file, err);
+            if (file.status === 'failed') {
+              this._showToast(`${file.name}: ${file.error ?? 'Upload failed'}`);
+            }
             break;
           }
           case 'retrying':
@@ -2673,6 +2688,7 @@ export class SfxUploader extends LitElement {
             <div class="modal-card">
               ${this._renderHeader()}
               ${this._renderBody()}
+              <sfx-toast></sfx-toast>
             </div>
           </div>
         ` : nothing}
@@ -2684,6 +2700,7 @@ export class SfxUploader extends LitElement {
       <div class="inline">
         ${this._renderHeader()}
         ${this._renderBody()}
+        <sfx-toast></sfx-toast>
       </div>
     `;
   }
