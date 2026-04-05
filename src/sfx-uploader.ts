@@ -1808,10 +1808,29 @@ export class SfxUploader extends LitElement {
     } catch (err) {
       if (resolveId !== this._authResolveId) return;
       console.error('[sfx-uploader] Auth resolution failed:', err);
-      this._showToast(
-        err instanceof Error ? err.message : 'Authentication failed',
-      );
+      this._showToast(this._formatAuthError(err));
     }
+  }
+
+  private _formatAuthError(err: unknown): string {
+    const msg = err instanceof Error ? err.message : String(err);
+
+    if (!this.config?.auth?.container) {
+      return 'Authentication failed: no container specified. Open the Auth panel and enter your credentials.';
+    }
+    if (msg.includes('HTTP 404')) {
+      return `Authentication failed: container "${this.config.auth.container}" not found. Check your container name.`;
+    }
+    if (msg.includes('HTTP 401') || msg.includes('HTTP 403')) {
+      return 'Authentication failed: invalid security template ID. Check your credentials in the Auth panel.';
+    }
+    if (msg.includes('timed out')) {
+      return 'Authentication failed: request timed out. Check your network connection.';
+    }
+    if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
+      return 'Authentication failed: network error. Check your internet connection.';
+    }
+    return `Authentication failed: ${msg}`;
   }
 
   private _showToast(message: string, type: 'error' | 'warning' | 'info' = 'error') {
