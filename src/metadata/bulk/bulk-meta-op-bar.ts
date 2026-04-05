@@ -51,12 +51,15 @@ export class SfxBulkMetaOpBar extends LitElement {
       this._availableOps = getAvailableOperations(this.field.type);
       this._operation = 'SET';
       this._value = undefined;
+      // Emit after reset so modal clears preview
+      this._emitPendingChange();
     }
   }
 
   private _onOpSelect(op: BulkOperation) {
     this._operation = op;
     this._opDropdownOpen = false;
+    this._emitPendingChange();
   }
 
   private _onOpToggle() {
@@ -80,6 +83,16 @@ export class SfxBulkMetaOpBar extends LitElement {
     document.removeEventListener('click', this._onOpDropdownClose);
   }
 
+  private _emitPendingChange() {
+    this.dispatchEvent(
+      new CustomEvent('pending-change', {
+        detail: { operation: this._operation, value: this._value },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
   /**
    * Intercept field-blur and field-change from the edit component.
    * Capture value locally in frontend format — don't propagate.
@@ -87,11 +100,13 @@ export class SfxBulkMetaOpBar extends LitElement {
   private _onFieldBlur = (e: CustomEvent) => {
     e.stopPropagation();
     this._value = e.detail.value;
+    this._emitPendingChange();
   };
 
   private _onFieldChange = (e: CustomEvent) => {
     e.stopPropagation();
     this._value = e.detail.value;
+    this._emitPendingChange();
   };
 
   private _onFieldEscape = (e: CustomEvent) => {
@@ -115,6 +130,12 @@ export class SfxBulkMetaOpBar extends LitElement {
 
     // Reset value — _effectiveValue returns type-appropriate empty default
     this._value = undefined;
+    this._emitPendingChange();
+  }
+
+  private _onClear() {
+    this._value = undefined;
+    this._emitPendingChange();
   }
 
   private get _isApplyDisabled(): boolean {
@@ -173,6 +194,21 @@ export class SfxBulkMetaOpBar extends LitElement {
             .autocomplete=${this.autocomplete}
           ></sfx-metadata-field-edit>
         </div>
+
+        ${!isEmpty(this._value)
+          ? html`
+              <button
+                class="btn-clear"
+                @click=${this._onClear}
+                title="Clear"
+                aria-label="Clear input"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            `
+          : nothing}
 
         <button
           class="btn-apply"

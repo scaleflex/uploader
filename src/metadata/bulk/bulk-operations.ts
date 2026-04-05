@@ -11,6 +11,12 @@ export interface BulkOperationDef {
   label: string;
 }
 
+/** Pending bulk operation — value the user has entered in the op-bar but not yet applied. */
+export interface PendingOp {
+  operation: BulkOperation;
+  value: unknown; // frontend format
+}
+
 const SET: BulkOperationDef = { key: 'SET', label: 'Set' };
 const ADD: BulkOperationDef = { key: 'ADD', label: 'Add' };
 const DELETE: BulkOperationDef = { key: 'DELETE', label: 'Delete' };

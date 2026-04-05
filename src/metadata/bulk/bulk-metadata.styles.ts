@@ -239,12 +239,40 @@ export const bulkSidebarStyles = css`
   }
 
   .group-label {
-    padding: 10px 16px 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+    padding: 12px 16px 6px;
+    margin-top: 8px;
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.06em;
     color: var(--sfx-up-text-muted, #94a3b8);
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-family: inherit;
+    text-align: left;
+  }
+  .group-label:first-child {
+    margin-top: 0;
+  }
+  .group-label:hover {
+    color: var(--sfx-up-text-secondary, #64748b);
+  }
+  .group-label-text {
+    flex: 1;
+  }
+  .group-chevron {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    transition: transform 0.18s ease;
+  }
+  .group-chevron.open {
+    transform: rotate(180deg);
   }
 
   .field-item {
@@ -270,6 +298,23 @@ export const bulkSidebarStyles = css`
     background: var(--sfx-up-primary-bg, #eff6ff);
     color: var(--sfx-up-primary, #2563eb);
     font-weight: 500;
+  }
+
+  .field-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.55;
+  }
+  .field-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+  .field-item.active .field-icon {
+    opacity: 0.85;
   }
 
   .field-name {
@@ -388,6 +433,26 @@ export const bulkOpBarStyles = css`
     min-width: 0;
   }
 
+  /* Clear button */
+  .btn-clear {
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 6px;
+    background: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--sfx-up-text-muted, #94a3b8);
+    flex-shrink: 0;
+    transition: background 0.12s ease, color 0.12s ease;
+  }
+  .btn-clear:hover {
+    background: var(--sfx-up-hover, #f1f5f9);
+    color: var(--sfx-up-text-secondary, #64748b);
+  }
+
   /* Apply button */
   .btn-apply {
     height: 34px;
@@ -429,6 +494,7 @@ export const bulkRowStyles = css`
     gap: 12px;
     padding: 10px 24px;
     border-bottom: 1px solid var(--sfx-up-border-light, #f1f5f9);
+    border-left: 3px solid transparent;
     transition: background 0.1s ease;
   }
   .row:hover {
@@ -479,12 +545,7 @@ export const bulkRowStyles = css`
   .row-field {
     flex: 1;
     min-width: 0;
-    cursor: pointer;
     position: relative;
-  }
-  .row-field-view {
-    max-height: 36px;
-    overflow: hidden;
   }
   .row-field-edit {
     min-width: 0;
@@ -496,12 +557,97 @@ export const bulkRowStyles = css`
     margin-top: 2px;
   }
 
+  .row--changed {
+    border-left-color: var(--sfx-up-success, #16a34a);
+  }
+
   .fm-checkbox {
     width: 16px;
     height: 16px;
     accent-color: var(--sfx-up-primary, #2563eb);
     cursor: pointer;
     margin: 0;
+  }
+`;
+
+// ---------------------------------------------------------------------------
+// Diff view
+// ---------------------------------------------------------------------------
+
+export const bulkDiffStyles = css`
+  :host {
+    display: block;
+    font-family: var(--sfx-up-font, inherit);
+  }
+
+  .diff-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+    min-height: 28px;
+    padding: 4px 8px;
+    border-radius: 6px;
+  }
+
+  /* ---- Chips (array diff) ---- */
+  .diff-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+  .diff-chip--kept {
+    background: var(--sfx-up-border-light, #f1f5f9);
+    color: var(--sfx-up-text-secondary, #64748b);
+  }
+  .diff-chip--added {
+    background: #dcfce7;
+    color: #166534;
+    font-weight: 500;
+  }
+  .diff-chip--removed {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+  .diff-chip--removed s {
+    text-decoration: line-through;
+  }
+
+  /* ---- Scalar diff ---- */
+  .diff-old {
+    color: #991b1b;
+  }
+  .diff-old s {
+    text-decoration: line-through;
+    opacity: 0.7;
+  }
+  .diff-arrow {
+    color: var(--sfx-up-text-muted, #94a3b8);
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+  .diff-new {
+    color: #166534;
+    font-weight: 500;
+  }
+  .diff-scalar-text {
+    font-size: 14px;
+  }
+
+  /* ---- Accessibility ---- */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
   }
 `;
 

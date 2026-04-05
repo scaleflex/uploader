@@ -2,6 +2,7 @@ import { LitElement, html } from 'lit';
 import { property } from 'lit/decorators.js';
 import type { MetadataField, MetadataConfig } from '../schema/schema.types';
 import type { UploadFile } from '../../store/store.types';
+import type { PendingOp } from './bulk-operations';
 import { bulkTableStyles } from './bulk-metadata.styles';
 
 /**
@@ -16,6 +17,7 @@ export class SfxBulkMetaTable extends LitElement {
   @property({ attribute: false }) selected: Set<string> = new Set();
   @property({ attribute: false }) config: MetadataConfig | null = null;
   @property({ attribute: false }) autocomplete: unknown;
+  @property({ attribute: false }) pendingOp: PendingOp | null = null;
 
   private _getEffectiveValue(file: UploadFile): unknown {
     return this.staged.get(file.id)?.get(this.field.key) ?? file.meta[this.field.key];
@@ -32,6 +34,7 @@ export class SfxBulkMetaTable extends LitElement {
             .selected=${this.selected.has(file.id)}
             .config=${this.config}
             .autocomplete=${this.autocomplete}
+            .pendingOp=${this.selected.has(file.id) ? this.pendingOp : null}
           ></sfx-bulk-meta-row>
         `,
       )}

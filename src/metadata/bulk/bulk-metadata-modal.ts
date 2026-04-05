@@ -8,7 +8,7 @@ import type {
 import type { UploadFile } from '../../store/store.types';
 import { mapValueToBackend } from '../schema/value-transforms';
 import { isEmpty } from '../schema/validation';
-import { applyBulkOperation, type BulkOperation } from './bulk-operations';
+import { applyBulkOperation, type BulkOperation, type PendingOp } from './bulk-operations';
 import { bulkModalStyles } from './bulk-metadata.styles';
 
 /**
@@ -29,6 +29,7 @@ export class SfxBulkMetadataModal extends LitElement {
   @state() private _staged: Map<string, Map<string, unknown>> = new Map();
   @state() private _selected: Set<string> = new Set();
   @state() private _sortAsc = true;
+  @state() private _pendingOp: PendingOp | null = null;
 
   // Snapshot of original files for diff on save
   private _originalFiles: Map<string, UploadFile> = new Map();
@@ -59,6 +60,7 @@ export class SfxBulkMetadataModal extends LitElement {
     );
     if (fromInput) return;
 
+    if (!this._confirmDiscardPending()) return;
     this._emitClose();
   };
 
@@ -143,7 +145,30 @@ export class SfxBulkMetadataModal extends LitElement {
   // Event handlers
   // -----------------------------------------------------------------------
 
+  private get _hasPendingValue(): boolean {
+    return this._pendingOp != null && !isEmpty(this._pendingOp.value);
+  }
+
+  /** Returns true if the caller should proceed; false if the user chose to stay. */
+  private _confirmDiscardPending(): boolean {
+    if (!this._hasPendingValue) return true;
+    return confirm('You have unapplied bulk changes. Discard them?');
+  }
+
+  private _onPendingChange = (
+    e: CustomEvent<{ operation: BulkOperation; value: unknown }>,
+  ) => {
+    const { operation, value } = e.detail;
+    if (isEmpty(value)) {
+      this._pendingOp = null;
+    } else {
+      this._pendingOp = { operation, value };
+    }
+  };
+
   private _onFieldSelect = (e: CustomEvent<{ fieldKey: string }>) => {
+    if (!this._confirmDiscardPending()) return;
+    this._pendingOp = null;
     this._activeFieldKey = e.detail.fieldKey;
   };
 
@@ -221,6 +246,8 @@ export class SfxBulkMetadataModal extends LitElement {
   // -----------------------------------------------------------------------
 
   private _onSave = () => {
+    if (!this._confirmDiscardPending()) return;
+
     const changes: Array<{ fileId: string; meta: Record<string, unknown> }> = [];
 
     for (const [fileId, fileStagedMap] of this._staged) {
@@ -254,10 +281,12 @@ export class SfxBulkMetadataModal extends LitElement {
   };
 
   private _onCancel = () => {
+    if (!this._confirmDiscardPending()) return;
     this._emitClose();
   };
 
   private _onClose = () => {
+    if (!this._confirmDiscardPending()) return;
     this._emitClose();
   };
 
@@ -346,6 +375,7 @@ export class SfxBulkMetadataModal extends LitElement {
                       .config=${this.config}
                       .selectedCount=${this._selected.size}
                       @bulk-apply=${this._onBulkApply}
+                      @pending-change=${this._onPendingChange}
                     ></sfx-bulk-meta-op-bar>
                   `
                 : nothing}
@@ -381,6 +411,7 @@ export class SfxBulkMetadataModal extends LitElement {
                         .selected=${this._selected}
                         .config=${this.config}
                         .autocomplete=${this.autocomplete}
+                        .pendingOp=${this._pendingOp}
                         @row-field-change=${this._onRowFieldChange}
                         @row-toggle=${this._onRowToggle}
                       ></sfx-bulk-meta-table>

@@ -2,33 +2,38 @@ import { LitElement, html, nothing } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import type { MetadataField, MetadataConfig } from '../schema/schema.types';
 import type { UploadFile } from '../../store/store.types';
+import type { PendingOp } from './bulk-operations';
 import { validateField } from '../schema/validation';
 import { mapValueToBackend, mapValueFromBackend } from '../schema/value-transforms';
+import { applyBulkOperation } from './bulk-operations';
 import { formatFileSize } from '../../utils/file-utils';
 import { bulkRowStyles } from './bulk-metadata.styles';
+import './bulk-meta-diff-view';
 
 /**
  * Per-file row in the bulk metadata table.
  * Shows checkbox, thumbnail, file name, size, and the active field value.
- * Click on the value cell to enter edit mode.
+ *
+ * When a pending bulk operation exists (user typing in op-bar before Apply),
+ * shows a live diff preview of what the operation would produce.
+ * Otherwise always shows the editable field input.
  */
 export class SfxBulkMetaRow extends LitElement {
   static styles = [bulkRowStyles];
 
   @property({ attribute: false }) file!: UploadFile;
   @property({ attribute: false }) field!: MetadataField;
-  @property({ attribute: false }) value: unknown; // backend format
+  @property({ attribute: false }) value: unknown; // backend format (staged)
   @property({ type: Boolean }) selected = false;
   @property({ attribute: false }) config: MetadataConfig | null = null;
   @property({ attribute: false }) autocomplete: unknown;
+  /** Pending bulk operation from op-bar (null when nothing pending or row unselected). */
+  @property({ attribute: false }) pendingOp: PendingOp | null = null;
 
-  @state() private _editing = false;
   @state() private _error: string | null = null;
 
   willUpdate(changed: Map<string, unknown>) {
-    // Reset edit mode when the active field changes (sidebar navigation)
     if (changed.has('field')) {
-      this._editing = false;
       this._error = null;
     }
   }
@@ -41,10 +46,6 @@ export class SfxBulkMetaRow extends LitElement {
         composed: true,
       }),
     );
-  }
-
-  private _onValueClick() {
-    if (!this._editing) this._editing = true;
   }
 
   private _onFieldBlur = (e: CustomEvent) => {
@@ -72,7 +73,10 @@ export class SfxBulkMetaRow extends LitElement {
       this.config?.language,
     );
 
-    this._editing = false;
+    // Skip dispatch if value hasn't changed — avoids unnecessary staged map
+    // mutations and re-renders of all rows on every blur.
+    if (JSON.stringify(backendValue) === JSON.stringify(this.value)) return;
+
     this.dispatchEvent(
       new CustomEvent('row-field-change', {
         detail: { fileId: this.file.id, value: backendValue },
@@ -82,27 +86,52 @@ export class SfxBulkMetaRow extends LitElement {
     );
   };
 
-  private _onFieldEscape = (e: CustomEvent) => {
-    e.stopPropagation();
-    this._editing = false;
-    this._error = null;
-  };
-
   private _getExtension(name: string): string {
     const idx = name.lastIndexOf('.');
     return idx > 0 ? name.slice(idx + 1).toUpperCase() : '?';
   }
 
-  render() {
-    const f = this.file;
-    const displayValue = mapValueFromBackend(
+  /**
+   * Compute what the value would become if the pending bulk operation were applied.
+   * Returns null if there's no pending op or the preview equals the current value.
+   */
+  private _computePreview(): unknown | null {
+    if (!this.pendingOp) return null;
+
+    const { operation, value: frontendValue } = this.pendingOp;
+    const language = this.config?.language;
+
+    const fakeFile = {
+      meta: { ...this.file.meta, [this.field.key]: this.value },
+    } as UploadFile;
+
+    const backendValue = mapValueToBackend(
       this.field,
-      this.value,
-      this.config?.language,
+      frontendValue,
+      fakeFile,
+      language,
     );
 
+    const result = applyBulkOperation(
+      operation,
+      this.value,
+      backendValue,
+      this.field.type,
+    );
+
+    // No visible change — don't show preview
+    if (JSON.stringify(result) === JSON.stringify(this.value)) return null;
+
+    return result;
+  }
+
+  render() {
+    const f = this.file;
+    const preview = this._computePreview();
+    const showPreview = preview !== null;
+
     return html`
-      <div class="row">
+      <div class="row ${showPreview ? 'row--changed' : ''}">
         <div class="row-check">
           <input
             type="checkbox"
@@ -121,26 +150,24 @@ export class SfxBulkMetaRow extends LitElement {
 
         <div
           class="row-field"
-          @click=${this._onValueClick}
           @field-blur=${this._onFieldBlur}
-          @field-escape=${this._onFieldEscape}
         >
-          ${this._editing
+          ${showPreview
             ? html`
+                <sfx-bulk-meta-diff-view
+                  .field=${this.field}
+                  .oldValue=${this.value}
+                  .newValue=${preview}
+                  .config=${this.config}
+                ></sfx-bulk-meta-diff-view>
+              `
+            : html`
                 <div class="row-field-edit">
                   <sfx-metadata-field-edit
                     .field=${this.field}
-                    .value=${displayValue}
+                    .value=${mapValueFromBackend(this.field, this.value, this.config?.language)}
                     .autocomplete=${this.autocomplete}
                   ></sfx-metadata-field-edit>
-                </div>
-              `
-            : html`
-                <div class="row-field-view">
-                  <sfx-metadata-field-view
-                    .field=${this.field}
-                    .value=${displayValue}
-                  ></sfx-metadata-field-view>
                 </div>
               `}
           ${this._error
