@@ -6,6 +6,37 @@ import type {
   RegionalVariantsGroup,
 } from './schema.types';
 
+/**
+ * Normalize a field label to sentence case per the design system.
+ * - `text` → `Text`
+ * - `asset_expiration` → `Asset expiration`
+ * - `assetExpiration` → `Asset expiration`
+ * - `SKU`, `DRM`, `URL` (short all-caps acronyms) → kept as-is
+ * - `Title` → `Title` (already correct, unchanged)
+ */
+function toSentenceCaseLabel(raw: string): string {
+  if (!raw) return raw;
+  // Short all-caps acronyms stay as-is (SKU, DRM, URL, API, ID, UUID, etc.)
+  if (/^[A-Z0-9]{2,5}$/.test(raw)) return raw;
+
+  // Split on separators and camelCase boundaries.
+  const words = raw
+    .replace(/[_\-]+/g, ' ')
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .split(/\s+/)
+    .filter(Boolean)
+    .map(w => (/^[A-Z0-9]{2,5}$/.test(w) ? w : w.toLowerCase()));
+
+  if (words.length === 0) return raw;
+
+  // Capitalize only the first word (unless it's an acronym).
+  const first = words[0];
+  if (!/^[A-Z0-9]{2,5}$/.test(first)) {
+    words[0] = first.charAt(0).toUpperCase() + first.slice(1);
+  }
+  return words.join(' ');
+}
+
 export function parseMetadataSchema(
   metadata: RawMetadata,
   config?: MetadataConfig,
@@ -37,7 +68,13 @@ export function parseMetadataSchema(
     }))
     .filter(g => g.fields.length > 0);
 
-  // 4. Flatten fields + build index
+  // 4. Normalize field titles to sentence case (design-system compliance)
+  groups = groups.map(g => ({
+    ...g,
+    fields: g.fields.map(f => ({ ...f, title: toSentenceCaseLabel(f.title) })),
+  }));
+
+  // 5. Flatten fields + build index
   const fields = groups.flatMap(g => g.fields);
   const fieldsByKey = new Map(fields.map(f => [f.key, f]));
 
