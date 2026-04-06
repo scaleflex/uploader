@@ -26,7 +26,9 @@ export class SfxMetaTagsField extends MetadataFieldBase {
       }
       .container:focus-within {
         border-color: var(--sfx-up-primary, #2563eb);
-        box-shadow: 0 0 0 3px var(--sfx-up-ring, oklch(0.578 0.198 268.129 / 0.15));
+        box-shadow:
+          0 0 0 2px var(--sfx-up-bg, #fff),
+          0 0 0 5px var(--sfx-up-ring, oklch(0.578 0.198 268.129 / 0.7));
       }
 
       .input {
