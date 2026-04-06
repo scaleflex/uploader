@@ -512,12 +512,12 @@ export class SfxFileItem extends LitElement {
           <!-- Preview button -->
           ${!isDone && !isUploading && !isPaused && !isError && f.status !== 'rejected'
             ? html`
-                <button class="preview-btn" @click=${this._preview} aria-label="Preview file">
+                <button class="preview-btn" @click=${this._preview} aria-label="Details">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                     <circle cx="12" cy="12" r="3"/>
                   </svg>
-                  Preview
+                  Details
                 </button>
               `
             : nothing}
