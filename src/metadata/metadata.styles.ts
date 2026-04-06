@@ -303,7 +303,7 @@ export const metadataFieldStyles = css`
   .field-label-text {
     font-size: 14px;
     font-weight: 400;
-    color: var(--sfx-up-text-muted, #94a3b8);
+    color: var(--sfx-up-text-secondary, #64748b);
   }
   .field-required {
     color: var(--sfx-up-error, #dc2626);

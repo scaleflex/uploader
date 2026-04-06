@@ -22,6 +22,8 @@ export class SfxFileItem extends LitElement {
       display: flex;
       flex-direction: column;
       position: relative;
+      min-width: 0;
+      overflow: hidden;
     }
 
     .tile:hover {
@@ -123,11 +125,15 @@ export class SfxFileItem extends LitElement {
     .info {
       padding: 8px 12px;
       min-width: 0;
+      overflow: hidden;
     }
 
     .name-input {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
       margin-bottom: 2px;
-      flex: 1;
       min-width: 0;
       font-size: 14px;
       font-weight: 400;
@@ -138,6 +144,9 @@ export class SfxFileItem extends LitElement {
       background: transparent;
       font-family: inherit;
       outline: none;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
       transition: border-color 0.15s, background 0.15s;
     }
     .name-input:hover {
