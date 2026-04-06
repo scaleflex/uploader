@@ -162,7 +162,7 @@ export class SfxFileItem extends LitElement {
     .meta {
       font-size: 12px;
       font-weight: 400;
-      color: var(--sfx-up-text-muted, #9ca3af);
+      color: #6b7280;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;

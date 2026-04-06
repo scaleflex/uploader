@@ -760,8 +760,8 @@ export class SfxUploader extends LitElement {
       position: absolute;
       top: 50%;
       transform: translateY(-50%);
-      width: 36px;
-      height: 36px;
+      width: 32px;
+      height: 32px;
       border-radius: 50%;
       border: none;
       background: #fff;
@@ -786,8 +786,8 @@ export class SfxUploader extends LitElement {
     }
 
     .preview-nav svg {
-      width: 18px;
-      height: 18px;
+      width: 16px;
+      height: 16px;
     }
 
     .preview-nav.prev { left: 10px; }
