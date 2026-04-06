@@ -53,6 +53,24 @@ export const metadataDropdownStyles = css`
     box-sizing: border-box;
     display: flex;
     align-items: center;
+    gap: 8px;
+  }
+  .trigger-chevron {
+    margin-left: auto;
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    color: var(--sfx-up-text-muted, #94a3b8);
+    transition: transform 0.18s ease;
+    pointer-events: none;
+  }
+  .trigger-chevron svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  .trigger-chevron.open {
+    transform: rotate(180deg);
   }
   .trigger:focus-visible {
     border-color: var(--sfx-up-primary, #2563eb);
@@ -60,6 +78,14 @@ export const metadataDropdownStyles = css`
       0 0 0 2px var(--sfx-up-bg, #fff),
       0 0 0 5px var(--sfx-up-ring, oklch(0.578 0.198 268.129 / 0.7));
     outline: none;
+  }
+  .placeholder,
+  .trigger-value {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .placeholder {
     color: var(--sfx-up-text-muted, #94a3b8);
@@ -315,7 +341,7 @@ export const metadataFieldStyles = css`
     display: flex;
     align-items: center;
     gap: 3px;
-    width: 112px;
+    width: 144px;
     flex-shrink: 0;
   }
   .field-label-text {

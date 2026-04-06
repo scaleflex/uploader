@@ -193,7 +193,7 @@ export class SfxMetaMultiSelectField extends MetadataFieldBase {
       <div class="trigger"
         role="combobox" aria-expanded=${this._open} aria-haspopup="listbox"
         tabindex="0"
-        @click=${() => !this._open && this._openDropdown()} @keydown=${this._onKeydown}>
+        @click=${() => this._open ? this._closeAndSubmit() : this._openDropdown()} @keydown=${this._onKeydown}>
         ${sel.length
           ? sel.map(v => html`
               <span class="chip">
@@ -201,6 +201,11 @@ export class SfxMetaMultiSelectField extends MetadataFieldBase {
                 <button class="chip-x" aria-label="Remove ${this._labelFor(v)}" @click=${(e: Event) => { e.stopPropagation(); this._remove(v); }}>&times;</button>
               </span>`)
           : html`<span class="placeholder">${this.field?.placeholder || placeholderFallback}</span>`}
+        <span class="trigger-chevron ${this._open ? 'open' : ''}" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m6 9 6 6 6-6"/>
+          </svg>
+        </span>
       </div>
 
       ${this._open ? html`

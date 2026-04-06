@@ -26,10 +26,6 @@ export class SfxMetadataForm extends LitElement {
       font-size: 14px;
       font-weight: 500;
       color: var(--sfx-up-text, #1e293b);
-      transition: color 0.12s ease;
-    }
-    .group-header:hover {
-      color: var(--sfx-up-primary, #2563eb);
     }
     .group-header:focus-visible {
       outline: 2px solid var(--sfx-up-ring, oklch(0.578 0.198 268.129 / 0.7));
