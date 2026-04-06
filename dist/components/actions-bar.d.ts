@@ -7,6 +7,8 @@ export declare class SfxActionsBar extends LitElement {
     totalSize: number;
     failedCount: number;
     showFillMetadata: boolean;
+    uploadDisabled: boolean;
+    uploadDisabledReason: string;
     completedCount: number;
     uploadProgress: number;
     private _clear;

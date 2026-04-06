@@ -1,6 +1,6 @@
-export { SfxUploader, type UploaderConfig, type UploaderCallbacks } from './sfx-uploader';
+export { SfxUploader, type UploaderConfig, type UploaderCallbacks, type InlineHeaderConfig } from './sfx-uploader';
 export { createStore, Store } from './store';
-export { UploadEngine, type UploadEngineConfig } from './engine';
+export { UploadEngine, type UploadEngineConfig, type TusConfig } from './engine';
 export { PublicEvents } from './events/public-events';
 export type { UploaderState, UploadFile, FileStatus, UploadResponse, QueueConfig, RetryConfig, UploadRestrictions, } from './store';
 export type { AuthConfig, SecurityTemplateAuth, SassKeyAuth, AuthHeaders, } from './auth';
@@ -14,4 +14,5 @@ export { SfxFileList } from './components/file-list';
 export { SfxFileItem } from './components/file-item';
 export { SfxSuccessCard } from './components/success-card';
 export { SfxActionsBar, type UploadButtonState } from './components/actions-bar';
+export type { MetadataConfig, MetadataSchema, MetadataField, MetadataGroup } from './metadata/schema/schema.types';
 //# sourceMappingURL=index.d.ts.map

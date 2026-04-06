@@ -1,7 +1,9 @@
 import { LitElement } from 'lit';
+import { TusConfig } from './engine';
 import { UploadFile, UploadRestrictions, UploadResponse } from './store/store.types';
 import { AuthConfig } from './auth/auth.types';
 import { ConnectorConfig } from './connectors/connector.types';
+import { MetadataConfig } from './metadata/schema/schema.types';
 export interface UploaderCallbacks {
     onFileAdded?: (file: UploadFile) => void;
     onFileRemoved?: (file: UploadFile) => void;
@@ -11,6 +13,8 @@ export interface UploaderCallbacks {
     onUploadComplete?: (file: UploadFile, response: UploadResponse) => void;
     onUploadError?: (file: UploadFile, error: Error) => void;
     onUploadRetry?: (file: UploadFile, attempt: number) => void;
+    onUploadPaused?: (file: UploadFile) => void;
+    onUploadResumed?: (file: UploadFile) => void;
     onAllComplete?: (successful: UploadFile[], failed: UploadFile[]) => void;
     onTotalProgress?: (percentage: number, speed: number, eta: number) => void;
     onBeforeUpload?: (files: UploadFile[]) => boolean | void;
@@ -21,17 +25,28 @@ export interface UploaderCallbacks {
     onFillMetadata?: (files: UploadFile[]) => void;
     onCompleteAction?: () => void;
 }
+export interface InlineHeaderConfig {
+    /** Small uppercase accent label (e.g. "Airbox"). */
+    accent?: string;
+    /** Main heading (e.g. "Q1 Marketing Assets"). */
+    title?: string;
+    /** Description text below the title. */
+    description?: string;
+}
 export interface UploaderConfig {
     auth: AuthConfig;
     targetFolder?: string;
     mode?: 'modal' | 'inline';
+    /** Header displayed above the uploader in inline mode. All fields are optional. */
+    inlineHeader?: InlineHeaderConfig;
     /**
-     * Controls the header navigation button.
-     * - `'none'`  — no button (default for inline)
-     * - `'close'` — X icon on the right (default for modal)
-     * - `'back'`  — back arrow on the left (use with modal for step/wizard flows)
+     * Controls the standard header bar.
+     * - `'close'` — header with X close button (default for modal)
+     * - `'back'`  — header with back arrow (wizard / step flows)
+     * - `true`    — header visible, no button (default for inline without inlineHeader)
+     * - `false`   — no header at all
      */
-    headerButton?: 'none' | 'close' | 'back';
+    header?: boolean | 'close' | 'back';
     restrictions?: Partial<UploadRestrictions>;
     concurrency?: number;
     autoProceed?: boolean;
@@ -39,6 +54,8 @@ export interface UploaderConfig {
     connectors?: ConnectorConfig;
     /** Show "Fill Metadata" button in the actions bar. */
     showFillMetadata?: boolean;
+    /** Metadata editing configuration. When provided, enables the built-in metadata form. */
+    metadataConfig?: MetadataConfig;
     /** Layout for the import-from sources section: horizontal pills (default) or cards grid. */
     sourcesLayout?: 'pills' | 'cards';
     /** Whether closing the modal clears all files. Default: true. Set to false to preserve files across open/close. */
@@ -67,6 +84,13 @@ export interface UploaderConfig {
      * Default: 4000 (4 seconds). Set to 0 or false to disable auto-removal.
      */
     rejectedFileAutoRemoveDelay?: number | false;
+    /**
+     * Enable resumable uploads via the tus protocol for large files.
+     * When set, files exceeding `sizeThreshold` (default 10 MB) are uploaded
+     * using chunked, resumable tus uploads instead of a single XHR POST.
+     * Set to `true` for defaults, or pass a TusConfig object for fine-grained control.
+     */
+    tusConfig?: TusConfig | boolean;
 }
 export declare class SfxUploader extends LitElement {
     static styles: import('lit').CSSResult;
@@ -94,7 +118,9 @@ export declare class SfxUploader extends LitElement {
     private _bodyDragOver;
     private _isMinimized;
     private _isPillExpanded;
-    private _bodyDragCounter;
+    private _metadataSchema;
+    private _bulkMetadataOpen;
+    private _metadataAutocomplete;
     private _videoBlobUrls;
     private _store;
     private _storeCtrl;
@@ -121,6 +147,10 @@ export declare class SfxUploader extends LitElement {
     resumeUpload(files?: UploadFile[]): void;
     /** Cancel a paused upload (spec §13.2). */
     cancelUpload(): void;
+    /** Pause a specific file's tus upload. Only works for files using resumable upload. */
+    pauseFile(fileId: string): void;
+    /** Resume a specific paused tus upload. */
+    resumeFile(fileId: string): void;
     /** Get a snapshot of all current files. */
     getFiles(): UploadFile[];
     /** Get a single file by ID. */
@@ -143,7 +173,18 @@ export declare class SfxUploader extends LitElement {
     disconnectedCallback(): void;
     private _applyConfig;
     private _resolveAuthAndEngine;
+    private _formatAuthError;
+    private _showToast;
+    private _normalizeTusConfig;
     private _ensureEngine;
+    private _preloadMetadataSchema;
+    private _onFileRename;
+    /** Handle file rename from the preview sidebar or thumbnail. */
+    private _onPreviewRename;
+    /** Handle field-blur from inline metadata form in the preview sidebar. */
+    private _onPreviewMetadataBlur;
+    private get _metadataEnforcing();
+    private get _hasUnfilledRequiredMetadata();
     private _dispatchPublic;
     /**
      * React to store changes and dispatch public events + callbacks
@@ -169,7 +210,11 @@ export declare class SfxUploader extends LitElement {
     private _onFileRemove;
     private _onFilePreview;
     private _onFillMetadata;
+    private _onBulkMetadataSaveBatch;
+    private _onBulkMetadataClose;
     private _onFileRetry;
+    private _onFilePause;
+    private _onFileResume;
     private _onRetryAll;
     private _onClearAll;
     private _onAddMore;
@@ -190,12 +235,14 @@ export declare class SfxUploader extends LitElement {
     private _onPillExpand;
     private _onPillDismiss;
     private _onModalBackdropClick;
+    private _bodyLeaveTimer;
     private _onBodyDragEnter;
     private _onBodyDragOver;
     private _onBodyDragLeave;
     private _onBodyDrop;
     private _onKeyDown;
     render(): import('lit-html').TemplateResult<1>;
+    private _renderInlineHeader;
     private _renderHeader;
     private _dimCache;
     private _getImageDimensions;

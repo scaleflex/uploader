@@ -7,13 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Bulk metadata editing modal — click "Fill Metadata" to open a full-screen overlay for editing metadata across multiple files at once
+  - Sidebar field navigator with schema groups, active highlight, and filled/required indicators
+  - Operation bar with SET, ADD, DELETE operations (ADD/DELETE available for array fields: multi-select, tags)
+  - Per-file table with inline click-to-edit and sortable name column
+  - Staged changes with diff-only save (only modified fields are persisted)
+  - Select-all / deselect-all with three-state checkbox
+- `sfx-metadata-field-edit` dispatcher component for rendering the correct field editor by type
+- `sfx-metadata-field-view` read-only value display component
+
+### Fixed
+
+- Dropdown fields (select, multi-select, boolean) closing immediately when clicking options inside Shadow DOM — fixed outside-click detection to use `composedPath()` instead of `e.target`
+
 ## [0.2.0] - 2026-03-22
 
 ### Added
 
 - Cards layout for import-from sources (`sourcesLayout: 'cards'`) — responsive grid of square cards with large icons
 - Video thumbnail generation from first frame
-- Configurable `headerButton` option (`close`, `back`, `none`)
+- Configurable `header` option (`'close'`, `'back'`, `true`, `false`)
 - Screen capture source
 - Prev/next navigation arrows on preview image
 - Custom dropdown selects replacing native selects with preview panel scroll

@@ -1,5 +1,5 @@
 import { RemoteFileInfo } from '../connectors/connector.types';
-export type FileStatus = 'idle' | 'queued' | 'uploading' | 'complete' | 'error' | 'retrying' | 'failed' | 'rejected' | 'cancelled';
+export type FileStatus = 'idle' | 'queued' | 'uploading' | 'paused' | 'complete' | 'error' | 'retrying' | 'failed' | 'rejected' | 'cancelled';
 export interface UploadFile {
     id: string;
     status: FileStatus;
@@ -20,6 +20,8 @@ export interface UploadFile {
     meta: Record<string, unknown>;
     tags: string[];
     remoteInfo: RemoteFileInfo | null;
+    isTus: boolean;
+    tusUploadUrl: string | null;
 }
 export interface UploadResponse {
     status: 'success' | 'error';
