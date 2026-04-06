@@ -9,12 +9,18 @@ export const metadataInputStyles = css`
     border: 1px solid var(--sfx-up-border, #e2e8f0);
     border-radius: 6px;
     font-size: 14px;
-    font-family: inherit;
+    font-family: var(--sfx-up-font, 'Inter', system-ui, -apple-system, sans-serif);
     color: var(--sfx-up-text, #1e293b);
     background: var(--sfx-up-bg, #fff);
     outline: none;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
     box-sizing: border-box;
+  }
+  input::placeholder, textarea::placeholder {
+    font-family: var(--sfx-up-font, 'Inter', system-ui, -apple-system, sans-serif);
+    font-size: 14px;
+    color: var(--sfx-up-text-muted, #94a3b8);
+    opacity: 1;
   }
   input:focus, textarea:focus, select:focus {
     border-color: var(--sfx-up-primary, #2563eb);
@@ -291,6 +297,14 @@ export const metadataFieldStyles = css`
     align-items: baseline;
     gap: 16px;
     padding: 8px 0;
+  }
+
+  /* Textarea rows: label should top-align with the first line of text */
+  .field-row--top {
+    align-items: flex-start;
+  }
+  .field-row--top .field-label {
+    padding-top: 6px;
   }
 
   .field-label {

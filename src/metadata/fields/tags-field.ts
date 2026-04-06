@@ -35,10 +35,16 @@ export class SfxMetaTagsField extends MetadataFieldBase {
         border: none;
         outline: none;
         font-size: 14px;
-        font-family: inherit;
+        font-family: var(--sfx-up-font, 'Inter', system-ui, -apple-system, sans-serif);
         color: var(--sfx-up-text, #1e293b);
         background: transparent;
         padding: 2px 0;
+      }
+      .input::placeholder {
+        font-family: var(--sfx-up-font, 'Inter', system-ui, -apple-system, sans-serif);
+        font-size: 14px;
+        color: var(--sfx-up-text-muted, #94a3b8);
+        opacity: 1;
       }
 
       .dropdown {

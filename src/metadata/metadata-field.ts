@@ -98,9 +98,11 @@ export class SfxMetadataFieldEl extends LitElement {
     if (!f) return nothing;
 
     const displayValue = mapValueFromBackend(f, this.value, this.config?.language);
+    const isTextarea = f.type === 'textarea';
+    const rowClass = isTextarea ? 'field-row field-row--top' : 'field-row';
 
     return html`
-      <div class="field-row" aria-required=${this._isRequired ? 'true' : 'false'}>
+      <div class=${rowClass} aria-required=${this._isRequired ? 'true' : 'false'}>
         <div class="field-label" id="label-${f.key}">
           <span class="field-label-text">${f.title}</span>
           ${this._isRequired ? html`<span class="field-required" aria-hidden="true">*</span>` : nothing}

@@ -762,10 +762,11 @@ export class SfxUploader extends LitElement {
       transform: translateY(-50%);
       width: 32px;
       height: 32px;
+      box-sizing: border-box;
       border-radius: 50%;
-      border: none;
+      border: 1px solid var(--sfx-up-border, #e2e8f0);
       background: #fff;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.12);
       cursor: pointer;
       display: flex;
       align-items: center;

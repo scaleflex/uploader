@@ -40,10 +40,12 @@ export class SfxMetaTextareaField extends MetadataFieldBase {
   }
 
   render() {
+    const title = this.field?.title ?? '';
+    const fallback = title ? `Enter ${title.toLowerCase()}` : '';
     return html`
       <textarea
         .value=${(this.value as string) ?? ''}
-        placeholder=${this.field?.placeholder ?? ''}
+        placeholder=${this.field?.placeholder || fallback}
         ?disabled=${this.disabled}
         @input=${this._onInput}
         @blur=${this._onBlur}
