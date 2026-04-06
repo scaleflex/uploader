@@ -43,8 +43,8 @@ else
 fi
 
 echo "==> Copying artifacts..."
-# Clean old artifacts but preserve .git
-find "$STAGE_DIR" -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
+# Clean old artifacts but preserve .git and .github
+find "$STAGE_DIR" -mindepth 1 -maxdepth 1 ! -name '.git' ! -name '.github' -exec rm -rf {} +
 
 # Copy built demo site to root (GitHub Pages serves from /)
 if [ -d "$ROOT_DIR/demo-dist" ]; then
@@ -61,6 +61,11 @@ cp "$ROOT_DIR/package.json" "$STAGE_DIR/"
 cp "$ROOT_DIR/README.md" "$STAGE_DIR/"
 [ -f "$ROOT_DIR/LICENSE" ] && cp "$ROOT_DIR/LICENSE" "$STAGE_DIR/"
 [ -f "$ROOT_DIR/CHANGELOG.md" ] && cp "$ROOT_DIR/CHANGELOG.md" "$STAGE_DIR/"
+
+# Copy GitHub workflows (Pages deployment, etc.)
+if [ -d "$ROOT_DIR/.github" ]; then
+  cp -r "$ROOT_DIR/.github" "$STAGE_DIR/"
+fi
 
 echo "==> Committing & pushing to GitHub ($GITHUB_BRANCH)..."
 cd "$STAGE_DIR"
