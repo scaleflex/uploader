@@ -4,16 +4,19 @@ import type { AuthHeaders } from '../auth/auth.types';
 import { updateFile } from '../store/helpers';
 import { xhrUploadFile, xhrUploadUrl, type XhrUploadHandle } from './xhr-upload';
 import { companionUploadFile } from './companion-upload';
+import { tusUploadFile, shouldUseTus, type TusConfig, type TusUploadHandle } from './tus-upload';
 
 export interface UploadEngineConfig {
   apiBase: string;
   authHeaders: AuthHeaders;
+  tusConfig?: TusConfig;
 }
 
 export class UploadEngine {
   private store: Store<UploaderState>;
   private config: UploadEngineConfig;
-  private activeUploads = new Map<string, XhrUploadHandle>();
+  private activeUploads = new Map<string, XhrUploadHandle | TusUploadHandle>();
+  private pausedUploads = new Map<string, TusUploadHandle>();
   private retryTimers = new Map<string, ReturnType<typeof setTimeout>>();
   private unsubscribe: (() => void) | null = null;
 
@@ -89,11 +92,53 @@ export class UploadEngine {
   }
 
   /**
+   * Pause a single tus upload.
+   * Removes from active slots so another queued file can start (v5 pattern).
+   */
+  pauseFile(fileId: string): void {
+    const handle = this.activeUploads.get(fileId);
+    if (handle && 'pause' in handle) {
+      handle.pause();
+      // Move from active → paused so the slot is freed for another file
+      this.activeUploads.delete(fileId);
+      this.pausedUploads.set(fileId, handle);
+      updateFile(this.store, fileId, { status: 'paused' });
+      // Let a queued file fill the freed slot
+      this.processQueue();
+    }
+  }
+
+  /**
+   * Resume a single paused tus upload.
+   * Re-queues through processQueue so it respects concurrency limits (v5 pattern).
+   */
+  resumeFile(fileId: string): void {
+    const handle = this.pausedUploads.get(fileId);
+    if (!handle) return;
+
+    const { concurrency } = this.store.getState().queueConfig;
+    if (this.activeUploads.size < concurrency) {
+      // Slot available — resume immediately
+      this.pausedUploads.delete(fileId);
+      handle.resume();
+      this.activeUploads.set(fileId, handle);
+      updateFile(this.store, fileId, { status: 'uploading' });
+    } else {
+      // No slot — mark as queued so processQueue picks it up when a slot opens.
+      // Keep the handle in pausedUploads so we can resume the actual tus upload later.
+      updateFile(this.store, fileId, { status: 'queued' });
+    }
+  }
+
+  /**
    * Cancel a single file upload.
    */
   cancelFile(fileId: string): void {
     const file = this.store.getState().files.get(fileId);
     if (!file || !isActive(file.status)) return;
+
+    // Safe even if both maps contain the file — tus abort() is idempotent
+    this.abortPausedUpload(fileId);
     this.abortUpload(fileId);
     updateFile(this.store, fileId, { status: 'cancelled' });
   }
@@ -105,6 +150,7 @@ export class UploadEngine {
     const { files } = this.store.getState();
     for (const file of files.values()) {
       if (isActive(file.status)) {
+        this.abortPausedUpload(file.id);
         this.abortUpload(file.id);
         updateFile(this.store, file.id, { status: 'cancelled' });
       }
@@ -125,6 +171,9 @@ export class UploadEngine {
   destroy(): void {
     for (const fileId of this.activeUploads.keys()) {
       this.abortUpload(fileId);
+    }
+    for (const fileId of [...this.pausedUploads.keys()]) {
+      this.abortPausedUpload(fileId);
     }
     for (const timer of this.retryTimers.values()) {
       clearTimeout(timer);
@@ -158,12 +207,22 @@ export class UploadEngine {
 
     const toStart = queued.slice(0, slotsAvailable);
     for (const file of toStart) {
-      this.startUpload(file);
+      // Check if this file has a paused tus handle that can be resumed
+      const pausedHandle = this.pausedUploads.get(file.id);
+      if (pausedHandle) {
+        this.pausedUploads.delete(file.id);
+        pausedHandle.resume();
+        this.activeUploads.set(file.id, pausedHandle);
+        updateFile(this.store, file.id, { status: 'uploading' });
+      } else {
+        this.startUpload(file);
+      }
     }
   }
 
   private startUpload(file: UploadFile): void {
-    updateFile(this.store, file.id, { status: 'uploading', error: null });
+    const isTus = !file.remoteInfo && !file.remoteUrl && shouldUseTus(file, this.config.tusConfig);
+    updateFile(this.store, file.id, { status: 'uploading', error: null, isTus });
 
     let lastLoaded = 0;
     let lastTime = Date.now();
@@ -194,7 +253,7 @@ export class UploadEngine {
       this.updateTotalProgress();
     };
 
-    let handle: XhrUploadHandle;
+    let handle: XhrUploadHandle | TusUploadHandle;
 
     if (file.remoteInfo) {
       // Companion proxy upload (cloud connector files)
@@ -202,8 +261,34 @@ export class UploadEngine {
     } else if (file.remoteUrl) {
       // Direct URL upload
       handle = xhrUploadUrl(file, baseOpts);
+    } else if (isTus) {
+      // Resumable tus upload for large files
+      const tusHandle = tusUploadFile(file, {
+        ...baseOpts,
+        onProgress,
+        tusConfig: this.config.tusConfig!,
+        // Supply a getter so tus picks up renewed SASS keys mid-upload
+        getAuthHeaders: () => this.config.authHeaders,
+        // Store the tus upload URL on file state for cross-session resume
+        onUploadUrlAvailable: (url) => {
+          updateFile(this.store, file.id, { tusUploadUrl: url });
+        },
+        // Sync UI state when tus pauses/resumes internally (e.g. network offline/online)
+        onPause: () => {
+          this.activeUploads.delete(file.id);
+          this.pausedUploads.set(file.id, tusHandle);
+          updateFile(this.store, file.id, { status: 'paused' });
+          this.processQueue();
+        },
+        onResume: () => {
+          this.pausedUploads.delete(file.id);
+          this.activeUploads.set(file.id, tusHandle);
+          updateFile(this.store, file.id, { status: 'uploading' });
+        },
+      });
+      handle = tusHandle;
     } else {
-      // Local file upload
+      // Standard XHR upload
       handle = xhrUploadFile(file, { ...baseOpts, onProgress });
     }
 
@@ -264,6 +349,14 @@ export class UploadEngine {
     }
   }
 
+  private abortPausedUpload(fileId: string): void {
+    const handle = this.pausedUploads.get(fileId);
+    if (handle) {
+      handle.abort();
+      this.pausedUploads.delete(fileId);
+    }
+  }
+
   private abortUpload(fileId: string): void {
     this.activeUploads.get(fileId)?.abort();
     this.activeUploads.delete(fileId);
@@ -286,6 +379,7 @@ export class UploadEngine {
       if (
         file.status === 'queued' ||
         file.status === 'uploading' ||
+        file.status === 'paused' ||
         file.status === 'retrying' ||
         file.status === 'complete' ||
         file.status === 'failed'
@@ -311,7 +405,8 @@ export class UploadEngine {
     const hasActive = [...files.values()].some((f) =>
       f.status === 'queued' ||
       f.status === 'uploading' ||
-      f.status === 'retrying',
+      f.status === 'retrying' ||
+      f.status === 'paused',
     );
 
     if (!hasActive && this.store.getState().isUploading) {
@@ -321,5 +416,5 @@ export class UploadEngine {
 }
 
 function isActive(status: FileStatus): boolean {
-  return status === 'queued' || status === 'uploading' || status === 'retrying';
+  return status === 'queued' || status === 'uploading' || status === 'retrying' || status === 'paused';
 }

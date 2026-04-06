@@ -1,8 +1,8 @@
 import { PublicEvents } from './public-events';
 
 describe('PublicEvents', () => {
-  it('exports 17 event constants', () => {
-    expect(Object.keys(PublicEvents).length).toBe(17);
+  it('exports 19 event constants', () => {
+    expect(Object.keys(PublicEvents).length).toBe(19);
   });
 
   it('all values are prefixed with "sfx-"', () => {

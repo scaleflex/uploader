@@ -8,6 +8,8 @@ export const PublicEvents = {
   UPLOAD_COMPLETE: 'sfx-upload-complete',
   UPLOAD_ERROR: 'sfx-upload-error',
   UPLOAD_RETRY: 'sfx-upload-retry',
+  UPLOAD_PAUSED: 'sfx-upload-paused',
+  UPLOAD_RESUMED: 'sfx-upload-resumed',
   ALL_COMPLETE: 'sfx-all-complete',
   TOTAL_PROGRESS: 'sfx-total-progress',
   BEFORE_UPLOAD: 'sfx-before-upload',

@@ -42,6 +42,8 @@ function makeFile(id: string, meta: Record<string, unknown> = {}): UploadFile {
     meta,
     tags: [],
     remoteInfo: null,
+    isTus: false,
+    tusUploadUrl: null,
   };
 }
 

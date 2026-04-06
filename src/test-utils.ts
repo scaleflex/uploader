@@ -21,6 +21,8 @@ export function makeUploadFile(overrides: Partial<UploadFile> = {}): UploadFile 
     meta: {},
     tags: [],
     remoteInfo: null,
+    isTus: false,
+    tusUploadUrl: null,
     ...overrides,
   };
 }

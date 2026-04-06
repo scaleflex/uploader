@@ -6,6 +6,7 @@ export type FileStatus =
   | 'idle'
   | 'queued'
   | 'uploading'
+  | 'paused'
   | 'complete'
   | 'error'
   | 'retrying'
@@ -49,6 +50,10 @@ export interface UploadFile {
 
   // Companion connector metadata (set for files from cloud providers)
   remoteInfo: RemoteFileInfo | null;
+
+  // tus resumable upload state
+  isTus: boolean;
+  tusUploadUrl: string | null;
 }
 
 export interface UploadResponse {

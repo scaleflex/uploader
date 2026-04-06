@@ -18,6 +18,8 @@ const page: Page = {
             <tr><td><code>upload()</code></td><td>Start uploading all queued files</td></tr>
             <tr><td><code>resumeUpload(files?)</code></td><td>Resume uploading failed/cancelled files</td></tr>
             <tr><td><code>cancelUpload()</code></td><td>Cancel all in-progress uploads</td></tr>
+            <tr><td><code>pauseFile(fileId: string)</code></td><td>Pause a tus upload (only works for resumable uploads)</td></tr>
+            <tr><td><code>resumeFile(fileId: string)</code></td><td>Resume a paused tus upload</td></tr>
             <tr><td><code>getFiles(): UploadFile[]</code></td><td>Get a snapshot of all current files</td></tr>
             <tr><td><code>getFile(fileId: string): UploadFile | undefined</code></td><td>Get a single file by ID</td></tr>
             <tr><td><code>updateFileMeta(fileId, meta?, tags?)</code></td><td>Update metadata and/or tags for a single file</td></tr>
@@ -58,6 +60,8 @@ uploader.addEventListener('sfx-all-complete', (e) => {
             <tr><td><code>sfx-upload-complete</code></td><td><code>{ file, response }</code></td><td>A single file upload completed</td></tr>
             <tr><td><code>sfx-upload-error</code></td><td><code>{ file, error }</code></td><td>A single file upload failed</td></tr>
             <tr><td><code>sfx-upload-retry</code></td><td><code>{ file, attempt }</code></td><td>A file upload is being retried</td></tr>
+            <tr><td><code>sfx-upload-paused</code></td><td><code>{ file }</code></td><td>A tus upload was paused</td></tr>
+            <tr><td><code>sfx-upload-resumed</code></td><td><code>{ file }</code></td><td>A paused tus upload was resumed</td></tr>
             <tr><td><code>sfx-all-complete</code></td><td><code>{ successful, failed }</code></td><td>All uploads finished</td></tr>
             <tr><td><code>sfx-total-progress</code></td><td><code>{ percentage, speed, eta }</code></td><td>Aggregate progress across all files</td></tr>
             <tr><td><code>sfx-open</code></td><td>—</td><td>Uploader was opened</td></tr>
@@ -124,6 +128,8 @@ uploader.addEventListener('sfx-all-complete', (e) => {
             <tr><td><code>onUploadComplete</code></td><td><code>(file, response) =&gt; void</code></td><td>Single file complete callback</td></tr>
             <tr><td><code>onUploadError</code></td><td><code>(file, error) =&gt; void</code></td><td>Single file error callback</td></tr>
             <tr><td><code>onUploadRetry</code></td><td><code>(file, attempt) =&gt; void</code></td><td>File retry callback</td></tr>
+            <tr><td><code>onUploadPaused</code></td><td><code>(file) =&gt; void</code></td><td>Tus upload paused by user</td></tr>
+            <tr><td><code>onUploadResumed</code></td><td><code>(file) =&gt; void</code></td><td>Paused tus upload resumed</td></tr>
             <tr><td><code>onAllComplete</code></td><td><code>(successful, failed) =&gt; void</code></td><td>All uploads finished callback</td></tr>
             <tr><td><code>onTotalProgress</code></td><td><code>(percentage, speed, eta) =&gt; void</code></td><td>Aggregate progress callback</td></tr>
             <tr><td><code>onOpen</code></td><td><code>() =&gt; void</code></td><td>Uploader opened callback</td></tr>

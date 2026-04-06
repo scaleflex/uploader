@@ -358,6 +358,35 @@ export class SfxFileItem extends LitElement {
       box-shadow: 0 0 0 2px var(--sfx-up-error, #dc2626);
     }
 
+    /* --- Paused state --- */
+    .tile.paused .spinner-overlay {
+      opacity: 1;
+      background: rgba(0, 0, 0, 0.35);
+    }
+
+    .tile.paused .spin-ring { display: none; }
+
+    .pause-icon {
+      width: 28px;
+      height: 28px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+    }
+
+    .tile.paused .pause-icon { display: flex; }
+
+    .act-btn.pause:hover {
+      background: var(--warning-10, #fef3c7);
+      color: var(--sfx-up-warning, #d97706);
+    }
+
+    .act-btn.resume:hover {
+      background: var(--sfx-up-primary-bg, #eff6ff);
+      color: var(--sfx-up-primary, #2563eb);
+    }
+
     @keyframes tileIn {
       0% {
         opacity: 0;
@@ -418,47 +447,30 @@ export class SfxFileItem extends LitElement {
     }
   }
 
-  private _remove() {
+  private _emit(name: string, extra?: Record<string, unknown>) {
     this.dispatchEvent(
-      new CustomEvent('file-remove', {
-        detail: { fileId: this.file.id },
+      new CustomEvent(name, {
+        detail: { fileId: this.file.id, ...extra },
         bubbles: true,
         composed: true,
       }),
     );
   }
 
-  private _retry() {
-    this.dispatchEvent(
-      new CustomEvent('file-retry', {
-        detail: { fileId: this.file.id },
-        bubbles: true,
-        composed: true,
-      }),
-    );
-  }
+  private _remove() { this._emit('file-remove'); }
+  private _retry() { this._emit('file-retry'); }
+  private _pause() { this._emit('file-pause'); }
+  private _resume() { this._emit('file-resume'); }
 
   private _rename(e: Event) {
     const name = (e.target as HTMLInputElement).value.trim();
     if (!name) return;
-    this.dispatchEvent(
-      new CustomEvent('file-rename', {
-        detail: { fileId: this.file.id, name },
-        bubbles: true,
-        composed: true,
-      }),
-    );
+    this._emit('file-rename', { name });
   }
 
   private _preview(e: Event) {
     e.stopPropagation();
-    this.dispatchEvent(
-      new CustomEvent('file-preview', {
-        detail: { fileId: this.file.id },
-        bubbles: true,
-        composed: true,
-      }),
-    );
+    this._emit('file-preview');
   }
 
   render() {
@@ -468,6 +480,7 @@ export class SfxFileItem extends LitElement {
     const category = getFileCategory(f);
     const isDone = f.status === 'complete';
     const isUploading = f.status === 'uploading';
+    const isPaused = f.status === 'paused';
     const isError = f.status === 'error' || f.status === 'failed';
     const isRejected = f.status === 'rejected';
     const ext = getFileExtension(f.name);
@@ -476,6 +489,7 @@ export class SfxFileItem extends LitElement {
       'tile',
       isDone ? 'done' : '',
       isUploading ? 'uploading' : '',
+      isPaused ? 'paused' : '',
       isRejected ? 'rejected' : '',
     ].filter(Boolean).join(' ');
 
@@ -496,7 +510,7 @@ export class SfxFileItem extends LitElement {
               `}
 
           <!-- Preview button -->
-          ${!isDone && !isUploading && !isError && f.status !== 'rejected'
+          ${!isDone && !isUploading && !isPaused && !isError && f.status !== 'rejected'
             ? html`
                 <button class="preview-btn" @click=${this._preview} aria-label="Preview file">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -508,9 +522,15 @@ export class SfxFileItem extends LitElement {
               `
             : nothing}
 
-          <!-- Spinner overlay -->
+          <!-- Spinner overlay (uploading = spinner, paused = pause icon) -->
           <div class="spinner-overlay">
             <div class="spin-ring"></div>
+            <div class="pause-icon">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="28" height="28">
+                <rect x="6" y="4" width="4" height="16" rx="1" />
+                <rect x="14" y="4" width="4" height="16" rx="1" />
+              </svg>
+            </div>
           </div>
 
           <!-- Done badge -->
@@ -522,8 +542,8 @@ export class SfxFileItem extends LitElement {
               </div>`
             : nothing}
 
-          <!-- Progress bar -->
-          ${f.status === 'uploading'
+          <!-- Progress bar (visible during upload and when paused) -->
+          ${f.status === 'uploading' || f.status === 'paused'
             ? html`
                 <div class="progress">
                   <div class="progress-fill" style="transform:scaleX(${Math.min(f.progress, 100) / 100})"></div>
@@ -544,6 +564,25 @@ export class SfxFileItem extends LitElement {
 
         <!-- Action buttons -->
         <div class="actions">
+          ${isUploading && f.isTus
+            ? html`
+                <button class="act-btn pause" @click=${this._pause} title="Pause" aria-label="Pause upload">
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <rect x="6" y="4" width="4" height="16" rx="1" />
+                    <rect x="14" y="4" width="4" height="16" rx="1" />
+                  </svg>
+                </button>
+              `
+            : nothing}
+          ${isPaused
+            ? html`
+                <button class="act-btn resume" @click=${this._resume} title="Resume" aria-label="Resume upload">
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <polygon points="5,3 19,12 5,21" />
+                  </svg>
+                </button>
+              `
+            : nothing}
           ${isError
             ? html`
                 <button class="act-btn retry" @click=${this._retry} title="Retry" aria-label="Retry upload">

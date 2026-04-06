@@ -1,6 +1,6 @@
-export { SfxUploader, type UploaderConfig, type UploaderCallbacks } from './sfx-uploader';
+export { SfxUploader, type UploaderConfig, type UploaderCallbacks, type InlineHeaderConfig } from './sfx-uploader';
 export { createStore, Store } from './store';
-export { UploadEngine, type UploadEngineConfig } from './engine';
+export { UploadEngine, type UploadEngineConfig, type TusConfig } from './engine';
 export { PublicEvents } from './events/public-events';
 export type {
   UploaderState,

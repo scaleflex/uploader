@@ -98,6 +98,7 @@ const page: Page = {
           'text',
           `idle → validating → queued → preparing → uploading → processing → complete
                                                      ↘ error → retrying → uploading
+                                                     ↘ paused → uploading (resumed)
                                                      ↘ cancelled
          validating → rejected (restrictions failed)
                     → failed (max retries exceeded)`,
@@ -108,6 +109,7 @@ const page: Page = {
           <li><strong>queued</strong> — validated, waiting for an upload slot</li>
           <li><strong>preparing</strong> — preparing the upload request</li>
           <li><strong>uploading</strong> — transfer in progress</li>
+          <li><strong>paused</strong> — tus upload paused by user (can be resumed)</li>
           <li><strong>processing</strong> — server processing the file</li>
           <li><strong>complete</strong> — successfully uploaded</li>
           <li><strong>error</strong> — upload failed (may be retried)</li>
