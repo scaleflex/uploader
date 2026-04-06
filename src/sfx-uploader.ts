@@ -1490,7 +1490,6 @@ export class SfxUploader extends LitElement {
   @state() private _metadataSchema: MetadataSchema | null = null;
   @state() private _bulkMetadataOpen = false;
   private _metadataAutocomplete: any = null;
-  private _bodyDragCounter = 0;
   private _videoBlobUrls = new Map<File, string>();
 
   private _store!: Store<UploaderState>;
@@ -2770,28 +2769,32 @@ export class SfxUploader extends LitElement {
 
   // --- Body-level drag & drop (full-area drop target) ---
 
+  private _bodyLeaveTimer: ReturnType<typeof setTimeout> | null = null;
+
   private _onBodyDragEnter = (e: DragEvent) => {
     e.preventDefault();
-    this._bodyDragCounter++;
-    if (this._bodyDragCounter === 1) this._bodyDragOver = true;
+    if (this._bodyLeaveTimer) { clearTimeout(this._bodyLeaveTimer); this._bodyLeaveTimer = null; }
+    this._bodyDragOver = true;
   };
 
   private _onBodyDragOver = (e: DragEvent) => {
     e.preventDefault();
+    if (this._bodyLeaveTimer) { clearTimeout(this._bodyLeaveTimer); this._bodyLeaveTimer = null; }
+    this._bodyDragOver = true;
   };
 
   private _onBodyDragLeave = (e: DragEvent) => {
     e.preventDefault();
-    this._bodyDragCounter--;
-    if (this._bodyDragCounter <= 0) {
-      this._bodyDragCounter = 0;
+    if (this._bodyLeaveTimer) clearTimeout(this._bodyLeaveTimer);
+    this._bodyLeaveTimer = setTimeout(() => {
       this._bodyDragOver = false;
-    }
+      this._bodyLeaveTimer = null;
+    }, 80);
   };
 
   private _onBodyDrop = (e: DragEvent) => {
     e.preventDefault();
-    this._bodyDragCounter = 0;
+    if (this._bodyLeaveTimer) { clearTimeout(this._bodyLeaveTimer); this._bodyLeaveTimer = null; }
     this._bodyDragOver = false;
 
     const files = Array.from(e.dataTransfer?.files ?? []);
