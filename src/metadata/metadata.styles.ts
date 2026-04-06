@@ -290,7 +290,7 @@ export const metadataFieldStyles = css`
     display: flex;
     align-items: baseline;
     gap: 8px;
-    padding: 10px 0;
+    padding: 8px 0;
   }
 
   .field-label {
