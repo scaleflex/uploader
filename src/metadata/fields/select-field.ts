@@ -137,6 +137,8 @@ export class SfxMetaSelectField extends MetadataFieldBase {
   }
 
   render() {
+    const title = this.field?.title ?? '';
+    const placeholderFallback = title ? `Select ${title.toLowerCase()}` : 'Select an option';
     return html`
       <button class="trigger" ?disabled=${this.disabled}
         role="combobox"
@@ -146,12 +148,12 @@ export class SfxMetaSelectField extends MetadataFieldBase {
         @keydown=${this._onKeydown}>
         ${this._selectedLabel
           ? html`<span>${this._selectedLabel}</span>`
-          : html`<span class="placeholder">${this.field?.placeholder ?? 'Select...'}</span>`}
+          : html`<span class="placeholder">${this.field?.placeholder || placeholderFallback}</span>`}
       </button>
 
       ${this._open ? html`
         <div class="dropdown" role="listbox" @keydown=${this._onKeydown}>
-          <input class="search" type="text" placeholder="Search..."
+          <input class="search" type="text" placeholder="Search"
             aria-label="Filter options"
             .value=${this._search}
             @input=${this._onSearchInput} />

@@ -6,7 +6,6 @@ import { MetadataFieldBase } from './field-base';
 const OPTIONS = [
   { label: 'True', value: 'true' },
   { label: 'False', value: 'false' },
-  { label: 'None', value: 'null' },
 ];
 
 export class SfxMetaBooleanField extends MetadataFieldBase {
@@ -18,7 +17,8 @@ export class SfxMetaBooleanField extends MetadataFieldBase {
   private _boundOutsideClick = this._onOutsideClick.bind(this);
 
   private get _currentLabel(): string {
-    const v = String(this.value ?? 'null');
+    if (this.value == null) return '';
+    const v = String(this.value);
     return OPTIONS.find(o => o.value === v)?.label ?? '';
   }
 
@@ -29,7 +29,7 @@ export class SfxMetaBooleanField extends MetadataFieldBase {
 
   private _openDropdown() {
     this._open = true;
-    const v = String(this.value ?? 'null');
+    const v = this.value == null ? '' : String(this.value);
     this._activeIndex = Math.max(OPTIONS.findIndex(o => o.value === v), 0);
     document.addEventListener('mousedown', this._boundOutsideClick);
     this.updateComplete.then(() => {
@@ -117,7 +117,9 @@ export class SfxMetaBooleanField extends MetadataFieldBase {
   }
 
   render() {
-    const current = String(this.value ?? 'null');
+    const current = this.value == null ? '' : String(this.value);
+    const title = this.field?.title ?? '';
+    const placeholderFallback = title ? `Select ${title.toLowerCase()}` : 'Select an option';
     return html`
       <button class="trigger" ?disabled=${this.disabled}
         role="combobox" aria-expanded=${this._open} aria-haspopup="listbox"
@@ -125,7 +127,7 @@ export class SfxMetaBooleanField extends MetadataFieldBase {
         @keydown=${this._onKeydown}>
         ${this._currentLabel
           ? html`<span>${this._currentLabel}</span>`
-          : html`<span class="placeholder">Select...</span>`}
+          : html`<span class="placeholder">${this.field?.placeholder || placeholderFallback}</span>`}
       </button>
 
       ${this._open ? html`

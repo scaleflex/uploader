@@ -187,6 +187,8 @@ export class SfxMetaMultiSelectField extends MetadataFieldBase {
 
   render() {
     const sel = this._selected;
+    const title = this.field?.title ?? '';
+    const placeholderFallback = title ? `Select ${title.toLowerCase()}` : 'Select an option';
     return html`
       <div class="trigger"
         role="combobox" aria-expanded=${this._open} aria-haspopup="listbox"
@@ -198,12 +200,12 @@ export class SfxMetaMultiSelectField extends MetadataFieldBase {
                 ${this._labelFor(v)}
                 <button class="chip-x" aria-label="Remove ${this._labelFor(v)}" @click=${(e: Event) => { e.stopPropagation(); this._remove(v); }}>&times;</button>
               </span>`)
-          : html`<span class="placeholder">${this.field?.placeholder ?? 'Select...'}</span>`}
+          : html`<span class="placeholder">${this.field?.placeholder || placeholderFallback}</span>`}
       </div>
 
       ${this._open ? html`
         <div class="dropdown" role="listbox" aria-multiselectable="true" @keydown=${this._onKeydown}>
-          <input class="search" type="text" placeholder="Search..."
+          <input class="search" type="text" placeholder="Search"
             aria-label="Filter options"
             .value=${this._search}
             @input=${this._onSearchInput} />

@@ -271,14 +271,14 @@ export class SfxMetaTagsField extends MetadataFieldBase {
         <input class="input" type="text" .value=${this._query}
           role="combobox" aria-expanded=${this._dropdownOpen} aria-haspopup="listbox"
           aria-label=${this.field?.title ?? 'Tags'}
-          placeholder=${tags.length ? '' : (this.field?.placeholder ?? 'Add tags...')}
+          placeholder=${tags.length ? '' : (this.field?.placeholder || 'Add tags')}
           ?disabled=${this.disabled}
           @input=${this._onInput} @blur=${this._onBlur} @keydown=${this._onKeydown} />
       </div>
 
       ${this._dropdownOpen && (this._query.trim() || suggestions.length) ? html`
         <div class="dropdown" role="listbox">
-          ${this._loading ? html`<div class="loading">Loading...</div>` : nothing}
+          ${this._loading ? html`<div class="loading">Loading</div>` : nothing}
           ${suggestions.map((t, i) => html`
             <div class="option ${i === this._activeIndex ? 'active' : ''}" role="option"
               @mousedown=${(e: Event) => { e.preventDefault(); this._addTag(t); }}

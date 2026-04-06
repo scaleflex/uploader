@@ -480,7 +480,7 @@ export class SfxSearchProviderBrowser extends LitElement {
         <input
           class="search-input"
           type="text"
-          placeholder="Search for images..."
+          placeholder="Search for images"
           .value=${this._searchQuery}
           @input=${this._onSearchInput}
           @keydown=${this._onSearchKeydown}

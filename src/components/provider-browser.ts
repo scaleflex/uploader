@@ -1117,7 +1117,7 @@ export class SfxProviderBrowser extends LitElement {
                 ?disabled=${this._loadingMore}
                 @click=${this._onLoadMore}
               >
-                ${this._loadingMore ? 'Loading...' : 'Load more'}
+                ${this._loadingMore ? 'Loading' : 'Load more'}
               </button>
             `
           : nothing}

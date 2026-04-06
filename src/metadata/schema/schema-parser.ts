@@ -7,6 +7,23 @@ import type {
 } from './schema.types';
 
 /**
+ * Detect placeholder strings that look like developer notes left in the
+ * VXP schema (e.g. "??? where it's going to be displayed", "TODO: …").
+ * These should be dropped so the uploader's own fallback kicks in.
+ *
+ * Valid placeholders are also normalized to start with a capital letter
+ * so the form keeps consistent sentence case ("test" → "Test").
+ */
+const DEV_NOTE_RE = /\?\?\?|\bTODO\b|\bTBD\b|\bFIXME\b|\bXXX\b/i;
+function sanitizePlaceholder(raw: string | undefined): string | undefined {
+  if (!raw) return raw;
+  const trimmed = raw.trim();
+  if (!trimmed) return undefined;
+  if (DEV_NOTE_RE.test(trimmed)) return undefined;
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+}
+
+/**
  * Normalize a field label to sentence case per the design system.
  * - `text` → `Text`
  * - `asset_expiration` → `Asset expiration`
@@ -68,10 +85,15 @@ export function parseMetadataSchema(
     }))
     .filter(g => g.fields.length > 0);
 
-  // 4. Normalize field titles to sentence case (design-system compliance)
+  // 4. Normalize field titles to sentence case + drop developer-note
+  //    placeholders so the uploader's own fallback can take over.
   groups = groups.map(g => ({
     ...g,
-    fields: g.fields.map(f => ({ ...f, title: toSentenceCaseLabel(f.title) })),
+    fields: g.fields.map(f => ({
+      ...f,
+      title: toSentenceCaseLabel(f.title),
+      placeholder: sanitizePlaceholder(f.placeholder),
+    })),
   }));
 
   // 5. Flatten fields + build index
