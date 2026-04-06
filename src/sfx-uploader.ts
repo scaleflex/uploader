@@ -3,7 +3,7 @@ import { property, state } from 'lit/decorators.js';
 import { createStore, Store } from './store';
 import { addFile, removeFile } from './store/helpers';
 import { StoreController } from './controllers/store.controller';
-import { UploadEngine, type UploadEngineConfig } from './engine';
+import { UploadEngine, type UploadEngineConfig, type TusConfig } from './engine';
 import type { SfxDropZone } from './components/drop-zone';
 import type { UploaderState, UploadFile, UploadRestrictions, UploadResponse } from './store/store.types';
 import type { AuthConfig, AuthHeaders } from './auth/auth.types';
@@ -44,6 +44,8 @@ export interface UploaderCallbacks {
   onUploadComplete?: (file: UploadFile, response: UploadResponse) => void;
   onUploadError?: (file: UploadFile, error: Error) => void;
   onUploadRetry?: (file: UploadFile, attempt: number) => void;
+  onUploadPaused?: (file: UploadFile) => void;
+  onUploadResumed?: (file: UploadFile) => void;
   onAllComplete?: (successful: UploadFile[], failed: UploadFile[]) => void;
   onTotalProgress?: (percentage: number, speed: number, eta: number) => void;
   onBeforeUpload?: (files: UploadFile[]) => boolean | void;
@@ -55,17 +57,29 @@ export interface UploaderCallbacks {
   onCompleteAction?: () => void;
 }
 
+export interface InlineHeaderConfig {
+  /** Small uppercase accent label (e.g. "Airbox"). */
+  accent?: string;
+  /** Main heading (e.g. "Q1 Marketing Assets"). */
+  title?: string;
+  /** Description text below the title. */
+  description?: string;
+}
+
 export interface UploaderConfig {
   auth: AuthConfig;
   targetFolder?: string;
   mode?: 'modal' | 'inline';
+  /** Header displayed above the uploader in inline mode. All fields are optional. */
+  inlineHeader?: InlineHeaderConfig;
   /**
-   * Controls the header navigation button.
-   * - `'none'`  — no button (default for inline)
-   * - `'close'` — X icon on the right (default for modal)
-   * - `'back'`  — back arrow on the left (use with modal for step/wizard flows)
+   * Controls the standard header bar.
+   * - `'close'` — header with X close button (default for modal)
+   * - `'back'`  — header with back arrow (wizard / step flows)
+   * - `true`    — header visible, no button (default for inline without inlineHeader)
+   * - `false`   — no header at all
    */
-  headerButton?: 'none' | 'close' | 'back';
+  header?: boolean | 'close' | 'back';
   restrictions?: Partial<UploadRestrictions>;
   concurrency?: number;
   autoProceed?: boolean;
@@ -103,7 +117,17 @@ export interface UploaderConfig {
    * Default: 4000 (4 seconds). Set to 0 or false to disable auto-removal.
    */
   rejectedFileAutoRemoveDelay?: number | false;
+  /**
+   * Enable resumable uploads via the tus protocol for large files.
+   * When set, files exceeding `sizeThreshold` (default 10 MB) are uploaded
+   * using chunked, resumable tus uploads instead of a single XHR POST.
+   * Set to `true` for defaults, or pass a TusConfig object for fine-grained control.
+   */
+  tusConfig?: TusConfig | boolean;
 }
+
+/** Default tus-related fields for new UploadFile objects. */
+const TUS_DEFAULTS = { isTus: false, tusUploadUrl: null } as const;
 
 type UploaderPhase = 'empty' | 'ready' | 'uploading' | 'complete';
 
@@ -369,8 +393,9 @@ export class SfxUploader extends LitElement {
 
     /* --- Inline mode --- */
     .inline {
-      border: 1px solid var(--sfx-up-border, #e2e8f0);
-      border-radius: var(--sfx-up-radius, 16px);
+      --sfx-inline-pad: 24px;
+      border: none;
+      border-radius: 0;
       background: var(--sfx-up-bg, #fff);
       display: flex;
       flex-direction: column;
@@ -379,13 +404,70 @@ export class SfxUploader extends LitElement {
       height: 100%;
       min-height: var(--sfx-up-min-height, 660px);
       max-height: var(--sfx-up-max-height, 88vh);
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
-      transition: box-shadow 0.25s ease;
+      box-shadow: none;
       animation: inlineIn 0.25s ease;
     }
 
-    .inline:hover {
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.03);
+    /* --- Inline header --- */
+    .inline-header {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: var(--sfx-inline-pad) var(--sfx-inline-pad) 0;
+    }
+    .inline-header-top {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .inline-header-accent {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .inline-header-accent .accent-line {
+      width: 32px;
+      height: 3px;
+      border-radius: 2px;
+      background: var(--sfx-up-primary);
+    }
+    .inline-header-accent span {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--sfx-up-primary);
+    }
+    .inline-header-title {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--sfx-up-text, #111827);
+      letter-spacing: -0.4px;
+    }
+    .inline-header-desc {
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--sfx-up-text-secondary, #6b7280);
+      line-height: 1.5;
+    }
+
+    /* Inline horizontal alignment — driven by --sfx-inline-pad */
+    .inline .body.has-files {
+      padding-left: 0;
+    }
+    .inline .asset-count {
+      padding: 16px var(--sfx-inline-pad);
+    }
+    .inline .file-grid-header {
+      padding: 16px var(--sfx-inline-pad);
+    }
+    .inline .body > sfx-file-list {
+      --sfx-grid-pad-l: var(--sfx-inline-pad);
+      --sfx-grid-pad-r: var(--sfx-inline-pad);
+    }
+    .inline .file-grid-side > sfx-file-list {
+      --sfx-grid-pad-l: var(--sfx-inline-pad);
     }
 
     /* --- Preview split layout --- */
@@ -1333,7 +1415,7 @@ export class SfxUploader extends LitElement {
 
       .preview-topbar { padding: 8px 0; }
 
-      .inline { border-radius: 12px; min-height: auto; }
+      .inline { --sfx-inline-pad: 16px; min-height: auto; }
 
       .connector-modal-backdrop { padding: 8px; }
       .connector-modal {
@@ -1362,7 +1444,8 @@ export class SfxUploader extends LitElement {
       .preview-layout .file-grid-side { max-height: 100px; }
       .preview-panel { padding: 0 0 12px; }
 
-      .inline { max-height: 100vh; border-radius: 8px; box-shadow: none; }
+      .inline { --sfx-inline-pad: 12px; max-height: 100vh; box-shadow: none; }
+      .inline-header-title { font-size: 18px; }
 
       .connector-modal-backdrop { padding: 0; }
       .connector-modal {
@@ -1533,6 +1616,16 @@ export class SfxUploader extends LitElement {
   /** Cancel a paused upload (spec §13.2). */
   cancelUpload() {
     this._engine?.cancelAll();
+  }
+
+  /** Pause a specific file's tus upload. Only works for files using resumable upload. */
+  pauseFile(fileId: string) {
+    this._engine?.pauseFile(fileId);
+  }
+
+  /** Resume a specific paused tus upload. */
+  resumeFile(fileId: string) {
+    this._engine?.resumeFile(fileId);
   }
 
   /** Get a snapshot of all current files. */
@@ -1786,6 +1879,7 @@ export class SfxUploader extends LitElement {
       this._engine?.updateConfig({
         apiBase: this._apiBase,
         authHeaders: this._authHeaders,
+        tusConfig: this._normalizeTusConfig(),
       });
       this._preloadMetadataSchema(cfg);
       return;
@@ -1803,6 +1897,7 @@ export class SfxUploader extends LitElement {
       this._engine?.updateConfig({
         apiBase: this._apiBase,
         authHeaders: this._authHeaders,
+        tusConfig: this._normalizeTusConfig(),
       });
       this._preloadMetadataSchema(cfg);
     } catch (err) {
@@ -1838,11 +1933,17 @@ export class SfxUploader extends LitElement {
     toast?.show(message, type);
   }
 
+  private _normalizeTusConfig(): TusConfig | undefined {
+    const raw = this.config?.tusConfig;
+    return raw === true ? {} : raw || undefined;
+  }
+
   private _ensureEngine() {
     if (!this._engine && this._apiBase && this._authHeaders) {
       this._engine = new UploadEngine(this._store, {
         apiBase: this._apiBase,
         authHeaders: this._authHeaders,
+        tusConfig: this._normalizeTusConfig(),
       });
       this._engine.start();
     }
@@ -1956,7 +2057,11 @@ export class SfxUploader extends LitElement {
       if (prevFile.status !== file.status) {
         switch (file.status) {
           case 'uploading':
-            // progress events handled below
+            // Detect resume: paused → uploading
+            if (prevFile.status === 'paused') {
+              this._dispatchPublic(PublicEvents.UPLOAD_RESUMED, { file });
+              callbacks?.onUploadResumed?.(file);
+            }
             break;
           case 'complete':
             if (file.response) {
@@ -1977,6 +2082,10 @@ export class SfxUploader extends LitElement {
           case 'retrying':
             this._dispatchPublic(PublicEvents.UPLOAD_RETRY, { file, attempt: file.retryCount });
             callbacks?.onUploadRetry?.(file, file.retryCount);
+            break;
+          case 'paused':
+            this._dispatchPublic(PublicEvents.UPLOAD_PAUSED, { file });
+            callbacks?.onUploadPaused?.(file);
             break;
         }
       }
@@ -2117,6 +2226,7 @@ export class SfxUploader extends LitElement {
           meta: {},
           tags: [],
           remoteInfo: null,
+          ...TUS_DEFAULTS,
         };
         addFile(this._store, uploadFile);
         this._dispatchPublic(PublicEvents.FILE_REJECTED, { file: uploadFile, reason: error });
@@ -2164,6 +2274,7 @@ export class SfxUploader extends LitElement {
         meta: {},
         tags: [],
         remoteInfo: null,
+        ...TUS_DEFAULTS,
       };
 
       addFile(this._store, uploadFile);
@@ -2294,7 +2405,7 @@ export class SfxUploader extends LitElement {
         id: generateFileId(), status: 'rejected', file: null, remoteUrl: url,
         name, size: 0, type, previewUrl: null, duration: null, progress: 0, speed: 0,
         bytesUploaded: 0, error, retryCount: 0, response: null,
-        addedAt: Date.now(), meta: {}, tags: [], remoteInfo: null,
+        addedAt: Date.now(), meta: {}, tags: [], remoteInfo: null, ...TUS_DEFAULTS,
       };
       addFile(this._store, rejFile);
       this._dispatchPublic(PublicEvents.FILE_REJECTED, { file: rejFile, reason: error });
@@ -2322,6 +2433,7 @@ export class SfxUploader extends LitElement {
       meta: {},
       tags: [],
       remoteInfo: null,
+      ...TUS_DEFAULTS,
     };
 
     addFile(this._store, uploadFile);
@@ -2373,8 +2485,8 @@ export class SfxUploader extends LitElement {
       const blobUrl = this._videoBlobUrls.get(file.file);
       if (blobUrl) { URL.revokeObjectURL(blobUrl); this._videoBlobUrls.delete(file.file); }
     }
-    // Cancel if active (including retrying, which has a pending retry timer)
-    if (file.status === 'uploading' || file.status === 'queued' || file.status === 'retrying') {
+    // Cancel if active (including retrying/paused, which has a pending retry timer or tus handle)
+    if (file.status === 'uploading' || file.status === 'queued' || file.status === 'retrying' || file.status === 'paused') {
       this._engine?.cancelFile(fileId);
     }
     removeFile(this._store, fileId);
@@ -2435,6 +2547,14 @@ export class SfxUploader extends LitElement {
   private _onFileRetry = (e: CustomEvent<{ fileId: string }>) => {
     this._ensureEngine();
     this._engine?.retryFile(e.detail.fileId);
+  };
+
+  private _onFilePause = (e: CustomEvent<{ fileId: string }>) => {
+    this._engine?.pauseFile(e.detail.fileId);
+  };
+
+  private _onFileResume = (e: CustomEvent<{ fileId: string }>) => {
+    this._engine?.resumeFile(e.detail.fileId);
   };
 
   private _onRetryAll = () => {
@@ -2520,7 +2640,7 @@ export class SfxUploader extends LitElement {
           name: info.name, size: info.size, type: info.mimeType,
           previewUrl: info.thumbnail, duration: null, progress: 0, speed: 0, bytesUploaded: 0,
           error, retryCount: 0, response: null, addedAt: Date.now(),
-          meta: {}, tags: [], remoteInfo: info,
+          meta: {}, tags: [], remoteInfo: info, ...TUS_DEFAULTS,
         };
         addFile(this._store, rejFile);
         this._dispatchPublic(PublicEvents.FILE_REJECTED, { file: rejFile, reason: error });
@@ -2548,6 +2668,7 @@ export class SfxUploader extends LitElement {
         meta: {},
         tags: [],
         remoteInfo: info,
+        ...TUS_DEFAULTS,
       };
       addFile(this._store, uploadFile);
       this._dispatchPublic(PublicEvents.FILE_ADDED, { file: uploadFile });
@@ -2687,9 +2808,11 @@ export class SfxUploader extends LitElement {
         this._onFsClose();
         return;
       }
-      if (this._isOpen && this.config?.mode === 'modal') {
-        const hb = this.config?.headerButton ?? 'close';
-        if (hb !== 'none') this._onModalDismiss();
+      const mode = this.config?.mode ?? 'modal';
+      const header = this.config?.header ?? (mode === 'modal' ? 'close' : true);
+      if (header === 'close' || header === 'back') {
+        if (mode === 'modal' && this._isOpen) this._onModalDismiss();
+        else if (mode === 'inline') this._onInlineDismiss();
       }
     }
   };
@@ -2724,8 +2847,26 @@ export class SfxUploader extends LitElement {
     `;
   }
 
+  private _renderInlineHeader(ih: InlineHeaderConfig) {
+    return html`
+      <div class="inline-header">
+        <div class="inline-header-top">
+          ${ih.accent ? html`
+            <div class="inline-header-accent">
+              <div class="accent-line"></div>
+              <span>${ih.accent}</span>
+            </div>
+          ` : nothing}
+          ${ih.title ? html`<h2 class="inline-header-title">${ih.title}</h2>` : nothing}
+        </div>
+        ${ih.description ? html`<div class="inline-header-desc">${ih.description}</div>` : nothing}
+      </div>
+    `;
+  }
+
   private _renderHeader() {
     if (this._phase === 'complete') return nothing;
+    const mode = this.config?.mode ?? 'modal';
     if (this._phase === 'uploading') {
       const s = this._storeCtrl.state;
       const files = [...s.files.values()];
@@ -2745,11 +2886,13 @@ export class SfxUploader extends LitElement {
         </div>
       `;
     }
-    const mode = this.config?.mode ?? 'modal';
-    const headerButton = this.config?.headerButton ?? (mode === 'modal' ? 'close' : 'none');
+    // Inline + branded header: rendered inside _renderBody(), skip standard header here
+    if (mode === 'inline' && this.config?.inlineHeader) return nothing;
+    const header = this.config?.header ?? (mode === 'modal' ? 'close' : true);
+    if (header === false) return nothing;
     const dismiss = mode === 'modal' ? this._onModalDismiss : this._onInlineDismiss;
 
-    const backBtn = headerButton === 'back'
+    const backBtn = header === 'back'
       ? html`<button class="header-btn header-btn-back" aria-label="Back to Asset Picker" @click=${dismiss}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="15 18 9 12 15 6"/>
@@ -2757,7 +2900,7 @@ export class SfxUploader extends LitElement {
         </button>`
       : nothing;
 
-    const closeBtn = headerButton === 'close'
+    const closeBtn = header === 'close'
       ? html`<button class="header-btn header-btn-close" aria-label="Close" @click=${dismiss}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <line x1="18" y1="6" x2="6" y2="18" />
@@ -2769,7 +2912,7 @@ export class SfxUploader extends LitElement {
     return html`
       <div class="header">
         ${backBtn}
-        ${headerButton !== 'back' ? html`
+        ${header !== 'back' ? html`
         <div class="header-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
             <polyline points="16 16 12 12 8 16" />
@@ -2916,7 +3059,9 @@ export class SfxUploader extends LitElement {
                         <button class="float-item-retry" @click=${() => { this._ensureEngine(); this._engine?.retryFile(f.id); }}>
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
                         </button>`
-                    : html`<div class="float-item-spinner"></div>`}
+                    : f.status === 'paused'
+                      ? html`<svg viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" width="16" height="16"><rect x="6" y="4" width="4" height="16" rx="1" fill="#d97706"/><rect x="14" y="4" width="4" height="16" rx="1" fill="#d97706"/></svg>`
+                      : html`<div class="float-item-spinner"></div>`}
               </div>
             </div>
           `; })}
@@ -2969,6 +3114,7 @@ export class SfxUploader extends LitElement {
       <div class="preview-topbar"></div>
       <div class="preview-layout">
         <div class="file-grid-side" style="flex:${this._splitPct}">
+          ${this.config?.mode === 'inline' && this.config?.inlineHeader ? this._renderInlineHeader(this.config.inlineHeader) : nothing}
           <div class="file-grid-header">
             <span class="file-grid-header-text">${files.length} ${files.length === 1 ? 'asset' : 'assets'} · ${formatFileSize(totalSize)}</span>
           </div>
@@ -3111,6 +3257,8 @@ export class SfxUploader extends LitElement {
         @file-remove=${this._onFileRemove}
         @file-preview=${this._onFilePreview}
         @file-retry=${this._onFileRetry}
+        @file-pause=${this._onFilePause}
+        @file-resume=${this._onFileResume}
         @file-rename=${this._onFileRename}
         @fill-metadata=${this._onFillMetadata}
         @retry-all=${this._onRetryAll}
@@ -3135,6 +3283,7 @@ export class SfxUploader extends LitElement {
           @dragleave=${hasFiles ? this._onBodyDragLeave : nothing}
           @drop=${hasFiles ? this._onBodyDrop : nothing}
         >
+          ${this.config?.mode === 'inline' && this.config?.inlineHeader && !this._previewFileId && phase !== 'uploading' && phase !== 'complete' ? this._renderInlineHeader(this.config.inlineHeader) : nothing}
           ${phase === 'complete'
               ? html`
                   <sfx-success-card

@@ -18,7 +18,7 @@ localStorage.removeItem('sfx-uploader-dev-config');
 
 function applyConfig(
   mode: 'inline' | 'modal' = 'inline',
-  headerButton?: 'none' | 'close' | 'back',
+  header?: boolean | 'close' | 'back',
   sourcesLayout?: 'pills' | 'cards',
 ) {
   const container = containerInput.value.trim();
@@ -46,7 +46,7 @@ function applyConfig(
     },
     targetFolder: folder,
     mode,
-    ...(headerButton ? { headerButton } : {}),
+    ...(header !== undefined ? { header } : {}),
     ...(sourcesLayout ? { sourcesLayout } : {}),
     connectors: {
       companionUrl: 'https://eu-on-24001.connector.filerobot.com',

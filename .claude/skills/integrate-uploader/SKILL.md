@@ -196,10 +196,11 @@ uploader.config = {
 
   // Display
   mode: 'modal',                        // 'modal' (default) or 'inline'
-  headerButton: 'close',                // 'none' | 'close' | 'back'
+  header: 'close',                       // boolean | 'close' | 'back'
                                         //   modal default: 'close'
-                                        //   inline default: 'none'
+                                        //   inline default: true (no button)
                                         //   'back': for wizard/step flows
+                                        //   false: hide header entirely
   sourcesLayout: 'pills',               // 'pills' (default) or 'cards'
 
   // Upload behavior
@@ -421,7 +422,7 @@ config = {
 config = {
   auth: { /* ... */ },
   mode: 'modal',
-  headerButton: 'back',
+  header: 'back',
   clearOnClose: false,  // preserve files across open/close
 };
 ```

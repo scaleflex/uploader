@@ -51,7 +51,8 @@ const page: Page = {
         <table>
           <thead><tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
           <tbody>
-            <tr><td><code>headerButton</code></td><td><code>'none' | 'close' | 'back'</code></td><td><code>'close'</code> (modal) / <code>'none'</code> (inline)</td><td>Header navigation button. Use <code>'back'</code> with modal for step/wizard flows.</td></tr>
+            <tr><td><code>header</code></td><td><code>boolean | 'close' | 'back'</code></td><td><code>'close'</code> (modal) / <code>true</code> (inline)</td><td>Controls the standard header bar. <code>'close'</code> shows an X button, <code>'back'</code> a back arrow, <code>true</code> shows header with no button, <code>false</code> hides the header entirely.</td></tr>
+            <tr><td><code>inlineHeader</code></td><td><code>InlineHeaderConfig</code></td><td><code>undefined</code></td><td>Branded header for inline mode with <code>accent</code>, <code>title</code>, and <code>description</code> fields. When set, replaces the standard header. See <a href="#/examples/inline">Inline example</a>.</td></tr>
             <tr><td><code>mode</code></td><td><code>'modal' | 'inline'</code></td><td><code>'modal'</code></td><td>Display mode</td></tr>
             <tr><td><code>sourcesLayout</code></td><td><code>'pills' | 'cards'</code></td><td><code>'pills'</code></td><td>Layout for the import-from sources section. <code>'pills'</code> shows compact horizontal buttons; <code>'cards'</code> shows a grid of square cards with large icons.</td></tr>
           </tbody>
@@ -65,6 +66,7 @@ const page: Page = {
             <tr><td><code>concurrency</code></td><td><code>number</code></td><td><code>3</code></td><td>Maximum concurrent uploads</td></tr>
             <tr><td><code>showFillMetadata</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Show "Fill Metadata" button in the actions bar</td></tr>
             <tr><td><code>targetFolder</code></td><td><code>string</code></td><td><code>'/'</code></td><td>Destination folder path in Scaleflex</td></tr>
+            <tr><td><code>tusConfig</code></td><td><code>TusConfig | boolean</code></td><td><code>undefined</code></td><td>Enable resumable uploads via the tus protocol for large files. Pass <code>true</code> for defaults (10 MB threshold, 5 MB chunks) or a <code>TusConfig</code> object. See <a href="#/examples/resumable-upload">Resumable upload example</a>.</td></tr>
           </tbody>
         </table>
 
@@ -91,7 +93,7 @@ const page: Page = {
         </table>
 
         <h2>Display modes</h2>
-        <p>The uploader supports two display modes (<code>mode</code>) and three header button styles (<code>headerButton</code>).</p>
+        <p>The uploader supports two display modes (<code>mode</code>) and a configurable header (<code>header</code>).</p>
 
         <h3>Modal (default)</h3>
         <p>Opens as a centered overlay with a backdrop. The header shows a close (X) button by default.</p>
@@ -100,32 +102,57 @@ const page: Page = {
           `uploader.config = {
   auth: { /* ... */ },
   mode: 'modal',           // default
-  // headerButton: 'close' // default for modal
+  // header: 'close' // default for modal
 };
 uploader.open();`,
         )}
 
         <h3>Inline</h3>
-        <p>Embeds directly into the page. No header button is shown by default.</p>
+        <p>Embeds directly into the page. The standard header is shown with no button by default.</p>
         ${code(
           'typescript',
           `uploader.config = {
   auth: { /* ... */ },
   mode: 'inline',
-  // headerButton: 'none' // default for inline
+  // header: true // default — header visible, no button
 };`,
         )}
 
-        <h3>Step mode (modal + back button)</h3>
-        <p>Use the modal with a back arrow instead of a close icon — ideal for multi-step wizard flows where the uploader is one step in a larger process.</p>
+        <h3>Inline with branded header</h3>
+        <p>Use <code>inlineHeader</code> for a custom branded header with accent, title, and description — ideal for full-page embedded views. When set, it replaces the standard header.</p>
         ${code(
           'typescript',
           `uploader.config = {
   auth: { /* ... */ },
-  mode: 'modal',
-  headerButton: 'back',
+  mode: 'inline',
+  inlineHeader: {
+    accent: 'Airbox',
+    title: 'Q1 Marketing Assets',
+    description: 'Upload banners, logos and brand visuals',
+  },
+};`,
+        )}
+
+        <h3>Back button (wizard / step flows)</h3>
+        <p>Use <code>header: 'back'</code> to show a back arrow instead of a close icon — ideal for multi-step wizard flows where the uploader is one step in a larger process.</p>
+        ${code(
+          'typescript',
+          `uploader.config = {
+  auth: { /* ... */ },
+  header: 'back', // works in both modal and inline
 };
 uploader.open();`,
+        )}
+
+        <h3>No header</h3>
+        <p>Set <code>header: false</code> to hide the standard header entirely — useful when the parent app provides its own chrome.</p>
+        ${code(
+          'typescript',
+          `uploader.config = {
+  auth: { /* ... */ },
+  mode: 'inline',
+  header: false,
+};`,
         )}
 
         <h2>Sources layout</h2>

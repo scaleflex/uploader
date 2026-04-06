@@ -28,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Cards layout for import-from sources (`sourcesLayout: 'cards'`) — responsive grid of square cards with large icons
 - Video thumbnail generation from first frame
-- Configurable `headerButton` option (`close`, `back`, `none`)
+- Configurable `header` option (`'close'`, `'back'`, `true`, `false`)
 - Screen capture source
 - Prev/next navigation arrows on preview image
 - Custom dropdown selects replacing native selects with preview panel scroll

@@ -1339,7 +1339,7 @@ body:not(.has-sidebar) #content {
   font-size: 16px;
   color: var(--sf-text-secondary);
   line-height: 1.7;
-  max-width: 560px;
+  max-width: 720px;
 }
 
 .page-header code {
