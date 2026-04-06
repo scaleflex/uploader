@@ -18,13 +18,13 @@ export class SfxMetadataForm extends LitElement {
       align-items: center;
       justify-content: space-between;
       width: 100%;
-      padding: 14px 0 8px;
+      padding: 16px 0;
       border: none;
       background: none;
       cursor: pointer;
       font-family: inherit;
-      font-size: 15px;
-      font-weight: 600;
+      font-size: 14px;
+      font-weight: 500;
       color: var(--sfx-up-text, #1e293b);
       transition: color 0.12s ease;
     }
