@@ -135,6 +135,7 @@ export class SfxUploader extends LitElement {
   static styles = css`
     :host {
       display: block;
+      height: inherit;
       font-family: var(--sfx-up-font, 'Inter', system-ui, -apple-system, sans-serif);
       color: var(--sfx-up-text, #1e293b);
       /* Bridge to Scaleflex design system with standalone fallbacks */
@@ -444,12 +445,20 @@ export class SfxUploader extends LitElement {
       font-weight: 700;
       color: var(--sfx-up-text, #111827);
       letter-spacing: -0.4px;
+      max-width: 770px;
     }
     .inline-header-desc {
       font-size: 14px;
       font-weight: 400;
       color: var(--sfx-up-text-secondary, #6b7280);
       line-height: 1.5;
+      max-width: 770px;
+    }
+
+    .inline .content {
+      max-width: 1600px;
+      align-self: center;
+      width: 100%;
     }
 
     /* Inline horizontal alignment — driven by --sfx-inline-pad */

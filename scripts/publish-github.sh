@@ -11,7 +11,7 @@ set -euo pipefail
 #   - GitHub remote "origin" pointing to the public repo
 #   - npm run build / npm run build:demo must work
 
-GITHUB_REMOTE="origin"
+GITHUB_REMOTE="github"
 GITHUB_BRANCH="release"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
