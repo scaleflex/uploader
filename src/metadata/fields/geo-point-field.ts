@@ -15,8 +15,19 @@ export class SfxMetaGeoPointField extends MetadataFieldBase {
       label {
         display: block;
         font-size: 12px;
-        color: var(--sfx-up-text-secondary, #64748b);
+        color: var(--sfx-up-text-muted, #94a3b8);
         margin-bottom: 4px;
+      }
+      /* Strip native number spinners — UI-kit Input has no chrome */
+      input[type='number'] {
+        -moz-appearance: textfield;
+        appearance: textfield;
+      }
+      input[type='number']::-webkit-outer-spin-button,
+      input[type='number']::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        appearance: none;
+        margin: 0;
       }
     `,
   ];

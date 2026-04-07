@@ -6,11 +6,9 @@ export class SfxMetadataForm extends LitElement {
   static styles = css`
     :host { display: block; }
 
-    .group {
-      padding-bottom: 4px;
-    }
     .group + .group {
       border-top: 1px solid var(--sfx-up-border, #e2e8f0);
+      margin-top: 16px;
     }
 
     .group-header {
