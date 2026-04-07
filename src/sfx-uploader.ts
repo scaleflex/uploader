@@ -593,9 +593,18 @@ export class SfxUploader extends LitElement {
       padding: 0;
     }
 
-    .preview-panel::-webkit-scrollbar { width: 5px; }
+    .preview-panel::-webkit-scrollbar { width: 12px; }
     .preview-panel::-webkit-scrollbar-track { background: transparent; }
-    .preview-panel::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 3px; }
+    .preview-panel::-webkit-scrollbar-thumb {
+      background: rgba(0,0,0,0.15);
+      background-clip: padding-box;
+      border: 3px solid transparent;
+      border-radius: 6px;
+    }
+    .preview-panel::-webkit-scrollbar-thumb:hover {
+      background: rgba(0,0,0,0.25);
+      background-clip: padding-box;
+    }
 
     .preview-panel-header {
       display: flex;
@@ -623,22 +632,10 @@ export class SfxUploader extends LitElement {
       line-height: 24px;
       font-weight: 500;
       color: var(--sfx-up-text, #1e293b);
-      border: 1px solid transparent;
-      border-radius: 4px;
-      padding: 2px 6px;
-      background: transparent;
       font-family: inherit;
-      outline: none;
-      transition: border-color 0.15s, background 0.15s;
-    }
-    .preview-header-name:hover {
-      border-color: var(--sfx-up-border, #e2e8f0);
-      background: var(--sfx-up-bg, #fff);
-    }
-    .preview-header-name:focus {
-      border-color: var(--sfx-up-primary, #2563eb);
-      background: var(--sfx-up-bg, #fff);
-      box-shadow: 0 0 0 3px var(--sfx-up-ring, oklch(0.578 0.198 268.129 / 0.15));
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
 
@@ -813,12 +810,12 @@ export class SfxUploader extends LitElement {
       display: flex;
       flex-direction: column;
       flex-shrink: 0;
-      padding: 12px 16px;
+      padding: 12px 16px 16px;
       border-bottom: 1px solid var(--sfx-up-border, #e2e8f0);
     }
 
     .preview-metadata {
-      padding: 0 16px 16px;
+      padding: 0 0 16px;
     }
 
     .preview-file-info {
@@ -3141,12 +3138,7 @@ export class SfxUploader extends LitElement {
         ></div>
         <div class="preview-panel" style="flex:${100 - this._splitPct}">
           <div class="preview-panel-header">
-            <input class="preview-header-name" type="text"
-              .value=${previewFile.name}
-              title=${previewFile.name}
-              aria-label="File name"
-              @change=${(e: Event) => this._onPreviewRename(previewFile.id, (e.target as HTMLInputElement).value)}
-            />
+            <span class="preview-header-name" title=${previewFile.name}>${previewFile.name}</span>
             <div class="preview-header-actions">
               ${previewFile.previewUrl || (previewFile.type.startsWith('video/') && previewFile.file) ? html`
                 <button @click=${() => { this._fullscreenPreviewUrl = previewFile.previewUrl; this._fullscreenVideoFile = previewFile.type.startsWith('video/') && previewFile.file ? previewFile.file : null; this._fullscreenZoomed = false; }} title="Fullscreen">

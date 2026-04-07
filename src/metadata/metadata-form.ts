@@ -6,9 +6,11 @@ export class SfxMetadataForm extends LitElement {
   static styles = css`
     :host { display: block; }
 
-    .group + .group {
-      border-top: 1px solid var(--sfx-up-border, #e2e8f0);
-      margin-top: 16px;
+    .group {
+      border-bottom: 1px solid var(--sfx-up-border, #e2e8f0);
+    }
+    .group:last-child {
+      border-bottom: none;
     }
 
     .group-header {
@@ -16,7 +18,9 @@ export class SfxMetadataForm extends LitElement {
       align-items: center;
       justify-content: space-between;
       width: 100%;
-      padding: 16px 0;
+      height: 48px;
+      padding: 0 16px;
+      box-sizing: border-box;
       border: none;
       background: none;
       cursor: pointer;
@@ -24,6 +28,10 @@ export class SfxMetadataForm extends LitElement {
       font-size: 14px;
       font-weight: 500;
       color: var(--sfx-up-text, #1e293b);
+      transition: background-color 0.12s ease;
+    }
+    .group-header:hover {
+      background: rgba(241, 245, 249, 0.5);
     }
     .group-header:focus-visible {
       outline: 2px solid var(--sfx-up-ring, oklch(0.578 0.198 268.129 / 0.7));
@@ -43,7 +51,7 @@ export class SfxMetadataForm extends LitElement {
     }
 
     .group-content {
-      padding: 0 0 4px;
+      padding: 0 16px 8px;
     }
 
     .empty {
@@ -81,7 +89,7 @@ export class SfxMetadataForm extends LitElement {
           @click=${() => this._toggleGroup(group.uuid)}
           aria-expanded=${isOpen}>
           <span>${group.name}</span>
-          <svg class="chevron ${isOpen ? 'open' : ''}" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg class="chevron ${isOpen ? 'open' : ''}" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="4 6 8 10 12 6"/>
           </svg>
         </button>
