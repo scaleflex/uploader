@@ -602,9 +602,11 @@ export class SfxUploader extends LitElement {
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-      padding: 16px 24px 16px 16px;
+      height: 56px;
+      padding: 12px 16px;
       flex-shrink: 0;
-      border-bottom: 1px solid var(--sfx-up-border, #e8edf5);
+      box-sizing: border-box;
+      border-bottom: 1px solid var(--sfx-up-border, #e2e8f0);
     }
 
     .preview-header-actions {
@@ -618,7 +620,8 @@ export class SfxUploader extends LitElement {
       flex: 1;
       min-width: 0;
       font-size: 16px;
-      font-weight: 400;
+      line-height: 24px;
+      font-weight: 500;
       color: var(--sfx-up-text, #1e293b);
       border: 1px solid transparent;
       border-radius: 4px;
@@ -640,8 +643,8 @@ export class SfxUploader extends LitElement {
 
 
     .preview-panel-header button {
-      width: 28px;
-      height: 28px;
+      width: 32px;
+      height: 32px;
       border-radius: 6px;
       border: none;
       background: none;
@@ -649,15 +652,15 @@ export class SfxUploader extends LitElement {
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--sfx-up-text-muted, #9ca3af);
+      color: #6b7280;
       transition: background 0.15s, color 0.15s;
       padding: 0;
       flex-shrink: 0;
     }
 
     .preview-panel-header button:hover {
-      background: var(--sfx-up-surface, #f8fafc);
-      color: var(--sfx-up-text, #374151);
+      background: #f3f4f6;
+      color: #374151;
     }
 
     .preview-panel-header button svg {
@@ -771,7 +774,7 @@ export class SfxUploader extends LitElement {
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--sfx-up-text, #1e293b);
+      color: #6b7280;
       transition: all 0.15s;
       z-index: 2;
       padding: 0;
@@ -780,6 +783,7 @@ export class SfxUploader extends LitElement {
     .preview-nav:hover {
       box-shadow: 0 3px 12px rgba(0, 0, 0, 0.18);
       transform: translateY(-50%) scale(1.06);
+      color: #374151;
     }
 
     .preview-nav:active {
@@ -787,8 +791,8 @@ export class SfxUploader extends LitElement {
     }
 
     .preview-nav svg {
-      width: 16px;
-      height: 16px;
+      width: 20px;
+      height: 20px;
     }
 
     .preview-nav.prev { left: 10px; }
@@ -809,19 +813,18 @@ export class SfxUploader extends LitElement {
       display: flex;
       flex-direction: column;
       flex-shrink: 0;
-      padding: 0 16px 4px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--sfx-up-border, #e2e8f0);
     }
 
     .preview-metadata {
-      padding: 0 12px 16px;
-      border-top: 1px solid var(--sfx-up-border-light, #f1f5f9);
+      padding: 0 16px 16px;
     }
 
     .preview-file-info {
-      font-size: 12px;
+      font-size: 14px;
       font-weight: 400;
-      color: var(--sfx-up-text-muted, #9ca3af);
-      padding: 2px 0;
+      color: #6b7280;
     }
 
 

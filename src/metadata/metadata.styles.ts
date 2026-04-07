@@ -243,7 +243,7 @@ export const metadataPanelStyles = css`
   .panel-content {
     flex: 1;
     overflow-y: auto;
-    padding: 12px 16px;
+    padding: 12px 16px 24px;
   }
 
   .panel-footer {
