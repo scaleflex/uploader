@@ -75,14 +75,17 @@ export class SfxFileList extends LitElement {
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      gap: clamp(6px, 1.8cqi, 14px);
       cursor: pointer;
       transition: all 0.18s ease;
-      padding: 12px 10px;
+      padding: clamp(12px, 3cqi, 24px) clamp(10px, 3cqi, 24px);
       position: relative;
       z-index: 1;
       min-height: 0;
       overflow: hidden;
+      align-self: stretch;
+      container-type: inline-size;
+      container-name: drop-tile;
     }
 
     .drop-tile:hover {
@@ -91,8 +94,8 @@ export class SfxFileList extends LitElement {
     }
 
     .drop-tile-rings {
-      width: clamp(40px, 6vw, 60px);
-      height: clamp(40px, 6vw, 60px);
+      width: clamp(48px, 18cqi, 96px);
+      height: clamp(48px, 18cqi, 96px);
       position: relative;
       display: flex;
       align-items: center;
@@ -109,7 +112,7 @@ export class SfxFileList extends LitElement {
     }
 
     .drop-tile-ring:nth-child(2) {
-      inset: 8px;
+      inset: clamp(6px, 2.5cqi, 18px);
       border-color: var(--sfx-up-ring-color-light, #d8e5f5);
       border-style: dotted;
       animation-direction: reverse;
@@ -121,8 +124,8 @@ export class SfxFileList extends LitElement {
     }
 
     .drop-tile-core {
-      width: clamp(24px, 4vw, 34px);
-      height: clamp(24px, 4vw, 34px);
+      width: clamp(28px, 10cqi, 56px);
+      height: clamp(28px, 10cqi, 56px);
       border-radius: 50%;
       background: var(--sfx-up-primary-bg, #eff6ff);
       color: var(--sfx-up-primary, #2563eb);
@@ -140,16 +143,16 @@ export class SfxFileList extends LitElement {
     }
 
     .drop-tile-core svg {
-      width: 16px;
-      height: 16px;
+      width: clamp(14px, 5cqi, 28px);
+      height: clamp(14px, 5cqi, 28px);
     }
 
     .drop-tile-text {
-      font-size: 11px;
+      font-size: clamp(11px, 3cqi, 14px);
       font-weight: 500;
       color: var(--sfx-up-text-secondary, #475569);
       text-align: center;
-      line-height: 1.3;
+      line-height: 1.35;
     }
 
     .drop-tile-text span {
@@ -159,13 +162,13 @@ export class SfxFileList extends LitElement {
 
     .drop-tile-sources {
       display: flex;
-      gap: 3px;
-      margin-top: 2px;
+      gap: clamp(3px, 1cqi, 8px);
+      margin-top: clamp(2px, 0.8cqi, 6px);
     }
 
     .drop-tile-src {
-      width: 28px;
-      height: 28px;
+      width: clamp(26px, 8cqi, 40px);
+      height: clamp(26px, 8cqi, 40px);
       border-radius: 6px;
       border: 1px solid var(--sfx-up-border, #e2e8f0);
       background: var(--sfx-up-bg, #fff);
@@ -186,8 +189,8 @@ export class SfxFileList extends LitElement {
     }
 
     .drop-tile-src svg {
-      width: 14px;
-      height: 14px;
+      width: clamp(13px, 4cqi, 20px);
+      height: clamp(13px, 4cqi, 20px);
       fill: none;
       stroke: currentColor;
       stroke-width: 2;
@@ -205,8 +208,8 @@ export class SfxFileList extends LitElement {
     }
 
     .drop-tile-more {
-      width: 28px;
-      height: 28px;
+      width: clamp(26px, 8cqi, 40px);
+      height: clamp(26px, 8cqi, 40px);
       border-radius: 6px;
       border: 1px solid var(--sfx-up-border, #e2e8f0);
       background: var(--sfx-up-bg, #fff);
@@ -217,7 +220,7 @@ export class SfxFileList extends LitElement {
       transition: all 0.15s ease;
       padding: 0;
       color: var(--sfx-up-text-muted, #94a3b8);
-      font-size: 14px;
+      font-size: clamp(13px, 3.5cqi, 18px);
       font-weight: 700;
       letter-spacing: 1px;
     }
