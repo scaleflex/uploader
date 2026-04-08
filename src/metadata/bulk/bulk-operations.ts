@@ -17,9 +17,9 @@ export interface PendingOp {
   value: unknown; // frontend format
 }
 
-const SET: BulkOperationDef = { key: 'SET', label: 'Set' };
-const ADD: BulkOperationDef = { key: 'ADD', label: 'Add' };
-const DELETE: BulkOperationDef = { key: 'DELETE', label: 'Delete' };
+const SET: BulkOperationDef = { key: 'SET', label: 'Overwrite' };
+const ADD: BulkOperationDef = { key: 'ADD', label: 'Append' };
+const DELETE: BulkOperationDef = { key: 'DELETE', label: 'Clear' };
 
 // ---------------------------------------------------------------------------
 // Field-type → available operations

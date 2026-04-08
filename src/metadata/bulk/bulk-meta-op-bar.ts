@@ -153,46 +153,59 @@ export class SfxBulkMetaOpBar extends LitElement {
 
     return html`
       <div class="op-bar">
-        <span class="op-label">Operation:</span>
+        <div class="op-field op-field--operation">
+          <span class="op-field-label">Operation</span>
+          ${showDropdown
+            ? html`
+                <div class="op-dropdown-wrap">
+                  <button
+                    class="op-trigger ${this._opDropdownOpen ? 'open' : ''}"
+                    @click=${this._onOpToggle}
+                  >
+                    <span class="op-trigger-label">${currentOp?.label ?? 'Overwrite'}</span>
+                    <svg class="op-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="m6 9 6 6 6-6"/>
+                    </svg>
+                  </button>
+                  ${this._opDropdownOpen
+                    ? html`
+                        <div class="op-menu">
+                          ${this._availableOps.map(
+                            (op) => html`
+                              <button
+                                class="op-option ${op.key === this._operation ? 'active' : ''}"
+                                @click=${() => this._onOpSelect(op.key)}
+                              >
+                                ${op.label}
+                              </button>
+                            `,
+                          )}
+                        </div>
+                      `
+                    : nothing}
+                </div>
+              `
+            : html`
+                <div class="op-trigger op-trigger--static">
+                  <span class="op-trigger-label">${currentOp?.label ?? 'Overwrite'}</span>
+                </div>
+              `}
+        </div>
 
-        ${showDropdown
-          ? html`
-              <div class="op-dropdown-wrap">
-                <button class="op-trigger" @click=${this._onOpToggle}>
-                  <span>${currentOp?.label ?? 'Set'}</span>
-                  <span class="op-arrow">\u25BE</span>
-                </button>
-                ${this._opDropdownOpen
-                  ? html`
-                      <div class="op-menu">
-                        ${this._availableOps.map(
-                          (op) => html`
-                            <button
-                              class="op-option ${op.key === this._operation ? 'active' : ''}"
-                              @click=${() => this._onOpSelect(op.key)}
-                            >
-                              ${op.label}
-                            </button>
-                          `,
-                        )}
-                      </div>
-                    `
-                  : nothing}
-              </div>
-            `
-          : html`<span class="op-label">${currentOp?.label ?? 'Set'}</span>`}
-
-        <div
-          class="op-value"
-          @field-blur=${this._onFieldBlur}
-          @field-change=${this._onFieldChange}
-          @field-escape=${this._onFieldEscape}
-        >
-          <sfx-metadata-field-edit
-            .field=${this.field}
-            .value=${this._effectiveValue}
-            .autocomplete=${this.autocomplete}
-          ></sfx-metadata-field-edit>
+        <div class="op-field op-field--value">
+          <span class="op-field-label">${this.field.title}</span>
+          <div
+            class="op-value"
+            @field-blur=${this._onFieldBlur}
+            @field-change=${this._onFieldChange}
+            @field-escape=${this._onFieldEscape}
+          >
+            <sfx-metadata-field-edit
+              .field=${this.field}
+              .value=${this._effectiveValue}
+              .autocomplete=${this.autocomplete}
+            ></sfx-metadata-field-edit>
+          </div>
         </div>
 
         ${!isEmpty(this._value)
