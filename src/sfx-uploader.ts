@@ -824,7 +824,7 @@ export class SfxUploader extends LitElement {
       display: flex;
       flex-direction: column;
       flex-shrink: 0;
-      padding: 12px 16px 16px;
+      padding: 12px;
       border-bottom: 1px solid var(--sfx-up-border, #e2e8f0);
     }
 
@@ -833,7 +833,7 @@ export class SfxUploader extends LitElement {
     }
 
     .preview-file-info {
-      font-size: 14px;
+      font-size: 12px;
       font-weight: 400;
       color: var(--sfx-up-text-muted, #94a3b8);
     }
