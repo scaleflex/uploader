@@ -280,7 +280,8 @@ export const bulkSidebarStyles = css`
     align-items: center;
     gap: 8px;
     height: 36px;
-    padding: 0 16px;
+    padding: 8px 12px;
+    box-sizing: border-box;
     cursor: pointer;
     font-size: 14px;
     color: var(--sfx-up-text-secondary, #64748b);
