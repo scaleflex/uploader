@@ -67,8 +67,11 @@ export class SfxBulkMetaOpBar extends LitElement {
   }
 
   private _onOpDropdownClose = (e: MouseEvent) => {
+    if (!this._opDropdownOpen) return;
+    const wrap = this.renderRoot.querySelector('.op-dropdown-wrap');
+    if (!wrap) return;
     const path = e.composedPath();
-    if (!path.includes(this)) {
+    if (!path.includes(wrap)) {
       this._opDropdownOpen = false;
     }
   };
