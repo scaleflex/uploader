@@ -283,7 +283,7 @@ export const bulkSidebarStyles = css`
     padding: 0 16px;
     cursor: pointer;
     font-size: 14px;
-    color: var(--sfx-up-text, #1e293b);
+    color: var(--sfx-up-text-secondary, #64748b);
     transition: background 0.12s ease;
     border: none;
     background: none;
