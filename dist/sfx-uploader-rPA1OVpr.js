@@ -3541,7 +3541,7 @@ const Rt = class Rt extends J {
     g = Math.max(8, Math.min(g, window.innerWidth - s - 8)), t.style.left = `${g}px`;
   }
   _onMoreItemClick(e, t) {
-    t.stopPropagation(), this._moreOpen = !1, this._onSourceIconClick(e);
+    t.stopPropagation(), this._moreOpen = !1, this._updateDropdownPortal(), this._onSourceIconClick(e);
   }
   _updateVisiblePills() {
     const e = window.innerWidth;
@@ -7282,11 +7282,11 @@ const H = (W = class extends J {
       if ((((n = (i = this.config) == null ? void 0 : i.connectors) == null ? void 0 : n.providers) ?? []).includes(e)) {
         if (mr.has(e)) {
           if (!customElements.get("sfx-search-provider-browser")) {
-            const { SfxSearchProviderBrowser: a } = await import("./search-provider-browser-DarbREgH.js");
+            const { SfxSearchProviderBrowser: a } = await import("./search-provider-browser-DExLx-hP.js");
             customElements.define("sfx-search-provider-browser", a);
           }
         } else if (!customElements.get("sfx-provider-browser")) {
-          const { SfxProviderBrowser: a } = await import("./provider-browser-qRo0t4Wt.js");
+          const { SfxProviderBrowser: a } = await import("./provider-browser-CqMcnx-N.js");
           customElements.define("sfx-provider-browser", a);
         }
         this._activeConnector = e;
@@ -7841,7 +7841,7 @@ const H = (W = class extends J {
     const t = e.metadataConfig;
     if (!(!t || !this._apiBase || !this._authHeaders))
       try {
-        const { fetchMetadataSchema: r, createTagsAutocomplete: i } = await import("./index-D7hE18PK.js");
+        const { fetchMetadataSchema: r, createTagsAutocomplete: i } = await import("./index-BvLTU64u.js");
         this._metadataSchema = await r(
           this._apiBase,
           this._authHeaders,
@@ -8603,6 +8603,7 @@ const H = (W = class extends J {
 }, W.styles = K`
     :host {
       display: block;
+      height: inherit;
       font-family: var(--sfx-up-font, 'Inter', system-ui, -apple-system, sans-serif);
       color: var(--sfx-up-text, #1e293b);
       /* Bridge to Scaleflex design system with standalone fallbacks */
@@ -8912,12 +8913,20 @@ const H = (W = class extends J {
       font-weight: 700;
       color: var(--sfx-up-text, #111827);
       letter-spacing: -0.4px;
+      max-width: 770px;
     }
     .inline-header-desc {
       font-size: 14px;
       font-weight: 400;
       color: var(--sfx-up-text-secondary, #6b7280);
       line-height: 1.5;
+      max-width: 770px;
+    }
+
+    .inline .content {
+      max-width: 1600px;
+      align-self: center;
+      width: 100%;
     }
 
     /* Inline horizontal alignment — driven by --sfx-inline-pad */

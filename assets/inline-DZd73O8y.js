@@ -1,8 +1,9 @@
-import{b as n}from"./index-Djwz1LL8.js";import{r as o}from"./code-block-Bk3NnwHF.js";const d={render(){return`
+import{b as n}from"./index-DvqKfEVw.js";import{r as a}from"./code-block-Bk3NnwHF.js";const l={render(){return`
       <div class="page-header">
         <h1>Inline display</h1>
         <p>Embed the uploader directly in the page flow with <code>mode: 'inline'</code>. It sizes to its container and does not use a backdrop overlay.</p>
         <p>This example uses <code>inlineHeader</code> for a branded header with accent, title, and description — ideal for full-page views. For the standard header bar (with close/back buttons), see the <a href="#/examples/header-button">Header</a> example.</p>
+        <p><a href="#/examples/full-screen">View full-screen example →</a></p>
       </div>
 
       <section class="page-section">
@@ -15,7 +16,7 @@ import{b as n}from"./index-Djwz1LL8.js";import{r as o}from"./code-block-Bk3NnwHF
         <h2>Code</h2>
         <div id="code-container"></div>
       </section>
-    `},init(e){const i=document.getElementById("inline-uploader");i.config=n({mode:"inline",inlineHeader:{accent:"Airbox",title:"Q1 Marketing Assets",description:"Upload banners, logos and brand visuals for the Q1 campaign"}}),o("#code-container",[{label:"HTML",lang:"markup",code:`
+    `},init(e){const i=document.getElementById("inline-uploader");i.config=n({mode:"inline",inlineHeader:{accent:"Airbox",title:"Q1 Marketing Assets",description:"Upload banners, logos and brand visuals for the Q1 campaign"}}),a("#code-container",[{label:"HTML",lang:"markup",code:`
 <!-- Inline uploader -->
 <div style="height: 500px;">
   <sfx-uploader id="inline-uploader"></sfx-uploader>
@@ -66,4 +67,4 @@ export function App() {
       />
     </div>
   );
-}`}])},destroy(){const e=document.getElementById("inline-uploader");e&&e.close()}};export{d as default};
+}`}])},destroy(){const e=document.getElementById("inline-uploader");e&&e.close()}};export{l as default};

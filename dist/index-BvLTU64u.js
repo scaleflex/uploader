@@ -1,6 +1,6 @@
 import { LitElement as w, css as x, nothing as f, html as a, svg as g } from "lit";
 import { property as c, state as h } from "lit/decorators.js";
-import { w as Ve } from "./sfx-uploader-D9z-E7SI.js";
+import { w as Ve } from "./sfx-uploader-rPA1OVpr.js";
 function Fe(o, e) {
   const t = (e == null ? void 0 : e.language) ?? "en", s = o.model ?? [], i = o.store ?? {}, n = s.find((u) => u.applies_to === "FILES");
   let r = (n == null ? void 0 : n.groups) ?? [];
