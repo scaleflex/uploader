@@ -230,37 +230,55 @@ export const bulkModalStyles = css`
 export const bulkSidebarStyles = css`
   :host {
     display: block;
-    width: 220px;
+    width: 260px;
     flex-shrink: 0;
     border-right: 1px solid var(--sfx-up-border, #e2e8f0);
     overflow-y: auto;
     padding: 12px 0;
     font-family: var(--sfx-up-font, inherit);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.18) transparent;
+  }
+  :host::-webkit-scrollbar {
+    width: 10px;
+  }
+  :host::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  :host::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.18);
+    background-clip: padding-box;
+    border: 3px solid transparent;
+    border-radius: 5px;
+  }
+  :host::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.28);
+    background-clip: padding-box;
   }
 
   .group-label {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 12px;
     width: 100%;
     padding: 12px 16px 6px;
     margin-top: 8px;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
+    font-size: 14px;
+    font-weight: 500;
     color: var(--sfx-up-text-muted, #94a3b8);
     border: none;
     background: none;
     cursor: pointer;
     font-family: inherit;
     text-align: left;
+    transition: background-color 0.12s ease, color 0.12s ease;
   }
   .group-label:first-child {
     margin-top: 0;
   }
   .group-label:hover {
     color: var(--sfx-up-text-secondary, #64748b);
+    background: color-mix(in srgb, var(--sfx-up-surface, #f1f5f9) 50%, transparent);
   }
   .group-label-text {
     flex: 1;
@@ -356,7 +374,7 @@ export const bulkOpBarStyles = css`
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 14px 24px;
+    padding: 16px 24px;
     border-bottom: 1px solid var(--sfx-up-border, #e2e8f0);
     flex-shrink: 0;
   }
