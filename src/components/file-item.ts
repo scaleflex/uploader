@@ -135,7 +135,7 @@ export class SfxFileItem extends LitElement {
       box-sizing: border-box;
       margin-bottom: 2px;
       min-width: 0;
-      font-size: 14px;
+      font-size: 12px;
       font-weight: 400;
       color: var(--foreground, var(--sfx-up-text, #111827));
       border: 1px solid transparent;
