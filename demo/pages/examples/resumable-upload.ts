@@ -62,31 +62,33 @@ const page: Page = {
       </div>
 
       <section class="page-section">
-        <div class="config-controls">
-          <div class="form-group">
-            <label>
-              <input type="checkbox" id="tus-enabled" checked />
-              Enable resumable upload
-            </label>
+        <div class="config-controls" style="flex-direction: column; align-items: stretch; gap: 16px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <input type="checkbox" id="tus-enabled" checked
+              style="width: 18px; height: 18px; margin: 0; cursor: pointer; accent-color: var(--sf-primary); flex-shrink: 0;" />
+            <label for="tus-enabled"
+              style="font-size: 14px; font-weight: 500; color: var(--sf-text-primary); cursor: pointer; margin: 0;">Enable resumable upload</label>
           </div>
-          <div class="form-group" id="threshold-group">
-            <label for="threshold-select">Size threshold</label>
-            <select id="threshold-select">
-              <option value="0">0 MB (always use tus)</option>
-              <option value="5">5 MB</option>
-              <option value="10" selected>10 MB (default)</option>
-              <option value="50">50 MB</option>
-              <option value="100">100 MB</option>
-            </select>
-          </div>
-          <div class="form-group" id="chunk-group">
-            <label for="chunk-select">Chunk size</label>
-            <select id="chunk-select">
-              <option value="1">1 MB</option>
-              <option value="2">2 MB</option>
-              <option value="5" selected>5 MB (default)</option>
-              <option value="10">10 MB</option>
-            </select>
+          <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+            <div class="form-group" id="threshold-group" style="margin-bottom: 0; min-width: 200px;">
+              <label for="threshold-select">Size threshold</label>
+              <select id="threshold-select">
+                <option value="0">0 MB (always use tus)</option>
+                <option value="5">5 MB</option>
+                <option value="10" selected>10 MB (default)</option>
+                <option value="50">50 MB</option>
+                <option value="100">100 MB</option>
+              </select>
+            </div>
+            <div class="form-group" id="chunk-group" style="margin-bottom: 0; min-width: 200px;">
+              <label for="chunk-select">Chunk size</label>
+              <select id="chunk-select">
+                <option value="1">1 MB</option>
+                <option value="2">2 MB</option>
+                <option value="5" selected>5 MB (default)</option>
+                <option value="10">10 MB</option>
+              </select>
+            </div>
           </div>
         </div>
         <button class="btn-primary open-btn-spacing" id="open-btn">Open uploader</button>
