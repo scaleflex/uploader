@@ -1598,6 +1598,19 @@ body:not(.has-sidebar) #content {
   text-decoration: underline;
 }
 
+/* Global link color — primary for both unvisited and visited states so
+   browser default purple never appears in the demo pages. */
+.page-header a,
+.page-header a:visited,
+.page-section a,
+.page-section a:visited {
+  color: var(--sf-primary);
+}
+.page-header a:hover,
+.page-section a:hover {
+  text-decoration: underline;
+}
+
 .doc-content ul,
 .doc-content ol {
   padding-left: 24px;
