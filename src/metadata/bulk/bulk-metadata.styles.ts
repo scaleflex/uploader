@@ -428,7 +428,7 @@ export const bulkOpBarStyles = css`
 
   .op-bar {
     display: flex;
-    align-items: flex-end;
+    align-items: flex-start;
     gap: 16px;
     padding: 16px 24px;
     flex-shrink: 0;
@@ -558,7 +558,10 @@ export const bulkOpBarStyles = css`
 
   /* Apply button */
   .btn-apply {
-    height: 34px;
+    height: 36px;
+    /* Sit at the same baseline as the controls (below the .op-field-label),
+       not at the top with the labels. label height (~18px line) + gap 6 = 24 */
+    margin-top: 24px;
     padding: 0 16px;
     border-radius: 6px;
     border: none;
