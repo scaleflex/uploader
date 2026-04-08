@@ -1025,6 +1025,7 @@ export class SfxDropZone extends LitElement {
   private _onMoreItemClick(source: SourceDef, e: MouseEvent) {
     e.stopPropagation();
     this._moreOpen = false;
+    this._updateDropdownPortal();
     this._onSourceIconClick(source);
   }
 
