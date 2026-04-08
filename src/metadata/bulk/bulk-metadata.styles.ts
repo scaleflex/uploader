@@ -429,29 +429,44 @@ export const bulkOpBarStyles = css`
 
   .op-bar {
     display: flex;
-    align-items: center;
-    gap: 12px;
+    align-items: flex-end;
+    gap: 16px;
     padding: 16px 24px;
     border-bottom: 1px solid var(--sfx-up-border, #e2e8f0);
     flex-shrink: 0;
   }
 
-  .op-label {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--sfx-up-text-muted, #94a3b8);
-    white-space: nowrap;
+  /* Stacked field (label on top, control below) */
+  .op-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+  }
+  .op-field--operation {
+    width: 200px;
     flex-shrink: 0;
+  }
+  .op-field--value {
+    flex: 1;
+    min-width: 0;
+  }
+  .op-field-label {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--sfx-up-text-muted, #94a3b8);
+    line-height: 1;
   }
 
   /* Operation dropdown */
   .op-dropdown-wrap {
     position: relative;
-    flex-shrink: 0;
+    width: 100%;
   }
   .op-trigger {
-    height: 34px;
-    padding: 0 10px;
+    width: 100%;
+    height: 36px;
+    padding: 0 12px;
     border: 1px solid var(--sfx-up-border, #e2e8f0);
     border-radius: 6px;
     background: var(--sfx-up-bg, #fff);
@@ -461,16 +476,38 @@ export const bulkOpBarStyles = css`
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 6px;
-    min-width: 80px;
+    gap: 8px;
+    box-sizing: border-box;
+    transition: border-color 0.12s ease, box-shadow 0.12s ease;
   }
   .op-trigger:hover {
     border-color: var(--sfx-up-primary, #2563eb);
   }
-  .op-arrow {
-    margin-left: auto;
-    font-size: 10px;
+  .op-trigger.open {
+    border-color: var(--sfx-up-primary, #2563eb);
+    box-shadow:
+      0 0 0 2px var(--sfx-up-bg, #fff),
+      0 0 0 5px var(--sfx-up-ring, oklch(0.578 0.198 268.129 / 0.7));
+  }
+  .op-trigger--static {
+    cursor: default;
+  }
+  .op-trigger-label {
+    flex: 1;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .op-chevron {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
     color: var(--sfx-up-text-muted, #94a3b8);
+    transition: transform 0.18s ease;
+  }
+  .op-trigger.open .op-chevron {
+    transform: rotate(180deg);
   }
   .op-menu {
     position: absolute;
@@ -485,7 +522,7 @@ export const bulkOpBarStyles = css`
     overflow: hidden;
   }
   .op-option {
-    padding: 8px 10px;
+    padding: 10px 12px;
     font-size: 14px;
     cursor: pointer;
     color: var(--sfx-up-text, #1e293b);
@@ -500,12 +537,13 @@ export const bulkOpBarStyles = css`
   }
   .op-option.active {
     color: var(--sfx-up-primary, #2563eb);
+    background: var(--sfx-up-primary-bg, #eff6ff);
     font-weight: 500;
   }
 
   /* Value input area */
   .op-value {
-    flex: 1;
+    width: 100%;
     min-width: 0;
   }
 
