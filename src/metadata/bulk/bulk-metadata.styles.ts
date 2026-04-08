@@ -93,11 +93,9 @@ export const bulkModalStyles = css`
     gap: 12px;
     padding: 8px 24px;
     border-bottom: 1px solid var(--sfx-up-border, #e2e8f0);
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--sfx-up-text-muted, #94a3b8);
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--sfx-up-text-secondary, #64748b);
     flex-shrink: 0;
   }
   .fm-th-check { width: 20px; flex-shrink: 0; }
@@ -112,13 +110,15 @@ export const bulkModalStyles = css`
     gap: 4px;
   }
   .fm-th-name:hover { color: var(--sfx-up-text-secondary, #64748b); }
-  .fm-th-size { width: 70px; flex-shrink: 0; text-align: right; }
+  .fm-th-size { width: 70px; flex-shrink: 0; text-align: left; }
   .fm-th-field { flex: 1; min-width: 0; }
 
   .fm-sort-arrow {
     display: inline-block;
-    font-size: 11px;
+    font-size: 14px;
     line-height: 1;
+    margin-left: 4px;
+    color: var(--sfx-up-text-muted, #94a3b8);
   }
 
   /* ---- Table body (scrollable) ---- */
@@ -556,7 +556,7 @@ export const bulkRowStyles = css`
   .row-size {
     width: 70px;
     flex-shrink: 0;
-    text-align: right;
+    text-align: left;
     font-size: 13px;
     color: var(--sfx-up-text-muted, #94a3b8);
   }

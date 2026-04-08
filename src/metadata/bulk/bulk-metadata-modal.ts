@@ -391,7 +391,7 @@ export class SfxBulkMetadataModal extends LitElement {
                     @change=${this._onSelectAll}
                   />
                 </div>
-                <div class="fm-th-thumb">Thumb</div>
+                <div class="fm-th-thumb"></div>
                 <div class="fm-th-name" @click=${this._onSortToggle}>
                   Name
                   <span class="fm-sort-arrow">${this._sortAsc ? '\u2191' : '\u2193'}</span>
