@@ -10,6 +10,7 @@ const page: Page = {
         <h1>Inline display</h1>
         <p>Embed the uploader directly in the page flow with <code>mode: 'inline'</code>. It sizes to its container and does not use a backdrop overlay.</p>
         <p>This example uses <code>inlineHeader</code> for a branded header with accent, title, and description — ideal for full-page views. For the standard header bar (with close/back buttons), see the <a href="#/examples/header-button">Header</a> example.</p>
+        <p><a href="#/examples/full-screen">View full-screen example →</a></p>
       </div>
 
       <section class="page-section">
