@@ -93,6 +93,7 @@ export const bulkModalStyles = css`
     gap: 12px;
     padding: 8px 24px;
     border-bottom: 1px solid var(--sfx-up-border, #e2e8f0);
+    border-left: 3px solid transparent;
     font-size: 14px;
     font-weight: 400;
     color: var(--sfx-up-text-secondary, #64748b);
@@ -126,6 +127,24 @@ export const bulkModalStyles = css`
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.18) transparent;
+  }
+  .fm-table-body::-webkit-scrollbar {
+    width: 10px;
+  }
+  .fm-table-body::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .fm-table-body::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.18);
+    background-clip: padding-box;
+    border: 3px solid transparent;
+    border-radius: 5px;
+  }
+  .fm-table-body::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.28);
+    background-clip: padding-box;
   }
 
   /* ---- Footer ---- */
@@ -618,11 +637,48 @@ export const bulkRowStyles = css`
   }
 
   .fm-checkbox {
+    -webkit-appearance: none;
+    appearance: none;
     width: 16px;
     height: 16px;
-    accent-color: var(--sfx-up-primary, #2563eb);
-    cursor: pointer;
+    box-sizing: border-box;
     margin: 0;
+    border: 1px solid var(--sfx-up-border, #e2e8f0);
+    border-radius: 3px;
+    background: var(--sfx-up-bg, #fff);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.12s ease, border-color 0.12s ease;
+    flex-shrink: 0;
+  }
+  .fm-checkbox:hover {
+    border-color: var(--sfx-up-primary, #2563eb);
+  }
+  .fm-checkbox:checked,
+  .fm-checkbox:indeterminate {
+    background: var(--sfx-up-primary, #2563eb);
+    border-color: var(--sfx-up-primary, #2563eb);
+  }
+  .fm-checkbox:checked::after {
+    content: '';
+    width: 10px;
+    height: 10px;
+    background: #fff;
+    -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>") center / contain no-repeat;
+    mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>") center / contain no-repeat;
+  }
+  .fm-checkbox:indeterminate::after {
+    content: '';
+    width: 8px;
+    height: 2px;
+    background: #fff;
+    border-radius: 1px;
+  }
+  .fm-checkbox:focus-visible {
+    outline: 2px solid var(--sfx-up-ring, oklch(0.578 0.198 268.129 / 0.7));
+    outline-offset: 2px;
   }
 `;
 
