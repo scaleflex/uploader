@@ -109,9 +109,10 @@ describe('validateField geopoint', () => {
     expect(validateField(field, { latitude: '40.7', longitude: '-74.0' })).toBeNull();
   });
 
-  it('allows partial coordinates without both-required error', () => {
-    expect(validateField(field, { latitude: '40.7', longitude: '' })).toBeNull();
-    expect(validateField(field, { latitude: '', longitude: '-74.0' })).toBeNull();
+  it('requires both lat and lng', () => {
+    expect(validateField(field, { latitude: '40.7', longitude: '' })).toBe(
+      'Both latitude and longitude are required',
+    );
   });
 
   it('validates latitude range', () => {

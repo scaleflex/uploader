@@ -49,14 +49,16 @@ export function validateField(
       const hasLat = geo.latitude !== '' && geo.latitude != null;
       const hasLng = geo.longitude !== '' && geo.longitude != null;
 
-      if (hasLat) {
+      // Both-or-neither
+      if (hasLat !== hasLng) {
+        return 'Both latitude and longitude are required';
+      }
+      if (hasLat && hasLng) {
         const lat = Number(geo.latitude);
+        const lng = Number(geo.longitude);
         if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
           return 'Latitude must be between -90 and 90';
         }
-      }
-      if (hasLng) {
-        const lng = Number(geo.longitude);
         if (!Number.isFinite(lng) || lng < -180 || lng > 180) {
           return 'Longitude must be between -180 and 180';
         }

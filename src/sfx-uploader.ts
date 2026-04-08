@@ -495,7 +495,7 @@ export class SfxUploader extends LitElement {
       display: flex;
       flex-direction: column;
       position: relative;
-      --sfx-up-grid-min: max(30%, 140px);
+      --sfx-up-grid-min: max(30%, 200px);
     }
 
     .preview-layout .file-grid-side::after {
@@ -658,15 +658,15 @@ export class SfxUploader extends LitElement {
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #6b7280;
+      color: var(--sfx-up-text-muted, #94a3b8);
       transition: background 0.15s, color 0.15s;
       padding: 0;
       flex-shrink: 0;
     }
 
     .preview-panel-header button:hover {
-      background: #f3f4f6;
-      color: #374151;
+      background: var(--sfx-up-surface, #f3f4f6);
+      color: var(--sfx-up-text, #374151);
     }
 
     .preview-panel-header button svg {
@@ -780,7 +780,7 @@ export class SfxUploader extends LitElement {
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #6b7280;
+      color: var(--sfx-up-text-muted, #94a3b8);
       transition: all 0.15s;
       z-index: 2;
       padding: 0;
@@ -789,7 +789,7 @@ export class SfxUploader extends LitElement {
     .preview-nav:hover {
       box-shadow: 0 3px 12px rgba(0, 0, 0, 0.18);
       transform: translateY(-50%) scale(1.06);
-      color: #374151;
+      color: var(--sfx-up-text, #374151);
     }
 
     .preview-nav:active {
@@ -830,7 +830,7 @@ export class SfxUploader extends LitElement {
     .preview-file-info {
       font-size: 14px;
       font-weight: 400;
-      color: #6b7280;
+      color: var(--sfx-up-text-muted, #94a3b8);
     }
 
 

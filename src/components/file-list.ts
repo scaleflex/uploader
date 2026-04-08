@@ -54,7 +54,7 @@ export class SfxFileList extends LitElement {
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(var(--sfx-up-grid-min, max(24%, 170px)), 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(var(--sfx-up-grid-min, 200px), 1fr));
       gap: 12px;
       padding: 0 var(--sfx-grid-pad-r, 12px) 16px var(--sfx-grid-pad-l, 16px);
     }

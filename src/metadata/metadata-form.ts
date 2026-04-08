@@ -31,7 +31,7 @@ export class SfxMetadataForm extends LitElement {
       transition: background-color 0.12s ease;
     }
     .group-header:hover {
-      background: rgba(241, 245, 249, 0.5);
+      background: color-mix(in srgb, var(--sfx-up-surface, #f1f5f9) 50%, transparent);
     }
     .group-header:focus-visible {
       outline: 2px solid var(--sfx-up-ring, oklch(0.578 0.198 268.129 / 0.7));

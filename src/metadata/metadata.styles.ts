@@ -55,6 +55,25 @@ export const metadataDropdownStyles = css`
     align-items: center;
     gap: 8px;
   }
+  .trigger-clear {
+    all: unset;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    font-size: 14px;
+    line-height: 1;
+    color: var(--sfx-up-text-muted, #94a3b8);
+    cursor: pointer;
+    transition: color 0.15s, background 0.15s;
+  }
+  .trigger-clear:hover {
+    color: var(--sfx-up-text, #1e293b);
+    background: var(--sfx-up-surface, #f1f5f9);
+  }
   .trigger-chevron {
     margin-left: auto;
     flex-shrink: 0;

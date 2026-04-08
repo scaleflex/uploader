@@ -42,6 +42,14 @@ export class SfxMetaDateField extends MetadataFieldBase {
         font-family: var(--sfx-up-font, 'Inter', system-ui, -apple-system, sans-serif);
       }
 
+      /* Firefox doesn't support ::-webkit-datetime-edit so it can't hide
+         the native placeholder — hide the custom one to avoid overlap. */
+      @supports (-moz-appearance: none) {
+        .date-placeholder {
+          display: none;
+        }
+      }
+
       .date-icon {
         position: absolute;
         right: 10px;
