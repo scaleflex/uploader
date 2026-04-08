@@ -38,17 +38,17 @@ export const bulkModalStyles = css`
 
   /* ---- Top bar ---- */
   .fm-topbar {
-    height: 48px;
     flex-shrink: 0;
     display: flex;
     align-items: center;
-    padding: 0 24px;
+    padding: 12px 16px;
     border-bottom: 1px solid var(--sfx-up-border, #e2e8f0);
   }
   .fm-topbar-title {
     flex: 1;
-    font-size: 15px;
-    font-weight: 600;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--sfx-up-text, #1e293b);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
