@@ -87,11 +87,12 @@ export class SfxFileList extends LitElement {
       background: var(--sfx-up-primary-bg, #eff6ff);
     }
 
-    /* Preview area — matches .preview { aspect-ratio: 16/10 } in file-item.
+    /* Preview area — flex:1 absorbs remaining row height so drop-tile total
+       always matches the file-card height (info bar handles its own size).
        container-type lets the inner rings/icon scale with tile width via cqi. */
     .drop-tile-preview {
-      aspect-ratio: 16 / 10;
-      flex-shrink: 0;
+      flex: 1;
+      min-height: 0;
       display: flex;
       align-items: center;
       justify-content: center;
