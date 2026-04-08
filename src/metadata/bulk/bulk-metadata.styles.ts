@@ -432,7 +432,6 @@ export const bulkOpBarStyles = css`
     align-items: flex-end;
     gap: 16px;
     padding: 16px 24px;
-    border-bottom: 1px solid var(--sfx-up-border, #e2e8f0);
     flex-shrink: 0;
   }
 
