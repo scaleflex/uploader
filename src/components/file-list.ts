@@ -66,26 +66,20 @@ export class SfxFileList extends LitElement {
       }
     }
 
-    /* --- Drop tile (first card in grid) --- */
+    /* --- Drop tile (first card in grid) — mirrors file-item structure
+       so its natural height matches a file card at any column width */
     .drop-tile {
       border-radius: 10px;
       border: 1.5px dashed var(--sfx-up-border, #c4d5ef);
       background: var(--sfx-up-surface, #f8fafc);
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: clamp(6px, 1.8cqi, 14px);
       cursor: pointer;
       transition: all 0.18s ease;
-      padding: clamp(12px, 3cqi, 24px) clamp(10px, 3cqi, 24px);
       position: relative;
       z-index: 1;
       min-height: 0;
       overflow: hidden;
-      align-self: stretch;
-      container-type: inline-size;
-      container-name: drop-tile;
     }
 
     .drop-tile:hover {
@@ -93,9 +87,30 @@ export class SfxFileList extends LitElement {
       background: var(--sfx-up-primary-bg, #eff6ff);
     }
 
+    /* Preview area — matches .preview { aspect-ratio: 16/10 } in file-item */
+    .drop-tile-preview {
+      aspect-ratio: 16 / 10;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* Info area — matches .info { padding: 8px 12px } in file-item so the
+       natural drop-tile height equals the natural file-card height */
+    .drop-tile-info {
+      padding: 8px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
     .drop-tile-rings {
-      width: clamp(48px, 18cqi, 96px);
-      height: clamp(48px, 18cqi, 96px);
+      width: clamp(40px, 6vw, 60px);
+      height: clamp(40px, 6vw, 60px);
       position: relative;
       display: flex;
       align-items: center;
@@ -112,7 +127,7 @@ export class SfxFileList extends LitElement {
     }
 
     .drop-tile-ring:nth-child(2) {
-      inset: clamp(6px, 2.5cqi, 18px);
+      inset: 8px;
       border-color: var(--sfx-up-ring-color-light, #d8e5f5);
       border-style: dotted;
       animation-direction: reverse;
@@ -124,8 +139,8 @@ export class SfxFileList extends LitElement {
     }
 
     .drop-tile-core {
-      width: clamp(28px, 10cqi, 56px);
-      height: clamp(28px, 10cqi, 56px);
+      width: clamp(24px, 4vw, 34px);
+      height: clamp(24px, 4vw, 34px);
       border-radius: 50%;
       background: var(--sfx-up-primary-bg, #eff6ff);
       color: var(--sfx-up-primary, #2563eb);
@@ -143,16 +158,16 @@ export class SfxFileList extends LitElement {
     }
 
     .drop-tile-core svg {
-      width: clamp(14px, 5cqi, 28px);
-      height: clamp(14px, 5cqi, 28px);
+      width: 16px;
+      height: 16px;
     }
 
     .drop-tile-text {
-      font-size: clamp(11px, 3cqi, 14px);
+      font-size: 12px;
       font-weight: 500;
       color: var(--sfx-up-text-secondary, #475569);
       text-align: center;
-      line-height: 1.35;
+      line-height: 1.2;
     }
 
     .drop-tile-text span {
@@ -162,13 +177,13 @@ export class SfxFileList extends LitElement {
 
     .drop-tile-sources {
       display: flex;
-      gap: clamp(3px, 1cqi, 8px);
-      margin-top: clamp(2px, 0.8cqi, 6px);
+      gap: 3px;
+      margin-top: 0;
     }
 
     .drop-tile-src {
-      width: clamp(26px, 8cqi, 40px);
-      height: clamp(26px, 8cqi, 40px);
+      width: 22px;
+      height: 22px;
       border-radius: 6px;
       border: 1px solid var(--sfx-up-border, #e2e8f0);
       background: var(--sfx-up-bg, #fff);
@@ -189,8 +204,8 @@ export class SfxFileList extends LitElement {
     }
 
     .drop-tile-src svg {
-      width: clamp(13px, 4cqi, 20px);
-      height: clamp(13px, 4cqi, 20px);
+      width: 12px;
+      height: 12px;
       fill: none;
       stroke: currentColor;
       stroke-width: 2;
@@ -208,8 +223,8 @@ export class SfxFileList extends LitElement {
     }
 
     .drop-tile-more {
-      width: clamp(26px, 8cqi, 40px);
-      height: clamp(26px, 8cqi, 40px);
+      width: 22px;
+      height: 22px;
       border-radius: 6px;
       border: 1px solid var(--sfx-up-border, #e2e8f0);
       background: var(--sfx-up-bg, #fff);
@@ -220,7 +235,7 @@ export class SfxFileList extends LitElement {
       transition: all 0.15s ease;
       padding: 0;
       color: var(--sfx-up-text-muted, #94a3b8);
-      font-size: clamp(13px, 3.5cqi, 18px);
+      font-size: 14px;
       font-weight: 700;
       letter-spacing: 1px;
     }
@@ -498,39 +513,43 @@ export class SfxFileList extends LitElement {
     const overflowSources = this.sources.slice(maxVisible);
     return html`
       <div class="drop-tile" @click=${this._onDropTileClick}>
-        <div class="drop-tile-rings">
-          <div class="drop-tile-ring"></div>
-          <div class="drop-tile-ring"></div>
-          <div class="drop-tile-core">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-              <polyline points="16 16 12 12 8 16" />
-              <line x1="12" y1="12" x2="12" y2="21" />
-              <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
-            </svg>
+        <div class="drop-tile-preview">
+          <div class="drop-tile-rings">
+            <div class="drop-tile-ring"></div>
+            <div class="drop-tile-ring"></div>
+            <div class="drop-tile-core">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                <polyline points="16 16 12 12 8 16" />
+                <line x1="12" y1="12" x2="12" y2="21" />
+                <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
+              </svg>
+            </div>
           </div>
         </div>
-        <div class="drop-tile-text">Drop files or<br>click to <span>browse</span></div>
-        ${visibleSources.length > 0 ? html`
-          <div class="drop-tile-sources">
-            ${visibleSources.map((s) => html`
-              <button
-                class="drop-tile-src"
-                style=${s.iconColor && !s.brandHtml ? `color:${s.iconColor}` : ''}
-                title=${s.label}
-                @click=${(e: Event) => this._onSourceClick(e, s)}
-              >
-                ${s.brandHtml
-                  ? unsafeHTML(s.brandHtml)
-                  : svgTag`<svg viewBox="0 0 24 24" class=${s.fillIcon ? 'fill-icon' : ''}>${unsafeSVG(s.icon)}</svg>`}
-              </button>
-            `)}
-            ${overflowSources.length > 0 ? html`
-              <div class="drop-tile-more-wrap">
-                <button class="drop-tile-more" title="More sources" @click=${(e: Event) => this._toggleMore(e)}>···</button>
-              </div>
-            ` : nothing}
-          </div>
-        ` : nothing}
+        <div class="drop-tile-info">
+          <div class="drop-tile-text">Drop or click to <span>browse</span></div>
+          ${visibleSources.length > 0 ? html`
+            <div class="drop-tile-sources">
+              ${visibleSources.map((s) => html`
+                <button
+                  class="drop-tile-src"
+                  style=${s.iconColor && !s.brandHtml ? `color:${s.iconColor}` : ''}
+                  title=${s.label}
+                  @click=${(e: Event) => this._onSourceClick(e, s)}
+                >
+                  ${s.brandHtml
+                    ? unsafeHTML(s.brandHtml)
+                    : svgTag`<svg viewBox="0 0 24 24" class=${s.fillIcon ? 'fill-icon' : ''}>${unsafeSVG(s.icon)}</svg>`}
+                </button>
+              `)}
+              ${overflowSources.length > 0 ? html`
+                <div class="drop-tile-more-wrap">
+                  <button class="drop-tile-more" title="More sources" @click=${(e: Event) => this._toggleMore(e)}>···</button>
+                </div>
+              ` : nothing}
+            </div>
+          ` : nothing}
+        </div>
         <input type="file" multiple accept=${this.accept || nothing} @change=${this._onFileInput} />
       </div>
     `;

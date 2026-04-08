@@ -742,9 +742,11 @@ export class SfxUploader extends LitElement {
 
     .preview-img-wrap {
       position: relative;
-      min-height: 200px;
-      max-height: 380px;
+      width: 420px;
+      height: 332px;
+      max-width: 100%;
       flex-shrink: 0;
+      align-self: center;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -761,7 +763,10 @@ export class SfxUploader extends LitElement {
     .preview-image {
       display: block;
       max-width: 100%;
-      max-height: 380px;
+      max-height: 100%;
+      width: auto;
+      height: auto;
+      object-fit: contain;
       border: none;
     }
 

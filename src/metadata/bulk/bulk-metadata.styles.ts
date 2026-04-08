@@ -480,12 +480,6 @@ export const bulkOpBarStyles = css`
     box-sizing: border-box;
     transition: border-color 0.12s ease, box-shadow 0.12s ease;
   }
-  .op-trigger:hover {
-    border-color: var(--sfx-up-primary, #2563eb);
-  }
-  .op-trigger.open {
-    border-color: var(--sfx-up-primary, #2563eb);
-  }
   .op-trigger--static {
     cursor: default;
   }
