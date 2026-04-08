@@ -7,64 +7,64 @@ import type { MetadataFieldType } from './schema/schema.types';
  */
 
 const icons: Record<MetadataFieldType, TemplateResult> = {
-  // T — plain text
+  // Short text — letter "A" + horizontal lines (UI-kit "case-sensitive" style)
   text: html`<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-    ${svg`<path d="M4 3h8M8 3v10"/>`}
+    ${svg`<path d="M2 11l2.5-7 2.5 7"/><line x1="2.8" y1="9" x2="6.2" y2="9"/><line x1="9" y1="6" x2="14" y2="6"/><line x1="9" y1="9" x2="14" y2="9"/><line x1="9" y1="12" x2="13" y2="12"/>`}
   </svg>`,
 
-  // Paragraph lines
+  // Long text — three horizontal lines (paragraph)
   textarea: html`<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-    ${svg`<line x1="3" y1="4" x2="13" y2="4"/><line x1="3" y1="7" x2="13" y2="7"/><line x1="3" y1="10" x2="9" y2="10"/>`}
+    ${svg`<line x1="3" y1="4" x2="13" y2="4"/><line x1="3" y1="8" x2="13" y2="8"/><line x1="3" y1="12" x2="13" y2="12"/>`}
   </svg>`,
 
-  // Dropdown chevron
+  // List (single value) — radio button (circle with center dot)
   'select-one': html`<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-    ${svg`<rect x="2" y="3" width="12" height="10" rx="2"/><polyline points="6 7 8 9.5 10 7"/>`}
+    ${svg`<circle cx="8" cy="8" r="6"/><circle cx="8" cy="8" r="2" fill="currentColor" stroke="none"/>`}
   </svg>`,
 
-  // Checkboxes
+  // List (multiple values) — single checkbox with check
   'multi-select': html`<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-    ${svg`<rect x="2" y="2" width="5" height="5" rx="1"/><polyline points="3 4.5 4.2 6 6 3"/><rect x="2" y="9" width="5" height="5" rx="1"/><line x1="9" y1="4.5" x2="14" y2="4.5"/><line x1="9" y1="11.5" x2="14" y2="11.5"/>`}
+    ${svg`<rect x="2" y="2" width="12" height="12" rx="2"/><polyline points="5 8 7.5 10.5 11.5 6"/>`}
   </svg>`,
 
-  // Toggle
+  // Boolean — toggle switch (off-state, knob on the left, outlined)
   boolean: html`<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-    ${svg`<rect x="2" y="4.5" width="12" height="7" rx="3.5"/><circle cx="10.5" cy="8" r="2" fill="currentColor" stroke="none"/>`}
+    ${svg`<rect x="2" y="4.5" width="12" height="7" rx="3.5"/><circle cx="5.5" cy="8" r="1.75"/>`}
   </svg>`,
 
-  // Calendar
+  // Date — calendar
   date: html`<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
     ${svg`<rect x="2" y="3" width="12" height="11" rx="2"/><line x1="2" y1="7" x2="14" y2="7"/><line x1="5.5" y1="1.5" x2="5.5" y2="4.5"/><line x1="10.5" y1="1.5" x2="10.5" y2="4.5"/>`}
   </svg>`,
 
-  // Hash #
-  numeric: html`<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-    ${svg`<line x1="6" y1="2" x2="4.5" y2="14"/><line x1="11.5" y1="2" x2="10" y2="14"/><line x1="3" y1="6" x2="13" y2="6"/><line x1="3" y1="10" x2="13" y2="10"/>`}
+  // Number (integer) — small "page" with "01" digits
+  numeric: html`<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    ${svg`<path d="M3.5 1.5h6l3 3v9a1 1 0 0 1-1 1h-8a1 1 0 0 1-1-1v-11a1 1 0 0 1 1-1z"/><polyline points="9.5 1.5 9.5 4.5 12.5 4.5"/><text x="4.5" y="12.5" font-size="5.5" fill="currentColor" stroke="none" font-family="inherit" font-weight="600">01</text>`}
   </svg>`,
 
-  // Circle + decimal marks
-  decimal2: html`<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
-    ${svg`<circle cx="5.5" cy="8" r="3"/><circle cx="12" cy="11" r="1" fill="currentColor" stroke="none"/><line x1="10" y1="5" x2="13" y2="5"/><line x1="10" y1="8" x2="13" y2="8"/>`}
+  // Decimal — ".00 →"
+  decimal2: html`<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    ${svg`<text x="1" y="11" font-size="7" fill="currentColor" stroke="none" font-family="inherit" font-weight="600">.00</text><line x1="9.5" y1="13" x2="13.5" y2="13"/><polyline points="11.5 11 13.5 13 11.5 15"/>`}
   </svg>`,
 
-  // Map pin
+  // Geolocation — crosshair/target (Lucide crosshair-2)
   geopoint: html`<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-    ${svg`<path d="M8 1.5a4.5 4.5 0 0 1 4.5 4.5c0 3.5-4.5 8.5-4.5 8.5S3.5 9.5 3.5 6A4.5 4.5 0 0 1 8 1.5Z"/><circle cx="8" cy="6" r="1.5"/>`}
+    ${svg`<circle cx="8" cy="8" r="3.5"/><line x1="8" y1="1.5" x2="8" y2="3.5"/><line x1="8" y1="12.5" x2="8" y2="14.5"/><line x1="1.5" y1="8" x2="3.5" y2="8"/><line x1="12.5" y1="8" x2="14.5" y2="8"/><circle cx="8" cy="8" r="0.6" fill="currentColor" stroke="none"/>`}
   </svg>`,
 
-  // Numbered list
+  // Numbered list — kept (numbered list pattern)
   'integer-list': html`<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
     ${svg`<line x1="7" y1="4" x2="14" y2="4"/><line x1="7" y1="8" x2="14" y2="8"/><line x1="7" y1="12" x2="14" y2="12"/><text x="2" y="5.5" font-size="4.5" fill="currentColor" stroke="none" font-family="inherit">1</text><text x="2" y="9.5" font-size="4.5" fill="currentColor" stroke="none" font-family="inherit">2</text><text x="2" y="13.5" font-size="4.5" fill="currentColor" stroke="none" font-family="inherit">3</text>`}
   </svg>`,
 
-  // Tag label
-  tags: html`<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-    ${svg`<path d="M1.5 2.5h5.6l7.4 5.5-5.5 5.5-7.5-5.4z"/><circle cx="5" cy="6" r="1" fill="currentColor" stroke="none"/>`}
+  // Supertags — hash "#"
+  tags: html`<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+    ${svg`<line x1="6" y1="2" x2="4.5" y2="14"/><line x1="11.5" y1="2" x2="10" y2="14"/><line x1="3" y1="6" x2="13" y2="6"/><line x1="3" y1="10" x2="13" y2="10"/>`}
   </svg>`,
 
-  // Link chain
-  'attachment-uri': html`<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-    ${svg`<path d="M7 9l2-2"/><path d="M9.5 6.5l1.8-1.8a2.1 2.1 0 0 1 3 3L12.5 9.5"/><path d="M6.5 9.5L4.7 11.3a2.1 2.1 0 0 1-3-3L3.5 6.5"/>`}
+  // URI-type attachment — Lucide link icon
+  'attachment-uri': html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    ${svg`<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>`}
   </svg>`,
 };
 
