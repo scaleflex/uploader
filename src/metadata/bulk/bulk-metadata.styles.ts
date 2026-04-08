@@ -597,7 +597,6 @@ export const bulkRowStyles = css`
     align-items: center;
     gap: 12px;
     padding: 10px 24px;
-    border-bottom: 1px solid var(--sfx-up-border-light, #f1f5f9);
     border-left: 3px solid transparent;
     transition: background 0.1s ease;
   }
