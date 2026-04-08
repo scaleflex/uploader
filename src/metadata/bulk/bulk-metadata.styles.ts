@@ -100,9 +100,8 @@ export const bulkModalStyles = css`
     flex-shrink: 0;
   }
   .fm-th-check { width: 20px; flex-shrink: 0; }
-  .fm-th-thumb { width: 52px; flex-shrink: 0; }
   .fm-th-name {
-    width: 180px;
+    width: 244px; /* row-thumb (52) + row gap (12) + row-name (180) */
     flex-shrink: 0;
     cursor: pointer;
     user-select: none;
@@ -355,7 +354,7 @@ export const bulkSidebarStyles = css`
     align-items: center;
     gap: 8px;
     height: 36px;
-    padding: 8px 12px;
+    padding: 8px 12px 8px 32px;
     box-sizing: border-box;
     cursor: pointer;
     font-size: 14px;
