@@ -100,7 +100,7 @@ export class SfxFileItem extends LitElement {
 
     /* --- Info bar --- */
     .info {
-      padding: 8px 12px;
+      padding: 8px 12px 24px;
       min-width: 0;
       overflow: hidden;
     }
