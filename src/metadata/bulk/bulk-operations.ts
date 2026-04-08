@@ -17,10 +17,6 @@ export interface PendingOp {
   value: unknown; // frontend format
 }
 
-const SET: BulkOperationDef = { key: 'SET', label: 'Overwrite' };
-const ADD: BulkOperationDef = { key: 'ADD', label: 'Append' };
-const DELETE: BulkOperationDef = { key: 'DELETE', label: 'Clear' };
-
 // ---------------------------------------------------------------------------
 // Field-type → available operations
 // ---------------------------------------------------------------------------
@@ -37,13 +33,32 @@ const TEXT_TYPES: Set<MetadataFieldType> = new Set([
   'attachment-uri',
 ]);
 
-/** Every field type now exposes Overwrite / Append / Clear; the semantics
- *  inside applyBulkOperation differ per type (arrays merge, text concats,
- *  scalars fall back to overwrite for Append). */
+/** Operation labels are context-aware: the same key (SET / ADD / DELETE)
+ *  reads differently depending on the field type so the UX matches the
+ *  actual semantics. Scalars only expose Replace + Clear because Append
+ *  has no meaningful behaviour for a single value. */
 export function getAvailableOperations(
-  _fieldType: MetadataFieldType,
+  fieldType: MetadataFieldType,
 ): BulkOperationDef[] {
-  return [SET, ADD, DELETE];
+  if (ARRAY_TYPES.has(fieldType)) {
+    return [
+      { key: 'SET', label: 'Replace' },
+      { key: 'ADD', label: 'Add to' },
+      { key: 'DELETE', label: 'Remove from' },
+    ];
+  }
+  if (TEXT_TYPES.has(fieldType)) {
+    return [
+      { key: 'SET', label: 'Replace' },
+      { key: 'ADD', label: 'Append' },
+      { key: 'DELETE', label: 'Clear' },
+    ];
+  }
+  // Scalars: numeric / decimal2 / date / select-one / boolean / geopoint
+  return [
+    { key: 'SET', label: 'Replace' },
+    { key: 'DELETE', label: 'Clear' },
+  ];
 }
 
 // ---------------------------------------------------------------------------
