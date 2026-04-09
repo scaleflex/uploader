@@ -31,6 +31,7 @@ export class SfxDropZone extends LitElement {
       flex-shrink: 0;
       flex: 1;
       min-height: 0;
+      container-type: inline-size;
     }
 
     :host([compact]) {
@@ -796,6 +797,23 @@ export class SfxDropZone extends LitElement {
       .core svg { width: 20px; height: 20px; }
     }
 
+    /* Inline mode on a wide container (e.g. full-screen) — frame the empty
+       drop-zone as a bounded bordered card centered in available space,
+       so it doesn't float lost in a sea of whitespace on big screens.
+       Does not apply in modal mode or in narrow inline embeds. */
+    @container (min-width: 768px) {
+      :host([mode="inline"]) .drop-zone:not(.compact) {
+        flex: 0 1 720px;
+        max-width: 100%;
+        box-sizing: border-box;
+        align-self: center;
+        margin-inline: auto;
+        padding: 64px 48px;
+        border: 1.5px dashed var(--sfx-up-ring-color, #c4d5ef);
+        border-radius: 24px;
+      }
+    }
+
     @media (prefers-reduced-motion: reduce) {
       .ring {
         animation: none;
@@ -814,6 +832,7 @@ export class SfxDropZone extends LitElement {
   @property({ type: String }) accept = '';
   @property({ type: Array }) sources: SourceDef[] = [];
   @property({ type: String, attribute: 'sources-layout' }) sourcesLayout: 'pills' | 'cards' = 'pills';
+  @property({ type: String, reflect: true }) mode: 'modal' | 'inline' = 'modal';
 
   @state() private _dragOver = false;
   @state() private _moreOpen = false;
