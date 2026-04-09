@@ -3320,6 +3320,7 @@ export class SfxUploader extends LitElement {
                         .accept=${accept}
                         .sources=${this._mergedSources}
                         .sourcesLayout=${this.config?.sourcesLayout ?? 'pills'}
+                        .mode=${this.config?.mode ?? 'modal'}
                       ></sfx-drop-zone>`}
 
                   ${hasFiles
