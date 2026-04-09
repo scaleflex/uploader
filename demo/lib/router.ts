@@ -32,6 +32,7 @@ const routes: RouteEntry[] = [
   { pattern: '/examples/react-wrapper', load: () => import('../pages/examples/react-wrapper').then((m) => m.default) },
   { pattern: '/examples/metadata', load: () => import('../pages/examples/metadata').then((m) => m.default) },
   { pattern: '/examples/full-screen', load: () => import('../pages/examples/full-screen').then((m) => m.default) },
+  { pattern: '/examples/last-upload-review', load: () => import('../pages/examples/last-upload-review').then((m) => m.default) },
 ];
 
 let currentPage: Page | null = null;

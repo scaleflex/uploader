@@ -8,6 +8,7 @@ import type { SfxDropZone } from './components/drop-zone';
 import type { UploaderState, UploadFile, UploadRestrictions, UploadResponse } from './store/store.types';
 import type { AuthConfig, AuthHeaders } from './auth/auth.types';
 import { resolveAuth, getApiBase, buildAuthHeaders } from './auth/auth.service';
+import { lastUploadStore } from './store/last-upload-store';
 import { PublicEvents, type PublicEventName } from './events/public-events';
 import { generateFileId, guessMimeType, formatFileSize, formatEta, generateVideoThumbnail, getFileCategory } from './utils/file-utils';
 import { validateFile, validateFileInfo, buildAcceptString } from './utils/validate';
@@ -27,6 +28,7 @@ import './components/source-pills';
 import './components/file-list';
 import './components/file-item';
 import './components/success-card';
+import './components/last-upload-review';
 import './components/actions-bar';
 import './components/url-dialog';
 import './components/camera-dialog';
@@ -379,6 +381,7 @@ export class SfxUploader extends LitElement {
       z-index: 1;
       overflow: visible;
     }
+
 
     .asset-count {
       font-size: 14px;
@@ -1504,6 +1507,12 @@ export class SfxUploader extends LitElement {
   @state() private _isPillExpanded = false;
   @state() private _metadataSchema: MetadataSchema | null = null;
   @state() private _bulkMetadataOpen = false;
+  /** True when the user has clicked "Review files" on the success-card or
+   *  the "View last upload" pill on the drop-zone screen. Renders the
+   *  read-only last-upload-review screen instead of the normal phase view. */
+  @state() private _isReviewing = false;
+  /** Files loaded from sessionStorage for the review screen. */
+  @state() private _reviewFiles: UploadFile[] = [];
   private _metadataAutocomplete: any = null;
   private _videoBlobUrls = new Map<File, string>();
 
@@ -2088,9 +2097,9 @@ export class SfxUploader extends LitElement {
             const err = new Error(file.error ?? 'Upload failed');
             this._dispatchPublic(PublicEvents.UPLOAD_ERROR, { file, error: err });
             callbacks?.onUploadError?.(file, err);
-            if (file.status === 'failed') {
-              this._showToast(`${file.name}: ${file.error ?? 'Upload failed'}`);
-            }
+            // Per-file failure toasts intentionally suppressed — the failed
+            // tile in the file-list already shows a red badge with the
+            // error text, and the success-card aggregates the failures.
             break;
           }
           case 'retrying':
@@ -2131,6 +2140,16 @@ export class SfxUploader extends LitElement {
       if (!hasCancelled) {
         const successful = allFiles.filter((f) => f.status === 'complete');
         const failed = allFiles.filter((f) => f.status === 'failed' || f.status === 'error');
+
+        // Persist this batch to sessionStorage so the success-card "Review
+        // files" button can later re-load it (e.g. after closing and
+        // re-opening the uploader within the same session). Overwrites any
+        // previous batch.
+        const reviewable = [...successful, ...failed];
+        if (reviewable.length > 0) {
+          lastUploadStore.save(reviewable);
+        }
+
         this._dispatchPublic(PublicEvents.ALL_COMPLETE, { successful, failed });
         callbacks?.onAllComplete?.(successful, failed);
 
@@ -2212,6 +2231,12 @@ export class SfxUploader extends LitElement {
 
   private _processIncomingFiles(rawFiles: File[]) {
     const callbacks = this.config?.callbacks;
+
+    // New files coming in — leave the read-only review screen if it's open.
+    if (this._isReviewing) {
+      this._isReviewing = false;
+      this._reviewFiles = [];
+    }
 
     for (const file of rawFiles) {
       // Re-read state each iteration so maxNumberOfFiles validation sees previously added files
@@ -2636,6 +2661,69 @@ export class SfxUploader extends LitElement {
 
   private _onUploadMore = () => {
     this._onClearAll();
+  };
+
+  // --- Last-upload review mode ---
+
+  /** Enter review mode. Prefers live files from the store (they still have
+   *  objectURL previewUrls for both successful AND failed files), and only
+   *  falls back to sessionStorage when no live files are present (e.g. the
+   *  user re-opened the uploader and clicked the "View last upload" pill). */
+  private _onEnterReview = () => {
+    const liveFiles = [...this._store.getState().files.values()].filter(
+      (f) => f.status === 'complete' || f.status === 'failed' || f.status === 'error',
+    );
+    if (liveFiles.length > 0) {
+      // Merge any locally-edited metadata from sessionStorage onto the live
+      // files so previously-saved review edits are not lost on re-entry.
+      const stored = lastUploadStore.load();
+      const editsByid = new Map(
+        (stored ?? []).map((sf) => [sf.id, sf]),
+      );
+      this._reviewFiles = liveFiles.map((f) => {
+        const stored = editsByid.get(f.id);
+        const hasEdit = stored && (stored as unknown as { __hasLocalMetaEdit?: boolean }).__hasLocalMetaEdit;
+        if (!hasEdit) return f;
+        // Carry forward the local meta + flag onto the live file copy.
+        return Object.assign({}, f, {
+          meta: stored.meta,
+          tags: stored.tags ?? f.tags,
+          __hasLocalMetaEdit: true,
+        }) as UploadFile;
+      });
+      this._isReviewing = true;
+      return;
+    }
+    // Fallback: no live files (modal was reopened later in the session).
+    const stored = lastUploadStore.load();
+    if (!stored || stored.length === 0) return;
+    this._reviewFiles = stored;
+    this._isReviewing = true;
+  };
+
+  private _onExitReview = () => {
+    this._isReviewing = false;
+    this._reviewFiles = [];
+  };
+
+  private _onClearReview = () => {
+    lastUploadStore.clear();
+    this._isReviewing = false;
+    this._reviewFiles = [];
+  };
+
+  /** Metadata-panel `metadata-save` from inside the review screen — persist
+   *  the edits to sessionStorage and refresh the local copy used for render.
+   *  Server sync is intentionally NOT done here (no PATCH endpoint exists). */
+  private _onReviewMetaSave = (
+    e: CustomEvent<{ fileId: string; meta: Record<string, unknown> }>,
+  ) => {
+    e.stopPropagation();
+    const { fileId, meta } = e.detail;
+    lastUploadStore.updateMeta(fileId, meta);
+    // Refresh the in-memory copy so the Local-edit pill appears immediately.
+    const reloaded = lastUploadStore.load();
+    if (reloaded) this._reviewFiles = reloaded;
   };
 
   private _onConnectorFilesSelected = (e: CustomEvent<{ files: RemoteFileInfo[] }>) => {
@@ -3296,8 +3384,20 @@ export class SfxUploader extends LitElement {
           @dragleave=${hasFiles ? this._onBodyDragLeave : nothing}
           @drop=${hasFiles ? this._onBodyDrop : nothing}
         >
-          ${this.config?.mode === 'inline' && this.config?.inlineHeader && !this._previewFileId && phase !== 'uploading' && phase !== 'complete' ? this._renderInlineHeader(this.config.inlineHeader) : nothing}
-          ${phase === 'complete'
+          ${this.config?.mode === 'inline' && this.config?.inlineHeader && !this._previewFileId && phase !== 'uploading' && phase !== 'complete' && !this._isReviewing ? this._renderInlineHeader(this.config.inlineHeader) : nothing}
+          ${this._isReviewing
+              ? html`
+                  <sfx-last-upload-review
+                    .files=${this._reviewFiles}
+                    .schema=${this._metadataSchema}
+                    .config=${this.config?.metadataConfig ?? null}
+                    .autocomplete=${this._metadataAutocomplete}
+                    @back=${this._onExitReview}
+                    @clear-history=${this._onClearReview}
+                    @metadata-save=${this._onReviewMetaSave}
+                  ></sfx-last-upload-review>
+                `
+              : phase === 'complete'
               ? html`
                   <sfx-success-card
                     .fileCount=${files.filter((f) => f.status === 'complete').length}
@@ -3307,6 +3407,7 @@ export class SfxUploader extends LitElement {
                     @close-uploader=${this._onSuccessCardClose}
                     @file-retry=${this._onFileRetry}
                     @retry-all=${this._onRetryAll}
+                    @review-files=${this._onEnterReview}
                   ></sfx-success-card>
                 `
               : phase === 'uploading'
@@ -3322,6 +3423,7 @@ export class SfxUploader extends LitElement {
                         .sourcesLayout=${this.config?.sourcesLayout ?? 'pills'}
                         .mode=${this.config?.mode ?? 'modal'}
                       ></sfx-drop-zone>`}
+
 
                   ${hasFiles
                     ? this._previewFileId
