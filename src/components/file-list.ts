@@ -357,6 +357,8 @@ export class SfxFileList extends LitElement {
   /** 'upload' (default): full controls; 'review': read-only post-upload review
    *  with status badges, Open links, and a Local-edit pill on edited files. */
   @property({ type: String }) mode: 'upload' | 'review' = 'upload';
+  /** Forwarded to each file-item for the Locate button URL override. */
+  @property({ attribute: false }) getLocateUrl?: (file: UploadFile) => string | null | undefined;
 
   @state() private _moreOpen = false;
   private _portalContainer: HTMLDivElement | null = null;
@@ -569,7 +571,7 @@ export class SfxFileList extends LitElement {
       <div class="grid">
         ${this.showDropTile && this.mode !== 'review' ? this._renderDropTile() : nothing}
         ${this.files.map(
-          (f, i) => html`<sfx-file-item .file=${f} .mode=${this.mode} style="--tile-index:${i}"></sfx-file-item>`,
+          (f, i) => html`<sfx-file-item .file=${f} .mode=${this.mode} .getLocateUrl=${this.getLocateUrl} style="--tile-index:${i}"></sfx-file-item>`,
         )}
       </div>
     `;
