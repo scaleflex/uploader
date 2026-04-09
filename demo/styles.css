@@ -1682,14 +1682,16 @@ body:not(.has-sidebar) #content {
   border-radius: var(--sf-radius-sm);
 }
 
-.doc-content table {
+.doc-content table,
+.page-section table {
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 24px;
   font-size: 14px;
 }
 
-.doc-content th {
+.doc-content th,
+.page-section th {
   text-align: left;
   font-weight: 600;
   color: var(--sf-text-primary);
@@ -1699,14 +1701,16 @@ body:not(.has-sidebar) #content {
   white-space: nowrap;
 }
 
-.doc-content td {
+.doc-content td,
+.page-section td {
   padding: 10px 14px;
   border-bottom: 1px solid var(--sf-light-border);
   color: var(--sf-text-secondary);
   vertical-align: top;
 }
 
-.doc-content td code {
+.doc-content td code,
+.page-section td code {
   font-size: 12px;
   white-space: nowrap;
 }
