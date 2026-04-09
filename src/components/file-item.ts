@@ -355,7 +355,7 @@ export class SfxFileItem extends LitElement {
       transform: translate(-50%, -50%);
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 10px;
       opacity: 0;
       transition: opacity 0.15s ease;
       z-index: 6;
@@ -378,28 +378,35 @@ export class SfxFileItem extends LitElement {
     .review-action {
       display: inline-flex;
       align-items: center;
-      gap: 5px;
-      padding: 6px 14px;
-      border-radius: 6px;
-      border: 1.5px solid var(--sfx-up-primary, #2563eb);
-      background: var(--sfx-up-bg, #fff);
-      color: var(--sfx-up-primary, #2563eb);
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 10px;
+      border: none;
       font-family: inherit;
-      font-size: 11px;
+      font-size: 13px;
       font-weight: 600;
       white-space: nowrap;
       cursor: pointer;
-      transition: background 0.15s ease, color 0.15s ease;
+      transition: transform 0.18s cubic-bezier(0.34, 1.3, 0.64, 1),
+                  box-shadow 0.18s ease,
+                  background 0.15s ease;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18),
+                  0 1px 2px rgba(15, 23, 42, 0.08);
     }
 
     .review-action:hover {
-      background: var(--sfx-up-primary, #2563eb);
-      color: var(--sfx-up-bg, #fff);
+      transform: scale(1.05);
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.22),
+                  0 1px 3px rgba(15, 23, 42, 0.1);
+    }
+
+    .review-action:active {
+      transform: scale(1.02);
     }
 
     .review-action svg {
-      width: 13px;
-      height: 13px;
+      width: 15px;
+      height: 15px;
       fill: none;
       stroke: currentColor;
       stroke-width: 2;
@@ -407,12 +414,29 @@ export class SfxFileItem extends LitElement {
       stroke-linejoin: round;
     }
 
-    .review-action.copied {
-      background: #16a34a;
-      color: #fff;
-      border-color: #16a34a;
+    /* Secondary — white card style (matches Preview in design system) */
+    .review-action.secondary {
+      background: rgba(255, 255, 255, 0.96);
+      color: var(--sfx-up-text, #1e293b);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
-    .review-action.copied svg { stroke: #fff; }
+
+    /* Primary — solid blue (matches + Select in design system) */
+    .review-action.primary {
+      background: var(--sfx-up-primary, #2563eb);
+      color: #fff;
+    }
+
+    .review-action.primary:hover {
+      background: var(--sfx-up-primary-hover, #1d4ed8);
+    }
+
+    /* Brief green flash after a successful clipboard copy */
+    .review-action.copied {
+      background: #16a34a !important;
+      color: #fff;
+    }
 
     /* --- Error / rejected state --- */
     .error-badge {
@@ -518,6 +542,10 @@ export class SfxFileItem extends LitElement {
   /** 'upload' (default): full controls; 'review': read-only post-upload
    *  view with status badges and hover actions (Locate / Copy CDN). */
   @property({ type: String }) mode: 'upload' | 'review' = 'upload';
+  /** Optional host-supplied builder for the Locate button URL. When set,
+   *  takes precedence over the default `response.file.url.public`. Lets
+   *  host apps point Locate at their own dashboard / file manager. */
+  @property({ attribute: false }) getLocateUrl?: (file: UploadFile) => string | null | undefined;
   @state() private _dims = '';
   /** Brief flash on the Copy CDN button after a successful copy. */
   @state() private _copied = false;
@@ -526,12 +554,32 @@ export class SfxFileItem extends LitElement {
   updated(changed: Map<string, unknown>) {
     if (changed.has('file')) {
       this._dims = '';
-      if (this.file?.previewUrl) {
+      // Only read dimensions from a fresh local objectURL — for restored
+      // files (where previewUrl is the CDN URL) the natural dimensions
+      // would reflect a possibly-resized CDN variant, not the original.
+      // Prefer the server-reported dims from response.file.info if present.
+      if (this.file?.previewUrl?.startsWith('blob:')) {
         const url = this.file.previewUrl;
         const img = new Image();
         img.onload = () => { if (this.file?.previewUrl === url) this._dims = `${img.naturalWidth}\u00D7${img.naturalHeight}`; };
         img.src = url;
+      } else if (this.file?.response?.file?.info) {
+        const info = this.file.response.file.info;
+        if (info.img_w && info.img_h) {
+          this._dims = `${info.img_w}\u00D7${info.img_h}`;
+        }
       }
+    }
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    // Clear the Copy CDN flash timer so it doesn't fire on a detached
+    // component (avoids a Lit "setState on disconnected element" warning
+    // and a tiny memory leak holding the closure reference).
+    if (this._copiedTimer != null) {
+      clearTimeout(this._copiedTimer);
+      this._copiedTimer = null;
     }
   }
 
@@ -563,9 +611,14 @@ export class SfxFileItem extends LitElement {
 
   private _locate(e: Event) {
     e.stopPropagation();
-    const url = this.file?.response?.file?.url?.public;
-    if (!url) return;
-    window.open(url, '_blank', 'noopener,noreferrer');
+    if (!this.file) return;
+    // Host apps can supply a custom URL via the getLocateUrl config option
+    // (e.g. a dashboard / file-manager URL where the file actually lives).
+    // If unset or returns nothing, fall back to the raw public file URL.
+    const custom = this.getLocateUrl?.(this.file);
+    const target = custom || this.file?.response?.file?.url?.public;
+    if (!target) return;
+    window.open(target, '_blank', 'noopener,noreferrer');
   }
 
   private async _copyCdn(e: Event) {
@@ -661,13 +714,13 @@ export class SfxFileItem extends LitElement {
             ? html`
                 <div class="review-actions">
                   ${f.response.file.url.public
-                    ? html`<button class="review-action" @click=${this._locate} title=${f.response.file.url.public}>
+                    ? html`<button class="review-action secondary" @click=${this._locate} title=${f.response.file.url.public} aria-label="Locate file in storage">
                         <svg viewBox="0 0 24 24"><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><circle cx="12" cy="12" r="7"/></svg>
                         Locate
                       </button>`
                     : nothing}
                   ${f.response.file.url.cdn
-                    ? html`<button class="review-action ${this._copied ? 'copied' : ''}" @click=${this._copyCdn} title="Copy CDN link">
+                    ? html`<button class="review-action primary ${this._copied ? 'copied' : ''}" @click=${this._copyCdn} title="Copy CDN link" aria-label="Copy CDN link to clipboard">
                         ${this._copied
                           ? html`<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>`
                           : html`<svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`}

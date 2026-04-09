@@ -1,27 +1,22 @@
 /**
  * Last-upload store — persists the most recently uploaded batch (successful
- * + failed files) to sessionStorage so the user can re-open the uploader,
- * review what was uploaded, edit metadata locally, and follow links to the
- * destination URLs.
+ * + failed files) to sessionStorage as a fallback for the review screen
+ * when no live files are present (e.g. the user re-opened the uploader
+ * after closing it within the same tab session).
  *
  * Scope: ONE batch only. Each call to `save()` overwrites the previous one.
  * Persistence: sessionStorage (per-tab; survives reloads, lost on tab close).
- *
- * Note: this is intentionally NOT a multi-session history. There is no
- * server sync for metadata edits — see the `__hasLocalMetaEdit` flag and
- * the `markLocalEdit()` API. Once a backend PATCH endpoint exists, the
- * `_onReviewMetaSave` handler in sfx-uploader.ts can wire up the actual
- * sync and the badge can be removed.
  */
 import type { UploadFile } from './store.types';
 
 const STORAGE_KEY = 'sfx-uploader:last-upload';
 const SCHEMA_VERSION = 1;
 
-/** Internal flag added to persisted files to mark un-synced local edits. */
+/** Persisted file shape — drops the unserializable File blob and the
+ *  per-page-life objectURL previewUrl (substituted with the CDN URL on
+ *  serialize so thumbnails survive a page reload). */
 type StoredFile = Omit<UploadFile, 'file' | 'previewUrl'> & {
-  previewUrl: string | null; // overridden: only ever a remote URL after load
-  __hasLocalMetaEdit?: boolean;
+  previewUrl: string | null;
 };
 
 interface StoredPayload {
@@ -87,35 +82,6 @@ export const lastUploadStore = {
     );
   },
 
-  /** Patch a stored file's metadata + tags and mark it as locally edited. */
-  updateMeta(
-    fileId: string,
-    meta: Record<string, unknown>,
-    tags?: string[],
-  ): void {
-    const payload = safeRead();
-    if (!payload) return;
-    const idx = payload.files.findIndex((f) => f.id === fileId);
-    if (idx === -1) return;
-    payload.files[idx] = {
-      ...payload.files[idx],
-      meta,
-      ...(tags !== undefined ? { tags } : {}),
-      __hasLocalMetaEdit: true,
-    };
-    safeWrite(payload);
-  },
-
-  /** Set the local-edit flag without changing meta (used by the host). */
-  markLocalEdit(fileId: string): void {
-    const payload = safeRead();
-    if (!payload) return;
-    const idx = payload.files.findIndex((f) => f.id === fileId);
-    if (idx === -1) return;
-    payload.files[idx] = { ...payload.files[idx], __hasLocalMetaEdit: true };
-    safeWrite(payload);
-  },
-
   /** Drop the stored batch entirely. */
   clear(): void {
     try {
@@ -123,15 +89,5 @@ export const lastUploadStore = {
     } catch {
       // ignore
     }
-  },
-
-  /** Whether a stored batch exists. */
-  has(): boolean {
-    return safeRead() !== null;
-  },
-
-  /** Number of files in the stored batch (0 if none). */
-  count(): number {
-    return safeRead()?.files.length ?? 0;
   },
 };

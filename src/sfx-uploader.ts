@@ -93,6 +93,20 @@ export interface UploaderConfig {
   metadataConfig?: MetadataConfig;
   /** Layout for the import-from sources section: horizontal pills (default) or cards grid. */
   sourcesLayout?: 'pills' | 'cards';
+  /**
+   * Override the URL opened by the "Locate" button in the last-upload review
+   * screen. Receives the completed file and should return the URL the host
+   * wants Locate to open (typically a dashboard / file-manager URL pointing
+   * at the file's containing folder). Return `null` / `undefined` to fall
+   * back to the file's own public URL (default behaviour).
+   *
+   * Example:
+   * ```ts
+   * getLocateUrl: (file) =>
+   *   `https://app.scaleflex.com/projects/${PROJECT_ID}/files?id=${file.response?.file?.uuid}`
+   * ```
+   */
+  getLocateUrl?: (file: UploadFile) => string | null | undefined;
   /** Whether closing the modal clears all files. Default: true. Set to false to preserve files across open/close. */
   clearOnClose?: boolean;
   /** Whether the "Done" action clears all files (inline mode resets, modal mode closes). Default: true. */
@@ -3359,6 +3373,7 @@ export class SfxUploader extends LitElement {
               ? html`
                   <sfx-last-upload-review
                     .files=${this._reviewFiles}
+                    .getLocateUrl=${this.config?.getLocateUrl}
                     @back=${this._onExitReview}
                     @clear-history=${this._onClearReview}
                   ></sfx-last-upload-review>
