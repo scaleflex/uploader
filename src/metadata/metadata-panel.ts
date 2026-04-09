@@ -18,8 +18,11 @@ const nextIcon = html`<svg viewBox="0 0 16 16" fill="none" stroke="currentColor"
   <polyline points="6 3 11 8 6 13"/>
 </svg>`;
 
-/** Statuses for files that can still be edited. */
-const MODIFIABLE_STATUSES = new Set(['idle', 'queued', 'rejected']);
+/** Statuses for files that can still be edited.
+ *  - idle/queued/rejected: pre-upload edits (saved on actual upload)
+ *  - complete: post-upload edits in the "last upload review" mode
+ *    (saved locally to sessionStorage; server sync is a follow-up). */
+const MODIFIABLE_STATUSES = new Set(['idle', 'queued', 'rejected', 'complete']);
 
 export class SfxMetadataPanel extends LitElement {
   static styles = [metadataPanelStyles];

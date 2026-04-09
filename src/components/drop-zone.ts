@@ -31,7 +31,6 @@ export class SfxDropZone extends LitElement {
       flex-shrink: 0;
       flex: 1;
       min-height: 0;
-      container-type: inline-size;
     }
 
     :host([compact]) {
@@ -797,21 +796,44 @@ export class SfxDropZone extends LitElement {
       .core svg { width: 20px; height: 20px; }
     }
 
-    /* Inline mode on a wide container (e.g. full-screen) — frame the empty
-       drop-zone as a bounded bordered card centered in available space,
-       so it doesn't float lost in a sea of whitespace on big screens.
-       Does not apply in modal mode or in narrow inline embeds. */
-    @container (min-width: 768px) {
-      :host([mode="inline"]) .drop-zone:not(.compact) {
-        flex: 0 1 720px;
-        max-width: 100%;
-        box-sizing: border-box;
-        align-self: center;
-        margin-inline: auto;
-        padding: 64px 48px;
-        border: 1.5px dashed var(--sfx-up-ring-color, #c4d5ef);
-        border-radius: 24px;
-      }
+    /* Inline mode on a TRULY wide host (e.g. full-screen) — frame the empty
+       drop-zone as a bounded bordered card so it doesn't float lost in a
+       sea of whitespace. The data-wide attribute is set imperatively by a
+       ResizeObserver in the component (see _onHostResize). Threshold is
+       1200px of host width, which only the full-screen example reliably
+       hits — embedded inline uploaders (Home demo, Sources Layout, plain
+       inline) are all narrower and stay untouched. Modal mode is always
+       excluded via the [mode="inline"] selector. */
+    :host([mode="inline"][data-wide]) .drop-zone:not(.compact) {
+      flex: 0 1 720px;
+      max-width: 100%;
+      box-sizing: border-box;
+      align-self: center;
+      margin-inline: auto;
+      padding: 64px 48px;
+      border: 1.5px dashed var(--sfx-up-ring-color, #c4d5ef);
+      border-radius: 24px;
+    }
+    :host([mode="inline"][data-wide]) .drop-zone:not(.compact) .rings {
+      width: 140px;
+      height: 140px;
+      margin-bottom: 28px;
+    }
+    :host([mode="inline"][data-wide]) .drop-zone:not(.compact) .core {
+      width: 68px;
+      height: 68px;
+    }
+    :host([mode="inline"][data-wide]) .drop-zone:not(.compact) .core svg {
+      width: 30px;
+      height: 30px;
+    }
+    :host([mode="inline"][data-wide]) .drop-zone:not(.compact) .title {
+      font-size: 22px;
+      margin-bottom: 8px;
+    }
+    :host([mode="inline"][data-wide]) .drop-zone:not(.compact) .subtitle {
+      font-size: 15px;
+      margin-bottom: 28px;
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -832,7 +854,16 @@ export class SfxDropZone extends LitElement {
   @property({ type: String }) accept = '';
   @property({ type: Array }) sources: SourceDef[] = [];
   @property({ type: String, attribute: 'sources-layout' }) sourcesLayout: 'pills' | 'cards' = 'pills';
+  /** Set by sfx-uploader to scope the wide-host frame to inline mode only.
+   *  Modal mode is excluded (no dashed card frame even on big modals). */
   @property({ type: String, reflect: true }) mode: 'modal' | 'inline' = 'modal';
+
+  /** Threshold (px) at which the host is considered "wide enough" for the
+   *  inline-fullscreen bordered-card layout. Tuned to fire on the actual
+   *  full-screen demo (1400+) while skipping embedded inline uploaders
+   *  (Home demo ~912, Sources Layout ~824, inline example ~824). */
+  private static readonly _WIDE_THRESHOLD_PX = 1200;
+  private _resizeObserver: ResizeObserver | null = null;
 
   @state() private _dragOver = false;
   @state() private _moreOpen = false;
@@ -1102,6 +1133,20 @@ export class SfxDropZone extends LitElement {
     window.addEventListener('scroll', this._onScrollOrResize, true);
     window.addEventListener('resize', this._onScrollOrResize);
     this._updateVisiblePills();
+    // Watch own width so the inline-fullscreen "wide" frame turns on/off
+    // automatically as the host resizes.
+    if (typeof ResizeObserver !== 'undefined') {
+      this._resizeObserver = new ResizeObserver((entries) => {
+        const width = entries[0]?.contentRect.width ?? this.getBoundingClientRect().width;
+        const isWide = width >= SfxDropZone._WIDE_THRESHOLD_PX;
+        if (isWide && !this.hasAttribute('data-wide')) {
+          this.setAttribute('data-wide', '');
+        } else if (!isWide && this.hasAttribute('data-wide')) {
+          this.removeAttribute('data-wide');
+        }
+      });
+      this._resizeObserver.observe(this);
+    }
   }
 
   updated(changed: Map<string, unknown>) {
@@ -1118,6 +1163,10 @@ export class SfxDropZone extends LitElement {
     window.removeEventListener('scroll', this._onScrollOrResize, true);
     window.removeEventListener('resize', this._onScrollOrResize);
     if (this._resizeTimer) clearTimeout(this._resizeTimer);
+    if (this._resizeObserver) {
+      this._resizeObserver.disconnect();
+      this._resizeObserver = null;
+    }
     if (this._portalContainer) {
       litRender(nothing, this._portalContainer);
       this._portalContainer.remove();

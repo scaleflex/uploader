@@ -149,6 +149,13 @@ export class SfxFileItem extends LitElement {
       box-shadow: 0 0 0 2px var(--sfx-up-primary, #2563eb);
     }
 
+    /* In review mode every tile is complete — the per-tile blue ring would
+       turn the whole grid into a wall of borders, so suppress it. The status
+       badge in the corner already conveys "uploaded successfully". */
+    .tile.review.done {
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.06);
+    }
+
     /* --- Action buttons --- */
     .actions {
       position: absolute;
@@ -318,6 +325,82 @@ export class SfxFileItem extends LitElement {
       height: 14px;
     }
 
+    /* --- Review mode: failed badge (mirrors done-badge) --- */
+    .failed-badge {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--sfx-up-error, #dc2626);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 10;
+      color: #fff;
+    }
+
+    .failed-badge svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    /* --- Review mode: Local edit pill --- */
+    .local-edit-pill {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      color: var(--sfx-up-primary, #2563eb);
+      background: var(--sfx-up-primary-bg, #eff6ff);
+      border: 1px solid color-mix(in srgb, var(--sfx-up-primary, #2563eb) 25%, transparent);
+      border-radius: 999px;
+      padding: 2px 8px;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* --- Review mode: Open destination button --- */
+    .open-btn {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 10px;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--sfx-up-primary, #2563eb);
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid var(--sfx-up-border, #e2e8f0);
+      border-radius: 6px;
+      cursor: pointer;
+      backdrop-filter: blur(4px);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+      z-index: 11;
+      text-decoration: none;
+    }
+
+    .open-btn:hover {
+      background: var(--sfx-up-primary-bg, #eff6ff);
+      border-color: var(--sfx-up-primary, #2563eb);
+    }
+
+    .open-btn svg {
+      width: 12px;
+      height: 12px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
     /* --- Error / rejected state --- */
     .error-badge {
       position: absolute;
@@ -419,6 +502,9 @@ export class SfxFileItem extends LitElement {
   `;
 
   @property({ attribute: false }) file!: UploadFile;
+  /** 'upload' (default): full controls; 'review': read-only post-upload review
+   *  with status badges + Open link + Local-edit pill. */
+  @property({ type: String }) mode: 'upload' | 'review' = 'upload';
   @state() private _dims = '';
 
   updated(changed: Map<string, unknown>) {
@@ -459,6 +545,13 @@ export class SfxFileItem extends LitElement {
     this._emit('file-preview');
   }
 
+  private _openDestination(e: Event) {
+    e.stopPropagation();
+    const url = this.file?.response?.file?.url?.public;
+    if (!url) return;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+
   render() {
     const f = this.file;
     if (!f) return nothing;
@@ -469,6 +562,8 @@ export class SfxFileItem extends LitElement {
     const isPaused = f.status === 'paused';
     const isError = f.status === 'error' || f.status === 'failed';
     const isRejected = f.status === 'rejected';
+    const isReview = this.mode === 'review';
+    const hasLocalEdit = isReview && (f as unknown as { __hasLocalMetaEdit?: boolean }).__hasLocalMetaEdit === true;
     const ext = getFileExtension(f.name);
 
     const tileClass = [
@@ -477,6 +572,7 @@ export class SfxFileItem extends LitElement {
       isUploading ? 'uploading' : '',
       isPaused ? 'paused' : '',
       isRejected ? 'rejected' : '',
+      isReview ? 'review' : '',
     ].filter(Boolean).join(' ');
 
     return html`
@@ -503,8 +599,9 @@ export class SfxFileItem extends LitElement {
                 </div>
               `}
 
-          <!-- Preview button -->
-          ${!isDone && !isUploading && !isPaused && !isError && f.status !== 'rejected'
+          <!-- Preview button: editable states + review mode for completed files -->
+          ${(!isDone && !isUploading && !isPaused && !isError && f.status !== 'rejected') ||
+          (isReview && isDone)
             ? html`
                 <button class="preview-btn" @click=${this._preview} aria-label="Details">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -536,8 +633,31 @@ export class SfxFileItem extends LitElement {
               </div>`
             : nothing}
 
-          <!-- Progress bar (visible during upload and when paused) -->
-          ${f.status === 'uploading' || f.status === 'paused'
+          <!-- Failed badge (review mode only — failed files get a visible status) -->
+          ${isReview && isError
+            ? html`<div class="failed-badge" title=${f.error || 'Upload failed'}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                </svg>
+              </div>`
+            : nothing}
+
+          <!-- Local edit pill (review mode, when metadata was edited locally) -->
+          ${hasLocalEdit
+            ? html`<div class="local-edit-pill">Local edit</div>`
+            : nothing}
+
+          <!-- Open destination button (review mode, complete files only) -->
+          ${isReview && isDone && f.response?.file?.url?.public
+            ? html`<button class="open-btn" @click=${this._openDestination} title="Open in new tab">
+                <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                Open
+              </button>`
+            : nothing}
+
+          <!-- Progress bar (visible during upload and when paused; not in review mode) -->
+          ${!isReview && (f.status === 'uploading' || f.status === 'paused')
             ? html`
                 <div class="progress">
                   <div class="progress-fill" style="transform:scaleX(${Math.min(f.progress, 100) / 100})"></div>
@@ -545,8 +665,8 @@ export class SfxFileItem extends LitElement {
               `
             : nothing}
 
-          <!-- Error / rejected badge -->
-          ${(isError || isRejected) && f.error
+          <!-- Error / rejected text overlay (suppressed in review mode — failed-badge takes over) -->
+          ${(isError || isRejected) && f.error && !isReview
             ? html`<div class="error-badge" title=${f.error}>${f.error}</div>`
             : nothing}
 
@@ -556,7 +676,8 @@ export class SfxFileItem extends LitElement {
             : nothing}
         </div>
 
-        <!-- Action buttons -->
+        <!-- Action buttons (hidden in review mode — files are read-only) -->
+        ${isReview ? nothing : html`
         <div class="actions">
           ${isUploading && f.isTus
             ? html`
@@ -597,11 +718,13 @@ export class SfxFileItem extends LitElement {
             </svg>
           </button>
         </div>
+        `}
 
         <!-- Info bar -->
         <div class="info">
           <input class="name-input" type="text" .value=${f.name} title=${f.name}
             aria-label="File name"
+            ?readonly=${isReview}
             @change=${this._rename} @click=${(e: Event) => e.stopPropagation()} />
           <div class="meta">${ext || ''}${f.size ? ` \u00B7 ${formatFileSize(f.size)}` : ''}${this._dims ? ` \u00B7 ${this._dims}` : ''}</div>
         </div>

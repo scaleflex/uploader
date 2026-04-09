@@ -354,6 +354,9 @@ export class SfxFileList extends LitElement {
   @property({ type: Boolean }) showDropTile = false;
   @property({ attribute: false }) sources: SourceDef[] = [];
   @property({ type: String }) accept = '';
+  /** 'upload' (default): full controls; 'review': read-only post-upload review
+   *  with status badges, Open links, and a Local-edit pill on edited files. */
+  @property({ type: String }) mode: 'upload' | 'review' = 'upload';
 
   @state() private _moreOpen = false;
   private _portalContainer: HTMLDivElement | null = null;
@@ -564,9 +567,9 @@ export class SfxFileList extends LitElement {
   render() {
     return html`
       <div class="grid">
-        ${this.showDropTile ? this._renderDropTile() : nothing}
+        ${this.showDropTile && this.mode !== 'review' ? this._renderDropTile() : nothing}
         ${this.files.map(
-          (f, i) => html`<sfx-file-item .file=${f} style="--tile-index:${i}"></sfx-file-item>`,
+          (f, i) => html`<sfx-file-item .file=${f} .mode=${this.mode} style="--tile-index:${i}"></sfx-file-item>`,
         )}
       </div>
     `;

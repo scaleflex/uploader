@@ -299,6 +299,12 @@ export class SfxSuccessCard extends LitElement {
     );
   }
 
+  private _reviewFiles() {
+    this.dispatchEvent(
+      new CustomEvent('review-files', { bubbles: true, composed: true }),
+    );
+  }
+
   private _primaryAction() {
     this.dispatchEvent(
       new CustomEvent('primary-action', { bubbles: true, composed: true }),
@@ -387,6 +393,9 @@ export class SfxSuccessCard extends LitElement {
 
         <div class="actions">
           <button class="btn-ghost" @click=${this._uploadMore}>Upload more</button>
+          ${hasSuccesses || hasFailed
+            ? html`<button class="btn-ghost" @click=${this._reviewFiles}>Review files (${this.fileCount + this.failedFiles.length})</button>`
+            : nothing}
           ${hasFailed ? html`<button class="btn-retry-all" @click=${this._retryAll}>Retry all (${this.failedFiles.length})</button>` : nothing}
           <button class="btn-primary" @click=${this._primaryAction}>${this.primaryLabel}</button>
         </div>
