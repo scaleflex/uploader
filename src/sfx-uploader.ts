@@ -2666,35 +2666,18 @@ export class SfxUploader extends LitElement {
   // --- Last-upload review mode ---
 
   /** Enter review mode. Prefers live files from the store (they still have
-   *  objectURL previewUrls for both successful AND failed files), and only
-   *  falls back to sessionStorage when no live files are present (e.g. the
-   *  user re-opened the uploader and clicked the "View last upload" pill). */
+   *  objectURL previewUrls for both successful AND failed files); falls
+   *  back to sessionStorage when no live files are present (e.g. the user
+   *  re-opened the uploader after closing). */
   private _onEnterReview = () => {
     const liveFiles = [...this._store.getState().files.values()].filter(
       (f) => f.status === 'complete' || f.status === 'failed' || f.status === 'error',
     );
     if (liveFiles.length > 0) {
-      // Merge any locally-edited metadata from sessionStorage onto the live
-      // files so previously-saved review edits are not lost on re-entry.
-      const stored = lastUploadStore.load();
-      const editsByid = new Map(
-        (stored ?? []).map((sf) => [sf.id, sf]),
-      );
-      this._reviewFiles = liveFiles.map((f) => {
-        const stored = editsByid.get(f.id);
-        const hasEdit = stored && (stored as unknown as { __hasLocalMetaEdit?: boolean }).__hasLocalMetaEdit;
-        if (!hasEdit) return f;
-        // Carry forward the local meta + flag onto the live file copy.
-        return Object.assign({}, f, {
-          meta: stored.meta,
-          tags: stored.tags ?? f.tags,
-          __hasLocalMetaEdit: true,
-        }) as UploadFile;
-      });
+      this._reviewFiles = liveFiles;
       this._isReviewing = true;
       return;
     }
-    // Fallback: no live files (modal was reopened later in the session).
     const stored = lastUploadStore.load();
     if (!stored || stored.length === 0) return;
     this._reviewFiles = stored;
@@ -2712,19 +2695,6 @@ export class SfxUploader extends LitElement {
     this._reviewFiles = [];
   };
 
-  /** Metadata-panel `metadata-save` from inside the review screen — persist
-   *  the edits to sessionStorage and refresh the local copy used for render.
-   *  Server sync is intentionally NOT done here (no PATCH endpoint exists). */
-  private _onReviewMetaSave = (
-    e: CustomEvent<{ fileId: string; meta: Record<string, unknown> }>,
-  ) => {
-    e.stopPropagation();
-    const { fileId, meta } = e.detail;
-    lastUploadStore.updateMeta(fileId, meta);
-    // Refresh the in-memory copy so the Local-edit pill appears immediately.
-    const reloaded = lastUploadStore.load();
-    if (reloaded) this._reviewFiles = reloaded;
-  };
 
   private _onConnectorFilesSelected = (e: CustomEvent<{ files: RemoteFileInfo[] }>) => {
     const callbacks = this.config?.callbacks;
@@ -3389,12 +3359,8 @@ export class SfxUploader extends LitElement {
               ? html`
                   <sfx-last-upload-review
                     .files=${this._reviewFiles}
-                    .schema=${this._metadataSchema}
-                    .config=${this.config?.metadataConfig ?? null}
-                    .autocomplete=${this._metadataAutocomplete}
                     @back=${this._onExitReview}
                     @clear-history=${this._onClearReview}
-                    @metadata-save=${this._onReviewMetaSave}
                   ></sfx-last-upload-review>
                 `
               : phase === 'complete'
