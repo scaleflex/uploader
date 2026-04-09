@@ -347,59 +347,72 @@ export class SfxFileItem extends LitElement {
       height: 14px;
     }
 
-    /* --- Review mode: Local edit pill --- */
-    .local-edit-pill {
+    /* --- Review mode: stacked hover actions (Locate / Copy CDN) --- */
+    .review-actions {
       position: absolute;
-      top: 8px;
-      right: 8px;
-      font-size: 10px;
-      font-weight: 600;
-      letter-spacing: 0.2px;
-      color: var(--sfx-up-primary, #2563eb);
-      background: var(--sfx-up-primary-bg, #eff6ff);
-      border: 1px solid color-mix(in srgb, var(--sfx-up-primary, #2563eb) 25%, transparent);
-      border-radius: 999px;
-      padding: 2px 8px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+      z-index: 6;
       pointer-events: none;
-      z-index: 10;
     }
 
-    /* --- Review mode: Open destination button --- */
-    .open-btn {
-      position: absolute;
-      bottom: 8px;
-      right: 8px;
+    .tile.review:hover .review-actions,
+    .tile.review:focus-within .review-actions {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    @media (hover: none) {
+      .tile.review .review-actions {
+        opacity: 1;
+        pointer-events: auto;
+      }
+    }
+
+    .review-action {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
-      padding: 5px 10px;
-      font-size: 11px;
-      font-weight: 500;
-      color: var(--sfx-up-primary, #2563eb);
-      background: rgba(255, 255, 255, 0.92);
-      border: 1px solid var(--sfx-up-border, #e2e8f0);
+      gap: 5px;
+      padding: 6px 14px;
       border-radius: 6px;
+      border: 1.5px solid var(--sfx-up-primary, #2563eb);
+      background: var(--sfx-up-bg, #fff);
+      color: var(--sfx-up-primary, #2563eb);
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
       cursor: pointer;
-      backdrop-filter: blur(4px);
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
-      z-index: 11;
-      text-decoration: none;
+      transition: background 0.15s ease, color 0.15s ease;
     }
 
-    .open-btn:hover {
-      background: var(--sfx-up-primary-bg, #eff6ff);
-      border-color: var(--sfx-up-primary, #2563eb);
+    .review-action:hover {
+      background: var(--sfx-up-primary, #2563eb);
+      color: var(--sfx-up-bg, #fff);
     }
 
-    .open-btn svg {
-      width: 12px;
-      height: 12px;
+    .review-action svg {
+      width: 13px;
+      height: 13px;
       fill: none;
       stroke: currentColor;
       stroke-width: 2;
       stroke-linecap: round;
       stroke-linejoin: round;
     }
+
+    .review-action.copied {
+      background: #16a34a;
+      color: #fff;
+      border-color: #16a34a;
+    }
+    .review-action.copied svg { stroke: #fff; }
 
     /* --- Error / rejected state --- */
     .error-badge {
@@ -502,10 +515,13 @@ export class SfxFileItem extends LitElement {
   `;
 
   @property({ attribute: false }) file!: UploadFile;
-  /** 'upload' (default): full controls; 'review': read-only post-upload review
-   *  with status badges + Open link + Local-edit pill. */
+  /** 'upload' (default): full controls; 'review': read-only post-upload
+   *  view with status badges and hover actions (Locate / Copy CDN). */
   @property({ type: String }) mode: 'upload' | 'review' = 'upload';
   @state() private _dims = '';
+  /** Brief flash on the Copy CDN button after a successful copy. */
+  @state() private _copied = false;
+  private _copiedTimer: number | null = null;
 
   updated(changed: Map<string, unknown>) {
     if (changed.has('file')) {
@@ -545,11 +561,36 @@ export class SfxFileItem extends LitElement {
     this._emit('file-preview');
   }
 
-  private _openDestination(e: Event) {
+  private _locate(e: Event) {
     e.stopPropagation();
     const url = this.file?.response?.file?.url?.public;
     if (!url) return;
     window.open(url, '_blank', 'noopener,noreferrer');
+  }
+
+  private async _copyCdn(e: Event) {
+    e.stopPropagation();
+    const url = this.file?.response?.file?.url?.cdn;
+    if (!url) return;
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      // Fallback for older browsers / insecure contexts
+      const textarea = document.createElement('textarea');
+      textarea.value = url;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try { document.execCommand('copy'); } catch { /* give up */ }
+      document.body.removeChild(textarea);
+    }
+    this._copied = true;
+    if (this._copiedTimer) clearTimeout(this._copiedTimer);
+    this._copiedTimer = window.setTimeout(() => {
+      this._copied = false;
+      this._copiedTimer = null;
+    }, 1400);
   }
 
   render() {
@@ -563,7 +604,6 @@ export class SfxFileItem extends LitElement {
     const isError = f.status === 'error' || f.status === 'failed';
     const isRejected = f.status === 'rejected';
     const isReview = this.mode === 'review';
-    const hasLocalEdit = isReview && (f as unknown as { __hasLocalMetaEdit?: boolean }).__hasLocalMetaEdit === true;
     const ext = getFileExtension(f.name);
 
     const tileClass = [
@@ -599,9 +639,9 @@ export class SfxFileItem extends LitElement {
                 </div>
               `}
 
-          <!-- Preview button: editable states + review mode for completed files -->
-          ${(!isDone && !isUploading && !isPaused && !isError && f.status !== 'rejected') ||
-          (isReview && isDone)
+          <!-- Preview button (not in review mode — review uses its own
+               stacked Locate / Copy CDN actions instead) -->
+          ${!isReview && !isDone && !isUploading && !isPaused && !isError && f.status !== 'rejected'
             ? html`
                 <button class="preview-btn" @click=${this._preview} aria-label="Details">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -610,6 +650,31 @@ export class SfxFileItem extends LitElement {
                   </svg>
                   Details
                 </button>
+              `
+            : nothing}
+
+          <!-- Review-mode hover actions: Locate (open in storage) +
+               Copy CDN (copy CDN URL to clipboard). Both buttons fade
+               in on tile hover, only for completed files (failed files
+               have no response.file.url). -->
+          ${isReview && isDone && f.response?.file?.url
+            ? html`
+                <div class="review-actions">
+                  ${f.response.file.url.public
+                    ? html`<button class="review-action" @click=${this._locate} title=${f.response.file.url.public}>
+                        <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                        Locate
+                      </button>`
+                    : nothing}
+                  ${f.response.file.url.cdn
+                    ? html`<button class="review-action ${this._copied ? 'copied' : ''}" @click=${this._copyCdn} title="Copy CDN link">
+                        ${this._copied
+                          ? html`<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>`
+                          : html`<svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`}
+                        ${this._copied ? 'Copied' : 'Copy CDN'}
+                      </button>`
+                    : nothing}
+                </div>
               `
             : nothing}
 
@@ -641,19 +706,6 @@ export class SfxFileItem extends LitElement {
                   <line x1="18" y1="6" x2="6" y2="18"/>
                 </svg>
               </div>`
-            : nothing}
-
-          <!-- Local edit pill (review mode, when metadata was edited locally) -->
-          ${hasLocalEdit
-            ? html`<div class="local-edit-pill">Local edit</div>`
-            : nothing}
-
-          <!-- Open destination button (review mode, complete files only) -->
-          ${isReview && isDone && f.response?.file?.url?.public
-            ? html`<button class="open-btn" @click=${this._openDestination} title="Open in new tab">
-                <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                Open
-              </button>`
             : nothing}
 
           <!-- Progress bar (visible during upload and when paused; not in review mode) -->

@@ -1,18 +1,15 @@
 import { LitElement, html, css, nothing } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import type { UploadFile } from '../store/store.types';
-import type { MetadataSchema, MetadataConfig } from '../metadata/schema/schema.types';
 import './file-list';
-import '../metadata/metadata-panel';
 
 type FilterMode = 'all' | 'success' | 'failed';
 
 /**
  * Read-only review screen for the most recently uploaded batch (success +
  * failed). Renders <sfx-file-list mode="review">, plus a top bar with
- * filter chips, Back, and Clear. When a file is clicked (file-preview
- * event), opens an overlay metadata-panel for editing. Edits bubble up
- * to the host as `metadata-save` events.
+ * filter chips, Back, and Clear. Tile click does not open anything —
+ * each tile exposes its own hover actions (Locate / Copy CDN).
  */
 export class SfxLastUploadReview extends LitElement {
   static styles = css`
@@ -143,49 +140,14 @@ export class SfxLastUploadReview extends LitElement {
       font-size: 14px;
     }
 
-    /* Metadata panel overlay */
-    .meta-overlay {
-      position: absolute;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.4);
-      backdrop-filter: blur(2px);
-      z-index: 50;
-      display: flex;
-      justify-content: flex-end;
-      animation: fadeIn 0.18s ease;
-    }
-
-    .meta-overlay sfx-metadata-panel {
-      width: min(520px, 100%);
-      height: 100%;
-      background: var(--sfx-up-bg, #fff);
-      box-shadow: -8px 0 32px rgba(0, 0, 0, 0.12);
-      animation: slideIn 0.22s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    @keyframes slideIn {
-      from { transform: translateX(20px); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
-
     @media (max-width: 480px) {
       .topbar { padding: 12px 16px; }
-      .meta-overlay sfx-metadata-panel { width: 100%; }
     }
   `;
 
   @property({ attribute: false }) files: UploadFile[] = [];
-  @property({ attribute: false }) schema: MetadataSchema | null = null;
-  @property({ attribute: false }) config: MetadataConfig | null = null;
-  @property({ attribute: false }) autocomplete: unknown = null;
 
   @state() private _filter: FilterMode = 'all';
-  @state() private _selectedFileId: string | null = null;
 
   private get _filtered(): UploadFile[] {
     if (this._filter === 'success') {
@@ -205,11 +167,6 @@ export class SfxLastUploadReview extends LitElement {
     return this.files.filter((f) => f.status === 'failed' || f.status === 'error').length;
   }
 
-  private get _selectedFile(): UploadFile | null {
-    if (!this._selectedFileId) return null;
-    return this.files.find((f) => f.id === this._selectedFileId) ?? null;
-  }
-
   private _setFilter = (filter: FilterMode) => () => {
     this._filter = filter;
   };
@@ -222,39 +179,9 @@ export class SfxLastUploadReview extends LitElement {
     this.dispatchEvent(new CustomEvent('clear-history', { bubbles: true, composed: true }));
   };
 
-  private _onFilePreview = (e: CustomEvent<{ fileId: string }>) => {
-    e.stopPropagation();
-    this._selectedFileId = e.detail.fileId;
-  };
-
-  private _onMetaSave = (e: CustomEvent<{ fileId: string; meta: Record<string, unknown> }>) => {
-    // Bubble up to host (sfx-uploader) so it can persist via lastUploadStore
-    e.stopPropagation();
-    this.dispatchEvent(
-      new CustomEvent('metadata-save', {
-        detail: e.detail,
-        bubbles: true,
-        composed: true,
-      }),
-    );
-  };
-
-  private _onMetaClose = (e: Event) => {
-    e.stopPropagation();
-    this._selectedFileId = null;
-  };
-
-  private _onOverlayClick = (e: MouseEvent) => {
-    // Close when clicking the backdrop (not the panel itself)
-    if (e.target === e.currentTarget) {
-      this._selectedFileId = null;
-    }
-  };
-
   render() {
     const filtered = this._filtered;
     const total = this.files.length;
-    const selected = this._selectedFile;
 
     return html`
       <div class="topbar">
@@ -282,26 +209,8 @@ export class SfxLastUploadReview extends LitElement {
       <div class="body">
         ${filtered.length === 0
           ? html`<div class="empty">No files match this filter.</div>`
-          : html`<sfx-file-list
-              .files=${filtered}
-              mode="review"
-              @file-preview=${this._onFilePreview}
-            ></sfx-file-list>`}
+          : html`<sfx-file-list .files=${filtered} mode="review"></sfx-file-list>`}
       </div>
-
-      ${selected
-        ? html`<div class="meta-overlay" @click=${this._onOverlayClick}>
-            <sfx-metadata-panel
-              .file=${selected}
-              .files=${this.files}
-              .schema=${this.schema}
-              .config=${this.config}
-              .autocomplete=${this.autocomplete}
-              @metadata-save=${this._onMetaSave}
-              @metadata-close=${this._onMetaClose}
-            ></sfx-metadata-panel>
-          </div>`
-        : nothing}
     `;
   }
 }
