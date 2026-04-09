@@ -128,7 +128,7 @@ export class SfxLastUploadReview extends LitElement {
       flex: 1;
       min-height: 0;
       overflow-y: auto;
-      padding: 0;
+      padding: 16px 0 0;
       scrollbar-width: thin;
       scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
     }
