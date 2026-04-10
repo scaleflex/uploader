@@ -549,27 +549,6 @@ export const bulkOpBarStyles = css`
     min-width: 0;
   }
 
-  /* Clear button */
-  .btn-clear {
-    width: 28px;
-    height: 28px;
-    border: none;
-    border-radius: 6px;
-    background: none;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--sfx-up-text-muted, #94a3b8);
-    flex-shrink: 0;
-    align-self: flex-end;
-    margin-bottom: 4px;
-    transition: background 0.12s ease, color 0.12s ease;
-  }
-  .btn-clear:hover {
-    background: var(--sfx-up-hover, #f1f5f9);
-    color: var(--sfx-up-text-secondary, #64748b);
-  }
 
   /* Apply button — align with input field */
   .btn-apply {
