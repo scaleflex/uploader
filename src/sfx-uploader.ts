@@ -130,7 +130,7 @@ export interface UploaderConfig {
   closeOnComplete?: boolean | number;
   /**
    * Auto-remove rejected files after this delay in milliseconds.
-   * Default: 4000 (4 seconds). Set to 0 or false to disable auto-removal.
+   * Set to 0, false, or omit to disable auto-removal.
    */
   rejectedFileAutoRemoveDelay?: number | false;
   /**
@@ -776,25 +776,6 @@ export class SfxUploader extends LitElement {
     .preview-panel-header button svg {
       width: 16px;
       height: 16px;
-    }
-
-    .file-info-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px 0 10px;
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--sfx-up-text, #1e293b);
-      border-top: 1px solid var(--sfx-up-border, #e8edf5);
-      margin-top: 4px;
-      flex-shrink: 0;
-    }
-
-    .file-info-header svg {
-      width: 16px;
-      height: 16px;
-      color: var(--sfx-up-text-muted, #9ca3af);
     }
 
     .preview-doc-wrap {
@@ -2651,6 +2632,13 @@ export class SfxUploader extends LitElement {
 
     // Validate against restrictions (size=0 for URL imports, so size checks are skipped)
     const s = this._store.getState();
+
+    // Skip duplicate URLs (same name already in queue)
+    const isDuplicate = [...s.files.values()].some(
+      (f) => f.name === name && f.status !== 'rejected' && f.status !== 'cancelled',
+    );
+    if (isDuplicate) return;
+
     const error = validateFileInfo({ name, size: 0, type }, s.restrictions, s.files);
     if (error) {
       const rejFile: UploadFile = {
@@ -2914,6 +2902,13 @@ export class SfxUploader extends LitElement {
     for (const info of e.detail.files) {
       // Re-read state each iteration so maxNumberOfFiles sees previously added files
       const s = this._store.getState();
+
+      // Skip duplicate files (same name + size already in queue)
+      const isDuplicate = [...s.files.values()].some(
+        (f) => f.name === info.name && f.size === info.size && f.status !== 'rejected' && f.status !== 'cancelled',
+      );
+      if (isDuplicate) continue;
+
       const error = validateFileInfo(
         { name: info.name, size: info.size, type: info.mimeType },
         s.restrictions,

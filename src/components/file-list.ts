@@ -83,11 +83,6 @@ export class SfxFileList extends LitElement {
     }
 
     .drop-tile:hover,
-    :host-context(.body-drag-over) .drop-tile {
-      border-color: var(--sfx-up-primary, #2563eb);
-      background: var(--sfx-up-primary-bg, #eff6ff);
-    }
-
     :host([drag-active]) .drop-tile {
       border-color: var(--sfx-up-primary, #2563eb);
       background: var(--sfx-up-primary-bg, #eff6ff);

@@ -276,8 +276,8 @@ export class SfxMetaMultiSelectField extends MetadataFieldBase {
           </div>
           ${this._options.length > 0 ? html`
             <div class="bulk-actions">
-              <button class="bulk-btn" @mousedown=${(e: Event) => { e.preventDefault(); this._selectAll(); }}>Select all</button>
-              <button class="bulk-btn bulk-btn--muted" @mousedown=${(e: Event) => { e.preventDefault(); this._clearAll(); }}>Clear all</button>
+              <button type="button" class="bulk-btn" @mousedown=${(e: Event) => { e.preventDefault(); this._selectAll(); }}>Select all</button>
+              <button type="button" class="bulk-btn bulk-btn--muted" @mousedown=${(e: Event) => { e.preventDefault(); this._clearAll(); }}>Clear all</button>
             </div>
           ` : nothing}
         </div>
