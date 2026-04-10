@@ -72,14 +72,17 @@ export const lastUploadStore = {
     safeWrite(payload);
   },
 
-  /** Returns the stored files (cast back to UploadFile shape) or null. */
+  /** Returns the stored files (rehydrated back to UploadFile shape) or null.
+   *  The `file` blob and `remoteUrl` are not serializable — they are set to
+   *  null on restore. Downstream code must null-check `file.file` before use. */
   load(): UploadFile[] | null {
     const payload = safeRead();
     if (!payload) return null;
-    // Re-cast: file blob is gone (null), previewUrl is now the cdn URL (or null).
-    return payload.files.map(
-      (f) => ({ ...f, file: null }) as unknown as UploadFile,
-    );
+    return payload.files.map((f): UploadFile => ({
+      ...f,
+      file: null,
+      previewUrl: f.previewUrl ?? null,
+    }));
   },
 
   /** Drop the stored batch entirely. */

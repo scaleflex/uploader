@@ -1,6 +1,58 @@
 import { css } from 'lit';
 
 // ---------------------------------------------------------------------------
+// Shared checkbox (used by both modal header and row components)
+// ---------------------------------------------------------------------------
+
+export const checkboxStyles = css`
+  .fm-checkbox {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    box-sizing: border-box;
+    margin: 0;
+    border: 1px solid var(--sfx-up-border, #e2e8f0);
+    border-radius: 3px;
+    background: var(--sfx-up-bg, #fff);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.12s ease, border-color 0.12s ease;
+    flex-shrink: 0;
+  }
+  .fm-checkbox:hover {
+    border-color: var(--sfx-up-primary, #2563eb);
+  }
+  .fm-checkbox:checked,
+  .fm-checkbox:indeterminate {
+    background: var(--sfx-up-primary, #2563eb);
+    border-color: var(--sfx-up-primary, #2563eb);
+  }
+  .fm-checkbox:checked::after {
+    content: '';
+    width: 10px;
+    height: 10px;
+    background: #fff;
+    -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>") center / contain no-repeat;
+    mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>") center / contain no-repeat;
+  }
+  .fm-checkbox:indeterminate::after {
+    content: '';
+    width: 10px;
+    height: 10px;
+    background: #fff;
+    -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><line x1='5' y1='12' x2='19' y2='12'/></svg>") center / contain no-repeat;
+    mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><line x1='5' y1='12' x2='19' y2='12'/></svg>") center / contain no-repeat;
+  }
+  .fm-checkbox:focus-visible {
+    outline: 2px solid var(--sfx-up-ring, oklch(0.578 0.198 268.129 / 0.7));
+    outline-offset: 2px;
+  }
+`;
+
+// ---------------------------------------------------------------------------
 // Overlay + Modal shell
 // ---------------------------------------------------------------------------
 
@@ -231,52 +283,7 @@ export const bulkModalStyles = css`
     font-size: 14px;
   }
 
-  /* ---- Checkbox ---- */
-  .fm-checkbox {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 16px;
-    height: 16px;
-    box-sizing: border-box;
-    margin: 0;
-    border: 1px solid var(--sfx-up-border, #e2e8f0);
-    border-radius: 3px;
-    background: var(--sfx-up-bg, #fff);
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: background-color 0.12s ease, border-color 0.12s ease;
-    flex-shrink: 0;
-  }
-  .fm-checkbox:hover {
-    border-color: var(--sfx-up-primary, #2563eb);
-  }
-  .fm-checkbox:checked,
-  .fm-checkbox:indeterminate {
-    background: var(--sfx-up-primary, #2563eb);
-    border-color: var(--sfx-up-primary, #2563eb);
-  }
-  .fm-checkbox:checked::after {
-    content: '';
-    width: 10px;
-    height: 10px;
-    background: #fff;
-    -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>") center / contain no-repeat;
-    mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>") center / contain no-repeat;
-  }
-  .fm-checkbox:indeterminate::after {
-    content: '';
-    width: 10px;
-    height: 10px;
-    background: #fff;
-    -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><line x1='5' y1='12' x2='19' y2='12'/></svg>") center / contain no-repeat;
-    mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><line x1='5' y1='12' x2='19' y2='12'/></svg>") center / contain no-repeat;
-  }
-  .fm-checkbox:focus-visible {
-    outline: 2px solid var(--sfx-up-ring, oklch(0.578 0.198 268.129 / 0.7));
-    outline-offset: 2px;
-  }
+  ${checkboxStyles}
 `;
 
 // ---------------------------------------------------------------------------
@@ -666,51 +673,7 @@ export const bulkRowStyles = css`
     margin-top: 2px;
   }
 
-  .fm-checkbox {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 16px;
-    height: 16px;
-    box-sizing: border-box;
-    margin: 0;
-    border: 1px solid var(--sfx-up-border, #e2e8f0);
-    border-radius: 3px;
-    background: var(--sfx-up-bg, #fff);
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition: background-color 0.12s ease, border-color 0.12s ease;
-    flex-shrink: 0;
-  }
-  .fm-checkbox:hover {
-    border-color: var(--sfx-up-primary, #2563eb);
-  }
-  .fm-checkbox:checked,
-  .fm-checkbox:indeterminate {
-    background: var(--sfx-up-primary, #2563eb);
-    border-color: var(--sfx-up-primary, #2563eb);
-  }
-  .fm-checkbox:checked::after {
-    content: '';
-    width: 10px;
-    height: 10px;
-    background: #fff;
-    -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>") center / contain no-repeat;
-    mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>") center / contain no-repeat;
-  }
-  .fm-checkbox:indeterminate::after {
-    content: '';
-    width: 10px;
-    height: 10px;
-    background: #fff;
-    -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><line x1='5' y1='12' x2='19' y2='12'/></svg>") center / contain no-repeat;
-    mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><line x1='5' y1='12' x2='19' y2='12'/></svg>") center / contain no-repeat;
-  }
-  .fm-checkbox:focus-visible {
-    outline: 2px solid var(--sfx-up-ring, oklch(0.578 0.198 268.129 / 0.7));
-    outline-offset: 2px;
-  }
+  ${checkboxStyles}
 `;
 
 // ---------------------------------------------------------------------------

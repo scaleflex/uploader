@@ -143,8 +143,14 @@ export class SfxBulkMetaOpBar extends LitElement {
 
   private get _isApplyDisabled(): boolean {
     if (this.selectedCount === 0) return true;
-    // For DELETE, allow even empty value (delete all)
-    if (this._operation === 'DELETE') return false;
+    // For DELETE on non-array types ("Clear"), allow empty value — it wipes
+    // the field regardless. For array DELETE ("Remove from"), require a
+    // non-empty value since removing nothing is a no-op.
+    if (this._operation === 'DELETE') {
+      const arrayTypes = new Set(['multi-select', 'tags', 'integer-list']);
+      if (arrayTypes.has(this.field?.type)) return isEmpty(this._value);
+      return false;
+    }
     return isEmpty(this._value);
   }
 

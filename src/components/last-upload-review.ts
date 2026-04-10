@@ -124,6 +124,13 @@ export class SfxLastUploadReview extends LitElement {
       background: color-mix(in srgb, var(--sfx-up-error, #dc2626) 8%, transparent);
     }
 
+    .back-btn:focus-visible,
+    .chip:focus-visible,
+    .clear-btn:focus-visible {
+      outline: 2px solid var(--sfx-up-ring, oklch(0.578 0.198 268.129 / 0.7));
+      outline-offset: 2px;
+    }
+
     .body {
       flex: 1;
       min-height: 0;
