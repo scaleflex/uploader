@@ -1,7 +1,7 @@
 import { LitElement, html, css, nothing } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import type { UploadFile } from '../store/store.types';
-import { formatFileSize, getFileCategory, getFileExtension } from '../utils/file-utils';
+import { formatFileSize, getFileCategory, getFileExtension, getFileTypeIconUrl, getDefaultFileTypeIconUrl } from '../utils/file-utils';
 
 export class SfxFileItem extends LitElement {
   static styles = css`
@@ -77,33 +77,10 @@ export class SfxFileItem extends LitElement {
       pointer-events: none;
     }
 
-    .type-icon-inner {
-      width: 44px;
-      height: 44px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(255, 255, 255, 0.9);
-      box-shadow: 0 2px 10px var(--sfx-up-shadow, rgba(0, 0, 0, 0.08));
-    }
-
-    .type-icon-inner svg {
-      width: 22px;
-      height: 22px;
-    }
-
-    .type-icon-inner.pdf { color: var(--sfx-up-error, #dc2626); }
-    .type-icon-inner.doc { color: var(--sfx-up-primary, #1d4ed8); }
-    .type-icon-inner.vid { color: #7c3aed; }
-    .type-icon-inner.zip { color: var(--warning-foreground, #b45309); }
-    .type-icon-inner.gen { color: var(--sfx-up-text-muted, #64748b); }
-
-    .ext-label {
-      font-size: 12px;
-      font-weight: 800;
-      text-transform: uppercase;
-      margin-top: 2px;
+    .type-icon-img {
+      max-width: 72px;
+      max-height: 72px;
+      object-fit: contain;
     }
 
     .duration-badge {
@@ -511,10 +488,18 @@ export class SfxFileItem extends LitElement {
             : html`
                 <div class="preview-bg ${category}"></div>
                 <div class="type-icon">
-                  <div class="type-icon-inner ${category}">
-                    ${this._renderTypeIcon(category)}
-                    ${ext ? html`<div class="ext-label">${ext}</div>` : nothing}
-                  </div>
+                  <img
+                    class="type-icon-img"
+                    src=${getFileTypeIconUrl(ext)}
+                    alt="${ext ? `${ext} file` : 'File'}"
+                    @error=${(e: Event) => {
+                      const img = e.target as HTMLImageElement;
+                      if (!img.dataset.fallback) {
+                        img.dataset.fallback = '1';
+                        img.src = getDefaultFileTypeIconUrl();
+                      }
+                    }}
+                  />
                 </div>
               `}
 
@@ -630,18 +615,4 @@ export class SfxFileItem extends LitElement {
     return `${m}:${s.toString().padStart(2, '0')}`;
   }
 
-  private _renderTypeIcon(category: string) {
-    switch (category) {
-      case 'pdf':
-        return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
-      case 'doc':
-        return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`;
-      case 'vid':
-        return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>`;
-      case 'zip':
-        return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>`;
-      default:
-        return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>`;
-    }
-  }
 }
