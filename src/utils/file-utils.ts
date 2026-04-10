@@ -50,6 +50,57 @@ export function getFileExtension(name: string): string {
   return dot >= 0 ? name.slice(dot + 1).toUpperCase() : '';
 }
 
+// --- File type icon utilities (v3 SVG icons) ---
+
+const FILE_TYPES_ICON_BASE = 'https://scaleflex.cloudimg.io/v7/assets/file-types/v3/';
+
+const FILE_TYPE_HASHES: Record<string, string> = {
+  _default: '9a518a',
+  // Images
+  png: '96cd9a', jpg: '06e819', jpg2: 'f0eb7f', jpeg: '6a65e9', gif: 'c3c2c3',
+  bmp: 'd2243a', webp: 'fedd74', svg: 'a15e46', tiff: '1f30c3', tif: 'b383c9',
+  heic: '84adfe', avif: '536b30', ico: '79063d', psd: 'be6140', psb: '678646',
+  ai: '84b254', dwg: '971fb3',
+  // Video
+  mp4: '42f175', webm: '26a84a', avi: 'd22ba8', mpeg: 'ba93bb', ogv: '74d453',
+  '3gp': 'f0d388', '3g2': '04c652', swf: '3955e2', fla: 'daf585', m3u8: '7d5e62',
+  // Audio
+  mp3: '66bbef', wav: 'd7a7d5', aac: '07f3f9', oga: 'a5c622', opus: '9548b1',
+  weba: '4dcf70', mid: '3f0e29', midi: '9fedec', cda: '85b83b',
+  // Documents
+  pdf: '18c5f7', doc: 'd1b47c', docx: '1eb6b0', txt: '307979', rtf: '978c5f',
+  xls: '13b5f7', xlsx: '79d64a', ppt: '4ee29b', pptx: '8b1568', csv: '4add78',
+  odt: '940781', ods: '9fbe9a', odp: 'bf892d', dbf: '457bd4', vsd: '8a9ccb',
+  abw: '313dc7', epub: '15263d', azw: 'a018b1', ics: '909f63', ogx: 'f694d2',
+  // Archives
+  zip: '84f98b', rar: '1d6423', '7z': 'e007e5', tar: '603aed', gz: 'de13f7',
+  bz: '0374ff', bz2: 'e14294', arc: '942fad', jar: '149796', mpkg: 'dea655',
+  // Fonts
+  ttf: 'd2e2c1', otf: 'c904fd', woff: '4b8177', woff2: 'b532d3', eot: 'a54980',
+  // Code / Scripts
+  js: '524691', mjs: 'd57921', ts: '9af3ae', css: '287863', html: 'fa7a87',
+  htm: '21323d', xhtml: 'e6d6a9', xul: '6c9c71', json: '104c9e', jsonld: 'f30c0f',
+  xml: '7f7194', php: '503e36', sh: '3b820e', csh: '08c0cc',
+  // Executables / Disk images
+  exe: 'ccca53', iso: '064b8f', bin: '1e9618',
+};
+
+function buildIconUrl(key: string): string {
+  const name = key === '_default' ? 'GENERIC' : key.toUpperCase();
+  return `${FILE_TYPES_ICON_BASE}${name}.svg?vh=${FILE_TYPE_HASHES[key]}`;
+}
+
+/** Get the CDN-hosted file type icon URL for a given extension. */
+export function getFileTypeIconUrl(extension: string): string {
+  const ext = extension?.toLowerCase().replaceAll('.', '') || '';
+  return ext in FILE_TYPE_HASHES ? buildIconUrl(ext) : buildIconUrl('_default');
+}
+
+/** Get the default/generic file type icon URL. */
+export function getDefaultFileTypeIconUrl(): string {
+  return buildIconUrl('_default');
+}
+
 const MIME_MAP: Record<string, string> = {
   jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif',
   webp: 'image/webp', svg: 'image/svg+xml', bmp: 'image/bmp', ico: 'image/x-icon',

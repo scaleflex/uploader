@@ -33,6 +33,42 @@ export class SfxMetaMultiSelectField extends MetadataFieldBase {
         color: #fff;
       }
       .option { display: flex; align-items: center; gap: 8px; }
+      .dropdown {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        max-height: 340px;
+        min-width: 240px;
+      }
+      .dropdown .search {
+        flex-shrink: 0;
+        min-height: 34px;
+      }
+      .options-list {
+        flex: 1;
+        overflow-y: auto;
+      }
+      .bulk-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        border-top: 1px solid var(--sfx-up-border-light, #f1f5f9);
+        flex-shrink: 0;
+      }
+      .bulk-btn {
+        all: unset;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--sfx-up-primary, #2563eb);
+        cursor: pointer;
+      }
+      .bulk-btn:hover {
+        text-decoration: underline;
+      }
+      .bulk-btn--muted {
+        color: var(--sfx-up-text-muted, #94a3b8);
+      }
     `,
   ];
 
@@ -104,6 +140,17 @@ export class SfxMetaMultiSelectField extends MetadataFieldBase {
     const next = this._selected.filter(v => v !== val);
     this.value = next;
     this._emit('field-change', next);
+  }
+
+  private _selectAll() {
+    const all = this._options.map(o => o.value);
+    this.value = all;
+    this._emit('field-change', all);
+  }
+
+  private _clearAll() {
+    this.value = [];
+    this._emit('field-change', []);
   }
 
   private _scrollActive() {
@@ -214,17 +261,25 @@ export class SfxMetaMultiSelectField extends MetadataFieldBase {
             aria-label="Filter options"
             .value=${this._search}
             @input=${this._onSearchInput} />
-          ${this._filtered.length
-            ? this._filtered.map((opt, i) => html`
-                <div class="option ${i === this._activeIndex ? 'active' : ''}" role="option" aria-selected=${sel.includes(opt.value)}
-                  @mousedown=${(e: Event) => { e.preventDefault(); this._toggle(opt); }}
-                  @mouseenter=${() => { this._activeIndex = i; }}>
-                  <span class="check ${sel.includes(opt.value) ? 'checked' : ''}">
-                    ${sel.includes(opt.value) ? '\u2713' : ''}
-                  </span>
-                  ${opt.label}
-                </div>`)
-            : html`<div class="empty">No options</div>`}
+          <div class="options-list">
+            ${this._filtered.length
+              ? this._filtered.map((opt, i) => html`
+                  <div class="option ${i === this._activeIndex ? 'active' : ''}" role="option" aria-selected=${sel.includes(opt.value)}
+                    @mousedown=${(e: Event) => { e.preventDefault(); this._toggle(opt); }}
+                    @mouseenter=${() => { this._activeIndex = i; }}>
+                    <span class="check ${sel.includes(opt.value) ? 'checked' : ''}">
+                      ${sel.includes(opt.value) ? '\u2713' : ''}
+                    </span>
+                    ${opt.label}
+                  </div>`)
+              : html`<div class="empty">No options</div>`}
+          </div>
+          ${this._options.length > 0 ? html`
+            <div class="bulk-actions">
+              <button class="bulk-btn" @mousedown=${(e: Event) => { e.preventDefault(); this._selectAll(); }}>Select all</button>
+              <button class="bulk-btn bulk-btn--muted" @mousedown=${(e: Event) => { e.preventDefault(); this._clearAll(); }}>Clear all</button>
+            </div>
+          ` : nothing}
         </div>
       ` : nothing}
     `;

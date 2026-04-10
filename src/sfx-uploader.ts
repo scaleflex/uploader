@@ -370,7 +370,7 @@ export class SfxUploader extends LitElement {
     }
 
     /* In preview mode, keep body blue but mask the preview side white */
-    .body.body-drag-over:has(.preview-layout)::after {
+    .body.body-drag-over.has-preview::after {
       display: none;
     }
 
@@ -406,7 +406,7 @@ export class SfxUploader extends LitElement {
       animation: bodyReveal 0.35s ease both;
     }
 
-    .body.has-files:has(.preview-layout) {
+    .body.has-files.has-preview {
       padding-right: 0;
     }
 
@@ -495,12 +495,18 @@ export class SfxUploader extends LitElement {
       animation: inlineIn 0.25s ease;
     }
 
+    /* Only scroll inline when showing drop-zone (no files) */
+    .inline.no-files {
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
     /* --- Inline header --- */
     .inline-header {
       display: flex;
       flex-direction: column;
       gap: 6px;
-      padding: var(--sfx-inline-pad) var(--sfx-inline-pad) 0;
+      padding: var(--sfx-inline-pad) var(--sfx-inline-pad) 16px;
     }
     .inline-header-top {
       display: flex;
@@ -542,14 +548,26 @@ export class SfxUploader extends LitElement {
     }
 
     .inline .content {
-      max-width: 1600px;
+      max-width: var(--sfx-up-content-max-width, 1600px);
       align-self: center;
       width: 100%;
+    }
+
+    .inline.no-files .content {
+      flex: 1 0 auto;
+    }
+
+    /* Inline: let body grow beyond container so .inline can scroll */
+    .inline .body {
+      flex: 1 0 auto;
+      overflow: visible;
     }
 
     /* Inline horizontal alignment — driven by --sfx-inline-pad */
     .inline .body.has-files {
       padding-left: 0;
+      flex: 1;
+      overflow: hidden;
     }
     .inline .asset-count {
       padding: 16px var(--sfx-inline-pad);
@@ -959,6 +977,68 @@ export class SfxUploader extends LitElement {
       color: var(--sfx-up-text-muted, #94a3b8);
     }
 
+    /* --- File info table (no-metadata fallback) --- */
+    .preview-file-info-panel {
+      padding: 0 16px;
+    }
+
+    .preview-file-info-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--sfx-up-text, #1e293b);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .preview-file-info-header svg {
+      width: 16px;
+      height: 16px;
+      color: var(--sfx-up-text-muted, #94a3b8);
+      transition: transform 0.2s ease;
+    }
+
+    .preview-file-info-header.open svg {
+      transform: rotate(180deg);
+    }
+
+    .preview-file-info-body {
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height 0.25s ease;
+    }
+
+    .preview-file-info-body.open {
+      max-height: 300px;
+    }
+
+    .preview-file-info-row {
+      display: flex;
+      align-items: baseline;
+      padding: 10px 0;
+    }
+
+    .preview-file-info-key {
+      width: 110px;
+      flex-shrink: 0;
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--sfx-up-text-muted, #94a3b8);
+    }
+
+    .preview-file-info-val {
+      flex: 1;
+      min-width: 0;
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--sfx-up-text, #1e293b);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
 
     /* --- Upload overlay (in-modal) --- */
     .upload-overlay {
@@ -1607,6 +1687,7 @@ export class SfxUploader extends LitElement {
   @state() private _showScreenCastDialog = false;
   @state() private _previewFileId: string | null = null;
   @state() private _previewDims: string = '—';
+  @state() private _fileInfoOpen: boolean = true;
   @state() private _splitPct = 58; // file-grid-side percentage
   private _isResizing = false;
   private _splitRafId = 0;
@@ -2365,6 +2446,13 @@ export class SfxUploader extends LitElement {
     for (const file of rawFiles) {
       // Re-read state each iteration so maxNumberOfFiles validation sees previously added files
       const s = this._store.getState();
+
+      // Skip duplicate files (same name + size already in queue)
+      const isDuplicate = [...s.files.values()].some(
+        (f) => f.name === file.name && f.size === file.size && f.status !== 'rejected' && f.status !== 'cancelled',
+      );
+      if (isDuplicate) continue;
+
       const error = validateFile(file, s.restrictions, s.files);
       if (error) {
         // Create a rejected file entry so the user sees the error
@@ -2491,6 +2579,7 @@ export class SfxUploader extends LitElement {
   };
 
   private _onDropTileSourceClick = (e: CustomEvent<{ source: SourceDef }>) => {
+    e.stopPropagation();
     this._handleSourceActivation(e.detail.source.id);
   };
 
@@ -3039,7 +3128,7 @@ export class SfxUploader extends LitElement {
 
     // Inline mode
     return html`
-      <div class="inline">
+      <div class="inline ${files.length === 0 ? 'no-files' : ''}">
         ${this._renderHeader()}
         ${this._renderBody()}
         <sfx-toast></sfx-toast>
@@ -3323,6 +3412,7 @@ export class SfxUploader extends LitElement {
             .showDropTile=${true}
             .sources=${this._mergedSources}
             .accept=${buildAcceptString(this._storeCtrl.state.restrictions)}
+            ?drag-active=${this._bodyDragOver}
             @source-click=${this._onDropTileSourceClick}
           ></sfx-file-list>
         </div>
@@ -3398,9 +3488,9 @@ export class SfxUploader extends LitElement {
                   </button>
                 </div>
               `}
-          <div class="preview-meta-list">
-            <div class="preview-file-info">${ext}${previewFile.size ? ` \u00B7 ${formatFileSize(previewFile.size)}` : ''}${this._previewDims !== '\u2014' ? ` \u00B7 ${this._previewDims}` : ''}</div>
-          </div>
+          ${this._metadataSchema && this.config?.metadataConfig
+            ? html`<div class="preview-meta-list"><div class="preview-file-info">${ext}${previewFile.size ? ` \u00B7 ${formatFileSize(previewFile.size)}` : ''}${this._previewDims !== '\u2014' ? ` \u00B7 ${this._previewDims}` : ''}</div></div>`
+            : nothing}
           ${this._metadataSchema && this.config?.metadataConfig
             ? html`
                 <div class="preview-metadata" @field-blur=${this._onPreviewMetadataBlur}>
@@ -3412,7 +3502,36 @@ export class SfxUploader extends LitElement {
                   ></sfx-metadata-form>
                 </div>
               `
-            : nothing}
+            : html`
+                <div class="preview-file-info-panel">
+                  <div class="preview-file-info-header ${this._fileInfoOpen ? 'open' : ''}" @click=${() => { this._fileInfoOpen = !this._fileInfoOpen; }}>
+                    <span>File info</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+                  </div>
+                  <div class="preview-file-info-body ${this._fileInfoOpen ? 'open' : ''}">
+                    <div class="preview-file-info-row">
+                      <div class="preview-file-info-key">File name</div>
+                      <div class="preview-file-info-val">${previewFile.name}</div>
+                    </div>
+                    <div class="preview-file-info-row">
+                      <div class="preview-file-info-key">Type</div>
+                      <div class="preview-file-info-val">${ext}</div>
+                    </div>
+                    ${previewFile.size ? html`
+                      <div class="preview-file-info-row">
+                        <div class="preview-file-info-key">Size</div>
+                        <div class="preview-file-info-val">${formatFileSize(previewFile.size)}</div>
+                      </div>
+                    ` : nothing}
+                    ${this._previewDims !== '\u2014' ? html`
+                      <div class="preview-file-info-row">
+                        <div class="preview-file-info-key">Dimensions</div>
+                        <div class="preview-file-info-val">${this._previewDims}</div>
+                      </div>
+                    ` : nothing}
+                  </div>
+                </div>
+              `}
         </div>
       </div>
     `;
@@ -3496,7 +3615,7 @@ export class SfxUploader extends LitElement {
         @screencast-cancel=${this._onScreenCastCancel}
       >
         <div
-          class="body ${hasFiles ? 'has-files' : ''} ${this._bodyDragOver ? 'body-drag-over' : ''}"
+          class="body ${hasFiles ? 'has-files' : ''} ${this._bodyDragOver ? 'body-drag-over' : ''} ${this._previewFileId ? 'has-preview' : ''}"
           @dragenter=${hasFiles ? this._onBodyDragEnter : nothing}
           @dragover=${hasFiles ? this._onBodyDragOver : nothing}
           @dragleave=${hasFiles ? this._onBodyDragLeave : nothing}
@@ -3555,6 +3674,7 @@ export class SfxUploader extends LitElement {
                             .showDropTile=${true}
                             .sources=${this._mergedSources}
                             .accept=${accept}
+                            ?drag-active=${this._bodyDragOver}
                             @source-click=${this._onDropTileSourceClick}
                           ></sfx-file-list>
                         `

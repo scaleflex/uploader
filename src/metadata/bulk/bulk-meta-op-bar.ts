@@ -136,11 +136,6 @@ export class SfxBulkMetaOpBar extends LitElement {
     this._emitPendingChange();
   }
 
-  private _onClear() {
-    this._value = undefined;
-    this._emitPendingChange();
-  }
-
   private get _isApplyDisabled(): boolean {
     if (this.selectedCount === 0) return true;
     // For DELETE on non-array types ("Clear"), allow empty value — it wipes
@@ -216,21 +211,6 @@ export class SfxBulkMetaOpBar extends LitElement {
             ></sfx-metadata-field-edit>
           </div>
         </div>
-
-        ${!isEmpty(this._value)
-          ? html`
-              <button
-                class="btn-clear"
-                @click=${this._onClear}
-                title="Clear"
-                aria-label="Clear input"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            `
-          : nothing}
 
         <button
           class="btn-apply"

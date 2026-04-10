@@ -1,7 +1,7 @@
 import { LitElement, html, css, nothing } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import type { UploadFile } from '../store/store.types';
-import { formatFileSize, getFileCategory, getFileExtension } from '../utils/file-utils';
+import { formatFileSize, getFileCategory, getFileExtension, getFileTypeIconUrl, getDefaultFileTypeIconUrl } from '../utils/file-utils';
 
 export class SfxFileItem extends LitElement {
   static styles = css`
@@ -714,10 +714,18 @@ export class SfxFileItem extends LitElement {
             : html`
                 <div class="preview-bg ${category}"></div>
                 <div class="type-icon">
-                  <div class="type-icon-inner ${category}">
-                    ${this._renderTypeIcon(category)}
-                    ${ext ? html`<div class="ext-label">${ext}</div>` : nothing}
-                  </div>
+                  <img
+                    class="type-icon-img"
+                    src=${getFileTypeIconUrl(ext)}
+                    alt="${ext ? `${ext} file` : 'File'}"
+                    @error=${(e: Event) => {
+                      const img = e.target as HTMLImageElement;
+                      if (!img.dataset.fallback) {
+                        img.dataset.fallback = '1';
+                        img.src = getDefaultFileTypeIconUrl();
+                      }
+                    }}
+                  />
                 </div>
               `}
 

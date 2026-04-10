@@ -28,9 +28,10 @@ export class SfxDropZone extends LitElement {
   static styles = css`
     :host {
       display: flex;
-      flex-shrink: 0;
+      flex-shrink: 1;
       flex: 1;
       min-height: 0;
+      overflow: hidden;
     }
 
     :host([compact]) {
@@ -49,7 +50,7 @@ export class SfxDropZone extends LitElement {
       text-align: center;
       cursor: pointer;
       position: relative;
-      overflow: visible;
+      overflow: auto;
       transition: background 0.22s;
       user-select: none;
       flex: 1;
