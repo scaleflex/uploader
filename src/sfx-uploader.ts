@@ -781,7 +781,8 @@ export class SfxUploader extends LitElement {
 
     .preview-doc-wrap {
       position: relative;
-      min-height: 200px;
+      height: 332px;
+      width: 100%;
       flex-shrink: 0;
       display: flex;
       align-items: center;
@@ -789,10 +790,19 @@ export class SfxUploader extends LitElement {
     }
 
     .preview-doc-wrap.pdf { background: linear-gradient(135deg, #fef2f2, #fee2e2); }
-    .preview-doc-wrap.doc { background: linear-gradient(135deg, var(--sfx-up-primary-bg, #eff6ff), var(--sfx-up-primary-bg, #dbeafe)); }
+    .preview-doc-wrap.doc { background: linear-gradient(135deg, #eff6ff, #dbeafe); }
     .preview-doc-wrap.vid { background: linear-gradient(135deg, #f5f3ff, #ede9fe); }
-    .preview-doc-wrap.zip { background: linear-gradient(135deg, var(--warning-10, #fffbeb), var(--warning-10, #fef3c7)); }
-    .preview-doc-wrap.gen { background: linear-gradient(135deg, var(--sfx-up-border-light, #f8fafc), var(--sfx-up-border-light, #f1f5f9)); }
+    .preview-doc-wrap.audio { background: linear-gradient(135deg, #fdf4ff, #fae8ff); }
+    .preview-doc-wrap.sheet { background: linear-gradient(135deg, #f0fdf4, #dcfce7); }
+    .preview-doc-wrap.slide { background: linear-gradient(135deg, #fff7ed, #ffedd5); }
+    .preview-doc-wrap.zip { background: linear-gradient(135deg, #fffbeb, #fef3c7); }
+    .preview-doc-wrap.code { background: linear-gradient(135deg, #f0f9ff, #e0f2fe); }
+    .preview-doc-wrap.markup { background: linear-gradient(135deg, #f0fdfa, #ccfbf1); }
+    .preview-doc-wrap.font { background: linear-gradient(135deg, #faf5ff, #f3e8ff); }
+    .preview-doc-wrap.design { background: linear-gradient(135deg, #fdf2f8, #fce7f3); }
+    .preview-doc-wrap.binary { background: linear-gradient(135deg, #f8fafc, #f1f5f9); }
+    .preview-doc-wrap.data { background: linear-gradient(135deg, #ecfdf5, #d1fae5); }
+    .preview-doc-wrap.gen { background: linear-gradient(135deg, #f8fafc, #f1f5f9); }
 
     .preview-doc-icon {
       display: flex;
@@ -807,11 +817,20 @@ export class SfxUploader extends LitElement {
       stroke-width: 1.5;
     }
 
-    .preview-doc-icon.pdf svg { color: var(--sfx-up-error, #dc2626); }
-    .preview-doc-icon.doc svg { color: var(--sfx-up-primary, #1d4ed8); }
+    .preview-doc-icon.pdf svg { color: #dc2626; }
+    .preview-doc-icon.doc svg { color: #1d4ed8; }
     .preview-doc-icon.vid svg { color: #7c3aed; }
-    .preview-doc-icon.zip svg { color: var(--warning-foreground, #b45309); }
-    .preview-doc-icon.gen svg { color: var(--sfx-up-text-muted, #64748b); }
+    .preview-doc-icon.audio svg { color: #c026d3; }
+    .preview-doc-icon.sheet svg { color: #16a34a; }
+    .preview-doc-icon.slide svg { color: #ea580c; }
+    .preview-doc-icon.zip svg { color: #b45309; }
+    .preview-doc-icon.code svg { color: #0284c7; }
+    .preview-doc-icon.markup svg { color: #0d9488; }
+    .preview-doc-icon.font svg { color: #7c3aed; }
+    .preview-doc-icon.design svg { color: #db2777; }
+    .preview-doc-icon.binary svg { color: #475569; }
+    .preview-doc-icon.data svg { color: #059669; }
+    .preview-doc-icon.gen svg { color: #64748b; }
 
     .preview-doc-ext {
       font-size: 13px;
@@ -820,11 +839,20 @@ export class SfxUploader extends LitElement {
       letter-spacing: 0.05em;
     }
 
-    .preview-doc-ext.pdf { color: var(--sfx-up-error, #dc2626); }
-    .preview-doc-ext.doc { color: var(--sfx-up-primary, #1d4ed8); }
+    .preview-doc-ext.pdf { color: #dc2626; }
+    .preview-doc-ext.doc { color: #1d4ed8; }
     .preview-doc-ext.vid { color: #7c3aed; }
-    .preview-doc-ext.zip { color: var(--warning-foreground, #b45309); }
-    .preview-doc-ext.gen { color: var(--sfx-up-text-muted, #64748b); }
+    .preview-doc-ext.audio { color: #c026d3; }
+    .preview-doc-ext.sheet { color: #16a34a; }
+    .preview-doc-ext.slide { color: #ea580c; }
+    .preview-doc-ext.zip { color: #b45309; }
+    .preview-doc-ext.code { color: #0284c7; }
+    .preview-doc-ext.markup { color: #0d9488; }
+    .preview-doc-ext.font { color: #7c3aed; }
+    .preview-doc-ext.design { color: #db2777; }
+    .preview-doc-ext.binary { color: #475569; }
+    .preview-doc-ext.data { color: #059669; }
+    .preview-doc-ext.gen { color: #64748b; }
 
     .preview-img-wrap {
       position: relative;
@@ -3398,8 +3426,26 @@ export class SfxUploader extends LitElement {
         return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`;
       case 'vid':
         return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>`;
+      case 'audio':
+        return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>`;
+      case 'sheet':
+        return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>`;
+      case 'slide':
+        return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>`;
       case 'zip':
         return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>`;
+      case 'code':
+        return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>`;
+      case 'markup':
+        return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/><line x1="14" y1="4" x2="10" y2="20"/></svg>`;
+      case 'font':
+        return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9.5" y1="20" x2="14.5" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>`;
+      case 'design':
+        return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="13.5" cy="6.5" r="2.5"/><path d="M17.5 10.5L20 21H4l5.5-12 4 6 4-4.5z"/></svg>`;
+      case 'binary':
+        return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/></svg>`;
+      case 'data':
+        return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>`;
       default:
         return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>`;
     }

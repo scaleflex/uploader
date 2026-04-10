@@ -61,11 +61,20 @@ export class SfxFileItem extends LitElement {
       max-height: 100%;
     }
 
-    .preview-bg.pdf { background: linear-gradient(135deg, var(--destructive-10, #fef2f2), var(--destructive-10, #fee2e2)); }
-    .preview-bg.doc { background: linear-gradient(135deg, var(--sfx-up-primary-bg, #eff6ff), var(--sfx-up-primary-bg, #dbeafe)); }
+    .preview-bg.pdf { background: linear-gradient(135deg, #fef2f2, #fee2e2); }
+    .preview-bg.doc { background: linear-gradient(135deg, #eff6ff, #dbeafe); }
     .preview-bg.vid { background: linear-gradient(135deg, #f5f3ff, #ede9fe); }
-    .preview-bg.zip { background: linear-gradient(135deg, var(--warning-10, #fffbeb), var(--warning-10, #fef3c7)); }
-    .preview-bg.gen { background: linear-gradient(135deg, var(--sfx-up-border-light, #f8fafc), var(--sfx-up-border-light, #f1f5f9)); }
+    .preview-bg.audio { background: linear-gradient(135deg, #fdf4ff, #fae8ff); }
+    .preview-bg.sheet { background: linear-gradient(135deg, #f0fdf4, #dcfce7); }
+    .preview-bg.slide { background: linear-gradient(135deg, #fff7ed, #ffedd5); }
+    .preview-bg.zip { background: linear-gradient(135deg, #fffbeb, #fef3c7); }
+    .preview-bg.code { background: linear-gradient(135deg, #f0f9ff, #e0f2fe); }
+    .preview-bg.markup { background: linear-gradient(135deg, #f0fdfa, #ccfbf1); }
+    .preview-bg.font { background: linear-gradient(135deg, #faf5ff, #f3e8ff); }
+    .preview-bg.design { background: linear-gradient(135deg, #fdf2f8, #fce7f3); }
+    .preview-bg.binary { background: linear-gradient(135deg, #f8fafc, #f1f5f9); }
+    .preview-bg.data { background: linear-gradient(135deg, #ecfdf5, #d1fae5); }
+    .preview-bg.gen { background: linear-gradient(135deg, #f8fafc, #f1f5f9); }
 
     /* --- File type icon --- */
     .type-icon {
