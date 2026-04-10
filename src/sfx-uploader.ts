@@ -546,11 +546,20 @@ export class SfxUploader extends LitElement {
       max-width: var(--sfx-up-content-max-width, 1600px);
       align-self: center;
       width: 100%;
+      flex: 1 0 auto;
+    }
+
+    /* Inline: let body grow beyond container so .inline can scroll */
+    .inline .body {
+      flex: 1 0 auto;
+      overflow: visible;
     }
 
     /* Inline horizontal alignment — driven by --sfx-inline-pad */
     .inline .body.has-files {
       padding-left: 0;
+      flex: 1;
+      overflow: hidden;
     }
     .inline .asset-count {
       padding: 16px var(--sfx-inline-pad);
