@@ -541,6 +541,12 @@ export const bulkOpBarStyles = css`
   .op-value {
     width: 100%;
     min-width: 0;
+    display: flex;
+    align-items: center;
+  }
+  .op-value > sfx-metadata-field-edit {
+    flex: 1;
+    min-width: 0;
   }
 
   /* Clear button */
@@ -556,6 +562,8 @@ export const bulkOpBarStyles = css`
     justify-content: center;
     color: var(--sfx-up-text-muted, #94a3b8);
     flex-shrink: 0;
+    align-self: flex-end;
+    margin-bottom: 4px;
     transition: background 0.12s ease, color 0.12s ease;
   }
   .btn-clear:hover {
@@ -563,12 +571,10 @@ export const bulkOpBarStyles = css`
     color: var(--sfx-up-text-secondary, #64748b);
   }
 
-  /* Apply button */
+  /* Apply button — align with input field */
   .btn-apply {
     height: 36px;
-    /* Sit at the same baseline as the controls (below the .op-field-label),
-       not at the top with the labels. label height (~18px line) + gap 6 = 24 */
-    margin-top: 24px;
+    align-self: flex-end;
     padding: 0 16px;
     border-radius: 6px;
     border: none;
