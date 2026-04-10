@@ -61,11 +61,20 @@ export class SfxFileItem extends LitElement {
       max-height: 100%;
     }
 
-    .preview-bg.pdf { background: linear-gradient(135deg, var(--destructive-10, #fef2f2), var(--destructive-10, #fee2e2)); }
-    .preview-bg.doc { background: linear-gradient(135deg, var(--sfx-up-primary-bg, #eff6ff), var(--sfx-up-primary-bg, #dbeafe)); }
+    .preview-bg.pdf { background: linear-gradient(135deg, #fef2f2, #fee2e2); }
+    .preview-bg.doc { background: linear-gradient(135deg, #eff6ff, #dbeafe); }
     .preview-bg.vid { background: linear-gradient(135deg, #f5f3ff, #ede9fe); }
-    .preview-bg.zip { background: linear-gradient(135deg, var(--warning-10, #fffbeb), var(--warning-10, #fef3c7)); }
-    .preview-bg.gen { background: linear-gradient(135deg, var(--sfx-up-border-light, #f8fafc), var(--sfx-up-border-light, #f1f5f9)); }
+    .preview-bg.audio { background: linear-gradient(135deg, #fdf4ff, #fae8ff); }
+    .preview-bg.sheet { background: linear-gradient(135deg, #f0fdf4, #dcfce7); }
+    .preview-bg.slide { background: linear-gradient(135deg, #fff7ed, #ffedd5); }
+    .preview-bg.zip { background: linear-gradient(135deg, #fffbeb, #fef3c7); }
+    .preview-bg.code { background: linear-gradient(135deg, #f0f9ff, #e0f2fe); }
+    .preview-bg.markup { background: linear-gradient(135deg, #f0fdfa, #ccfbf1); }
+    .preview-bg.font { background: linear-gradient(135deg, #faf5ff, #f3e8ff); }
+    .preview-bg.design { background: linear-gradient(135deg, #fdf2f8, #fce7f3); }
+    .preview-bg.binary { background: linear-gradient(135deg, #f8fafc, #f1f5f9); }
+    .preview-bg.data { background: linear-gradient(135deg, #ecfdf5, #d1fae5); }
+    .preview-bg.gen { background: linear-gradient(135deg, #f8fafc, #f1f5f9); }
 
     /* --- File type icon --- */
     .type-icon {
@@ -78,32 +87,44 @@ export class SfxFileItem extends LitElement {
     }
 
     .type-icon-inner {
-      width: 44px;
-      height: 44px;
-      border-radius: 12px;
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: rgba(255, 255, 255, 0.9);
-      box-shadow: 0 2px 10px var(--sfx-up-shadow, rgba(0, 0, 0, 0.08));
+      gap: 4px;
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
     }
 
     .type-icon-inner svg {
-      width: 22px;
-      height: 22px;
+      width: 24px;
+      height: 24px;
     }
 
-    .type-icon-inner.pdf { color: var(--sfx-up-error, #dc2626); }
-    .type-icon-inner.doc { color: var(--sfx-up-primary, #1d4ed8); }
+    .type-icon-inner.pdf { color: #dc2626; }
+    .type-icon-inner.doc { color: #1d4ed8; }
     .type-icon-inner.vid { color: #7c3aed; }
-    .type-icon-inner.zip { color: var(--warning-foreground, #b45309); }
-    .type-icon-inner.gen { color: var(--sfx-up-text-muted, #64748b); }
+    .type-icon-inner.audio { color: #c026d3; }
+    .type-icon-inner.sheet { color: #16a34a; }
+    .type-icon-inner.slide { color: #ea580c; }
+    .type-icon-inner.zip { color: #b45309; }
+    .type-icon-inner.code { color: #0284c7; }
+    .type-icon-inner.markup { color: #0d9488; }
+    .type-icon-inner.font { color: #7c3aed; }
+    .type-icon-inner.design { color: #db2777; }
+    .type-icon-inner.binary { color: #475569; }
+    .type-icon-inner.data { color: #059669; }
+    .type-icon-inner.gen { color: #64748b; }
 
     .ext-label {
-      font-size: 12px;
-      font-weight: 800;
+      font-size: 10px;
+      font-weight: 700;
       text-transform: uppercase;
-      margin-top: 2px;
+      letter-spacing: 0.5px;
+      line-height: 1;
     }
 
     .duration-badge {
@@ -859,8 +880,26 @@ export class SfxFileItem extends LitElement {
         return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`;
       case 'vid':
         return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>`;
+      case 'audio':
+        return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>`;
+      case 'sheet':
+        return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>`;
+      case 'slide':
+        return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>`;
       case 'zip':
         return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>`;
+      case 'code':
+        return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>`;
+      case 'markup':
+        return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/><line x1="14" y1="4" x2="10" y2="20"/></svg>`;
+      case 'font':
+        return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9.5" y1="20" x2="14.5" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>`;
+      case 'design':
+        return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="13.5" cy="6.5" r="2.5"/><path d="M17.5 10.5L20 21H4l5.5-12 4 6 4-4.5z"/></svg>`;
+      case 'binary':
+        return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/></svg>`;
+      case 'data':
+        return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>`;
       default:
         return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>`;
     }

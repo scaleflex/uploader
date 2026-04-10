@@ -28,10 +28,19 @@ export function formatEta(seconds: number): string {
 export function getFileCategory(file: { name: string; type: string }): string {
   const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
   if (file.type.startsWith('image/')) return 'image';
-  if (file.type.startsWith('video/') || ['mp4', 'mov', 'avi', 'webm', 'mkv'].includes(ext)) return 'vid';
+  if (file.type.startsWith('video/') || ['mp4', 'mov', 'avi', 'webm', 'mkv', 'flv', 'wmv'].includes(ext)) return 'vid';
+  if (file.type.startsWith('audio/') || ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'wma'].includes(ext)) return 'audio';
   if (file.type === 'application/pdf' || ext === 'pdf') return 'pdf';
-  if (['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'rtf', 'odt'].includes(ext)) return 'doc';
-  if (['zip', 'rar', '7z', 'tar', 'gz', 'bz2'].includes(ext)) return 'zip';
+  if (['xls', 'xlsx', 'csv', 'tsv', 'ods'].includes(ext)) return 'sheet';
+  if (['doc', 'docx', 'txt', 'rtf', 'odt', 'pages'].includes(ext)) return 'doc';
+  if (['ppt', 'pptx', 'key', 'odp'].includes(ext)) return 'slide';
+  if (['zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz', 'zst'].includes(ext)) return 'zip';
+  if (['js', 'ts', 'jsx', 'tsx', 'py', 'rb', 'go', 'rs', 'java', 'c', 'cpp', 'h', 'cs', 'php', 'swift', 'kt', 'sh', 'bash'].includes(ext)) return 'code';
+  if (['html', 'css', 'scss', 'xml', 'svg', 'json', 'yaml', 'yml', 'toml', 'md', 'mdx', 'ini', 'env', 'log'].includes(ext)) return 'markup';
+  if (['ttf', 'otf', 'woff', 'woff2', 'eot'].includes(ext)) return 'font';
+  if (['ai', 'psd', 'sketch', 'fig', 'xd', 'indd', 'eps'].includes(ext)) return 'design';
+  if (['exe', 'dmg', 'app', 'msi', 'deb', 'rpm', 'apk', 'ipa'].includes(ext)) return 'binary';
+  if (['sql', 'db', 'sqlite', 'mdb'].includes(ext)) return 'data';
   return 'gen';
 }
 
