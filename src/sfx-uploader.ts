@@ -486,7 +486,8 @@ export class SfxUploader extends LitElement {
       background: var(--sfx-up-bg, #fff);
       display: flex;
       flex-direction: column;
-      overflow: hidden;
+      overflow-y: auto;
+      overflow-x: hidden;
       position: relative;
       height: 100%;
       min-height: var(--sfx-up-min-height, 660px);
@@ -542,7 +543,7 @@ export class SfxUploader extends LitElement {
     }
 
     .inline .content {
-      max-width: 1600px;
+      max-width: var(--sfx-up-content-max-width, 1600px);
       align-self: center;
       width: 100%;
     }
@@ -2554,6 +2555,7 @@ export class SfxUploader extends LitElement {
   };
 
   private _onDropTileSourceClick = (e: CustomEvent<{ source: SourceDef }>) => {
+    e.stopPropagation();
     this._handleSourceActivation(e.detail.source.id);
   };
 
