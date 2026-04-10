@@ -135,7 +135,6 @@ export class SfxFileItem extends LitElement {
       background: var(--sfx-up-bg, #fff);
     }
 
-
     .meta {
       font-size: 12px;
       font-weight: 400;
@@ -628,15 +627,9 @@ export class SfxFileItem extends LitElement {
     try {
       await navigator.clipboard.writeText(url);
     } catch {
-      // Fallback for older browsers / insecure contexts
-      const textarea = document.createElement('textarea');
-      textarea.value = url;
-      textarea.style.position = 'fixed';
-      textarea.style.opacity = '0';
-      document.body.appendChild(textarea);
-      textarea.select();
-      try { document.execCommand('copy'); } catch { /* give up */ }
-      document.body.removeChild(textarea);
+      // Clipboard API unavailable (insecure context / old browser) — silently
+      // skip rather than using the deprecated document.execCommand('copy').
+      return;
     }
     this._copied = true;
     if (this._copiedTimer) clearTimeout(this._copiedTimer);
@@ -830,7 +823,7 @@ export class SfxFileItem extends LitElement {
           <input class="name-input" type="text" .value=${f.name} title=${f.name}
             aria-label="File name"
             ?readonly=${isReview}
-            @change=${this._rename} @click=${(e: Event) => e.stopPropagation()} />
+            @change=${isReview ? nothing : this._rename} @click=${(e: Event) => e.stopPropagation()} />
           <div class="meta">${ext || ''}${f.size ? ` \u00B7 ${formatFileSize(f.size)}` : ''}${this._dims ? ` \u00B7 ${this._dims}` : ''}</div>
         </div>
       </div>

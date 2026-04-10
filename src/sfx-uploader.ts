@@ -350,6 +350,7 @@ export class SfxUploader extends LitElement {
       gap: 4px;
       min-height: 0;
       background: var(--sfx-up-bg, #fff);
+      position: relative;
     }
 
     .body.body-drag-over {
@@ -396,6 +397,46 @@ export class SfxUploader extends LitElement {
       overflow: visible;
     }
 
+    /* "View last upload" pill — shown on the drop-zone screen when
+       sessionStorage contains a previous batch */
+    .last-upload-pill {
+      position: absolute;
+      bottom: 16px;
+      right: 16px;
+      z-index: 10;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--sfx-up-text-secondary, #475569);
+      background: var(--sfx-up-bg, #fff);
+      border: 1px solid var(--sfx-up-border, #e2e8f0);
+      border-radius: 999px;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+      transition: all 0.15s ease;
+    }
+    .last-upload-pill:hover {
+      border-color: var(--sfx-up-primary, #2563eb);
+      color: var(--sfx-up-primary, #2563eb);
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);
+    }
+    .last-upload-pill:focus-visible {
+      outline: 2px solid var(--sfx-up-ring, oklch(0.578 0.198 268.129 / 0.7));
+      outline-offset: 2px;
+    }
+    .last-upload-pill svg {
+      width: 14px;
+      height: 14px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
 
     .asset-count {
       font-size: 14px;
@@ -1527,6 +1568,9 @@ export class SfxUploader extends LitElement {
   @state() private _isReviewing = false;
   /** Files loaded from sessionStorage for the review screen. */
   @state() private _reviewFiles: UploadFile[] = [];
+  /** Whether sessionStorage has a stored last-upload batch. Checked on
+   *  connectedCallback and updated when batches are saved/cleared. */
+  @state() private _hasStoredReview = false;
   private _metadataAutocomplete: any = null;
   private _videoBlobUrls = new Map<File, string>();
 
@@ -1840,6 +1884,8 @@ export class SfxUploader extends LitElement {
     this._prevStoreState = this._store.getState();
     // Subscribe to store changes for public event dispatching
     this._unsubStoreEvents = this._store.subscribe(() => this._onStoreChange());
+    // Check if a previous upload batch exists in sessionStorage
+    this._hasStoredReview = lastUploadStore.load() != null;
   }
 
   disconnectedCallback() {
@@ -2162,6 +2208,7 @@ export class SfxUploader extends LitElement {
         const reviewable = [...successful, ...failed];
         if (reviewable.length > 0) {
           lastUploadStore.save(reviewable);
+          this._hasStoredReview = true;
         }
 
         this._dispatchPublic(PublicEvents.ALL_COMPLETE, { successful, failed });
@@ -2707,8 +2754,8 @@ export class SfxUploader extends LitElement {
     lastUploadStore.clear();
     this._isReviewing = false;
     this._reviewFiles = [];
+    this._hasStoredReview = false;
   };
-
 
   private _onConnectorFilesSelected = (e: CustomEvent<{ files: RemoteFileInfo[] }>) => {
     const callbacks = this.config?.callbacks;
@@ -3403,8 +3450,13 @@ export class SfxUploader extends LitElement {
                         .sources=${this._mergedSources}
                         .sourcesLayout=${this.config?.sourcesLayout ?? 'pills'}
                         .mode=${this.config?.mode ?? 'modal'}
-                      ></sfx-drop-zone>`}
-
+                      ></sfx-drop-zone>
+                      ${this._hasStoredReview
+                        ? html`<button class="last-upload-pill" @click=${this._onEnterReview} title="View last upload batch">
+                            <svg viewBox="0 0 24 24"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg>
+                            View last upload
+                          </button>`
+                        : nothing}`}
 
                   ${hasFiles
                     ? this._previewFileId
