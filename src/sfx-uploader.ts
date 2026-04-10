@@ -2446,6 +2446,13 @@ export class SfxUploader extends LitElement {
     for (const file of rawFiles) {
       // Re-read state each iteration so maxNumberOfFiles validation sees previously added files
       const s = this._store.getState();
+
+      // Skip duplicate files (same name + size already in queue)
+      const isDuplicate = [...s.files.values()].some(
+        (f) => f.name === file.name && f.size === file.size && f.status !== 'rejected' && f.status !== 'cancelled',
+      );
+      if (isDuplicate) continue;
+
       const error = validateFile(file, s.restrictions, s.files);
       if (error) {
         // Create a rejected file entry so the user sees the error
