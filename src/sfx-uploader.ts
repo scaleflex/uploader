@@ -828,6 +828,13 @@ export class SfxUploader extends LitElement {
       border: none;
     }
 
+    .preview-media-area {
+      position: relative;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+
     .preview-nav {
       position: absolute;
       top: 50%;
@@ -3293,8 +3300,10 @@ export class SfxUploader extends LitElement {
           </div>
           ${previewFile.type.startsWith('video/') && previewFile.file
             ? html`
-                <div class="preview-img-wrap">
-                  <video class="preview-image" src=${this._getVideoBlobUrl(previewFile.file)} controls playsinline></video>
+                <div class="preview-media-area">
+                  <div class="preview-img-wrap">
+                    <video class="preview-image" src=${this._getVideoBlobUrl(previewFile.file)} controls playsinline></video>
+                  </div>
                   <button class="preview-nav prev" ?disabled=${files.indexOf(previewFile) === 0} @click=${() => this._navigatePreview(files, -1)}>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
                   </button>
@@ -3305,8 +3314,10 @@ export class SfxUploader extends LitElement {
               `
           : previewFile.previewUrl
             ? html`
-                <div class="preview-img-wrap">
-                  <img class="preview-image" src=${previewFile.previewUrl} alt=${previewFile.name} />
+                <div class="preview-media-area">
+                  <div class="preview-img-wrap">
+                    <img class="preview-image" src=${previewFile.previewUrl} alt=${previewFile.name} />
+                  </div>
                   <button class="preview-nav prev" ?disabled=${files.indexOf(previewFile) === 0} @click=${() => this._navigatePreview(files, -1)}>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
                   </button>
@@ -3316,10 +3327,12 @@ export class SfxUploader extends LitElement {
                 </div>
               `
             : html`
-                <div class="preview-doc-wrap ${getFileCategory(previewFile)}">
-                  <div class="preview-doc-icon ${getFileCategory(previewFile)}">
-                    ${this._renderDocTypeIcon(getFileCategory(previewFile))}
-                    <span class="preview-doc-ext ${getFileCategory(previewFile)}">${ext}</span>
+                <div class="preview-media-area">
+                  <div class="preview-doc-wrap ${getFileCategory(previewFile)}">
+                    <div class="preview-doc-icon ${getFileCategory(previewFile)}">
+                      ${this._renderDocTypeIcon(getFileCategory(previewFile))}
+                      <span class="preview-doc-ext ${getFileCategory(previewFile)}">${ext}</span>
+                    </div>
                   </div>
                   <button class="preview-nav prev" ?disabled=${files.indexOf(previewFile) === 0} @click=${() => this._navigatePreview(files, -1)}>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
