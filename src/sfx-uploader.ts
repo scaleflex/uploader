@@ -486,8 +486,7 @@ export class SfxUploader extends LitElement {
       background: var(--sfx-up-bg, #fff);
       display: flex;
       flex-direction: column;
-      overflow-y: auto;
-      overflow-x: hidden;
+      overflow: hidden;
       position: relative;
       height: 100%;
       min-height: var(--sfx-up-min-height, 660px);
@@ -496,12 +495,18 @@ export class SfxUploader extends LitElement {
       animation: inlineIn 0.25s ease;
     }
 
+    /* Only scroll inline when showing drop-zone (no files) */
+    .inline:has(.body:not(.has-files)) {
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
     /* --- Inline header --- */
     .inline-header {
       display: flex;
       flex-direction: column;
       gap: 6px;
-      padding: var(--sfx-inline-pad) var(--sfx-inline-pad) 0;
+      padding: var(--sfx-inline-pad) var(--sfx-inline-pad) 16px;
     }
     .inline-header-top {
       display: flex;
@@ -546,6 +551,9 @@ export class SfxUploader extends LitElement {
       max-width: var(--sfx-up-content-max-width, 1600px);
       align-self: center;
       width: 100%;
+    }
+
+    .inline:has(.body:not(.has-files)) .content {
       flex: 1 0 auto;
     }
 
