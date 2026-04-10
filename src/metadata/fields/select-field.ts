@@ -74,6 +74,13 @@ export class SfxMetaSelectField extends MetadataFieldBase {
     this._closeAndSubmit(returnFocus);
   }
 
+  private _clear(e: Event) {
+    e.stopPropagation();
+    this.value = null as unknown as string;
+    this._emit('field-change', null);
+    this._emit('field-blur', null);
+  }
+
   private _scrollActive() {
     this.updateComplete.then(() => {
       this.renderRoot.querySelector('.option.active')?.scrollIntoView({ block: 'nearest' });
@@ -149,6 +156,11 @@ export class SfxMetaSelectField extends MetadataFieldBase {
         ${this._selectedLabel
           ? html`<span class="trigger-value">${this._selectedLabel}</span>`
           : html`<span class="placeholder">${this.field?.placeholder || placeholderFallback}</span>`}
+        ${this._selectedLabel && !this.disabled ? html`
+          <span class="trigger-clear" role="button" tabindex="0" aria-label="Clear"
+            @click=${this._clear}
+            @keydown=${(e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this._clear(e); } }}>&times;</span>
+        ` : nothing}
         <span class="trigger-chevron ${this._open ? 'open' : ''}" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="m6 9 6 6 6-6"/>

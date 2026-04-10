@@ -35,21 +35,21 @@ const TEXT_TYPES: Set<MetadataFieldType> = new Set([
 
 /** Operation labels are context-aware: the same key (SET / ADD / DELETE)
  *  reads differently depending on the field type so the UX matches the
- *  actual semantics. Scalars only expose Replace + Clear because Append
+ *  actual semantics. Scalars only expose Set + Clear because Append
  *  has no meaningful behaviour for a single value. */
 export function getAvailableOperations(
   fieldType: MetadataFieldType,
 ): BulkOperationDef[] {
   if (ARRAY_TYPES.has(fieldType)) {
     return [
-      { key: 'SET', label: 'Replace' },
+      { key: 'SET', label: 'Set' },
       { key: 'ADD', label: 'Add to' },
       { key: 'DELETE', label: 'Remove from' },
     ];
   }
   if (TEXT_TYPES.has(fieldType)) {
     return [
-      { key: 'SET', label: 'Replace' },
+      { key: 'SET', label: 'Set' },
       { key: 'ADD', label: 'Append' },
       { key: 'DELETE', label: 'Clear' },
     ];

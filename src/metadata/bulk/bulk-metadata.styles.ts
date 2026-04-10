@@ -592,14 +592,6 @@ export const bulkRowStyles = css`
     gap: 12px;
     padding: 10px 24px;
     border-left: 3px solid transparent;
-    transition: background 0.1s ease;
-  }
-  .row:hover {
-    background: var(--sfx-up-hover, #f1f5f9);
-    /* Cascade the hover bg into nested inputs (via Shadow DOM custom prop
-       inheritance) so the value editor blends with the row instead of
-       sitting as a white "cutout" on top of the hover highlight. */
-    --sfx-up-bg: var(--sfx-up-hover, #f1f5f9);
   }
 
   .row-check { width: 20px; flex-shrink: 0; }

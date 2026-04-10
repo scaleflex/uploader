@@ -78,12 +78,12 @@ export class SfxBulkMetaOpBar extends LitElement {
 
   connectedCallback() {
     super.connectedCallback();
-    document.addEventListener('click', this._onOpDropdownClose);
+    document.addEventListener('click', this._onOpDropdownClose, true);
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
-    document.removeEventListener('click', this._onOpDropdownClose);
+    document.removeEventListener('click', this._onOpDropdownClose, true);
   }
 
   private _emitPendingChange() {
@@ -166,7 +166,7 @@ export class SfxBulkMetaOpBar extends LitElement {
                     class="op-trigger ${this._opDropdownOpen ? 'open' : ''}"
                     @click=${this._onOpToggle}
                   >
-                    <span class="op-trigger-label">${currentOp?.label ?? 'Replace'}</span>
+                    <span class="op-trigger-label">${currentOp?.label ?? 'Set'}</span>
                     <svg class="op-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                       <path d="m6 9 6 6 6-6"/>
                     </svg>
