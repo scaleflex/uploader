@@ -104,7 +104,7 @@ export class SfxFileList extends LitElement {
     /* Info area — wider bottom padding so the source pills don't hug the
        card edge. Natural height stays close to the file-card .info area. */
     .drop-tile-info {
-      padding: 8px 12px 24px;
+      padding: 12px 12px 24px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -188,9 +188,9 @@ export class SfxFileList extends LitElement {
     }
 
     .drop-tile-src {
-      width: clamp(22px, 7cqi, 36px);
-      height: clamp(22px, 7cqi, 36px);
-      border-radius: 6px;
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
       border: 1px solid var(--sfx-up-border, #e2e8f0);
       background: var(--sfx-up-bg, #fff);
       display: flex;
@@ -210,8 +210,8 @@ export class SfxFileList extends LitElement {
     }
 
     .drop-tile-src svg {
-      width: clamp(12px, 4cqi, 20px);
-      height: clamp(12px, 4cqi, 20px);
+      width: clamp(20px, 6cqi, 24px);
+      height: clamp(20px, 6cqi, 24px);
       fill: none;
       stroke: currentColor;
       stroke-width: 2;
@@ -224,14 +224,30 @@ export class SfxFileList extends LitElement {
       stroke: none;
     }
 
+    .drop-tile-src .brand-ico {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .drop-tile-src .brand-ico svg {
+      width: 20px;
+      height: 20px;
+      stroke: none;
+      stroke-width: 0;
+    }
+
     .drop-tile-more-wrap {
       position: relative;
     }
 
     .drop-tile-more {
-      width: clamp(22px, 7cqi, 36px);
-      height: clamp(22px, 7cqi, 36px);
-      border-radius: 6px;
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
       border: 1px solid var(--sfx-up-border, #e2e8f0);
       background: var(--sfx-up-bg, #fff);
       display: flex;
