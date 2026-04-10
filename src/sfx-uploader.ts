@@ -969,10 +969,32 @@ export class SfxUploader extends LitElement {
       align-items: center;
       justify-content: space-between;
       padding: 14px 0;
-      border-bottom: 1px solid var(--sfx-up-border, #e2e8f0);
       font-size: 14px;
       font-weight: 600;
       color: var(--sfx-up-text, #1e293b);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .preview-file-info-header svg {
+      width: 16px;
+      height: 16px;
+      color: var(--sfx-up-text-muted, #94a3b8);
+      transition: transform 0.2s ease;
+    }
+
+    .preview-file-info-header.open svg {
+      transform: rotate(180deg);
+    }
+
+    .preview-file-info-body {
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height 0.25s ease;
+    }
+
+    .preview-file-info-body.open {
+      max-height: 300px;
     }
 
     .preview-file-info-row {
@@ -1647,6 +1669,7 @@ export class SfxUploader extends LitElement {
   @state() private _showScreenCastDialog = false;
   @state() private _previewFileId: string | null = null;
   @state() private _previewDims: string = '—';
+  @state() private _fileInfoOpen: boolean = true;
   @state() private _splitPct = 58; // file-grid-side percentage
   private _isResizing = false;
   private _splitRafId = 0;
@@ -3454,27 +3477,32 @@ export class SfxUploader extends LitElement {
               `
             : html`
                 <div class="preview-file-info-panel">
-                  <div class="preview-file-info-header">File info</div>
-                  <div class="preview-file-info-row">
-                    <div class="preview-file-info-key">File name</div>
-                    <div class="preview-file-info-val">${previewFile.name}</div>
+                  <div class="preview-file-info-header ${this._fileInfoOpen ? 'open' : ''}" @click=${() => { this._fileInfoOpen = !this._fileInfoOpen; }}>
+                    <span>File info</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
                   </div>
-                  <div class="preview-file-info-row">
-                    <div class="preview-file-info-key">Type</div>
-                    <div class="preview-file-info-val">${ext}</div>
+                  <div class="preview-file-info-body ${this._fileInfoOpen ? 'open' : ''}">
+                    <div class="preview-file-info-row">
+                      <div class="preview-file-info-key">File name</div>
+                      <div class="preview-file-info-val">${previewFile.name}</div>
+                    </div>
+                    <div class="preview-file-info-row">
+                      <div class="preview-file-info-key">Type</div>
+                      <div class="preview-file-info-val">${ext}</div>
+                    </div>
+                    ${previewFile.size ? html`
+                      <div class="preview-file-info-row">
+                        <div class="preview-file-info-key">Size</div>
+                        <div class="preview-file-info-val">${formatFileSize(previewFile.size)}</div>
+                      </div>
+                    ` : nothing}
+                    ${this._previewDims !== '\u2014' ? html`
+                      <div class="preview-file-info-row">
+                        <div class="preview-file-info-key">Dimensions</div>
+                        <div class="preview-file-info-val">${this._previewDims}</div>
+                      </div>
+                    ` : nothing}
                   </div>
-                  ${previewFile.size ? html`
-                    <div class="preview-file-info-row">
-                      <div class="preview-file-info-key">Size</div>
-                      <div class="preview-file-info-val">${formatFileSize(previewFile.size)}</div>
-                    </div>
-                  ` : nothing}
-                  ${this._previewDims !== '\u2014' ? html`
-                    <div class="preview-file-info-row">
-                      <div class="preview-file-info-key">Dimensions</div>
-                      <div class="preview-file-info-val">${this._previewDims}</div>
-                    </div>
-                  ` : nothing}
                 </div>
               `}
         </div>
