@@ -362,11 +362,39 @@ export class SfxUploader extends LitElement {
     .body.body-drag-over::after {
       content: '';
       position: absolute;
-      inset: 4px;
+      inset: 0;
       border: 2px dashed var(--sfx-up-primary, #2563eb);
       border-radius: 8px;
       z-index: 100;
       pointer-events: none;
+    }
+
+    /* In preview mode, keep body blue but mask the preview side white */
+    .body.body-drag-over:has(.preview-layout)::after {
+      display: none;
+    }
+
+    .body.body-drag-over .file-grid-side {
+      position: relative;
+    }
+
+    .body.body-drag-over .file-grid-side::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border: 2px dashed var(--sfx-up-primary, #2563eb);
+      border-radius: 8px;
+      z-index: 100;
+      pointer-events: none;
+    }
+
+    .body.body-drag-over .file-grid-header {
+      background: transparent;
+    }
+
+    .body.body-drag-over .preview-divider,
+    .body.body-drag-over .preview-panel {
+      background: var(--sfx-up-bg, #fff);
     }
 
     .body.has-files {
