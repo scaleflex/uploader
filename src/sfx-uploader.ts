@@ -959,6 +959,46 @@ export class SfxUploader extends LitElement {
       color: var(--sfx-up-text-muted, #94a3b8);
     }
 
+    /* --- File info table (no-metadata fallback) --- */
+    .preview-file-info-panel {
+      padding: 0 16px;
+    }
+
+    .preview-file-info-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--sfx-up-border, #e2e8f0);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--sfx-up-text, #1e293b);
+    }
+
+    .preview-file-info-row {
+      display: flex;
+      align-items: baseline;
+      padding: 10px 0;
+    }
+
+    .preview-file-info-key {
+      width: 110px;
+      flex-shrink: 0;
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--sfx-up-text-muted, #94a3b8);
+    }
+
+    .preview-file-info-val {
+      flex: 1;
+      min-width: 0;
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--sfx-up-text, #1e293b);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
 
     /* --- Upload overlay (in-modal) --- */
     .upload-overlay {
@@ -3398,9 +3438,9 @@ export class SfxUploader extends LitElement {
                   </button>
                 </div>
               `}
-          <div class="preview-meta-list">
-            <div class="preview-file-info">${ext}${previewFile.size ? ` \u00B7 ${formatFileSize(previewFile.size)}` : ''}${this._previewDims !== '\u2014' ? ` \u00B7 ${this._previewDims}` : ''}</div>
-          </div>
+          ${this._metadataSchema && this.config?.metadataConfig
+            ? html`<div class="preview-meta-list"><div class="preview-file-info">${ext}${previewFile.size ? ` \u00B7 ${formatFileSize(previewFile.size)}` : ''}${this._previewDims !== '\u2014' ? ` \u00B7 ${this._previewDims}` : ''}</div></div>`
+            : nothing}
           ${this._metadataSchema && this.config?.metadataConfig
             ? html`
                 <div class="preview-metadata" @field-blur=${this._onPreviewMetadataBlur}>
@@ -3412,7 +3452,31 @@ export class SfxUploader extends LitElement {
                   ></sfx-metadata-form>
                 </div>
               `
-            : nothing}
+            : html`
+                <div class="preview-file-info-panel">
+                  <div class="preview-file-info-header">File info</div>
+                  <div class="preview-file-info-row">
+                    <div class="preview-file-info-key">File name</div>
+                    <div class="preview-file-info-val">${previewFile.name}</div>
+                  </div>
+                  <div class="preview-file-info-row">
+                    <div class="preview-file-info-key">Type</div>
+                    <div class="preview-file-info-val">${ext}</div>
+                  </div>
+                  ${previewFile.size ? html`
+                    <div class="preview-file-info-row">
+                      <div class="preview-file-info-key">Size</div>
+                      <div class="preview-file-info-val">${formatFileSize(previewFile.size)}</div>
+                    </div>
+                  ` : nothing}
+                  ${this._previewDims !== '\u2014' ? html`
+                    <div class="preview-file-info-row">
+                      <div class="preview-file-info-key">Dimensions</div>
+                      <div class="preview-file-info-val">${this._previewDims}</div>
+                    </div>
+                  ` : nothing}
+                </div>
+              `}
         </div>
       </div>
     `;
