@@ -370,7 +370,7 @@ export class SfxUploader extends LitElement {
     }
 
     /* In preview mode, keep body blue but mask the preview side white */
-    .body.body-drag-over:has(.preview-layout)::after {
+    .body.body-drag-over.has-preview::after {
       display: none;
     }
 
@@ -406,7 +406,7 @@ export class SfxUploader extends LitElement {
       animation: bodyReveal 0.35s ease both;
     }
 
-    .body.has-files:has(.preview-layout) {
+    .body.has-files.has-preview {
       padding-right: 0;
     }
 
@@ -496,7 +496,7 @@ export class SfxUploader extends LitElement {
     }
 
     /* Only scroll inline when showing drop-zone (no files) */
-    .inline:has(.body:not(.has-files)) {
+    .inline.no-files {
       overflow-y: auto;
       overflow-x: hidden;
     }
@@ -553,7 +553,7 @@ export class SfxUploader extends LitElement {
       width: 100%;
     }
 
-    .inline:has(.body:not(.has-files)) .content {
+    .inline.no-files .content {
       flex: 1 0 auto;
     }
 
@@ -3121,7 +3121,7 @@ export class SfxUploader extends LitElement {
 
     // Inline mode
     return html`
-      <div class="inline">
+      <div class="inline ${files.length === 0 ? 'no-files' : ''}">
         ${this._renderHeader()}
         ${this._renderBody()}
         <sfx-toast></sfx-toast>
@@ -3405,6 +3405,7 @@ export class SfxUploader extends LitElement {
             .showDropTile=${true}
             .sources=${this._mergedSources}
             .accept=${buildAcceptString(this._storeCtrl.state.restrictions)}
+            ?drag-active=${this._bodyDragOver}
             @source-click=${this._onDropTileSourceClick}
           ></sfx-file-list>
         </div>
@@ -3607,7 +3608,7 @@ export class SfxUploader extends LitElement {
         @screencast-cancel=${this._onScreenCastCancel}
       >
         <div
-          class="body ${hasFiles ? 'has-files' : ''} ${this._bodyDragOver ? 'body-drag-over' : ''}"
+          class="body ${hasFiles ? 'has-files' : ''} ${this._bodyDragOver ? 'body-drag-over' : ''} ${this._previewFileId ? 'has-preview' : ''}"
           @dragenter=${hasFiles ? this._onBodyDragEnter : nothing}
           @dragover=${hasFiles ? this._onBodyDragOver : nothing}
           @dragleave=${hasFiles ? this._onBodyDragLeave : nothing}
@@ -3666,6 +3667,7 @@ export class SfxUploader extends LitElement {
                             .showDropTile=${true}
                             .sources=${this._mergedSources}
                             .accept=${accept}
+                            ?drag-active=${this._bodyDragOver}
                             @source-click=${this._onDropTileSourceClick}
                           ></sfx-file-list>
                         `
