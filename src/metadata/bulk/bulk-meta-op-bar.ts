@@ -136,11 +136,6 @@ export class SfxBulkMetaOpBar extends LitElement {
     this._emitPendingChange();
   }
 
-  private _onClear() {
-    this._value = undefined;
-    this._emitPendingChange();
-  }
-
   private get _isApplyDisabled(): boolean {
     if (this.selectedCount === 0) return true;
     // For DELETE on non-array types ("Clear"), allow empty value — it wipes
