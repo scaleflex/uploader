@@ -31,7 +31,28 @@ export class SfxDropZone extends LitElement {
       flex-shrink: 1;
       flex: 1;
       min-height: 0;
+      min-width: 0;
+      max-width: 100%;
       overflow: hidden;
+    }
+
+    @media (max-width: 768px) {
+      :host {
+        max-width: 100vw;
+      }
+      .drop-zone:not(.compact) {
+        padding: 32px 16px;
+      }
+      .sources-grid {
+        max-width: 100%;
+      }
+      .src-pill {
+        padding: 9px 14px;
+        font-size: 13px;
+      }
+      .title {
+        font-size: 18px;
+      }
     }
 
     :host([compact]) {

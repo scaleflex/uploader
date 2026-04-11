@@ -399,8 +399,13 @@ export class SfxUploader extends LitElement {
       justify-content: stretch;
       gap: 4px;
       min-height: 0;
+      min-width: 0;
       background: var(--sfx-up-bg, #fff);
       position: relative;
+    }
+
+    .file-grid-side {
+      min-width: 0;
     }
 
     .body.body-drag-over {
@@ -1852,15 +1857,44 @@ export class SfxUploader extends LitElement {
       }
     }
 
-    /* --- Responsive: Tablet (≤ 768px) --- */
+    /* --- Responsive: Tablet & Mobile (≤ 768px) ---
+       Take modal-card OUT of backdrop's flex centering and pin it
+       directly to viewport. This bypasses any min-width:auto issues
+       in the flex layout that were leaving content overflowing. */
     @media (max-width: 768px) {
       .modal-backdrop {
-        padding: 12px;
+        padding: 0;
+        display: block;
       }
       .modal-card {
-        border-radius: 12px;
-        max-height: 92vh;
-        min-height: auto;
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        max-width: 100vw;
+        height: 100vh;
+        max-height: 100vh;
+        min-width: 0;
+        min-height: 0;
+        border-radius: 0;
+        overflow: hidden;
+      }
+      .inline {
+        max-width: 100%;
+        min-width: 0;
+      }
+      .connector-modal-backdrop {
+        padding: 0;
+        display: block;
+      }
+      .connector-modal {
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        max-width: 100vw;
+        height: 100vh;
+        max-height: 100vh;
+        min-height: 0;
+        border-radius: 0;
       }
       .header {
         padding: 12px 16px;
@@ -1906,29 +1940,11 @@ export class SfxUploader extends LitElement {
         --sfx-inline-pad: 16px;
         min-height: auto;
       }
-
-      .connector-modal-backdrop {
-        padding: 8px;
-      }
-      .connector-modal {
-        max-width: 100%;
-        height: 85vh;
-        max-height: none;
-        border-radius: 14px;
-      }
     }
 
-    /* --- Responsive: Mobile (≤ 480px) --- */
+    /* --- Responsive: Mobile (≤ 480px) — tighter spacing on top of
+       the fullscreen rules already applied at ≤768. */
     @media (max-width: 480px) {
-      .modal-backdrop {
-        padding: 0;
-      }
-      .modal-card {
-        border-radius: 0;
-        max-height: 100vh;
-        max-width: 100%;
-        height: 100%;
-      }
       .header {
         padding: 10px 14px;
       }
@@ -1956,20 +1972,10 @@ export class SfxUploader extends LitElement {
 
       .inline {
         --sfx-inline-pad: 12px;
-        max-height: 100vh;
         box-shadow: none;
       }
       .inline-header-title {
         font-size: 18px;
-      }
-
-      .connector-modal-backdrop {
-        padding: 0;
-      }
-      .connector-modal {
-        border-radius: 0;
-        height: 100vh;
-        min-height: auto;
       }
     }
 

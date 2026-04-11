@@ -33,6 +33,8 @@ export class SfxFileList extends LitElement {
       scrollbar-width: thin;
       scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
       scrollbar-gutter: stable;
+      container-type: inline-size;
+      container-name: file-list;
     }
 
     :host::-webkit-scrollbar {
@@ -59,10 +61,21 @@ export class SfxFileList extends LitElement {
       padding: 0 var(--sfx-grid-pad-r, 8px) 16px var(--sfx-grid-pad-l, 16px);
     }
 
-    @media (max-width: 480px) {
+    /* Container query: react to actual file-list width, not viewport.
+       Inline-mode containers can be narrower than the viewport, and
+       @media queries miss that. */
+    @container file-list (max-width: 768px) {
       .grid {
-        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 8px;
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+    }
+
+    @container file-list (max-width: 360px) {
+      .grid {
+        grid-template-columns: 1fr;
       }
     }
 
