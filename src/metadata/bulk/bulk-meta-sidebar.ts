@@ -18,6 +18,27 @@ export class SfxBulkMetaSidebar extends LitElement {
   @property({ attribute: false }) config: MetadataConfig | null = null;
 
   @state() private _collapsed: Set<string> = new Set();
+  /** Tracks the mobile breakpoint so collapsed groups don't hide fields
+      on narrow viewports where the group-label toggle button is itself
+      hidden (display: none). Without this a user who collapses a group
+      on desktop and resizes to mobile ends up with fields unreachable. */
+  @state() private _isNarrow = false;
+
+  connectedCallback() {
+    super.connectedCallback();
+    this._updateNarrow();
+    window.addEventListener('resize', this._updateNarrow);
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    window.removeEventListener('resize', this._updateNarrow);
+  }
+
+  private _updateNarrow = () => {
+    const next = window.innerWidth <= 768;
+    if (next !== this._isNarrow) this._isNarrow = next;
+  };
 
   private _isRequired(field: { ckey: string; required: 0 | 1 }): boolean {
     if (this.config?.requiredFields?.includes(field.ckey)) return true;
@@ -49,7 +70,9 @@ export class SfxBulkMetaSidebar extends LitElement {
 
     return html`
       ${this.schema.groups.map((group) => {
-        const isOpen = !this._collapsed.has(group.uuid);
+        // On mobile the group-label toggle button is hidden via CSS,
+        // so collapsed state is unreachable — force open there.
+        const isOpen = this._isNarrow || !this._collapsed.has(group.uuid);
         return html`
           <button
             class="group-label"

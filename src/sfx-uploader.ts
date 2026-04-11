@@ -2069,9 +2069,15 @@ export class SfxUploader extends LitElement {
       .body {
         padding: 16px 20px;
       }
+      /* Let the preview image scale down instead of forcing a
+         340×240 crop — on a 1920×600 kiosk that hardcoded size
+         looked tiny; relying on max-width/max-height lets the wrap
+         fill whatever vertical space the layout gives it. */
       .preview-img-wrap {
-        width: 340px;
-        height: 240px;
+        width: auto;
+        height: auto;
+        max-width: min(420px, 60vw);
+        max-height: min(280px, 55vh);
       }
     }
   `;
@@ -2089,9 +2095,7 @@ export class SfxUploader extends LitElement {
   @state() private _splitPct = 58; // file-grid-side percentage
   private _isResizing = false;
   private _splitRafId = 0;
-  /** Pixel width the preview panel opens at by default. Resize drag still works. */
-  private static readonly DEFAULT_PREVIEW_PANEL_WIDTH_PX = 500;
-  /** Has the default 500px preview width been applied for the current preview session? */
+  /** Has the default split (3/8 panel) been applied for the current preview session? */
   private _previewDefaultApplied = false;
   @state() private _fullscreenPreviewUrl: string | null = null;
   @state() private _fullscreenVideoFile: File | null = null;
@@ -2347,12 +2351,10 @@ export class SfxUploader extends LitElement {
   }
 
   /**
-   * The preview panel opens at DEFAULT_PREVIEW_PANEL_WIDTH_PX (500px) by default
-   * instead of the fixed 42% from _splitPct = 58. On first appearance of the
-   * preview layout we measure its width and set _splitPct to the percentage that
-   * gives the desired panel width (clamped to the same 25–75 range used by
-   * _onSplitPointerMove). Once the user drags the divider their value wins —
-   * the flag is only reset when the preview layout is dismissed.
+   * The preview panel opens at 3/8 (~37.5%) of the modal width by default,
+   * giving the grid 5/8. On first appearance of the preview layout we set
+   * _splitPct once; after that the user's own divider drag wins until the
+   * preview layout is dismissed.
    */
   private _applyDefaultPreviewWidth() {
     const layout =

@@ -226,11 +226,18 @@ export class SfxBulkMetadataModal extends LitElement {
       // substring removal, etc. — so we unwrap before calling and rewrap
       // after. Without this, ADD/DELETE on text fields would receive an
       // object and silently fall back to the empty branch.
-      const innerCurrent = isRegional && currentStaged && typeof currentStaged === 'object'
-        ? (currentStaged as Record<string, unknown>)[lang]
+      //
+      // Guard against arrays explicitly: today only text fields are
+      // regional, but a future regional multi-select would be an array
+      // that would crash the spread below.
+      const isRegionalObject = (v: unknown): v is Record<string, unknown> =>
+        isRegional && v !== null && typeof v === 'object' && !Array.isArray(v);
+
+      const innerCurrent = isRegionalObject(currentStaged)
+        ? currentStaged[lang]
         : currentStaged;
-      const innerBackend = isRegional && backendValue && typeof backendValue === 'object'
-        ? (backendValue as Record<string, unknown>)[lang]
+      const innerBackend = isRegionalObject(backendValue)
+        ? backendValue[lang]
         : backendValue;
 
       const innerResult = applyBulkOperation(
@@ -242,9 +249,7 @@ export class SfxBulkMetadataModal extends LitElement {
 
       const result = isRegional
         ? {
-            ...((currentStaged && typeof currentStaged === 'object'
-              ? (currentStaged as Record<string, unknown>)
-              : {}) as Record<string, unknown>),
+            ...(isRegionalObject(currentStaged) ? currentStaged : {}),
             [lang]: innerResult,
           }
         : innerResult;
