@@ -33,8 +33,6 @@ export class SfxFileList extends LitElement {
       scrollbar-width: thin;
       scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
       scrollbar-gutter: stable;
-      container-type: inline-size;
-      container-name: file-list;
     }
 
     :host::-webkit-scrollbar {
@@ -61,19 +59,22 @@ export class SfxFileList extends LitElement {
       padding: 0 var(--sfx-grid-pad-r, 8px) 16px var(--sfx-grid-pad-l, 16px);
     }
 
-    /* Container query: react to actual file-list width, not viewport.
-       Inline-mode containers can be narrower than the viewport, and
-       @media queries miss that. */
-    @container file-list (max-width: 768px) {
+    /* Mobile: 2 cols at <=768, 1 col at <=440. Use viewport @media not
+       container queries — container queries fire on local file-list width
+       which is narrow in desktop preview mode, breaking desktop layout. */
+    @media (max-width: 768px) {
+      :host {
+        scrollbar-gutter: auto;
+        padding-bottom: 0;
+      }
       .grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 8px;
-        padding-left: 12px;
-        padding-right: 12px;
+        gap: 10px;
+        padding: 0 12px 16px;
       }
     }
 
-    @container file-list (max-width: 360px) {
+    @media (max-width: 440px) {
       .grid {
         grid-template-columns: 1fr;
       }
@@ -198,7 +199,7 @@ export class SfxFileList extends LitElement {
     .drop-tile-sources {
       display: flex;
       gap: clamp(3px, 1.2cqi, 8px);
-      margin-top: 0;
+      margin-top: 8px;
     }
 
     .drop-tile-src {
@@ -391,6 +392,7 @@ export class SfxFileList extends LitElement {
   @property({ attribute: false }) getLocateUrl?: (file: UploadFile) => string | null | undefined;
 
   @state() private _moreOpen = false;
+  @state() private _dropTileMaxVisible = 3;
   private _portalContainer: HTMLDivElement | null = null;
 
   private _outsideClickHandler = (e: MouseEvent) => {
@@ -534,12 +536,27 @@ export class SfxFileList extends LitElement {
     root.adoptedStyleSheets = [...root.adoptedStyleSheets, tileDropdownSheet];
   }
 
+  connectedCallback() {
+    super.connectedCallback();
+    this._updateDropTileMaxVisible();
+    window.addEventListener('resize', this._updateDropTileMaxVisible);
+  }
+
   disconnectedCallback() {
     super.disconnectedCallback();
     this._moreOpen = false;
     this._closePortal();
     this._removeGlobalListeners();
+    window.removeEventListener('resize', this._updateDropTileMaxVisible);
   }
+
+  /** Drop-tile source slots based on viewport width (not host width).
+      Host width can be small on desktop in preview mode, but the drop-tile
+      should still expose 3 sources because the modal is wide. */
+  private _updateDropTileMaxVisible = () => {
+    const next = window.innerWidth <= 768 ? 1 : 3;
+    if (next !== this._dropTileMaxVisible) this._dropTileMaxVisible = next;
+  };
 
   private _onMoreSourceClick(e: Event, source: SourceDef) {
     this._moreOpen = false;
@@ -549,7 +566,7 @@ export class SfxFileList extends LitElement {
   }
 
   private _renderDropTile() {
-    const maxVisible = 3;
+    const maxVisible = this._dropTileMaxVisible;
     const visibleSources = this.sources.slice(0, maxVisible);
     const overflowSources = this.sources.slice(maxVisible);
     return html`

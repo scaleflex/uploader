@@ -49,14 +49,14 @@ export class SfxMetaGeoPointField extends MetadataFieldBase {
       <div class="grid">
         <div>
           <label>Latitude</label>
-          <input type="number" step="any" .value=${geo.latitude}
+          <input type="number" step="any" inputmode="decimal" .value=${geo.latitude}
             ?disabled=${this.disabled}
             @input=${(e: Event) => this._onInput('latitude', e)}
             @blur=${this._onBlur} @keydown=${this._onKeydown} />
         </div>
         <div>
           <label>Longitude</label>
-          <input type="number" step="any" .value=${geo.longitude}
+          <input type="number" step="any" inputmode="decimal" .value=${geo.longitude}
             ?disabled=${this.disabled}
             @input=${(e: Event) => this._onInput('longitude', e)}
             @blur=${this._onBlur} @keydown=${this._onKeydown} />

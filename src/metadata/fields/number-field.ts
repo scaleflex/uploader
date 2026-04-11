@@ -9,6 +9,10 @@ export class SfxMetaNumberField extends MetadataFieldBase {
     return this.field?.type === 'decimal2' ? '0.01' : '1';
   }
 
+  private get _inputMode(): 'decimal' | 'numeric' {
+    return this.field?.type === 'decimal2' ? 'decimal' : 'numeric';
+  }
+
   private _onInput(e: Event) {
     this._emit('field-change', (e.target as HTMLInputElement).value);
   }
@@ -26,6 +30,7 @@ export class SfxMetaNumberField extends MetadataFieldBase {
       <input
         type="number"
         step=${this._step}
+        inputmode=${this._inputMode}
         .value=${String(this.value ?? '')}
         placeholder=${this.field?.placeholder ?? ''}
         ?disabled=${this.disabled}

@@ -398,4 +398,22 @@ export const metadataFieldStyles = css`
     color: var(--sfx-up-error, #dc2626);
     margin-top: 2px;
   }
+
+  /* Mobile: stack label above the input full-width. The fixed 144px
+     label column gets crushed on narrow viewports. */
+  @media (max-width: 768px) {
+    .field-row,
+    .field-row--top {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 6px;
+      padding: 10px 0;
+    }
+    .field-row--top .field-label {
+      padding-top: 0;
+    }
+    .field-label {
+      width: auto;
+    }
+  }
 `;

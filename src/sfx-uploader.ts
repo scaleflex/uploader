@@ -673,7 +673,7 @@ export class SfxUploader extends LitElement {
       display: flex;
       flex-direction: column;
       position: relative;
-      --sfx-up-grid-min: max(30%, 200px);
+      --sfx-up-grid-min: 170px;
     }
 
     .preview-layout .file-grid-side::after {
@@ -806,6 +806,19 @@ export class SfxUploader extends LitElement {
       flex-shrink: 0;
       box-sizing: border-box;
       border-bottom: 1px solid var(--sfx-up-border, #e2e8f0);
+    }
+
+    /* Mobile back-arrow — hidden by default, shown at <=768px to give
+       a clear "return to file list" affordance on small screens.
+       Use !important because .preview-panel-header button below has
+       higher specificity and would otherwise force display: flex. */
+    .preview-panel-header button.preview-back-btn {
+      display: none;
+    }
+    @media (max-width: 768px) {
+      .preview-panel-header button.preview-back-btn {
+        display: inline-flex;
+      }
     }
 
     .preview-header-actions {
@@ -1915,21 +1928,31 @@ export class SfxUploader extends LitElement {
         padding: 16px;
       }
       .body.has-files {
-        padding: 0 0 12px 8px;
+        padding: 0 0 12px;
+      }
+      .body > sfx-file-list,
+      .file-grid-side > sfx-file-list {
+        --sfx-grid-pad-l: 12px;
+        --sfx-grid-pad-r: 12px;
       }
 
+      /* Mobile preview = fullscreen takeover. When a file is selected
+         the file grid + divider get hidden and preview-panel fills the
+         whole modal. Tapping close (X) in preview-header returns to
+         the grid. */
       .preview-layout {
         flex-direction: column;
       }
-      .preview-layout .file-grid-side {
-        width: 100%;
-        max-height: 140px;
-        overflow-x: auto;
-        overflow-y: hidden;
-        flex-shrink: 0;
+      .preview-layout .file-grid-side,
+      .preview-layout .preview-divider {
+        display: none !important;
       }
-      .preview-panel {
-        padding: 0 0 16px;
+      .preview-layout .preview-panel {
+        flex: 1 1 100% !important;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        padding: 0;
       }
 
       .preview-topbar {
@@ -1939,6 +1962,40 @@ export class SfxUploader extends LitElement {
       .inline {
         --sfx-inline-pad: 16px;
         min-height: auto;
+      }
+
+      /* Force fs-overlay to viewport-fill on mobile. Without these the
+         shadow-DOM stacking + sibling modal-card was clipping it. */
+      .fs-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 100000;
+      }
+      .fs-img {
+        max-width: 92vw;
+        max-height: 80vh;
+      }
+      /* Make sure nav arrows + close toolbar stay above the image and
+         are tappable (40×40 minimum). */
+      .fs-nav {
+        z-index: 100002;
+        width: 44px;
+        height: 44px;
+        background: rgba(255, 255, 255, 0.2);
+      }
+      .fs-nav.prev {
+        left: 12px;
+      }
+      .fs-nav.next {
+        right: 12px;
+      }
+      .fs-toolbar {
+        z-index: 100002;
       }
     }
 
@@ -1960,14 +2017,7 @@ export class SfxUploader extends LitElement {
         padding: 12px;
       }
       .body.has-files {
-        padding: 0 0 8px 8px;
-      }
-
-      .preview-layout .file-grid-side {
-        max-height: 100px;
-      }
-      .preview-panel {
-        padding: 0 0 12px;
+        padding: 0 0 8px;
       }
 
       .inline {
@@ -2278,12 +2328,8 @@ export class SfxUploader extends LitElement {
     if (this._previewDefaultApplied) return;
     const width = layout.getBoundingClientRect().width;
     if (width <= 0) return;
-    const panelWidth = SfxUploader.DEFAULT_PREVIEW_PANEL_WIDTH_PX;
-    const gridPct = Math.max(
-      25,
-      Math.min(75, ((width - panelWidth) / width) * 100),
-    );
-    this._splitPct = gridPct;
+    // Preview panel takes 3/8 (~37.5%) of the modal by default → grid gets 5/8.
+    this._splitPct = 62.5;
     this._previewDefaultApplied = true;
   }
 
@@ -3662,6 +3708,7 @@ export class SfxUploader extends LitElement {
               </div>
             `
           : nothing}
+        ${this._renderFsOverlay()}
       `;
     }
 
@@ -3670,6 +3717,52 @@ export class SfxUploader extends LitElement {
       <div class="inline ${files.length === 0 ? "no-files" : ""}">
         ${this._renderHeader()} ${this._renderBody()}
         <sfx-toast></sfx-toast>
+      </div>
+      ${this._renderFsOverlay()}
+    `;
+  }
+
+  /** Fullscreen image/video overlay. Rendered at the top level (sibling
+      of modal-backdrop) so it never inherits a containing block from the
+      modal-card on mobile, where modal-card is position:fixed itself and
+      its overflow:hidden was clipping the overlay. */
+  private _renderFsOverlay() {
+    if (!this._fullscreenPreviewUrl && !this._fullscreenVideoFile) return nothing;
+    const fsFiles = [...this._store.getState().files.values()].filter(
+      (f) => f.previewUrl || (f.type.startsWith("video/") && f.file),
+    );
+    const fsIdx = fsFiles.findIndex((f) => f.id === this._previewFileId);
+    return html`
+      <div
+        class="fs-overlay ${this._fullscreenZoomed ? "zoomed" : ""} ${this._fsDragging ? "panning" : ""}"
+        @click=${this._onFsOverlayClick}
+        @mousedown=${this._onFsPanStart}
+        @mousemove=${this._onFsPanMove}
+        @mouseup=${this._onFsPanEnd}
+        @mouseleave=${this._onFsPanEnd}
+        @touchstart=${this._onFsTouchStart}
+        @touchmove=${this._onFsTouchMove}
+        @touchend=${this._onFsPanEnd}
+      >
+        <div class="fs-toolbar" @click=${(e: Event) => e.stopPropagation()}>
+          <button class="fs-btn" @click=${this._onFsToggleZoom} title="${this._fullscreenZoomed ? "Zoom out" : "Zoom in"}">
+            ${this._fullscreenZoomed
+              ? html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>`
+              : html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>`}
+          </button>
+          <button class="fs-btn" @click=${this._onFsClose} title="Close">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        ${this._fullscreenVideoFile
+          ? html`<video class="fs-img" src=${this._getVideoBlobUrl(this._fullscreenVideoFile)} controls playsinline draggable="false" @click=${(e: Event) => e.stopPropagation()}></video>`
+          : html`<img class="fs-img" src=${this._fullscreenPreviewUrl} alt="" style=${this._fullscreenZoomed ? `transform: scale(2) translate(${this._fsPanX}px, ${this._fsPanY}px)` : ""} draggable="false" />`}
+        <button class="fs-nav prev" ?disabled=${fsIdx <= 0} @click=${(e: Event) => { e.stopPropagation(); this._navigateFs(-1); }}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <button class="fs-nav next" ?disabled=${fsIdx >= fsFiles.length - 1} @click=${(e: Event) => { e.stopPropagation(); this._navigateFs(1); }}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 6 15 12 9 18"/></svg>
+        </button>
       </div>
     `;
   }
@@ -4340,6 +4433,26 @@ export class SfxUploader extends LitElement {
         ></div>
         <div class="preview-panel" style="flex:${100 - this._splitPct}">
           <div class="preview-panel-header">
+            <button
+              class="preview-back-btn"
+              @click=${() => {
+                this._previewFileId = null;
+              }}
+              aria-label="Back to file list"
+              title="Back"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <line x1="19" y1="12" x2="5" y2="12" />
+                <polyline points="12 19 5 12 12 5" />
+              </svg>
+            </button>
             <span class="preview-header-name" title=${previewFile.name}
               >${previewFile.name}</span
             >
@@ -5000,142 +5113,6 @@ export class SfxUploader extends LitElement {
                 @metadata-save-batch=${this._onBulkMetadataSaveBatch}
                 @metadata-close=${this._onBulkMetadataClose}
               ></sfx-bulk-metadata-modal>
-            `
-          : nothing}
-        ${this._fullscreenPreviewUrl || this._fullscreenVideoFile
-          ? html`
-              <div
-                class="fs-overlay ${this._fullscreenZoomed
-                  ? "zoomed"
-                  : ""} ${this._fsDragging ? "panning" : ""}"
-                @click=${this._onFsOverlayClick}
-                @mousedown=${this._onFsPanStart}
-                @mousemove=${this._onFsPanMove}
-                @mouseup=${this._onFsPanEnd}
-                @mouseleave=${this._onFsPanEnd}
-                @touchstart=${this._onFsTouchStart}
-                @touchmove=${this._onFsTouchMove}
-                @touchend=${this._onFsPanEnd}
-              >
-                <div
-                  class="fs-toolbar"
-                  @click=${(e: Event) => e.stopPropagation()}
-                >
-                  <button
-                    class="fs-btn"
-                    @click=${this._onFsToggleZoom}
-                    title="${this._fullscreenZoomed ? "Zoom out" : "Zoom in"}"
-                  >
-                    ${this._fullscreenZoomed
-                      ? html`<svg
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                        >
-                          <circle cx="11" cy="11" r="8" />
-                          <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                          <line x1="8" y1="11" x2="14" y2="11" />
-                        </svg>`
-                      : html`<svg
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                        >
-                          <circle cx="11" cy="11" r="8" />
-                          <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                          <line x1="11" y1="8" x2="11" y2="14" />
-                          <line x1="8" y1="11" x2="14" y2="11" />
-                        </svg>`}
-                  </button>
-                  <button
-                    class="fs-btn"
-                    @click=${this._onFsClose}
-                    title="Close"
-                  >
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                    >
-                      <line x1="18" y1="6" x2="6" y2="18" />
-                      <line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
-                  </button>
-                </div>
-                ${this._fullscreenVideoFile
-                  ? html`<video
-                      class="fs-img"
-                      src=${this._getVideoBlobUrl(this._fullscreenVideoFile)}
-                      controls
-                      playsinline
-                      draggable="false"
-                      @click=${(e: Event) => e.stopPropagation()}
-                    ></video>`
-                  : html`<img
-                      class="fs-img"
-                      src=${this._fullscreenPreviewUrl}
-                      alt=""
-                      style=${this._fullscreenZoomed
-                        ? `transform: scale(2) translate(${this._fsPanX}px, ${this._fsPanY}px)`
-                        : ""}
-                      draggable="false"
-                    />`}
-                ${(() => {
-                  const fsFiles = [
-                    ...this._store.getState().files.values(),
-                  ].filter(
-                    (f) =>
-                      f.previewUrl || (f.type.startsWith("video/") && f.file),
-                  );
-                  const fsIdx = fsFiles.findIndex(
-                    (f) => f.id === this._previewFileId,
-                  );
-                  return html`
-                    <button
-                      class="fs-nav prev"
-                      ?disabled=${fsIdx <= 0}
-                      @click=${(e: Event) => {
-                        e.stopPropagation();
-                        this._navigateFs(-1);
-                      }}
-                    >
-                      <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2.5"
-                        stroke-linecap="round"
-                      >
-                        <polyline points="15 18 9 12 15 6" />
-                      </svg>
-                    </button>
-                    <button
-                      class="fs-nav next"
-                      ?disabled=${fsIdx >= fsFiles.length - 1}
-                      @click=${(e: Event) => {
-                        e.stopPropagation();
-                        this._navigateFs(1);
-                      }}
-                    >
-                      <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2.5"
-                        stroke-linecap="round"
-                      >
-                        <polyline points="9 6 15 12 9 18" />
-                      </svg>
-                    </button>
-                  `;
-                })()}
-              </div>
             `
           : nothing}
       </div>

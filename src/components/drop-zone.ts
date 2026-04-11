@@ -1187,10 +1187,9 @@ export class SfxDropZone extends LitElement {
         this._visiblePills = 5;
       }
     } else {
-      if (w <= 480) {
+      if (w <= 768) {
+        // Mobile & tablet: only My Device, everything else under More.
         this._visiblePills = 1;
-      } else if (w <= 768) {
-        this._visiblePills = 2;
       } else {
         this._visiblePills = VISIBLE_PILLS;
       }
