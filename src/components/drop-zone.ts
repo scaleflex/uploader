@@ -36,44 +36,6 @@ export class SfxDropZone extends LitElement {
       overflow: hidden;
     }
 
-    @media (max-width: 768px) {
-      :host {
-        max-width: 100vw;
-      }
-      .drop-zone:not(.compact) {
-        padding: 32px 16px;
-      }
-      .import-divider {
-        max-width: 100%;
-        margin-bottom: 14px;
-      }
-      .sources-grid {
-        max-width: 100%;
-        min-height: 0;
-      }
-      .src-pill {
-        padding: 9px 14px;
-        font-size: 13px;
-      }
-      .title {
-        font-size: 18px;
-      }
-    }
-
-    /* Galaxy Z Fold / Samsung S8+ / iPhone SE — extra narrow */
-    @media (max-width: 400px) {
-      .drop-zone:not(.compact) {
-        padding: 24px 12px;
-      }
-      .sources-grid {
-        gap: 6px;
-      }
-      .src-pill {
-        padding: 8px 12px;
-        font-size: 13px;
-      }
-    }
-
     :host([compact]) {
       flex: 0 0 auto;
     }
@@ -916,6 +878,47 @@ export class SfxDropZone extends LitElement {
       }
       .drop-zone.compact {
         animation: none;
+      }
+    }
+
+    /* Mobile responsive — placed at the END of the stylesheet so these
+       overrides win the cascade against the base .src-pill, .title,
+       .drop-zone rules declared earlier above. */
+    @media (max-width: 768px) {
+      :host {
+        max-width: 100vw;
+      }
+      .drop-zone:not(.compact) {
+        padding: 32px 16px;
+      }
+      .import-divider {
+        max-width: 100%;
+        margin-bottom: 14px;
+      }
+      .sources-grid {
+        max-width: 100%;
+        min-height: 0;
+      }
+      .src-pill {
+        padding: 9px 14px;
+        font-size: 13px;
+      }
+      .title {
+        font-size: 18px;
+      }
+    }
+
+    /* Galaxy Z Fold / Samsung S8+ / iPhone SE — extra narrow. */
+    @media (max-width: 400px) {
+      .drop-zone:not(.compact) {
+        padding: 24px 12px;
+      }
+      .sources-grid {
+        gap: 6px;
+      }
+      .src-pill {
+        padding: 8px 12px;
+        font-size: 13px;
       }
     }
   `;

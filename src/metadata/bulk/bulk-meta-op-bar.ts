@@ -118,13 +118,27 @@ export class SfxBulkMetaOpBar extends LitElement {
   };
 
   /**
-   * Enter inside the value input acts as Apply. Skipped for textarea
-   * (Enter inserts a newline there) and when there's no value yet so
-   * the user doesn't accidentally submit an empty op.
+   * Enter inside the value input acts as Apply — but only for simple
+   * scalar inputs where Enter has no other meaning. tags/multi-select
+   * use Enter to add an entry / confirm a selection; select-one opens
+   * the dropdown on Enter; textarea inserts a newline. Hijacking those
+   * would swallow user input, so the shortcut is whitelisted.
    */
+  private static readonly _ENTER_APPLY_TYPES = new Set([
+    'text',
+    'numeric',
+    'decimal2',
+    'date',
+    'geopoint',
+    'attachment-uri',
+  ]);
+
   private _onValueKeydown = (e: KeyboardEvent) => {
     if (e.key !== 'Enter') return;
-    if (this.field?.type === 'textarea') return;
+    const fieldType = this.field?.type;
+    if (!fieldType || !SfxBulkMetaOpBar._ENTER_APPLY_TYPES.has(fieldType)) return;
+    // Also bail if focus is actually inside a textarea (native multi-line
+    // element — unlikely for the whitelisted types but defensive).
     const target = e.composedPath().find((el): el is HTMLElement => el instanceof HTMLElement);
     if (target?.tagName === 'TEXTAREA') return;
     e.preventDefault();

@@ -6,23 +6,37 @@ import type { MetadataFieldType } from '../schema/schema.types';
 // ---------------------------------------------------------------------------
 
 describe('getAvailableOperations', () => {
-  const singleValueTypes: MetadataFieldType[] = [
-    'text', 'textarea', 'numeric', 'decimal2', 'boolean',
-    'date', 'select-one', 'geopoint', 'attachment-uri',
+  const arrayTypes: MetadataFieldType[] = ['multi-select', 'tags', 'integer-list'];
+  const textTypes: MetadataFieldType[] = ['text', 'textarea', 'attachment-uri'];
+  const scalarTypes: MetadataFieldType[] = [
+    'numeric', 'decimal2', 'boolean', 'date', 'select-one', 'geopoint',
   ];
 
-  const arrayTypes: MetadataFieldType[] = ['multi-select', 'tags', 'integer-list'];
-
-  it.each(singleValueTypes)('returns [SET] for %s', (type) => {
+  it.each(arrayTypes)('returns [SET] for %s', (type) => {
     const ops = getAvailableOperations(type);
-    expect(ops).toHaveLength(1);
-    expect(ops[0].key).toBe('SET');
+    expect(ops.map(o => o.key)).toEqual(['SET']);
   });
 
-  it.each(arrayTypes)('returns [SET, ADD, DELETE] for %s', (type) => {
+  it.each(textTypes)('returns [SET, ADD, DELETE] for %s', (type) => {
     const ops = getAvailableOperations(type);
-    expect(ops).toHaveLength(3);
     expect(ops.map(o => o.key)).toEqual(['SET', 'ADD', 'DELETE']);
+  });
+
+  it.each(scalarTypes)('returns [SET, DELETE] for %s', (type) => {
+    const ops = getAvailableOperations(type);
+    expect(ops.map(o => o.key)).toEqual(['SET', 'DELETE']);
+  });
+
+  it('labels text DELETE as "Remove" (substring removal, not wipe)', () => {
+    const ops = getAvailableOperations('text');
+    const del = ops.find(o => o.key === 'DELETE');
+    expect(del?.label).toBe('Remove');
+  });
+
+  it('labels scalar DELETE as "Clear"', () => {
+    const ops = getAvailableOperations('numeric');
+    const del = ops.find(o => o.key === 'DELETE');
+    expect(del?.label).toBe('Clear');
   });
 });
 
@@ -128,6 +142,43 @@ describe('applyBulkOperation DELETE', () => {
 
     it('handles null current value', () => {
       expect(applyBulkOperation('DELETE', null, ['v1'], 'multi-select')).toEqual([]);
+    });
+  });
+
+  describe('text (substring removal, not wipe)', () => {
+    it('removes a substring from text', () => {
+      expect(applyBulkOperation('DELETE', '123', '1', 'text')).toBe('23');
+    });
+
+    it('removes every occurrence', () => {
+      expect(applyBulkOperation('DELETE', 'foo bar foo', 'foo', 'text')).toBe('bar');
+    });
+
+    it('collapses double spaces left by the removal', () => {
+      expect(applyBulkOperation('DELETE', 'a b c', 'b', 'text')).toBe('a c');
+    });
+
+    it('wipes the whole field when no substring is provided', () => {
+      expect(applyBulkOperation('DELETE', 'anything', '', 'text')).toBe('');
+    });
+
+    it('handles null current value', () => {
+      expect(applyBulkOperation('DELETE', null, 'x', 'text')).toBe('');
+    });
+  });
+
+  describe('scalar types', () => {
+    it('clears numeric to null', () => {
+      expect(applyBulkOperation('DELETE', 42, null, 'numeric')).toBeNull();
+    });
+
+    it('clears date to null', () => {
+      expect(applyBulkOperation('DELETE', '2026-01-01', null, 'date')).toBeNull();
+    });
+
+    it('clears geopoint to empty latitude/longitude', () => {
+      expect(applyBulkOperation('DELETE', '(40,-74)', null, 'geopoint'))
+        .toEqual({ latitude: '', longitude: '' });
     });
   });
 });

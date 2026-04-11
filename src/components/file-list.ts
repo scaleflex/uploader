@@ -501,7 +501,10 @@ export class SfxFileList extends LitElement {
   }
 
   private _openPortal() {
-    const overflowSources = this.sources.slice(3);
+    // Use the same slot count as _renderDropTile so the dropdown shows
+    // exactly the sources that aren't visible as pills. Hardcoded 3
+    // used to drop sources 1 and 2 on mobile where only 1 is visible.
+    const overflowSources = this.sources.slice(this._dropTileMaxVisible);
     if (!this._portalContainer) {
       this._portalContainer = document.createElement('div');
       this._portalContainer.setAttribute('data-sfx-tile-dropdown', '');
