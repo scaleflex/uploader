@@ -317,6 +317,63 @@ export const bulkModalStyles = css`
     font-size: 14px;
   }
 
+  /* ---- Mobile / tablet responsive ----
+     At <=768px the bulk modal goes fullscreen and restacks: sidebar
+     on top as a horizontal scroll bar, table header is hidden (rows
+     carry their own labels via stacked layout), footer buttons wrap. */
+  @media (max-width: 768px) {
+    .fm-overlay {
+      padding: 0;
+    }
+    .fm-modal {
+      width: 100vw;
+      max-width: 100vw;
+      height: 100vh;
+      max-height: 100vh;
+      border-radius: 0;
+    }
+    .fm-topbar {
+      padding: 10px 14px;
+    }
+    .fm-body {
+      flex-direction: column;
+    }
+    .fm-table-header {
+      display: none;
+    }
+    .fm-th-name,
+    .fm-th-size {
+      width: auto;
+    }
+    .fm-footer {
+      padding: 10px 12px;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .fm-footer .btn-ghost,
+    .fm-footer .btn-primary,
+    .fm-footer .btn-back {
+      padding: 0 12px;
+      font-size: 13px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .fm-topbar-title {
+      font-size: 13px;
+    }
+    .fm-footer {
+      padding: 8px 10px;
+    }
+    .fm-footer .btn-ghost,
+    .fm-footer .btn-primary,
+    .fm-footer .btn-back {
+      padding: 0 10px;
+      font-size: 12px;
+      height: 34px;
+    }
+  }
+
   ${checkboxStyles}
 `;
 
@@ -455,6 +512,48 @@ export const bulkSidebarStyles = css`
     font-weight: 500;
     flex-shrink: 0;
   }
+
+  /* ---- Mobile: sidebar becomes a horizontal scrollable tab bar on top,
+     since the modal stacks vertically below 768px. Hide group labels and
+     flatten all fields into one row. ---- */
+  @media (max-width: 768px) {
+    :host {
+      width: 100%;
+      max-height: 56px;
+      min-height: 56px;
+      border-right: none;
+      border-bottom: 1px solid var(--sfx-up-border, #e2e8f0);
+      padding: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    :host::-webkit-scrollbar {
+      height: 4px;
+    }
+    .group-label {
+      display: none;
+    }
+    .field-item {
+      height: 40px;
+      padding: 8px 14px;
+      width: auto;
+      flex-shrink: 0;
+      border-radius: 999px;
+      margin: 0 4px;
+      background: var(--sfx-up-border-light, #f1f5f9);
+      font-size: 13px;
+    }
+    .field-item.active {
+      background: var(--sfx-up-primary-bg, #eff6ff);
+    }
+    .field-name {
+      overflow: visible;
+      text-overflow: unset;
+    }
+  }
 `;
 
 // ---------------------------------------------------------------------------
@@ -584,10 +683,13 @@ export const bulkOpBarStyles = css`
   }
 
 
-  /* Apply button — align with input field */
+  /* Apply button — align with the TOP of the input column so it sits
+     next to the control (not the bottom of multi-line textareas). The
+     op-bar row uses align-items: flex-start, so this sits at the top. */
   .btn-apply {
     height: 36px;
-    align-self: flex-end;
+    align-self: flex-start;
+    margin-top: 18px; /* tuned to line up with input top edge */
     padding: 0 16px;
     border-radius: 6px;
     border: none;
@@ -607,6 +709,26 @@ export const bulkOpBarStyles = css`
   .btn-apply:disabled {
     opacity: 0.45;
     cursor: not-allowed;
+  }
+
+  /* ---- Mobile: stack op-field rows vertically so the operation
+     dropdown, value input, and Apply button each get full width. ---- */
+  @media (max-width: 768px) {
+    .op-bar {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 10px;
+      padding: 12px 14px;
+    }
+    .op-field--operation {
+      width: 100%;
+    }
+    .btn-apply {
+      align-self: stretch;
+      margin-top: 0;
+      height: 38px;
+      font-size: 14px;
+    }
   }
 `;
 
@@ -682,6 +804,44 @@ export const bulkRowStyles = css`
     font-size: 11px;
     color: var(--sfx-up-error, #dc2626);
     margin-top: 2px;
+  }
+
+  /* ---- Mobile: stack row contents vertically. Top row has
+     checkbox + thumb + name, then size below name, and the field
+     editor spans the full row width underneath. ---- */
+  @media (max-width: 768px) {
+    .row {
+      flex-wrap: wrap;
+      padding: 10px 14px;
+      gap: 10px;
+    }
+    .row-name {
+      flex: 1;
+      width: auto;
+      min-width: 0;
+    }
+    .row-size {
+      width: auto;
+      font-size: 12px;
+    }
+    .row-field {
+      flex-basis: 100%;
+      margin-left: 32px;
+    }
+  }
+
+  @media (max-width: 440px) {
+    .row {
+      padding: 10px 12px;
+    }
+    .row-thumb,
+    .row-thumb-placeholder {
+      width: 44px;
+      height: 32px;
+    }
+    .row-field {
+      margin-left: 0;
+    }
   }
 
   ${checkboxStyles}

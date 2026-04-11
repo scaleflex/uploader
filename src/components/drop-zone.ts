@@ -43,8 +43,13 @@ export class SfxDropZone extends LitElement {
       .drop-zone:not(.compact) {
         padding: 32px 16px;
       }
+      .import-divider {
+        max-width: 100%;
+        margin-bottom: 14px;
+      }
       .sources-grid {
         max-width: 100%;
+        min-height: 0;
       }
       .src-pill {
         padding: 9px 14px;
@@ -52,6 +57,20 @@ export class SfxDropZone extends LitElement {
       }
       .title {
         font-size: 18px;
+      }
+    }
+
+    /* Galaxy Z Fold / Samsung S8+ / iPhone SE — extra narrow */
+    @media (max-width: 400px) {
+      .drop-zone:not(.compact) {
+        padding: 24px 12px;
+      }
+      .sources-grid {
+        gap: 6px;
+      }
+      .src-pill {
+        padding: 8px 12px;
+        font-size: 13px;
       }
     }
 

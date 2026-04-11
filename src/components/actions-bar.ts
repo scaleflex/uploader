@@ -17,6 +17,8 @@ export class SfxActionsBar extends LitElement {
         box-shadow: none;
         position: relative;
         animation: barSlideUp 0.3s cubic-bezier(0.34, 1.2, 0.64, 1) both;
+        container-type: inline-size;
+        container-name: actions-bar;
       }
 
       /* Full-column-width divider above the actions bar.
@@ -165,7 +167,11 @@ export class SfxActionsBar extends LitElement {
         }
       }
 
-      @media (max-width: 480px) {
+      /* Collapse the right group to icon-only when the actions bar
+         itself is narrow — not when the viewport is. @container beats
+         @media here because inline uploaders can live inside a column
+         narrower than the browser window. */
+      @container actions-bar (max-width: 560px) {
         .buttons-row {
           padding: 10px 12px;
           gap: 6px;
@@ -178,7 +184,6 @@ export class SfxActionsBar extends LitElement {
           height: 36px;
           font-size: 12px;
         }
-        /* Icon-only buttons in the right group + primary upload button */
         .right .btn-ghost,
         .right .btn-sec,
         .right .btn-retry,
@@ -192,6 +197,23 @@ export class SfxActionsBar extends LitElement {
           display: none;
         }
         .right svg {
+          width: 16px;
+          height: 16px;
+        }
+      }
+
+      /* Very narrow: also collapse the left Fill Metadata pill. */
+      @container actions-bar (max-width: 380px) {
+        .left .btn-sec {
+          padding: 0;
+          width: 36px;
+          min-width: 36px;
+          gap: 0;
+        }
+        .left .btn-label {
+          display: none;
+        }
+        .left svg {
           width: 16px;
           height: 16px;
         }
@@ -278,7 +300,7 @@ export class SfxActionsBar extends LitElement {
         <div class="left">
           ${this.showFillMetadata && this.uploadState === "idle"
             ? html`
-                <button class="btn-sec" @click=${this._fillMetadata}>
+                <button class="btn-sec" @click=${this._fillMetadata} aria-label="Fill Metadata">
                   <svg
                     viewBox="0 0 24 24"
                     fill="none"
@@ -295,7 +317,7 @@ export class SfxActionsBar extends LitElement {
                     <line x1="16" y1="17" x2="8" y2="17" />
                     <line x1="10" y1="9" x2="8" y2="9" />
                   </svg>
-                  Fill Metadata
+                  <span class="btn-label">Fill Metadata</span>
                 </button>
               `
             : nothing}

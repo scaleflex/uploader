@@ -1,9 +1,10 @@
 import { LitElement, html, css, nothing } from 'lit';
-import { property } from 'lit/decorators.js';
+import { property, state } from 'lit/decorators.js';
 import { formatFileSize } from '../utils/file-utils';
 import { buttonStyles, focusStyles } from './shared-styles';
 
-const MAX_THUMBS = 7;
+const MAX_THUMBS_DESKTOP = 7;
+const MAX_THUMBS_MOBILE = 4;
 
 export class SfxSuccessCard extends LitElement {
   static styles = [buttonStyles, focusStyles, css`
@@ -311,7 +312,16 @@ export class SfxSuccessCard extends LitElement {
       .icon { width: 48px; height: 48px; margin-bottom: 12px; }
       .icon svg { width: 24px; height: 24px; }
       .title { font-size: 17px; }
+      .subtitle { max-width: 90vw; padding: 0 4px; }
       .thumb, .thumb-more { width: 44px; height: 44px; }
+    }
+
+    /* Galaxy Z Fold / S8+ — extra narrow: tighten thumb grid so 5+
+       thumbs don't force horizontal overflow. */
+    @media (max-width: 380px) {
+      .thumbs { gap: 4px; }
+      .thumb, .thumb-more { width: 40px; height: 40px; }
+      .failed-list { max-width: calc(100vw - 24px); }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -325,6 +335,26 @@ export class SfxSuccessCard extends LitElement {
   @property({ type: Array }) thumbnails: string[] = [];
   @property({ type: String }) primaryLabel = 'Done';
   @property({ type: Array }) failedFiles: { id: string; name: string; error: string }[] = [];
+
+  @state() private _maxThumbs = MAX_THUMBS_DESKTOP;
+
+  connectedCallback() {
+    super.connectedCallback();
+    this._updateMaxThumbs();
+    window.addEventListener('resize', this._updateMaxThumbs);
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    window.removeEventListener('resize', this._updateMaxThumbs);
+  }
+
+  /** 7 thumbs on desktop, 4 on mobile — larger thumbnails overflow the
+      narrow viewport otherwise. Overflow count ("+N") updates to match. */
+  private _updateMaxThumbs = () => {
+    const next = window.innerWidth <= 768 ? MAX_THUMBS_MOBILE : MAX_THUMBS_DESKTOP;
+    if (next !== this._maxThumbs) this._maxThumbs = next;
+  };
 
   private _uploadMore() {
     this.dispatchEvent(
@@ -363,8 +393,8 @@ export class SfxSuccessCard extends LitElement {
   }
 
   render() {
-    const visibleThumbs = this.thumbnails.slice(0, MAX_THUMBS);
-    const overflowCount = this.thumbnails.length - MAX_THUMBS;
+    const visibleThumbs = this.thumbnails.slice(0, this._maxThumbs);
+    const overflowCount = this.thumbnails.length - this._maxThumbs;
     const hasSuccesses = this.fileCount > 0;
     const hasFailed = this.failedFiles.length > 0;
     const allFailed = hasFailed && !hasSuccesses;

@@ -2050,13 +2050,28 @@ export class SfxUploader extends LitElement {
       }
     }
 
-    /* --- Responsive: Landscape / short viewports --- */
+    /* --- Responsive: Landscape / short viewports (Nest Hub 1024×600,
+       iPad mini landscape, laptops with address bar visible etc) ---
+       Modal min-height 660 exceeds viewport; drop the min and expand the
+       max so content gets every pixel available. Trim header/body padding
+       so the available space is actually usable. */
     @media (max-height: 700px) {
       .modal-card {
         min-height: auto;
+        max-height: 96vh;
       }
       .inline {
         min-height: auto;
+      }
+      .header {
+        padding: 10px 20px;
+      }
+      .body {
+        padding: 16px 20px;
+      }
+      .preview-img-wrap {
+        width: 340px;
+        height: 240px;
       }
     }
   `;

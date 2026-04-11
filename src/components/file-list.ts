@@ -130,8 +130,8 @@ export class SfxFileList extends LitElement {
     }
 
     .drop-tile-rings {
-      width: clamp(48px, 30cqi, 140px);
-      height: clamp(48px, 30cqi, 140px);
+      width: clamp(48px, 24cqi, 100px);
+      height: clamp(48px, 24cqi, 100px);
       position: relative;
       display: flex;
       align-items: center;
@@ -160,8 +160,8 @@ export class SfxFileList extends LitElement {
     }
 
     .drop-tile-core {
-      width: clamp(28px, 16cqi, 76px);
-      height: clamp(28px, 16cqi, 76px);
+      width: clamp(32px, 14cqi, 52px);
+      height: clamp(32px, 14cqi, 52px);
       border-radius: 50%;
       background: var(--sfx-up-primary-bg, #eff6ff);
       color: var(--sfx-up-primary, #2563eb);
@@ -179,12 +179,12 @@ export class SfxFileList extends LitElement {
     }
 
     .drop-tile-core svg {
-      width: clamp(14px, 8cqi, 38px);
-      height: clamp(14px, 8cqi, 38px);
+      width: clamp(16px, 7cqi, 26px);
+      height: clamp(16px, 7cqi, 26px);
     }
 
     .drop-tile-text {
-      font-size: clamp(12px, 4cqi, 18px);
+      font-size: clamp(12px, 3.5cqi, 15px);
       font-weight: 500;
       color: var(--sfx-up-text-secondary, #475569);
       text-align: center;
@@ -380,27 +380,11 @@ export class SfxFileList extends LitElement {
       display: none;
     }
 
-    /* Single full-width drop-tile (mobile, 1-col grid): the rings + cloud
-       icon use cqi-based clamps that balloon when the tile is wide. Cap
-       them and enlarge the source buttons so they read on a big card.
-       Placed at the END of styles so they win the cascade vs the base
-       .drop-tile-rings/.drop-tile-core rules above. */
+    /* Single full-width drop-tile (mobile, 1-col grid): base clamp() rules
+       already size rings/core/svg smoothly (max caps are tight enough that
+       the full-width tile doesn't balloon). We only bump the source buttons
+       here so they're tappable on a large card. */
     @media (max-width: 440px) {
-      .drop-tile-rings {
-        width: 84px;
-        height: 84px;
-      }
-      .drop-tile-core {
-        width: 44px;
-        height: 44px;
-      }
-      .drop-tile-core svg {
-        width: 22px;
-        height: 22px;
-      }
-      .drop-tile-text {
-        font-size: 14px;
-      }
       .drop-tile-info {
         padding: 16px 12px 24px;
         gap: 6px;
