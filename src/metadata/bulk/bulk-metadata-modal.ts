@@ -30,6 +30,8 @@ export class SfxBulkMetadataModal extends LitElement {
   @state() private _selected: Set<string> = new Set();
   @state() private _sortAsc = true;
   @state() private _pendingOp: PendingOp | null = null;
+  @state() private _confirmVisible = false;
+  private _confirmResolve: ((ok: boolean) => void) | null = null;
 
   // Snapshot of original files for diff on save
   private _originalFiles: Map<string, UploadFile> = new Map();
@@ -45,7 +47,7 @@ export class SfxBulkMetadataModal extends LitElement {
     document.removeEventListener('keydown', this._onKeyDown);
   }
 
-  private _onKeyDown = (e: KeyboardEvent) => {
+  private _onKeyDown = async (e: KeyboardEvent) => {
     if (e.key !== 'Escape') return;
 
     // Don't close modal if user is typing in a form field — let the field
@@ -60,7 +62,7 @@ export class SfxBulkMetadataModal extends LitElement {
     );
     if (fromInput) return;
 
-    if (!this._confirmDiscardPending()) return;
+    if (!(await this._confirmDiscardPending())) return;
     this._emitClose();
   };
 
@@ -150,10 +152,25 @@ export class SfxBulkMetadataModal extends LitElement {
   }
 
   /** Returns true if the caller should proceed; false if the user chose to stay. */
-  private _confirmDiscardPending(): boolean {
-    if (!this._hasPendingValue) return true;
-    return confirm('You have unapplied bulk changes. Discard them?');
+  private _confirmDiscardPending(): Promise<boolean> {
+    if (!this._hasPendingValue) return Promise.resolve(true);
+    return new Promise<boolean>((resolve) => {
+      this._confirmResolve = resolve;
+      this._confirmVisible = true;
+    });
   }
+
+  private _onConfirmOk = () => {
+    this._confirmVisible = false;
+    this._confirmResolve?.(true);
+    this._confirmResolve = null;
+  };
+
+  private _onConfirmCancel = () => {
+    this._confirmVisible = false;
+    this._confirmResolve?.(false);
+    this._confirmResolve = null;
+  };
 
   private _onPendingChange = (
     e: CustomEvent<{ operation: BulkOperation; value: unknown }>,
@@ -166,8 +183,8 @@ export class SfxBulkMetadataModal extends LitElement {
     }
   };
 
-  private _onFieldSelect = (e: CustomEvent<{ fieldKey: string }>) => {
-    if (!this._confirmDiscardPending()) return;
+  private _onFieldSelect = async (e: CustomEvent<{ fieldKey: string }>) => {
+    if (!(await this._confirmDiscardPending())) return;
     this._pendingOp = null;
     this._activeFieldKey = e.detail.fieldKey;
   };
@@ -197,7 +214,10 @@ export class SfxBulkMetadataModal extends LitElement {
         language,
       );
 
-      const currentStaged = fileStaged?.get(field.key);
+      // Use staged value if available, otherwise fall back to original file meta
+      const currentStaged = fileStaged?.has(field.key)
+        ? fileStaged.get(field.key)
+        : this._originalFiles.get(fileId)?.meta?.[field.key] ?? null;
       const result = applyBulkOperation(
         operation,
         currentStaged,
@@ -245,8 +265,8 @@ export class SfxBulkMetadataModal extends LitElement {
   // Save / Cancel / Close
   // -----------------------------------------------------------------------
 
-  private _onSave = () => {
-    if (!this._confirmDiscardPending()) return;
+  private _onSave = async () => {
+    if (!(await this._confirmDiscardPending())) return;
 
     const changes: Array<{ fileId: string; meta: Record<string, unknown> }> = [];
 
@@ -280,13 +300,13 @@ export class SfxBulkMetadataModal extends LitElement {
     this._emitClose();
   };
 
-  private _onCancel = () => {
-    if (!this._confirmDiscardPending()) return;
+  private _onCancel = async () => {
+    if (!(await this._confirmDiscardPending())) return;
     this._emitClose();
   };
 
-  private _onClose = () => {
-    if (!this._confirmDiscardPending()) return;
+  private _onClose = async () => {
+    if (!(await this._confirmDiscardPending())) return;
     this._emitClose();
   };
 
@@ -429,6 +449,18 @@ export class SfxBulkMetadataModal extends LitElement {
             <button class="btn-ghost" @click=${this._onCancel}>Cancel</button>
             <button class="btn-primary" @click=${this._onSave}>Save</button>
           </div>
+
+          ${this._confirmVisible ? html`
+            <div class="fm-confirm-overlay" @click=${this._onConfirmCancel}>
+              <div class="fm-confirm" @click=${(e: Event) => e.stopPropagation()}>
+                <p class="fm-confirm-text">You have unapplied bulk changes. Discard them?</p>
+                <div class="fm-confirm-actions">
+                  <button class="btn-ghost" @click=${this._onConfirmCancel}>Cancel</button>
+                  <button class="btn-primary" @click=${this._onConfirmOk}>Discard</button>
+                </div>
+              </div>
+            </div>
+          ` : nothing}
         </div>
       </div>
     `;

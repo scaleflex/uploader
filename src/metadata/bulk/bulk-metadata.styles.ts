@@ -75,6 +75,40 @@ export const bulkModalStyles = css`
     -webkit-backdrop-filter: blur(6px);
   }
 
+  /* ---- Confirm discard dialog ---- */
+  .fm-confirm-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(17, 24, 39, 0.35);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+    border-radius: 14px;
+  }
+  .fm-confirm {
+    background: var(--sfx-up-bg, #fff);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+    padding: 24px;
+    max-width: 340px;
+    width: 100%;
+  }
+  .fm-confirm-text {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--sfx-up-text, #1e293b);
+    margin: 0 0 20px;
+    line-height: 1.5;
+  }
+  .fm-confirm-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
   .fm-modal {
     width: 980px;
     max-width: calc(100vw - 40px);

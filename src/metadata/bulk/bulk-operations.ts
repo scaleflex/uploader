@@ -43,8 +43,6 @@ export function getAvailableOperations(
   if (ARRAY_TYPES.has(fieldType)) {
     return [
       { key: 'SET', label: 'Set' },
-      { key: 'ADD', label: 'Add to' },
-      { key: 'DELETE', label: 'Remove from' },
     ];
   }
   if (TEXT_TYPES.has(fieldType)) {
@@ -56,7 +54,7 @@ export function getAvailableOperations(
   }
   // Scalars: numeric / decimal2 / date / select-one / boolean / geopoint
   return [
-    { key: 'SET', label: 'Replace' },
+    { key: 'SET', label: 'Set' },
     { key: 'DELETE', label: 'Clear' },
   ];
 }
@@ -147,8 +145,15 @@ export function applyBulkOperation(
         );
       }
 
-      // Non-arrays — Clear always wipes the value regardless of any input
-      if (isText) return '';
+      // Text — if operationValue provided, remove that substring; otherwise clear all
+      if (isText) {
+        const toRemove = typeof operationValue === 'string' ? operationValue : '';
+        if (toRemove) {
+          const current = typeof currentValue === 'string' ? currentValue : '';
+          return current.replaceAll(toRemove, '').replace(/\s{2,}/g, ' ').trim();
+        }
+        return '';
+      }
       if (fieldType === 'geopoint') return { latitude: '', longitude: '' };
       return null;
     }
