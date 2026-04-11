@@ -379,6 +379,55 @@ export class SfxFileList extends LitElement {
     input[type="file"] {
       display: none;
     }
+
+    /* Single full-width drop-tile (mobile, 1-col grid): the rings + cloud
+       icon use cqi-based clamps that balloon when the tile is wide. Cap
+       them and enlarge the source buttons so they read on a big card.
+       Placed at the END of styles so they win the cascade vs the base
+       .drop-tile-rings/.drop-tile-core rules above. */
+    @media (max-width: 440px) {
+      .drop-tile-rings {
+        width: 84px;
+        height: 84px;
+      }
+      .drop-tile-core {
+        width: 44px;
+        height: 44px;
+      }
+      .drop-tile-core svg {
+        width: 22px;
+        height: 22px;
+      }
+      .drop-tile-text {
+        font-size: 14px;
+      }
+      .drop-tile-info {
+        padding: 16px 12px 24px;
+        gap: 6px;
+      }
+      .drop-tile-src,
+      .drop-tile-more {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+      }
+      .drop-tile-src svg {
+        width: 22px;
+        height: 22px;
+      }
+      .drop-tile-src .brand-ico {
+        width: 32px;
+        height: 32px;
+      }
+      .drop-tile-src .brand-ico svg {
+        width: 24px;
+        height: 24px;
+      }
+      .drop-tile-sources {
+        gap: 10px;
+        margin-top: 12px;
+      }
+    }
   `;
 
   @property({ attribute: false }) files: UploadFile[] = [];

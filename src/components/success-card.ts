@@ -274,10 +274,43 @@ export class SfxSuccessCard extends LitElement {
       100% { transform: scale(1); }
     }
 
+    @media (max-width: 768px) {
+      :host {
+        padding: 16px 12px;
+        align-items: flex-start;
+      }
+      .card {
+        width: 100%;
+        max-width: 100%;
+        padding-top: 8px;
+      }
+      .icon { width: 56px; height: 56px; margin-bottom: 14px; }
+      .icon svg { width: 26px; height: 26px; }
+      .title { font-size: 18px; }
+      .subtitle { font-size: 13px; max-width: 100%; padding: 0 8px; }
+      .thumb, .thumb-more { width: 48px; height: 48px; }
+      .failed-list { max-width: 100%; }
+
+      /* Stack action buttons two-up on mobile so labels don't wrap. */
+      .actions {
+        width: 100%;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+        padding: 0 8px;
+        box-sizing: border-box;
+      }
+      .actions > button {
+        flex: 1 1 calc(50% - 8px);
+        min-width: 0;
+        white-space: nowrap;
+      }
+    }
+
     @media (max-width: 480px) {
       .icon { width: 48px; height: 48px; margin-bottom: 12px; }
       .icon svg { width: 24px; height: 24px; }
-      .title { font-size: 18px; }
+      .title { font-size: 17px; }
       .thumb, .thumb-more { width: 44px; height: 44px; }
     }
 

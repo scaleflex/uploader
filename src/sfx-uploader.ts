@@ -1980,22 +1980,43 @@ export class SfxUploader extends LitElement {
         max-width: 92vw;
         max-height: 80vh;
       }
-      /* Make sure nav arrows + close toolbar stay above the image and
-         are tappable (40×40 minimum). */
-      .fs-nav {
+      /* Brighter, larger, tappable nav arrows + close toolbar on mobile.
+         Default styling is too subtle (12% white) and gets lost over the
+         dark overlay. */
+      .fs-toolbar {
         z-index: 100002;
+        top: 16px;
+      }
+      .fs-btn {
         width: 44px;
         height: 44px;
-        background: rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+      }
+      .fs-btn svg {
+        width: 22px;
+        height: 22px;
+      }
+      .fs-nav {
+        z-index: 100002;
+        width: 48px;
+        height: 48px;
+        background: rgba(255, 255, 255, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+      }
+      .fs-nav:disabled {
+        opacity: 0.18;
+        pointer-events: none;
+      }
+      .fs-nav svg {
+        width: 24px;
+        height: 24px;
       }
       .fs-nav.prev {
         left: 12px;
       }
       .fs-nav.next {
         right: 12px;
-      }
-      .fs-toolbar {
-        z-index: 100002;
       }
     }
 
@@ -3725,7 +3746,10 @@ export class SfxUploader extends LitElement {
   /** Fullscreen image/video overlay. Rendered at the top level (sibling
       of modal-backdrop) so it never inherits a containing block from the
       modal-card on mobile, where modal-card is position:fixed itself and
-      its overflow:hidden was clipping the overlay. */
+      its overflow:hidden was clipping the overlay. The toolbar + nav
+      buttons are rendered as SIBLINGS of the overlay (not children) so
+      their position:fixed always resolves to the viewport, even if some
+      ancestor of fs-overlay establishes a containing block on first paint. */
   private _renderFsOverlay() {
     if (!this._fullscreenPreviewUrl && !this._fullscreenVideoFile) return nothing;
     const fsFiles = [...this._store.getState().files.values()].filter(
@@ -3744,26 +3768,26 @@ export class SfxUploader extends LitElement {
         @touchmove=${this._onFsTouchMove}
         @touchend=${this._onFsPanEnd}
       >
-        <div class="fs-toolbar" @click=${(e: Event) => e.stopPropagation()}>
-          <button class="fs-btn" @click=${this._onFsToggleZoom} title="${this._fullscreenZoomed ? "Zoom out" : "Zoom in"}">
-            ${this._fullscreenZoomed
-              ? html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>`
-              : html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>`}
-          </button>
-          <button class="fs-btn" @click=${this._onFsClose} title="Close">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </button>
-        </div>
         ${this._fullscreenVideoFile
           ? html`<video class="fs-img" src=${this._getVideoBlobUrl(this._fullscreenVideoFile)} controls playsinline draggable="false" @click=${(e: Event) => e.stopPropagation()}></video>`
           : html`<img class="fs-img" src=${this._fullscreenPreviewUrl} alt="" style=${this._fullscreenZoomed ? `transform: scale(2) translate(${this._fsPanX}px, ${this._fsPanY}px)` : ""} draggable="false" />`}
-        <button class="fs-nav prev" ?disabled=${fsIdx <= 0} @click=${(e: Event) => { e.stopPropagation(); this._navigateFs(-1); }}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </div>
+      <div class="fs-toolbar" @click=${(e: Event) => e.stopPropagation()}>
+        <button class="fs-btn" @click=${this._onFsToggleZoom} title="${this._fullscreenZoomed ? "Zoom out" : "Zoom in"}">
+          ${this._fullscreenZoomed
+            ? html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>`
+            : html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>`}
         </button>
-        <button class="fs-nav next" ?disabled=${fsIdx >= fsFiles.length - 1} @click=${(e: Event) => { e.stopPropagation(); this._navigateFs(1); }}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 6 15 12 9 18"/></svg>
+        <button class="fs-btn" @click=${this._onFsClose} title="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
+      <button class="fs-nav prev" ?disabled=${fsIdx <= 0} @click=${(e: Event) => { e.stopPropagation(); this._navigateFs(-1); }}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <button class="fs-nav next" ?disabled=${fsIdx >= fsFiles.length - 1} @click=${(e: Event) => { e.stopPropagation(); this._navigateFs(1); }}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 6 15 12 9 18"/></svg>
+      </button>
     `;
   }
 
@@ -4469,6 +4493,12 @@ export class SfxUploader extends LitElement {
                             ? previewFile.file
                             : null;
                         this._fullscreenZoomed = false;
+                        // Force a second paint — on mobile WebKit the
+                        // first paint of the fs-overlay sometimes skips
+                        // the fixed-positioned toolbar/nav buttons until
+                        // the user interacts. requestAnimationFrame +
+                        // requestUpdate fixes it.
+                        requestAnimationFrame(() => this.requestUpdate());
                       }}
                       title="Fullscreen"
                     >
