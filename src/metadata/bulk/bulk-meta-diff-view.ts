@@ -40,17 +40,12 @@ export class SfxBulkMetaDiffView extends LitElement {
   private _renderScalarDiff(diff: FieldDiff & { kind: 'scalar' }) {
     const srText = `Will change from ${diff.oldEmpty ? 'empty' : diff.oldDisplay} to ${diff.newEmpty ? 'empty' : diff.newDisplay}`;
 
+    // Show only the resulting value (no strikethrough on old). When the
+    // result is empty, render an empty cell — no em-dash, no struck-through
+    // old value. The screen-reader text still announces the change.
     return html`
       <div class="diff-wrap diff-scalar-text" aria-label="Bulk operation preview">
         <span class="sr-only">${srText}</span>
-        ${!diff.oldEmpty
-          ? html`
-              <span class="diff-old" aria-hidden="true"><s>${diff.oldDisplay}</s></span>
-              ${!diff.newEmpty
-                ? html`<span class="diff-arrow" aria-hidden="true">\u2192</span>`
-                : nothing}
-            `
-          : nothing}
         ${!diff.newEmpty
           ? html`<span class="diff-new" aria-hidden="true">${diff.newDisplay}</span>`
           : nothing}

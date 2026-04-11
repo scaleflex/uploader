@@ -117,6 +117,26 @@ export class SfxBulkMetaOpBar extends LitElement {
     e.stopPropagation();
   };
 
+  /**
+   * Enter inside the value input acts as Apply. Skipped for textarea
+   * (Enter inserts a newline there) and when there's no value yet so
+   * the user doesn't accidentally submit an empty op.
+   */
+  private _onValueKeydown = (e: KeyboardEvent) => {
+    if (e.key !== 'Enter') return;
+    if (this.field?.type === 'textarea') return;
+    const target = e.composedPath().find((el): el is HTMLElement => el instanceof HTMLElement);
+    if (target?.tagName === 'TEXTAREA') return;
+    e.preventDefault();
+    // Pull the latest value from the input before applying — change events
+    // can lag a microtask behind keydown.
+    const input = e.composedPath().find((el): el is HTMLInputElement => el instanceof HTMLInputElement);
+    if (input && input.value !== undefined) {
+      this._value = input.value;
+    }
+    this._onApply();
+  };
+
   private _onApply() {
     if (this._isApplyDisabled) return;
 
@@ -138,12 +158,17 @@ export class SfxBulkMetaOpBar extends LitElement {
 
   private get _isApplyDisabled(): boolean {
     if (this.selectedCount === 0) return true;
-    // For DELETE on non-array types ("Clear"), allow empty value — it wipes
-    // the field regardless. For array DELETE ("Remove from"), require a
-    // non-empty value since removing nothing is a no-op.
+    // DELETE/Clear semantics:
+    //   - Arrays ("Remove from"): require entries to remove.
+    //   - Text fields: require a substring to remove (otherwise the user
+    //     accidentally wipes the whole field).
+    //   - Scalars (number / date / select / boolean / geopoint): allow
+    //     empty — Clear simply nulls the value, there is nothing to type.
     if (this._operation === 'DELETE') {
       const arrayTypes = new Set(['multi-select', 'tags', 'integer-list']);
+      const textTypes = new Set(['text', 'textarea', 'attachment-uri']);
       if (arrayTypes.has(this.field?.type)) return isEmpty(this._value);
+      if (textTypes.has(this.field?.type)) return isEmpty(this._value);
       return false;
     }
     return isEmpty(this._value);
@@ -203,6 +228,7 @@ export class SfxBulkMetaOpBar extends LitElement {
             @field-blur=${this._onFieldBlur}
             @field-change=${this._onFieldChange}
             @field-escape=${this._onFieldEscape}
+            @keydown=${this._onValueKeydown}
           >
             <sfx-metadata-field-edit
               .field=${this.field}

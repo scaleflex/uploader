@@ -49,7 +49,7 @@ export function getAvailableOperations(
     return [
       { key: 'SET', label: 'Set' },
       { key: 'ADD', label: 'Append' },
-      { key: 'DELETE', label: 'Clear' },
+      { key: 'DELETE', label: 'Remove' },
     ];
   }
   // Scalars: numeric / decimal2 / date / select-one / boolean / geopoint

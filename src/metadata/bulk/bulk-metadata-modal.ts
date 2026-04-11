@@ -197,6 +197,8 @@ export class SfxBulkMetadataModal extends LitElement {
 
     const { operation, value: frontendValue } = e.detail;
     const language = this.config?.language;
+    const lang = language ?? 'en';
+    const isRegional = !!field.regional_variants_group_uuid;
     const updates: Array<[string, string, unknown]> = [];
 
     for (const fileId of this._selected) {
@@ -218,12 +220,34 @@ export class SfxBulkMetadataModal extends LitElement {
       const currentStaged = fileStaged?.has(field.key)
         ? fileStaged.get(field.key)
         : this._originalFiles.get(fileId)?.meta?.[field.key] ?? null;
-      const result = applyBulkOperation(
+
+      // Regional-variant fields wrap their values as { [lang]: value }.
+      // applyBulkOperation works on the inner primitive — string concat,
+      // substring removal, etc. — so we unwrap before calling and rewrap
+      // after. Without this, ADD/DELETE on text fields would receive an
+      // object and silently fall back to the empty branch.
+      const innerCurrent = isRegional && currentStaged && typeof currentStaged === 'object'
+        ? (currentStaged as Record<string, unknown>)[lang]
+        : currentStaged;
+      const innerBackend = isRegional && backendValue && typeof backendValue === 'object'
+        ? (backendValue as Record<string, unknown>)[lang]
+        : backendValue;
+
+      const innerResult = applyBulkOperation(
         operation,
-        currentStaged,
-        backendValue,
+        innerCurrent,
+        innerBackend,
         field.type,
       );
+
+      const result = isRegional
+        ? {
+            ...((currentStaged && typeof currentStaged === 'object'
+              ? (currentStaged as Record<string, unknown>)
+              : {}) as Record<string, unknown>),
+            [lang]: innerResult,
+          }
+        : innerResult;
 
       updates.push([fileId, field.key, result]);
     }

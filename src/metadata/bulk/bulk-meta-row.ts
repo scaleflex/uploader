@@ -127,11 +127,9 @@ export class SfxBulkMetaRow extends LitElement {
 
   render() {
     const f = this.file;
-    const preview = this._computePreview();
-    const showPreview = preview !== null;
 
     return html`
-      <div class="row ${showPreview ? 'row--changed' : ''}">
+      <div class="row">
         <div class="row-check">
           <input
             type="checkbox"
@@ -152,24 +150,13 @@ export class SfxBulkMetaRow extends LitElement {
           class="row-field"
           @field-blur=${this._onFieldBlur}
         >
-          ${showPreview
-            ? html`
-                <sfx-bulk-meta-diff-view
-                  .field=${this.field}
-                  .oldValue=${this.value}
-                  .newValue=${preview}
-                  .config=${this.config}
-                ></sfx-bulk-meta-diff-view>
-              `
-            : html`
-                <div class="row-field-edit">
-                  <sfx-metadata-field-edit
-                    .field=${this.field}
-                    .value=${mapValueFromBackend(this.field, this.value, this.config?.language)}
-                    .autocomplete=${this.autocomplete}
-                  ></sfx-metadata-field-edit>
-                </div>
-              `}
+          <div class="row-field-edit">
+            <sfx-metadata-field-edit
+              .field=${this.field}
+              .value=${mapValueFromBackend(this.field, this.value, this.config?.language)}
+              .autocomplete=${this.autocomplete}
+            ></sfx-metadata-field-edit>
+          </div>
           ${this._error
             ? html`<div class="row-error" role="alert">${this._error}</div>`
             : nothing}
