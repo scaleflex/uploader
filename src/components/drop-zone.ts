@@ -1,10 +1,10 @@
-import { LitElement, html, css, nothing, render as litRender } from 'lit';
-import { property, state, query } from 'lit/decorators.js';
-import { unsafeSVG } from 'lit/directives/unsafe-svg.js';
-import { unsafeHTML } from 'lit/directives/unsafe-html.js';
-import { svg as svgTag } from 'lit';
-import type { SourceDef } from './source-pills';
-import { getPortalTarget } from '../utils/portal-target';
+import { LitElement, html, css, nothing, render as litRender } from "lit";
+import { property, state, query } from "lit/decorators.js";
+import { unsafeSVG } from "lit/directives/unsafe-svg.js";
+import { unsafeHTML } from "lit/directives/unsafe-html.js";
+import { svg as svgTag } from "lit";
+import type { SourceDef } from "./source-pills";
+import { getPortalTarget } from "../utils/portal-target";
 
 /** Number of source pills shown directly; the rest go into "More" dropdown. */
 const VISIBLE_PILLS = 3;
@@ -106,21 +106,12 @@ export class SfxDropZone extends LitElement {
       }
     }
 
-    /* --- Radial glow --- */
+    /* Legacy radial glow element — kept hidden for back-compat.
+       The real glow is now drawn as a pseudo-element of .rings so
+       it is always centered on the cloud icon regardless of the
+       drop-zone's size (previously .dz-glow was pinned to top: 20px
+       which misaligned when the drop-zone stretched vertically). */
     .dz-glow {
-      position: absolute;
-      width: 260px;
-      height: 260px;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: radial-gradient(circle at center, rgba(37, 99, 235, 0.04) 0%, rgba(37, 99, 235, 0.02) 40%, transparent 70%);
-      border-radius: 50%;
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    .compact .dz-glow {
       display: none;
     }
 
@@ -134,6 +125,24 @@ export class SfxDropZone extends LitElement {
       justify-content: center;
       margin-bottom: 24px;
       flex-shrink: 0;
+    }
+
+    .drop-zone:not(.compact) .rings::before {
+      content: "";
+      position: absolute;
+      width: 260px;
+      height: 260px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(
+        circle at center,
+        rgba(37, 99, 235, 0.04) 0%,
+        rgba(37, 99, 235, 0.02) 40%,
+        transparent 70%
+      );
+      border-radius: 50%;
+      pointer-events: none;
     }
 
     .ring {
@@ -188,7 +197,9 @@ export class SfxDropZone extends LitElement {
       font-weight: 700;
       color: var(--sfx-up-text, #1e293b);
       margin-bottom: 6px;
-      transition: font-size 0.3s, margin 0.3s;
+      transition:
+        font-size 0.3s,
+        margin 0.3s;
     }
 
     .title span {
@@ -228,7 +239,7 @@ export class SfxDropZone extends LitElement {
 
     .import-divider::before,
     .import-divider::after {
-      content: '';
+      content: "";
       flex: 1;
       height: 1px;
       background: var(--sfx-up-border, #e2e8f0);
@@ -524,7 +535,9 @@ export class SfxDropZone extends LitElement {
       position: fixed;
       background: var(--sfx-up-bg, #fff);
       border-radius: 12px;
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.14), 0 2px 8px rgba(0, 0, 0, 0.06);
+      box-shadow:
+        0 12px 40px rgba(0, 0, 0, 0.14),
+        0 2px 8px rgba(0, 0, 0, 0.06);
       border: 1px solid var(--sfx-up-border, #e8edf5);
       padding: 6px;
       min-width: 210px;
@@ -534,7 +547,10 @@ export class SfxDropZone extends LitElement {
       opacity: 0;
       visibility: hidden;
       pointer-events: none;
-      transition: opacity 0.18s ease, visibility 0.18s ease, transform 0.18s ease;
+      transition:
+        opacity 0.18s ease,
+        visibility 0.18s ease,
+        transform 0.18s ease;
     }
 
     .more-dropdown.above {
@@ -728,7 +744,9 @@ export class SfxDropZone extends LitElement {
       white-space: nowrap;
       opacity: 0;
       visibility: hidden;
-      transition: opacity 0.15s, visibility 0.15s;
+      transition:
+        opacity 0.15s,
+        visibility 0.15s;
       pointer-events: none;
       z-index: 50;
       font-family: inherit;
@@ -756,7 +774,7 @@ export class SfxDropZone extends LitElement {
     }
 
     /* --- Hidden input --- */
-    input[type='file'] {
+    input[type="file"] {
       display: none;
     }
 
@@ -791,10 +809,21 @@ export class SfxDropZone extends LitElement {
       .drop-zone:not(.compact) {
         padding: 32px 20px;
       }
-      .title { font-size: 16px; }
-      .rings { width: 90px; height: 90px; }
-      .core { width: 44px; height: 44px; }
-      .core svg { width: 20px; height: 20px; }
+      .title {
+        font-size: 16px;
+      }
+      .rings {
+        width: 90px;
+        height: 90px;
+      }
+      .core {
+        width: 44px;
+        height: 44px;
+      }
+      .core svg {
+        width: 20px;
+        height: 20px;
+      }
     }
 
     /* Inline mode on a TRULY wide host (e.g. full-screen) — frame the empty
@@ -806,7 +835,8 @@ export class SfxDropZone extends LitElement {
        inline) are all narrower and stay untouched. Modal mode is always
        excluded via the [mode="inline"] selector. */
     :host([mode="inline"][data-wide]) .drop-zone:not(.compact) {
-      flex: 0 1 720px;
+      flex: 1 1 auto;
+      width: 100%;
       max-width: 100%;
       box-sizing: border-box;
       align-self: center;
@@ -851,13 +881,16 @@ export class SfxDropZone extends LitElement {
   `;
 
   @property({ type: Boolean, reflect: true }) compact = false;
-  @property({ type: Boolean, attribute: 'external-drag-over' }) externalDragOver = false;
-  @property({ type: String }) accept = '';
+  @property({ type: Boolean, attribute: "external-drag-over" })
+  externalDragOver = false;
+  @property({ type: String }) accept = "";
   @property({ type: Array }) sources: SourceDef[] = [];
-  @property({ type: String, attribute: 'sources-layout' }) sourcesLayout: 'pills' | 'cards' = 'pills';
+  @property({ type: String, attribute: "sources-layout" }) sourcesLayout:
+    | "pills"
+    | "cards" = "pills";
   /** Set by sfx-uploader to scope the wide-host frame to inline mode only.
    *  Modal mode is excluded (no dashed card frame even on big modals). */
-  @property({ type: String, reflect: true }) mode: 'modal' | 'inline' = 'modal';
+  @property({ type: String, reflect: true }) mode: "modal" | "inline" = "modal";
 
   /** Threshold (px) at which the host is considered "wide enough" for the
    *  inline-fullscreen bordered-card layout. Tuned to fire on the actual
@@ -870,7 +903,7 @@ export class SfxDropZone extends LitElement {
   @state() private _moreOpen = false;
   @state() private _visiblePills = VISIBLE_PILLS;
 
-  @query('.ripple') private _rippleEl!: HTMLElement;
+  @query(".ripple") private _rippleEl!: HTMLElement;
   @query('input[type="file"]') fileInput!: HTMLInputElement;
 
   private _dragCounter = 0;
@@ -919,21 +952,21 @@ export class SfxDropZone extends LitElement {
 
   private _onClick = (e: MouseEvent) => {
     // Ripple effect
-    const zone = this.shadowRoot!.querySelector('.drop-zone') as HTMLElement;
+    const zone = this.shadowRoot!.querySelector(".drop-zone") as HTMLElement;
     if (zone && this._rippleEl) {
       const rect = zone.getBoundingClientRect();
       this._rippleEl.style.left = `${e.clientX - rect.left}px`;
       this._rippleEl.style.top = `${e.clientY - rect.top}px`;
-      this._rippleEl.classList.remove('go');
+      this._rippleEl.classList.remove("go");
       // Force reflow
       void this._rippleEl.offsetWidth;
-      this._rippleEl.classList.add('go');
+      this._rippleEl.classList.add("go");
     }
     this.browse();
   };
 
   private _onKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'Enter' || e.key === ' ') {
+    if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
       this.browse();
     }
@@ -946,7 +979,7 @@ export class SfxDropZone extends LitElement {
       this._emitFiles(files);
     }
     // Reset so the same file can be re-selected
-    input.value = '';
+    input.value = "";
   };
 
   // --- Paste ---
@@ -960,7 +993,7 @@ export class SfxDropZone extends LitElement {
 
     const files: File[] = [];
     for (const item of items) {
-      if (item.kind === 'file') {
+      if (item.kind === "file") {
         const file = item.getAsFile();
         if (file) files.push(file);
       }
@@ -973,7 +1006,7 @@ export class SfxDropZone extends LitElement {
 
   private _onSourceIconClick(source: SourceDef) {
     this.dispatchEvent(
-      new CustomEvent('source-click', {
+      new CustomEvent("source-click", {
         detail: { source: source.id },
         bubbles: true,
         composed: true,
@@ -983,7 +1016,7 @@ export class SfxDropZone extends LitElement {
 
   private _emitFiles(files: File[]) {
     this.dispatchEvent(
-      new CustomEvent('files-selected', {
+      new CustomEvent("files-selected", {
         detail: { files },
         bubbles: true,
         composed: true,
@@ -1003,8 +1036,8 @@ export class SfxDropZone extends LitElement {
     if (this._moreOpen) {
       const overflowSources = this.sources.slice(this._visiblePills);
       if (!this._portalContainer) {
-        this._portalContainer = document.createElement('div');
-        this._portalContainer.setAttribute('data-sfx-more-dropdown', '');
+        this._portalContainer = document.createElement("div");
+        this._portalContainer.setAttribute("data-sfx-more-dropdown", "");
         getPortalTarget(this).appendChild(this._portalContainer);
         this._injectDropdownStyles();
       }
@@ -1012,13 +1045,23 @@ export class SfxDropZone extends LitElement {
         html`<div class="sfx-more-dropdown open">
           ${overflowSources.map(
             (s) => html`
-              <button class="sfx-more-item" @click=${(e: MouseEvent) => this._onMoreItemClick(s, e)}>
+              <button
+                class="sfx-more-item"
+                @click=${(e: MouseEvent) => this._onMoreItemClick(s, e)}
+              >
                 <div class="sfx-more-item-ico">
                   ${s.brandHtml
                     ? unsafeHTML(s.brandHtml)
                     : s.iconColor
-                      ? html`<svg viewBox="0 0 24 24" style="color:${s.iconColor}">${unsafeSVG(s.icon)}</svg>`
-                      : svgTag`<svg viewBox="0 0 24 24">${unsafeSVG(s.icon)}</svg>`}
+                    ? html`<svg
+                        viewBox="0 0 24 24"
+                        style="color:${s.iconColor}"
+                      >
+                        ${unsafeSVG(s.icon)}
+                      </svg>`
+                    : svgTag`<svg viewBox="0 0 24 24">${unsafeSVG(
+                        s.icon,
+                      )}</svg>`}
                 </div>
                 ${s.label}
               </button>
@@ -1036,7 +1079,10 @@ export class SfxDropZone extends LitElement {
   }
 
   private _injectDropdownStyles() {
-    const root = this._portalContainer?.getRootNode() as Document | ShadowRoot | undefined;
+    const root = this._portalContainer?.getRootNode() as
+      | Document
+      | ShadowRoot
+      | undefined;
     if (!root) return;
     if (root.adoptedStyleSheets.includes(moreDropdownSheet)) return;
     root.adoptedStyleSheets = [...root.adoptedStyleSheets, moreDropdownSheet];
@@ -1044,8 +1090,12 @@ export class SfxDropZone extends LitElement {
 
   /** Position the fixed dropdown, choosing above or below based on available space. */
   private _positionDropdown() {
-    const pill = this.shadowRoot?.querySelector('.more-wrap > button') as HTMLElement;
-    const dropdown = this._portalContainer?.querySelector('.sfx-more-dropdown') as HTMLElement;
+    const pill = this.shadowRoot?.querySelector(
+      ".more-wrap > button",
+    ) as HTMLElement;
+    const dropdown = this._portalContainer?.querySelector(
+      ".sfx-more-dropdown",
+    ) as HTMLElement;
     if (!pill || !dropdown) return;
 
     const pillRect = pill.getBoundingClientRect();
@@ -1089,7 +1139,7 @@ export class SfxDropZone extends LitElement {
   };
 
   private _onDocKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'Escape' && this._moreOpen) {
+    if (e.key === "Escape" && this._moreOpen) {
       this._moreOpen = false;
       this._updateDropdownPortal();
     }
@@ -1107,7 +1157,7 @@ export class SfxDropZone extends LitElement {
 
   private _updateVisiblePills() {
     const w = window.innerWidth;
-    if (this.sourcesLayout === 'cards') {
+    if (this.sourcesLayout === "cards") {
       if (w <= 480) {
         this._visiblePills = 2;
       } else if (w <= 768) {
@@ -1128,22 +1178,23 @@ export class SfxDropZone extends LitElement {
 
   connectedCallback() {
     super.connectedCallback();
-    document.addEventListener('paste', this._onPaste);
-    document.addEventListener('click', this._onDocClick);
-    document.addEventListener('keydown', this._onDocKeyDown);
-    window.addEventListener('scroll', this._onScrollOrResize, true);
-    window.addEventListener('resize', this._onScrollOrResize);
+    document.addEventListener("paste", this._onPaste);
+    document.addEventListener("click", this._onDocClick);
+    document.addEventListener("keydown", this._onDocKeyDown);
+    window.addEventListener("scroll", this._onScrollOrResize, true);
+    window.addEventListener("resize", this._onScrollOrResize);
     this._updateVisiblePills();
     // Watch own width so the inline-fullscreen "wide" frame turns on/off
     // automatically as the host resizes.
-    if (typeof ResizeObserver !== 'undefined') {
+    if (typeof ResizeObserver !== "undefined") {
       this._resizeObserver = new ResizeObserver((entries) => {
-        const width = entries[0]?.contentRect.width ?? this.getBoundingClientRect().width;
+        const width =
+          entries[0]?.contentRect.width ?? this.getBoundingClientRect().width;
         const isWide = width >= SfxDropZone._WIDE_THRESHOLD_PX;
-        if (isWide && !this.hasAttribute('data-wide')) {
-          this.setAttribute('data-wide', '');
-        } else if (!isWide && this.hasAttribute('data-wide')) {
-          this.removeAttribute('data-wide');
+        if (isWide && !this.hasAttribute("data-wide")) {
+          this.setAttribute("data-wide", "");
+        } else if (!isWide && this.hasAttribute("data-wide")) {
+          this.removeAttribute("data-wide");
         }
       });
       this._resizeObserver.observe(this);
@@ -1151,18 +1202,18 @@ export class SfxDropZone extends LitElement {
   }
 
   updated(changed: Map<string, unknown>) {
-    if (changed.has('sourcesLayout')) {
+    if (changed.has("sourcesLayout")) {
       this._updateVisiblePills();
     }
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
-    document.removeEventListener('paste', this._onPaste);
-    document.removeEventListener('click', this._onDocClick);
-    document.removeEventListener('keydown', this._onDocKeyDown);
-    window.removeEventListener('scroll', this._onScrollOrResize, true);
-    window.removeEventListener('resize', this._onScrollOrResize);
+    document.removeEventListener("paste", this._onPaste);
+    document.removeEventListener("click", this._onDocClick);
+    document.removeEventListener("keydown", this._onDocKeyDown);
+    window.removeEventListener("scroll", this._onScrollOrResize, true);
+    window.removeEventListener("resize", this._onScrollOrResize);
     if (this._resizeTimer) clearTimeout(this._resizeTimer);
     if (this._resizeObserver) {
       this._resizeObserver.disconnect();
@@ -1186,8 +1237,13 @@ export class SfxDropZone extends LitElement {
       >
         ${s.brandHtml
           ? unsafeHTML(s.brandHtml)
-          : html`<span class="pill-ico" style=${s.iconColor ? `color:${s.iconColor}` : ''}>
-              ${svgTag`<svg viewBox="0 0 24 24" class=${s.fillIcon ? 'fill-icon' : ''}>${unsafeSVG(s.icon)}</svg>`}
+          : html`<span
+              class="pill-ico"
+              style=${s.iconColor ? `color:${s.iconColor}` : ""}
+            >
+              ${svgTag`<svg viewBox="0 0 24 24" class=${
+                s.fillIcon ? "fill-icon" : ""
+              }>${unsafeSVG(s.icon)}</svg>`}
             </span>`}
         ${s.label}
       </button>
@@ -1206,8 +1262,13 @@ export class SfxDropZone extends LitElement {
       >
         ${s.brandHtml
           ? html`<span class="card-ico">${unsafeHTML(s.brandHtml)}</span>`
-          : html`<span class="card-ico" style=${s.iconColor ? `color:${s.iconColor}` : ''}>
-              ${svgTag`<svg viewBox="0 0 24 24" class=${s.fillIcon ? 'fill-icon' : ''}>${unsafeSVG(s.icon)}</svg>`}
+          : html`<span
+              class="card-ico"
+              style=${s.iconColor ? `color:${s.iconColor}` : ""}
+            >
+              ${svgTag`<svg viewBox="0 0 24 24" class=${
+                s.fillIcon ? "fill-icon" : ""
+              }>${unsafeSVG(s.icon)}</svg>`}
             </span>`}
         <span class="card-label">${s.label}</span>
       </button>
@@ -1216,13 +1277,19 @@ export class SfxDropZone extends LitElement {
 
   private _renderMoreCard() {
     return html`
-      <div class="more-wrap ${this._moreOpen ? 'open' : ''}">
-        <button class="src-card" @click=${(e: MouseEvent) => this._toggleMore(e)}>
-          <span class="card-ico" style="color: var(--sfx-up-text-muted, #94a3b8)">
+      <div class="more-wrap ${this._moreOpen ? "open" : ""}">
+        <button
+          class="src-card"
+          @click=${(e: MouseEvent) => this._toggleMore(e)}
+        >
+          <span
+            class="card-ico"
+            style="color: var(--sfx-up-text-muted, #94a3b8)"
+          >
             <svg viewBox="0 0 24 24" style="fill: currentColor; stroke: none">
-              <circle cx="5" cy="12" r="2.5"/>
-              <circle cx="12" cy="12" r="2.5"/>
-              <circle cx="19" cy="12" r="2.5"/>
+              <circle cx="5" cy="12" r="2.5" />
+              <circle cx="12" cy="12" r="2.5" />
+              <circle cx="19" cy="12" r="2.5" />
             </svg>
           </span>
           <span class="card-label">More</span>
@@ -1233,10 +1300,15 @@ export class SfxDropZone extends LitElement {
 
   private _renderMoreDropdown() {
     return html`
-      <div class="more-wrap ${this._moreOpen ? 'open' : ''}">
-        <button class="more-pill" @click=${(e: MouseEvent) => this._toggleMore(e)}>
+      <div class="more-wrap ${this._moreOpen ? "open" : ""}">
+        <button
+          class="more-pill"
+          @click=${(e: MouseEvent) => this._toggleMore(e)}
+        >
           More
-          <svg class="more-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          <svg class="more-chevron" viewBox="0 0 24 24">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
         </button>
       </div>
     `;
@@ -1244,12 +1316,12 @@ export class SfxDropZone extends LitElement {
 
   render() {
     const classes = [
-      'drop-zone',
-      (this._dragOver || this.externalDragOver) ? 'drag-over' : '',
-      this.compact ? 'compact' : '',
+      "drop-zone",
+      this._dragOver || this.externalDragOver ? "drag-over" : "",
+      this.compact ? "compact" : "",
     ]
       .filter(Boolean)
-      .join(' ');
+      .join(" ");
 
     const visibleSources = this.sources.slice(0, this._visiblePills);
     const overflowSources = this.sources.slice(this._visiblePills);
@@ -1272,7 +1344,13 @@ export class SfxDropZone extends LitElement {
           <div class="ring"></div>
           <div class="ring"></div>
           <div class="core">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+            >
               <polyline points="16 16 12 12 8 16" />
               <line x1="12" y1="12" x2="12" y2="21" />
               <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
@@ -1280,17 +1358,14 @@ export class SfxDropZone extends LitElement {
           </div>
         </div>
 
-        <div class="title">
-          Drag & Drop or click to <span>browse</span>
-        </div>
+        <div class="title">Drag & Drop or click to <span>browse</span></div>
         ${!this.compact
           ? html`<div class="subtitle">Drop files anywhere on this page</div>`
           : nothing}
-
         ${!this.compact && this.sources.length > 0
           ? html`
               <div class="import-divider"><span>or import from</span></div>
-              ${this.sourcesLayout === 'cards'
+              ${this.sourcesLayout === "cards"
                 ? html`
                     <div class="sources-cards">
                       ${visibleSources.map((s) => this._renderCard(s))}
@@ -1309,7 +1384,6 @@ export class SfxDropZone extends LitElement {
                   `}
             `
           : nothing}
-
         ${this.compact && this.sources.length > 0
           ? html`
               <div class="sources-row">
@@ -1317,7 +1391,9 @@ export class SfxDropZone extends LitElement {
                   (s) => html`
                     <button
                       class="src-ico"
-                      style=${s.iconColor && !s.brandHtml ? `color:${s.iconColor}` : ''}
+                      style=${s.iconColor && !s.brandHtml
+                        ? `color:${s.iconColor}`
+                        : ""}
                       data-tip=${s.label}
                       aria-label=${s.label}
                       @click=${(e: MouseEvent) => {
@@ -1327,7 +1403,9 @@ export class SfxDropZone extends LitElement {
                     >
                       ${s.brandHtml
                         ? unsafeHTML(s.brandHtml)
-                        : svgTag`<svg viewBox="0 0 24 24" class=${s.fillIcon ? 'fill-icon' : ''}>${unsafeSVG(s.icon)}</svg>`}
+                        : svgTag`<svg viewBox="0 0 24 24" class=${
+                            s.fillIcon ? "fill-icon" : ""
+                          }>${unsafeSVG(s.icon)}</svg>`}
                     </button>
                   `,
                 )}

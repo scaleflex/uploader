@@ -1,39 +1,66 @@
-import { LitElement, html, css, nothing, render as litRender } from 'lit';
-import { property, state } from 'lit/decorators.js';
-import { createStore, Store } from './store';
-import { addFile, removeFile } from './store/helpers';
-import { StoreController } from './controllers/store.controller';
-import { UploadEngine, type UploadEngineConfig, type TusConfig } from './engine';
-import type { SfxDropZone } from './components/drop-zone';
-import type { UploaderState, UploadFile, UploadRestrictions, UploadResponse } from './store/store.types';
-import type { AuthConfig, AuthHeaders } from './auth/auth.types';
-import { resolveAuth, getApiBase, buildAuthHeaders } from './auth/auth.service';
-import { lastUploadStore } from './store/last-upload-store';
-import { PublicEvents, type PublicEventName } from './events/public-events';
-import { generateFileId, guessMimeType, formatFileSize, formatEta, generateVideoThumbnail, getFileCategory } from './utils/file-utils';
-import { validateFile, validateFileInfo, buildAcceptString } from './utils/validate';
-import type { ProviderId, ConnectorConfig, RemoteFileInfo } from './connectors/connector.types';
-import { getProviderSources } from './connectors/provider-registry';
-import { CORE_SOURCES, type SourceDef } from './components/source-pills';
-import type { MetadataConfig, MetadataSchema } from './metadata/schema/schema.types';
-import type { SfxToast } from './components/toast';
+import { LitElement, html, css, nothing, render as litRender } from "lit";
+import { property, state } from "lit/decorators.js";
+import { createStore, Store } from "./store";
+import { addFile, removeFile } from "./store/helpers";
+import { StoreController } from "./controllers/store.controller";
+import {
+  UploadEngine,
+  type UploadEngineConfig,
+  type TusConfig,
+} from "./engine";
+import type { SfxDropZone } from "./components/drop-zone";
+import type {
+  UploaderState,
+  UploadFile,
+  UploadRestrictions,
+  UploadResponse,
+} from "./store/store.types";
+import type { AuthConfig, AuthHeaders } from "./auth/auth.types";
+import { resolveAuth, getApiBase, buildAuthHeaders } from "./auth/auth.service";
+import { lastUploadStore } from "./store/last-upload-store";
+import { PublicEvents, type PublicEventName } from "./events/public-events";
+import {
+  generateFileId,
+  guessMimeType,
+  formatFileSize,
+  formatEta,
+  generateVideoThumbnail,
+  getFileCategory,
+} from "./utils/file-utils";
+import {
+  validateFile,
+  validateFileInfo,
+  buildAcceptString,
+} from "./utils/validate";
+import type {
+  ProviderId,
+  ConnectorConfig,
+  RemoteFileInfo,
+} from "./connectors/connector.types";
+import { getProviderSources } from "./connectors/provider-registry";
+import { CORE_SOURCES, type SourceDef } from "./components/source-pills";
+import type {
+  MetadataConfig,
+  MetadataSchema,
+} from "./metadata/schema/schema.types";
+import type { SfxToast } from "./components/toast";
 
 /** Providers that use search instead of OAuth file browsing. */
-const SEARCH_PROVIDERS = new Set<ProviderId>(['unsplash']);
+const SEARCH_PROVIDERS = new Set<ProviderId>(["unsplash"]);
 
 // Import component classes so they can be registered
-import './components/drop-zone';
-import './components/import-divider';
-import './components/source-pills';
-import './components/file-list';
-import './components/file-item';
-import './components/success-card';
-import './components/last-upload-review';
-import './components/actions-bar';
-import './components/url-dialog';
-import './components/camera-dialog';
-import './components/screen-cast-dialog';
-import './components/toast';
+import "./components/drop-zone";
+import "./components/import-divider";
+import "./components/source-pills";
+import "./components/file-list";
+import "./components/file-item";
+import "./components/success-card";
+import "./components/last-upload-review";
+import "./components/actions-bar";
+import "./components/url-dialog";
+import "./components/camera-dialog";
+import "./components/screen-cast-dialog";
+import "./components/toast";
 
 // --- Config callbacks (spec §13.1) ---
 
@@ -42,7 +69,11 @@ export interface UploaderCallbacks {
   onFileRemoved?: (file: UploadFile) => void;
   onFileRejected?: (file: UploadFile, reason: string) => void;
   onUploadStarted?: (files: UploadFile[]) => void;
-  onUploadProgress?: (file: UploadFile, progress: number, speed: number) => void;
+  onUploadProgress?: (
+    file: UploadFile,
+    progress: number,
+    speed: number,
+  ) => void;
   onUploadComplete?: (file: UploadFile, response: UploadResponse) => void;
   onUploadError?: (file: UploadFile, error: Error) => void;
   onUploadRetry?: (file: UploadFile, attempt: number) => void;
@@ -71,7 +102,7 @@ export interface InlineHeaderConfig {
 export interface UploaderConfig {
   auth: AuthConfig;
   targetFolder?: string;
-  mode?: 'modal' | 'inline';
+  mode?: "modal" | "inline";
   /** Header displayed above the uploader in inline mode. All fields are optional. */
   inlineHeader?: InlineHeaderConfig;
   /**
@@ -81,7 +112,7 @@ export interface UploaderConfig {
    * - `true`    — header visible, no button (default for inline without inlineHeader)
    * - `false`   — no header at all
    */
-  header?: boolean | 'close' | 'back';
+  header?: boolean | "close" | "back";
   restrictions?: Partial<UploadRestrictions>;
   concurrency?: number;
   autoProceed?: boolean;
@@ -92,7 +123,7 @@ export interface UploaderConfig {
   /** Metadata editing configuration. When provided, enables the built-in metadata form. */
   metadataConfig?: MetadataConfig;
   /** Layout for the import-from sources section: horizontal pills (default) or cards grid. */
-  sourcesLayout?: 'pills' | 'cards';
+  sourcesLayout?: "pills" | "cards";
   /**
    * Override the URL opened by the "Locate" button in the last-upload review
    * screen. Receives the completed file and should return the URL the host
@@ -145,14 +176,20 @@ export interface UploaderConfig {
 /** Default tus-related fields for new UploadFile objects. */
 const TUS_DEFAULTS = { isTus: false, tusUploadUrl: null } as const;
 
-type UploaderPhase = 'empty' | 'ready' | 'uploading' | 'complete';
+type UploaderPhase = "empty" | "ready" | "uploading" | "complete";
 
 export class SfxUploader extends LitElement {
   static styles = css`
     :host {
       display: block;
       height: inherit;
-      font-family: var(--sfx-up-font, 'Inter', system-ui, -apple-system, sans-serif);
+      font-family: var(
+        --sfx-up-font,
+        "Inter",
+        system-ui,
+        -apple-system,
+        sans-serif
+      );
       color: var(--sfx-up-text, #1e293b);
       /* Bridge to Scaleflex design system with standalone fallbacks */
       --sfx-up-primary: var(--primary, #2563eb);
@@ -169,7 +206,7 @@ export class SfxUploader extends LitElement {
       --sfx-up-border-light: var(--muted, #f1f5f9);
       --sfx-up-bg: var(--background, #ffffff);
       --sfx-up-radius: 16px;
-      --sfx-up-font: 'Inter', system-ui, -apple-system, sans-serif;
+      --sfx-up-font: "Inter", system-ui, -apple-system, sans-serif;
       --sfx-up-shadow: var(--shadow, rgba(0, 0, 0, 0.1));
       --sfx-up-surface: var(--card, #f8fafc);
       --sfx-up-backdrop: rgba(0, 0, 0, 0.45);
@@ -196,7 +233,9 @@ export class SfxUploader extends LitElement {
     .modal-card {
       background: var(--sfx-up-bg, #fff);
       border-radius: 16px;
-      box-shadow: 0 28px 80px rgba(0, 0, 0, 0.2), 0 4px 16px rgba(0, 0, 0, 0.06);
+      box-shadow:
+        0 28px 80px rgba(0, 0, 0, 0.2),
+        0 4px 16px rgba(0, 0, 0, 0.06);
       width: 100%;
       max-width: 1100px;
       min-height: var(--sfx-up-min-height, 660px);
@@ -259,7 +298,9 @@ export class SfxUploader extends LitElement {
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background 0.15s, color 0.15s;
+      transition:
+        background 0.15s,
+        color 0.15s;
       flex-shrink: 0;
     }
 
@@ -294,7 +335,7 @@ export class SfxUploader extends LitElement {
     }
 
     .header-btn-back::after {
-      content: 'Back to Asset Picker';
+      content: "Back to Asset Picker";
       position: absolute;
       left: calc(100% + 8px);
       top: 50%;
@@ -323,11 +364,20 @@ export class SfxUploader extends LitElement {
 
     /* --- Responsive header buttons --- */
     @media (max-width: 768px) {
-      .header-btn { width: 28px; height: 28px; }
-      .header-btn svg { width: 14px; height: 14px; }
+      .header-btn {
+        width: 28px;
+        height: 28px;
+      }
+      .header-btn svg {
+        width: 14px;
+        height: 14px;
+      }
     }
     @media (max-width: 480px) {
-      .header-btn { width: 26px; height: 26px; }
+      .header-btn {
+        width: 26px;
+        height: 26px;
+      }
     }
 
     /* --- Content wrapper (holds body + actions bar) --- */
@@ -360,7 +410,7 @@ export class SfxUploader extends LitElement {
     }
 
     .body.body-drag-over::after {
-      content: '';
+      content: "";
       position: absolute;
       inset: 0;
       border: 2px dashed var(--sfx-up-primary, #2563eb);
@@ -379,7 +429,7 @@ export class SfxUploader extends LitElement {
     }
 
     .body.body-drag-over .file-grid-side::after {
-      content: '';
+      content: "";
       position: absolute;
       inset: 0;
       border: 2px dashed var(--sfx-up-primary, #2563eb);
@@ -411,8 +461,12 @@ export class SfxUploader extends LitElement {
     }
 
     @keyframes bodyReveal {
-      from { opacity: 0.5; }
-      to { opacity: 1; }
+      from {
+        opacity: 0.5;
+      }
+      to {
+        opacity: 1;
+      }
     }
 
     .body.has-files::-webkit-scrollbar-thumb:hover {
@@ -507,6 +561,21 @@ export class SfxUploader extends LitElement {
       flex-direction: column;
       gap: 6px;
       padding: var(--sfx-inline-pad) var(--sfx-inline-pad) 16px;
+    }
+
+    /* On the empty landing state the accent label should start flush
+       with the top of the uploader region — no extra whitespace above. */
+    .inline.no-files .inline-header {
+      padding-top: 0;
+    }
+
+    /* Lift the empty-state drop-zone 16px closer to the inline header
+       description so the dashed card's top edge sits right under the
+       text. 16px is the exact size of the gap (inline-header's bottom
+       padding); pulling more would make the card background overlap
+       the description. */
+    .inline.no-files sfx-drop-zone {
+      margin-top: -16px;
     }
     .inline-header-top {
       display: flex;
@@ -657,7 +726,7 @@ export class SfxUploader extends LitElement {
     }
 
     .preview-divider::before {
-      content: '';
+      content: "";
       position: absolute;
       top: 0;
       bottom: 0;
@@ -667,7 +736,7 @@ export class SfxUploader extends LitElement {
     }
 
     .preview-divider::after {
-      content: '';
+      content: "";
       width: 3px;
       height: 28px;
       border-radius: 2px;
@@ -706,16 +775,20 @@ export class SfxUploader extends LitElement {
       padding: 0;
     }
 
-    .preview-panel::-webkit-scrollbar { width: 12px; }
-    .preview-panel::-webkit-scrollbar-track { background: transparent; }
+    .preview-panel::-webkit-scrollbar {
+      width: 12px;
+    }
+    .preview-panel::-webkit-scrollbar-track {
+      background: transparent;
+    }
     .preview-panel::-webkit-scrollbar-thumb {
-      background: rgba(0,0,0,0.15);
+      background: rgba(0, 0, 0, 0.15);
       background-clip: padding-box;
       border: 3px solid transparent;
       border-radius: 6px;
     }
     .preview-panel::-webkit-scrollbar-thumb:hover {
-      background: rgba(0,0,0,0.25);
+      background: rgba(0, 0, 0, 0.25);
       background-clip: padding-box;
     }
 
@@ -724,8 +797,7 @@ export class SfxUploader extends LitElement {
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-      height: 56px;
-      padding: 12px 16px;
+      padding: 24px 16px 12px;
       flex-shrink: 0;
       box-sizing: border-box;
       border-bottom: 1px solid var(--sfx-up-border, #e2e8f0);
@@ -751,7 +823,6 @@ export class SfxUploader extends LitElement {
       white-space: nowrap;
     }
 
-
     .preview-panel-header button {
       width: 32px;
       height: 32px;
@@ -763,7 +834,9 @@ export class SfxUploader extends LitElement {
       align-items: center;
       justify-content: center;
       color: var(--sfx-up-text-muted, #94a3b8);
-      transition: background 0.15s, color 0.15s;
+      transition:
+        background 0.15s,
+        color 0.15s;
       padding: 0;
       flex-shrink: 0;
     }
@@ -788,20 +861,48 @@ export class SfxUploader extends LitElement {
       justify-content: center;
     }
 
-    .preview-doc-wrap.pdf { background: linear-gradient(135deg, #fef2f2, #fee2e2); }
-    .preview-doc-wrap.doc { background: linear-gradient(135deg, #eff6ff, #dbeafe); }
-    .preview-doc-wrap.vid { background: linear-gradient(135deg, #f5f3ff, #ede9fe); }
-    .preview-doc-wrap.audio { background: linear-gradient(135deg, #fdf4ff, #fae8ff); }
-    .preview-doc-wrap.sheet { background: linear-gradient(135deg, #f0fdf4, #dcfce7); }
-    .preview-doc-wrap.slide { background: linear-gradient(135deg, #fff7ed, #ffedd5); }
-    .preview-doc-wrap.zip { background: linear-gradient(135deg, #fffbeb, #fef3c7); }
-    .preview-doc-wrap.code { background: linear-gradient(135deg, #f0f9ff, #e0f2fe); }
-    .preview-doc-wrap.markup { background: linear-gradient(135deg, #f0fdfa, #ccfbf1); }
-    .preview-doc-wrap.font { background: linear-gradient(135deg, #faf5ff, #f3e8ff); }
-    .preview-doc-wrap.design { background: linear-gradient(135deg, #fdf2f8, #fce7f3); }
-    .preview-doc-wrap.binary { background: linear-gradient(135deg, #f8fafc, #f1f5f9); }
-    .preview-doc-wrap.data { background: linear-gradient(135deg, #ecfdf5, #d1fae5); }
-    .preview-doc-wrap.gen { background: linear-gradient(135deg, #f8fafc, #f1f5f9); }
+    .preview-doc-wrap.pdf {
+      background: linear-gradient(135deg, #fef2f2, #fee2e2);
+    }
+    .preview-doc-wrap.doc {
+      background: linear-gradient(135deg, #eff6ff, #dbeafe);
+    }
+    .preview-doc-wrap.vid {
+      background: linear-gradient(135deg, #f5f3ff, #ede9fe);
+    }
+    .preview-doc-wrap.audio {
+      background: linear-gradient(135deg, #fdf4ff, #fae8ff);
+    }
+    .preview-doc-wrap.sheet {
+      background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+    }
+    .preview-doc-wrap.slide {
+      background: linear-gradient(135deg, #fff7ed, #ffedd5);
+    }
+    .preview-doc-wrap.zip {
+      background: linear-gradient(135deg, #fffbeb, #fef3c7);
+    }
+    .preview-doc-wrap.code {
+      background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+    }
+    .preview-doc-wrap.markup {
+      background: linear-gradient(135deg, #f0fdfa, #ccfbf1);
+    }
+    .preview-doc-wrap.font {
+      background: linear-gradient(135deg, #faf5ff, #f3e8ff);
+    }
+    .preview-doc-wrap.design {
+      background: linear-gradient(135deg, #fdf2f8, #fce7f3);
+    }
+    .preview-doc-wrap.binary {
+      background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+    }
+    .preview-doc-wrap.data {
+      background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+    }
+    .preview-doc-wrap.gen {
+      background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+    }
 
     .preview-doc-icon {
       display: flex;
@@ -816,20 +917,48 @@ export class SfxUploader extends LitElement {
       stroke-width: 1.5;
     }
 
-    .preview-doc-icon.pdf svg { color: #dc2626; }
-    .preview-doc-icon.doc svg { color: #1d4ed8; }
-    .preview-doc-icon.vid svg { color: #7c3aed; }
-    .preview-doc-icon.audio svg { color: #c026d3; }
-    .preview-doc-icon.sheet svg { color: #16a34a; }
-    .preview-doc-icon.slide svg { color: #ea580c; }
-    .preview-doc-icon.zip svg { color: #b45309; }
-    .preview-doc-icon.code svg { color: #0284c7; }
-    .preview-doc-icon.markup svg { color: #0d9488; }
-    .preview-doc-icon.font svg { color: #7c3aed; }
-    .preview-doc-icon.design svg { color: #db2777; }
-    .preview-doc-icon.binary svg { color: #475569; }
-    .preview-doc-icon.data svg { color: #059669; }
-    .preview-doc-icon.gen svg { color: #64748b; }
+    .preview-doc-icon.pdf svg {
+      color: #dc2626;
+    }
+    .preview-doc-icon.doc svg {
+      color: #1d4ed8;
+    }
+    .preview-doc-icon.vid svg {
+      color: #7c3aed;
+    }
+    .preview-doc-icon.audio svg {
+      color: #c026d3;
+    }
+    .preview-doc-icon.sheet svg {
+      color: #16a34a;
+    }
+    .preview-doc-icon.slide svg {
+      color: #ea580c;
+    }
+    .preview-doc-icon.zip svg {
+      color: #b45309;
+    }
+    .preview-doc-icon.code svg {
+      color: #0284c7;
+    }
+    .preview-doc-icon.markup svg {
+      color: #0d9488;
+    }
+    .preview-doc-icon.font svg {
+      color: #7c3aed;
+    }
+    .preview-doc-icon.design svg {
+      color: #db2777;
+    }
+    .preview-doc-icon.binary svg {
+      color: #475569;
+    }
+    .preview-doc-icon.data svg {
+      color: #059669;
+    }
+    .preview-doc-icon.gen svg {
+      color: #64748b;
+    }
 
     .preview-doc-ext {
       font-size: 13px;
@@ -838,20 +967,48 @@ export class SfxUploader extends LitElement {
       letter-spacing: 0.05em;
     }
 
-    .preview-doc-ext.pdf { color: #dc2626; }
-    .preview-doc-ext.doc { color: #1d4ed8; }
-    .preview-doc-ext.vid { color: #7c3aed; }
-    .preview-doc-ext.audio { color: #c026d3; }
-    .preview-doc-ext.sheet { color: #16a34a; }
-    .preview-doc-ext.slide { color: #ea580c; }
-    .preview-doc-ext.zip { color: #b45309; }
-    .preview-doc-ext.code { color: #0284c7; }
-    .preview-doc-ext.markup { color: #0d9488; }
-    .preview-doc-ext.font { color: #7c3aed; }
-    .preview-doc-ext.design { color: #db2777; }
-    .preview-doc-ext.binary { color: #475569; }
-    .preview-doc-ext.data { color: #059669; }
-    .preview-doc-ext.gen { color: #64748b; }
+    .preview-doc-ext.pdf {
+      color: #dc2626;
+    }
+    .preview-doc-ext.doc {
+      color: #1d4ed8;
+    }
+    .preview-doc-ext.vid {
+      color: #7c3aed;
+    }
+    .preview-doc-ext.audio {
+      color: #c026d3;
+    }
+    .preview-doc-ext.sheet {
+      color: #16a34a;
+    }
+    .preview-doc-ext.slide {
+      color: #ea580c;
+    }
+    .preview-doc-ext.zip {
+      color: #b45309;
+    }
+    .preview-doc-ext.code {
+      color: #0284c7;
+    }
+    .preview-doc-ext.markup {
+      color: #0d9488;
+    }
+    .preview-doc-ext.font {
+      color: #7c3aed;
+    }
+    .preview-doc-ext.design {
+      color: #db2777;
+    }
+    .preview-doc-ext.binary {
+      color: #475569;
+    }
+    .preview-doc-ext.data {
+      color: #059669;
+    }
+    .preview-doc-ext.gen {
+      color: #64748b;
+    }
 
     .preview-img-wrap {
       position: relative;
@@ -864,13 +1021,20 @@ export class SfxUploader extends LitElement {
       align-items: center;
       justify-content: center;
       background-color: var(--sfx-up-checker-bg);
-      background-image:
-        linear-gradient(45deg, var(--sfx-up-checker-tile) 25%, transparent 25%),
+      background-image: linear-gradient(
+          45deg,
+          var(--sfx-up-checker-tile) 25%,
+          transparent 25%
+        ),
         linear-gradient(-45deg, var(--sfx-up-checker-tile) 25%, transparent 25%),
         linear-gradient(45deg, transparent 75%, var(--sfx-up-checker-tile) 75%),
         linear-gradient(-45deg, transparent 75%, var(--sfx-up-checker-tile) 75%);
       background-size: 16px 16px;
-      background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+      background-position:
+        0 0,
+        0 8px,
+        8px -8px,
+        -8px 0;
     }
 
     .preview-image {
@@ -900,7 +1064,9 @@ export class SfxUploader extends LitElement {
       border-radius: 50%;
       border: 1px solid var(--sfx-up-border, #e2e8f0);
       background: #fff;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.12);
+      box-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.08),
+        0 2px 8px rgba(0, 0, 0, 0.12);
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -926,8 +1092,12 @@ export class SfxUploader extends LitElement {
       height: 20px;
     }
 
-    .preview-nav.prev { left: 10px; }
-    .preview-nav.next { right: 10px; }
+    .preview-nav.prev {
+      left: 10px;
+    }
+    .preview-nav.next {
+      right: 10px;
+    }
 
     .preview-nav:disabled {
       opacity: 0.35;
@@ -1121,12 +1291,25 @@ export class SfxUploader extends LitElement {
       color: var(--sfx-up-text, #374151);
     }
 
-    .upload-header .float-actions button svg { width: 16px; height: 16px; }
+    .upload-header .float-actions button svg {
+      width: 16px;
+      height: 16px;
+    }
 
-    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
     @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(12px); }
-      to { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     /* --- Floating upload card (Variant 3 style) --- */
@@ -1138,7 +1321,9 @@ export class SfxUploader extends LitElement {
       width: 470px;
       border-radius: 12px;
       background: var(--sfx-up-bg, #fff);
-      box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+      box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.12),
+        0 2px 8px rgba(0, 0, 0, 0.06);
       overflow: hidden;
       font-family: inherit;
       animation: floatSlideIn 0.3s ease both;
@@ -1170,7 +1355,10 @@ export class SfxUploader extends LitElement {
       flex-shrink: 0;
     }
 
-    .float-icon svg { width: 14px; height: 14px; }
+    .float-icon svg {
+      width: 14px;
+      height: 14px;
+    }
 
     .float-icon.done {
       background: #f0fdf4;
@@ -1218,7 +1406,10 @@ export class SfxUploader extends LitElement {
       color: var(--sfx-up-text, #374151);
     }
 
-    .float-actions button svg { width: 14px; height: 14px; }
+    .float-actions button svg {
+      width: 14px;
+      height: 14px;
+    }
 
     .float-progress {
       padding: 10px 14px;
@@ -1243,9 +1434,15 @@ export class SfxUploader extends LitElement {
       color: var(--sfx-up-primary, #2563eb);
     }
 
-    .float-progress-pct.done { color: #22c55e; }
-    .float-progress-pct.warn { color: #f59e0b; }
-    .float-progress-pct.error { color: #ef4444; }
+    .float-progress-pct.done {
+      color: #22c55e;
+    }
+    .float-progress-pct.warn {
+      color: #f59e0b;
+    }
+    .float-progress-pct.error {
+      color: #ef4444;
+    }
 
     .float-bar {
       height: 4px;
@@ -1261,16 +1458,22 @@ export class SfxUploader extends LitElement {
       transition: width 0.3s ease;
     }
 
-    .float-bar-fill.done { background: #22c55e; }
-    .float-bar-fill.warn { background: #f59e0b; }
-    .float-bar-fill.error { background: #ef4444; }
+    .float-bar-fill.done {
+      background: #22c55e;
+    }
+    .float-bar-fill.warn {
+      background: #f59e0b;
+    }
+    .float-bar-fill.error {
+      background: #ef4444;
+    }
 
     .float-items {
       max-height: 200px;
       overflow-y: auto;
       overflow-x: hidden;
       scrollbar-width: thin;
-      scrollbar-color: rgba(0,0,0,0.1) transparent;
+      scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
     }
 
     .float-item {
@@ -1282,7 +1485,9 @@ export class SfxUploader extends LitElement {
       overflow: hidden;
     }
 
-    .float-item:last-child { border-bottom: none; }
+    .float-item:last-child {
+      border-bottom: none;
+    }
 
     .float-item-thumb {
       width: 32px;
@@ -1296,9 +1501,16 @@ export class SfxUploader extends LitElement {
       flex-shrink: 0;
     }
 
-    .float-item-thumb svg { width: 16px; height: 16px; }
+    .float-item-thumb svg {
+      width: 16px;
+      height: 16px;
+    }
 
-    .float-item-info { flex: 1; min-width: 0; overflow: hidden; }
+    .float-item-info {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+    }
 
     .float-item-name {
       font-size: 12px;
@@ -1326,7 +1538,10 @@ export class SfxUploader extends LitElement {
       flex-shrink: 0;
     }
 
-    .float-item-done svg { width: 12px; height: 12px; }
+    .float-item-done svg {
+      width: 12px;
+      height: 12px;
+    }
 
     .float-item-spinner {
       width: 16px;
@@ -1367,7 +1582,9 @@ export class SfxUploader extends LitElement {
       white-space: nowrap;
       pointer-events: none;
       z-index: 10;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.08);
+      box-shadow:
+        0 2px 12px rgba(0, 0, 0, 0.12),
+        0 1px 4px rgba(0, 0, 0, 0.08);
     }
 
     .float-item-error-wrap:hover .float-item-tooltip {
@@ -1397,13 +1614,25 @@ export class SfxUploader extends LitElement {
       border-radius: 4px;
     }
 
-    .float-item-retry svg { width: 16px; height: 16px; }
+    .float-item-retry svg {
+      width: 16px;
+      height: 16px;
+    }
 
-    .float-item-retry:hover { background: var(--sfx-up-surface, #f8fafc); color: var(--sfx-up-primary-hover, #1d4ed8); }
+    .float-item-retry:hover {
+      background: var(--sfx-up-surface, #f8fafc);
+      color: var(--sfx-up-primary-hover, #1d4ed8);
+    }
 
     @keyframes floatSlideIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     /* --- Connector modal overlay --- */
@@ -1423,7 +1652,9 @@ export class SfxUploader extends LitElement {
     .connector-modal {
       background: var(--sfx-up-bg, #fff);
       border-radius: 12px;
-      box-shadow: 0 28px 80px var(--sfx-up-shadow, rgba(0, 0, 0, 0.18)), 0 4px 16px oklch(0 0 0 / 0.06);
+      box-shadow:
+        0 28px 80px var(--sfx-up-shadow, rgba(0, 0, 0, 0.18)),
+        0 4px 16px oklch(0 0 0 / 0.06);
       width: 100%;
       max-width: 520px;
       height: 75vh;
@@ -1436,8 +1667,12 @@ export class SfxUploader extends LitElement {
     }
 
     @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
     }
 
     @keyframes modalIn {
@@ -1452,8 +1687,12 @@ export class SfxUploader extends LitElement {
     }
 
     @keyframes inlineIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
     }
 
     /* --- Fullscreen preview overlay --- */
@@ -1552,12 +1791,26 @@ export class SfxUploader extends LitElement {
       padding: 0;
     }
 
-    .fs-nav:hover { background: rgba(255, 255, 255, 0.3); }
-    .fs-nav:disabled { opacity: 0.3; cursor: default; }
-    .fs-nav:disabled:hover { background: rgba(255, 255, 255, 0.15); }
-    .fs-nav svg { width: 22px; height: 22px; }
-    .fs-nav.prev { left: 20px; }
-    .fs-nav.next { right: 20px; }
+    .fs-nav:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+    .fs-nav:disabled {
+      opacity: 0.3;
+      cursor: default;
+    }
+    .fs-nav:disabled:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+    .fs-nav svg {
+      width: 22px;
+      height: 22px;
+    }
+    .fs-nav.prev {
+      left: 20px;
+    }
+    .fs-nav.next {
+      right: 20px;
+    }
 
     .fs-filename {
       position: fixed;
@@ -1582,25 +1835,58 @@ export class SfxUploader extends LitElement {
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .modal-backdrop { animation: none; }
-      .modal-card { animation: none; }
-      .inline { animation: none; }
-      .fs-overlay { animation: none; }
-      .body.has-files { animation: none; }
+      .modal-backdrop {
+        animation: none;
+      }
+      .modal-card {
+        animation: none;
+      }
+      .inline {
+        animation: none;
+      }
+      .fs-overlay {
+        animation: none;
+      }
+      .body.has-files {
+        animation: none;
+      }
     }
 
     /* --- Responsive: Tablet (≤ 768px) --- */
     @media (max-width: 768px) {
-      .modal-backdrop { padding: 12px; }
-      .modal-card { border-radius: 12px; max-height: 92vh; min-height: auto; }
-      .header { padding: 12px 16px; }
-      .header-icon { width: 28px; height: 28px; margin-right: 10px; }
-      .header-icon svg { width: 14px; height: 14px; }
-      .header-title { font-size: 14px; }
-      .body { padding: 16px; }
-      .body.has-files { padding: 0 0 12px 8px; }
+      .modal-backdrop {
+        padding: 12px;
+      }
+      .modal-card {
+        border-radius: 12px;
+        max-height: 92vh;
+        min-height: auto;
+      }
+      .header {
+        padding: 12px 16px;
+      }
+      .header-icon {
+        width: 28px;
+        height: 28px;
+        margin-right: 10px;
+      }
+      .header-icon svg {
+        width: 14px;
+        height: 14px;
+      }
+      .header-title {
+        font-size: 14px;
+      }
+      .body {
+        padding: 16px;
+      }
+      .body.has-files {
+        padding: 0 0 12px 8px;
+      }
 
-      .preview-layout { flex-direction: column; }
+      .preview-layout {
+        flex-direction: column;
+      }
       .preview-layout .file-grid-side {
         width: 100%;
         max-height: 140px;
@@ -1608,13 +1894,22 @@ export class SfxUploader extends LitElement {
         overflow-y: hidden;
         flex-shrink: 0;
       }
-      .preview-panel { padding: 0 0 16px; }
+      .preview-panel {
+        padding: 0 0 16px;
+      }
 
-      .preview-topbar { padding: 8px 0; }
+      .preview-topbar {
+        padding: 8px 0;
+      }
 
-      .inline { --sfx-inline-pad: 16px; min-height: auto; }
+      .inline {
+        --sfx-inline-pad: 16px;
+        min-height: auto;
+      }
 
-      .connector-modal-backdrop { padding: 8px; }
+      .connector-modal-backdrop {
+        padding: 8px;
+      }
       .connector-modal {
         max-width: 100%;
         height: 85vh;
@@ -1625,26 +1920,52 @@ export class SfxUploader extends LitElement {
 
     /* --- Responsive: Mobile (≤ 480px) --- */
     @media (max-width: 480px) {
-      .modal-backdrop { padding: 0; }
+      .modal-backdrop {
+        padding: 0;
+      }
       .modal-card {
         border-radius: 0;
         max-height: 100vh;
         max-width: 100%;
         height: 100%;
       }
-      .header { padding: 10px 14px; }
-      .header-icon { width: 26px; height: 26px; margin-right: 8px; }
-      .header-title { font-size: 14px; }
-      .body { padding: 12px; }
-      .body.has-files { padding: 0 0 8px 8px; }
+      .header {
+        padding: 10px 14px;
+      }
+      .header-icon {
+        width: 26px;
+        height: 26px;
+        margin-right: 8px;
+      }
+      .header-title {
+        font-size: 14px;
+      }
+      .body {
+        padding: 12px;
+      }
+      .body.has-files {
+        padding: 0 0 8px 8px;
+      }
 
-      .preview-layout .file-grid-side { max-height: 100px; }
-      .preview-panel { padding: 0 0 12px; }
+      .preview-layout .file-grid-side {
+        max-height: 100px;
+      }
+      .preview-panel {
+        padding: 0 0 12px;
+      }
 
-      .inline { --sfx-inline-pad: 12px; max-height: 100vh; box-shadow: none; }
-      .inline-header-title { font-size: 18px; }
+      .inline {
+        --sfx-inline-pad: 12px;
+        max-height: 100vh;
+        box-shadow: none;
+      }
+      .inline-header-title {
+        font-size: 18px;
+      }
 
-      .connector-modal-backdrop { padding: 0; }
+      .connector-modal-backdrop {
+        padding: 0;
+      }
       .connector-modal {
         border-radius: 0;
         height: 100vh;
@@ -1654,8 +1975,12 @@ export class SfxUploader extends LitElement {
 
     /* --- Responsive: Landscape / short viewports --- */
     @media (max-height: 700px) {
-      .modal-card { min-height: auto; }
-      .inline { min-height: auto; }
+      .modal-card {
+        min-height: auto;
+      }
+      .inline {
+        min-height: auto;
+      }
     }
   `;
 
@@ -1667,11 +1992,15 @@ export class SfxUploader extends LitElement {
   @state() private _showCameraDialog = false;
   @state() private _showScreenCastDialog = false;
   @state() private _previewFileId: string | null = null;
-  @state() private _previewDims: string = '—';
+  @state() private _previewDims: string = "—";
   @state() private _fileInfoOpen: boolean = true;
   @state() private _splitPct = 58; // file-grid-side percentage
   private _isResizing = false;
   private _splitRafId = 0;
+  /** Pixel width the preview panel opens at by default. Resize drag still works. */
+  private static readonly DEFAULT_PREVIEW_PANEL_WIDTH_PX = 500;
+  /** Has the default 500px preview width been applied for the current preview session? */
+  private _previewDefaultApplied = false;
   @state() private _fullscreenPreviewUrl: string | null = null;
   @state() private _fullscreenVideoFile: File | null = null;
   @state() private _fullscreenZoomed = false;
@@ -1744,7 +2073,10 @@ export class SfxUploader extends LitElement {
     if (!this._isOpen) return;
     this._isOpen = false;
     // Cancel any pending closeOnComplete timer so it doesn't fire after manual close
-    if (this._closeOnCompleteTimer) { clearTimeout(this._closeOnCompleteTimer); this._closeOnCompleteTimer = null; }
+    if (this._closeOnCompleteTimer) {
+      clearTimeout(this._closeOnCompleteTimer);
+      this._closeOnCompleteTimer = null;
+    }
     if (this.config?.clearOnClose !== false) {
       this._onClearAll();
     }
@@ -1758,12 +2090,12 @@ export class SfxUploader extends LitElement {
   upload() {
     this._ensureEngine();
     if (!this._engine) {
-      console.warn('[sfx-uploader] Cannot upload: auth not resolved yet');
+      console.warn("[sfx-uploader] Cannot upload: auth not resolved yet");
       return;
     }
 
     const files = [...this._store.getState().files.values()].filter(
-      (f) => f.status === 'idle' || f.status === 'queued',
+      (f) => f.status === "idle" || f.status === "queued",
     );
 
     // Fire onBeforeUpload callback — returning false cancels
@@ -1787,7 +2119,7 @@ export class SfxUploader extends LitElement {
 
     this._engine.uploadAll();
 
-    if (this.config?.minimizeOnUpload && this.config?.mode !== 'inline') {
+    if (this.config?.minimizeOnUpload && this.config?.mode !== "inline") {
       this._isMinimized = true;
       this._isPillExpanded = true;
       this.requestUpdate();
@@ -1846,7 +2178,9 @@ export class SfxUploader extends LitElement {
 
   /** Statuses where meta/tags can still be modified before upload. */
   private static readonly _MODIFIABLE_STATUSES = new Set([
-    'idle', 'queued', 'rejected',
+    "idle",
+    "queued",
+    "rejected",
   ]);
 
   /** Update metadata and/or tags for a single file. */
@@ -1857,7 +2191,8 @@ export class SfxUploader extends LitElement {
   ): void {
     const current = this._store.getState().files;
     const existing = current.get(fileId);
-    if (!existing || !SfxUploader._MODIFIABLE_STATUSES.has(existing.status)) return;
+    if (!existing || !SfxUploader._MODIFIABLE_STATUSES.has(existing.status))
+      return;
 
     const next = new Map(current);
     next.set(fileId, {
@@ -1870,7 +2205,11 @@ export class SfxUploader extends LitElement {
 
   /** Batch-update metadata and/or tags for multiple files. */
   updateFilesMeta(
-    updates: Array<{ fileId: string; meta?: Record<string, unknown>; tags?: string[] }>,
+    updates: Array<{
+      fileId: string;
+      meta?: Record<string, unknown>;
+      tags?: string[];
+    }>,
   ): void {
     const current = this._store.getState().files;
     const next = new Map(current);
@@ -1878,7 +2217,8 @@ export class SfxUploader extends LitElement {
 
     for (const { fileId, meta, tags } of updates) {
       const existing = current.get(fileId);
-      if (!existing || !SfxUploader._MODIFIABLE_STATUSES.has(existing.status)) continue;
+      if (!existing || !SfxUploader._MODIFIABLE_STATUSES.has(existing.status))
+        continue;
       next.set(fileId, {
         ...existing,
         meta: meta != null ? { ...existing.meta, ...meta } : existing.meta,
@@ -1893,30 +2233,58 @@ export class SfxUploader extends LitElement {
   // --- Lifecycle ---
 
   updated(changed: Map<string, unknown>) {
-    if (changed.has('config') && this.config) {
+    if (changed.has("config") && this.config) {
       this._applyConfig(this.config);
     }
     // Resolve image dimensions when preview file changes
-    if (changed.has('_previewFileId') && this._previewFileId) {
+    if (changed.has("_previewFileId") && this._previewFileId) {
       const targetId = this._previewFileId;
       const file = this._store.getState().files.get(targetId);
       if (file) {
         this._getImageDimensions(file).then((dims) => {
           if (this._previewFileId !== targetId) return; // stale
-          this._previewDims = dims ? `${dims.w} × ${dims.h}` : '—';
+          this._previewDims = dims ? `${dims.w} × ${dims.h}` : "—";
         });
       } else {
-        this._previewDims = '—';
+        this._previewDims = "—";
       }
     }
+    this._applyDefaultPreviewWidth();
     // Render floating card portal in document.body
     this._updateFloatingPortal();
   }
 
+  /**
+   * The preview panel opens at DEFAULT_PREVIEW_PANEL_WIDTH_PX (500px) by default
+   * instead of the fixed 42% from _splitPct = 58. On first appearance of the
+   * preview layout we measure its width and set _splitPct to the percentage that
+   * gives the desired panel width (clamped to the same 25–75 range used by
+   * _onSplitPointerMove). Once the user drags the divider their value wins —
+   * the flag is only reset when the preview layout is dismissed.
+   */
+  private _applyDefaultPreviewWidth() {
+    const layout =
+      this.shadowRoot?.querySelector<HTMLElement>(".preview-layout");
+    if (!layout) {
+      this._previewDefaultApplied = false;
+      return;
+    }
+    if (this._previewDefaultApplied) return;
+    const width = layout.getBoundingClientRect().width;
+    if (width <= 0) return;
+    const panelWidth = SfxUploader.DEFAULT_PREVIEW_PANEL_WIDTH_PX;
+    const gridPct = Math.max(
+      25,
+      Math.min(75, ((width - panelWidth) / width) * 100),
+    );
+    this._splitPct = gridPct;
+    this._previewDefaultApplied = true;
+  }
+
   private _injectFloatStyles() {
-    if (document.querySelector('style[data-sfx-upload-float-styles]')) return;
-    const style = document.createElement('style');
-    style.setAttribute('data-sfx-upload-float-styles', '');
+    if (document.querySelector("style[data-sfx-upload-float-styles]")) return;
+    const style = document.createElement("style");
+    style.setAttribute("data-sfx-upload-float-styles", "");
     style.textContent = `
       [data-sfx-upload-float] .upload-float { position:fixed; bottom:24px; right:24px; z-index:10000; width:470px; border-radius:12px; background:#fff; box-shadow:0 8px 32px rgba(0,0,0,0.12),0 2px 8px rgba(0,0,0,0.06); overflow:hidden; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; animation:sfxFloatIn .3s ease both; }
       [data-sfx-upload-float] .float-header { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-bottom:1px solid #e8edf5; }
@@ -1988,8 +2356,8 @@ export class SfxUploader extends LitElement {
     if (this._isMinimized && files.length > 0) {
       this._injectFloatStyles();
       if (!this._portalContainer) {
-        this._portalContainer = document.createElement('div');
-        this._portalContainer.setAttribute('data-sfx-upload-float', '');
+        this._portalContainer = document.createElement("div");
+        this._portalContainer.setAttribute("data-sfx-upload-float", "");
         document.body.appendChild(this._portalContainer);
       }
       litRender(this._renderFloatingPill(files), this._portalContainer);
@@ -2004,7 +2372,7 @@ export class SfxUploader extends LitElement {
 
   connectedCallback() {
     super.connectedCallback();
-    document.addEventListener('keydown', this._onKeyDown);
+    document.addEventListener("keydown", this._onKeyDown);
     // Seed previous state so the first store change is not silently skipped
     this._prevStoreState = this._store.getState();
     // Subscribe to store changes for public event dispatching
@@ -2015,7 +2383,7 @@ export class SfxUploader extends LitElement {
 
   disconnectedCallback() {
     super.disconnectedCallback();
-    document.removeEventListener('keydown', this._onKeyDown);
+    document.removeEventListener("keydown", this._onKeyDown);
     this._unsubStoreEvents?.();
     this._unsubStoreEvents = null;
     this._prevStoreState = null;
@@ -2023,8 +2391,8 @@ export class SfxUploader extends LitElement {
     this._portalContainer?.remove();
     this._portalContainer = null;
     // Remove injected float styles if no other portal containers remain
-    if (!document.querySelector('[data-sfx-upload-float]')) {
-      document.querySelector('style[data-sfx-upload-float-styles]')?.remove();
+    if (!document.querySelector("[data-sfx-upload-float]")) {
+      document.querySelector("style[data-sfx-upload-float-styles]")?.remove();
     }
     // Revoke cached video blob URLs
     this._revokeVideoBlobUrls();
@@ -2032,7 +2400,10 @@ export class SfxUploader extends LitElement {
     for (const timer of this._rejectedTimers.values()) clearTimeout(timer);
     this._rejectedTimers.clear();
     // Clear closeOnComplete timer
-    if (this._closeOnCompleteTimer) { clearTimeout(this._closeOnCompleteTimer); this._closeOnCompleteTimer = null; }
+    if (this._closeOnCompleteTimer) {
+      clearTimeout(this._closeOnCompleteTimer);
+      this._closeOnCompleteTimer = null;
+    }
     // Revoke all preview blob URLs to prevent memory leaks
     for (const file of this._store.getState().files.values()) {
       if (file.previewUrl) URL.revokeObjectURL(file.previewUrl);
@@ -2071,7 +2442,7 @@ export class SfxUploader extends LitElement {
     this._resolveAuthAndEngine(cfg);
 
     // Auto-open for inline mode
-    if (cfg.mode === 'inline' || !cfg.mode) {
+    if (cfg.mode === "inline" || !cfg.mode) {
       this._isOpen = true;
     }
   }
@@ -2080,7 +2451,7 @@ export class SfxUploader extends LitElement {
     const auth = cfg.auth;
 
     // For sass-key mode, resolve synchronously
-    if (auth.mode === 'sass-key') {
+    if (auth.mode === "sass-key") {
       this._apiBase = getApiBase(auth.container);
       this._authHeaders = buildAuthHeaders(auth);
       this._ensureEngine();
@@ -2110,7 +2481,7 @@ export class SfxUploader extends LitElement {
       this._preloadMetadataSchema(cfg);
     } catch (err) {
       if (resolveId !== this._authResolveId) return;
-      console.error('[sfx-uploader] Auth resolution failed:', err);
+      console.error("[sfx-uploader] Auth resolution failed:", err);
       this._showToast(this._formatAuthError(err));
     }
   }
@@ -2119,25 +2490,30 @@ export class SfxUploader extends LitElement {
     const msg = err instanceof Error ? err.message : String(err);
 
     if (!this.config?.auth?.container) {
-      return 'Authentication failed: no container specified. Open the Auth panel and enter your credentials.';
+      return "Authentication failed: no container specified. Open the Auth panel and enter your credentials.";
     }
-    if (msg.includes('HTTP 404')) {
+    if (msg.includes("HTTP 404")) {
       return `Authentication failed: container "${this.config.auth.container}" not found. Check your container name.`;
     }
-    if (msg.includes('HTTP 401') || msg.includes('HTTP 403')) {
-      return 'Authentication failed: invalid security template ID. Check your credentials in the Auth panel.';
+    if (msg.includes("HTTP 401") || msg.includes("HTTP 403")) {
+      return "Authentication failed: invalid security template ID. Check your credentials in the Auth panel.";
     }
-    if (msg.includes('timed out')) {
-      return 'Authentication failed: request timed out. Check your network connection.';
+    if (msg.includes("timed out")) {
+      return "Authentication failed: request timed out. Check your network connection.";
     }
-    if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
-      return 'Authentication failed: network error. Check your internet connection.';
+    if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) {
+      return "Authentication failed: network error. Check your internet connection.";
     }
     return `Authentication failed: ${msg}`;
   }
 
-  private _showToast(message: string, type: 'error' | 'warning' | 'info' = 'error') {
-    const toast = this.shadowRoot?.querySelector('sfx-toast') as SfxToast | null;
+  private _showToast(
+    message: string,
+    type: "error" | "warning" | "info" = "error",
+  ) {
+    const toast = this.shadowRoot?.querySelector(
+      "sfx-toast",
+    ) as SfxToast | null;
     toast?.show(message, type);
   }
 
@@ -2164,21 +2540,28 @@ export class SfxUploader extends LitElement {
     if (!mc || !this._apiBase || !this._authHeaders) return;
 
     try {
-      const { fetchMetadataSchema, createTagsAutocomplete } = await import('./metadata');
+      const { fetchMetadataSchema, createTagsAutocomplete } = await import(
+        "./metadata"
+      );
       this._metadataSchema = await fetchMetadataSchema(
         this._apiBase,
         this._authHeaders,
         mc.projectUuid,
         mc,
       );
-      this._metadataAutocomplete = createTagsAutocomplete(this._apiBase, this._authHeaders);
+      this._metadataAutocomplete = createTagsAutocomplete(
+        this._apiBase,
+        this._authHeaders,
+      );
     } catch (err) {
-      console.error('[sfx-uploader] Failed to load metadata schema:', err);
-      this._showToast('Failed to load metadata schema', 'warning');
+      console.error("[sfx-uploader] Failed to load metadata schema:", err);
+      this._showToast("Failed to load metadata schema", "warning");
     }
   }
 
-  private _onFileRename = (e: CustomEvent<{ fileId: string; name: string }>) => {
+  private _onFileRename = (
+    e: CustomEvent<{ fileId: string; name: string }>,
+  ) => {
     this._onPreviewRename(e.detail.fileId, e.detail.name);
   };
 
@@ -2194,7 +2577,9 @@ export class SfxUploader extends LitElement {
   }
 
   /** Handle field-blur from inline metadata form in the preview sidebar. */
-  private _onPreviewMetadataBlur = (e: CustomEvent<{ key: string; value: unknown }>) => {
+  private _onPreviewMetadataBlur = (
+    e: CustomEvent<{ key: string; value: unknown }>,
+  ) => {
     const fileId = this._previewFileId;
     if (!fileId) return;
     const { key, value } = e.detail;
@@ -2209,27 +2594,29 @@ export class SfxUploader extends LitElement {
     const mc = this.config?.metadataConfig;
     if (!mc || !this._metadataSchema) return false;
     if (mc.enforceRequiredBeforeUpload === true) return true;
-    if (mc.enforceRequiredBeforeUpload === 'auto') return this._metadataSchema.forceFillingOnUpload;
+    if (mc.enforceRequiredBeforeUpload === "auto")
+      return this._metadataSchema.forceFillingOnUpload;
     return false;
   }
 
   private get _hasUnfilledRequiredMetadata(): boolean {
     if (!this._metadataEnforcing || !this._metadataSchema) return false;
-    const requiredFields = this._metadataSchema.fields.filter(f => {
+    const requiredFields = this._metadataSchema.fields.filter((f) => {
       const mc = this.config?.metadataConfig;
       if (mc?.requiredFields) return mc.requiredFields.includes(f.ckey);
       return f.required === 1;
     });
     if (requiredFields.length === 0) return false;
     const files = [...this._store.getState().files.values()].filter(
-      f => f.status === 'idle' || f.status === 'queued' || f.status === 'rejected',
+      (f) =>
+        f.status === "idle" || f.status === "queued" || f.status === "rejected",
     );
-    return requiredFields.some(field =>
-      files.some(file => {
+    return requiredFields.some((field) =>
+      files.some((file) => {
         const val = file.meta[field.key];
         if (val == null) return true;
         if (Array.isArray(val)) return val.length === 0;
-        if (typeof val === 'string') return val.length === 0;
+        if (typeof val === "string") return val.length === 0;
         return !val;
       }),
     );
@@ -2237,7 +2624,10 @@ export class SfxUploader extends LitElement {
 
   // --- Public event dispatching (spec §13.1) ---
 
-  private _dispatchPublic(eventName: PublicEventName, detail: Record<string, unknown>) {
+  private _dispatchPublic(
+    eventName: PublicEventName,
+    detail: Record<string, unknown>,
+  ) {
     this.dispatchEvent(
       new CustomEvent(eventName, { bubbles: true, composed: true, detail }),
     );
@@ -2264,34 +2654,43 @@ export class SfxUploader extends LitElement {
 
       if (prevFile.status !== file.status) {
         switch (file.status) {
-          case 'uploading':
+          case "uploading":
             // Detect resume: paused → uploading
-            if (prevFile.status === 'paused') {
+            if (prevFile.status === "paused") {
               this._dispatchPublic(PublicEvents.UPLOAD_RESUMED, { file });
               callbacks?.onUploadResumed?.(file);
             }
             break;
-          case 'complete':
+          case "complete":
             if (file.response) {
-              this._dispatchPublic(PublicEvents.UPLOAD_COMPLETE, { file, response: file.response });
+              this._dispatchPublic(PublicEvents.UPLOAD_COMPLETE, {
+                file,
+                response: file.response,
+              });
               callbacks?.onUploadComplete?.(file, file.response);
             }
             break;
-          case 'error':
-          case 'failed': {
-            const err = new Error(file.error ?? 'Upload failed');
-            this._dispatchPublic(PublicEvents.UPLOAD_ERROR, { file, error: err });
+          case "error":
+          case "failed": {
+            const err = new Error(file.error ?? "Upload failed");
+            this._dispatchPublic(PublicEvents.UPLOAD_ERROR, {
+              file,
+              error: err,
+            });
             callbacks?.onUploadError?.(file, err);
             // Per-file failure toasts intentionally suppressed — the failed
             // tile in the file-list already shows a red badge with the
             // error text, and the success-card aggregates the failures.
             break;
           }
-          case 'retrying':
-            this._dispatchPublic(PublicEvents.UPLOAD_RETRY, { file, attempt: file.retryCount });
+          case "retrying":
+            this._dispatchPublic(PublicEvents.UPLOAD_RETRY, {
+              file,
+              attempt: file.retryCount,
+            });
             callbacks?.onUploadRetry?.(file, file.retryCount);
             break;
-          case 'paused':
+          case "paused":
             this._dispatchPublic(PublicEvents.UPLOAD_PAUSED, { file });
             callbacks?.onUploadPaused?.(file);
             break;
@@ -2299,17 +2698,25 @@ export class SfxUploader extends LitElement {
       }
 
       // Progress change
-      if (file.status === 'uploading' && prevFile.progress !== file.progress) {
-        this._dispatchPublic(PublicEvents.UPLOAD_PROGRESS, { file, progress: file.progress, speed: file.speed });
+      if (file.status === "uploading" && prevFile.progress !== file.progress) {
+        this._dispatchPublic(PublicEvents.UPLOAD_PROGRESS, {
+          file,
+          progress: file.progress,
+          speed: file.speed,
+        });
         callbacks?.onUploadProgress?.(file, file.progress, file.speed);
       }
     }
 
     // Total progress
-    if (curr.totalProgress !== prev.totalProgress || curr.totalSpeed !== prev.totalSpeed) {
-      const eta = curr.totalSpeed > 0
-        ? (curr.totalBytes - curr.totalBytesUploaded) / curr.totalSpeed
-        : 0;
+    if (
+      curr.totalProgress !== prev.totalProgress ||
+      curr.totalSpeed !== prev.totalSpeed
+    ) {
+      const eta =
+        curr.totalSpeed > 0
+          ? (curr.totalBytes - curr.totalBytesUploaded) / curr.totalSpeed
+          : 0;
       this._dispatchPublic(PublicEvents.TOTAL_PROGRESS, {
         percentage: curr.totalProgress,
         speed: curr.totalSpeed,
@@ -2321,10 +2728,12 @@ export class SfxUploader extends LitElement {
     // All complete detection — only fire when uploads finished naturally, not on cancel
     if (prev.isUploading && !curr.isUploading) {
       const allFiles = [...curr.files.values()];
-      const hasCancelled = allFiles.some((f) => f.status === 'cancelled');
+      const hasCancelled = allFiles.some((f) => f.status === "cancelled");
       if (!hasCancelled) {
-        const successful = allFiles.filter((f) => f.status === 'complete');
-        const failed = allFiles.filter((f) => f.status === 'failed' || f.status === 'error');
+        const successful = allFiles.filter((f) => f.status === "complete");
+        const failed = allFiles.filter(
+          (f) => f.status === "failed" || f.status === "error",
+        );
 
         // Persist this batch to sessionStorage so the success-card "Review
         // files" button can later re-load it (e.g. after closing and
@@ -2342,11 +2751,11 @@ export class SfxUploader extends LitElement {
         // Auto-close after a brief delay so the user sees the success state
         const closeOpt = this.config?.closeOnComplete;
         if (closeOpt) {
-          const delay = typeof closeOpt === 'number' ? closeOpt : 1500;
+          const delay = typeof closeOpt === "number" ? closeOpt : 1500;
           this._closeOnCompleteTimer = setTimeout(() => {
             this._closeOnCompleteTimer = null;
             // Guard: only act if still in the complete phase (user may have clicked "Upload more")
-            if (this._phase !== 'complete') return;
+            if (this._phase !== "complete") return;
             // Fire the same callbacks/events as the "Done" button
             this._dispatchPublic(PublicEvents.COMPLETE_ACTION, {});
             this.config?.callbacks?.onCompleteAction?.();
@@ -2360,7 +2769,12 @@ export class SfxUploader extends LitElement {
   // --- Connector sources ---
 
   /** Reserved source IDs that cannot be overridden by custom sources. */
-  private static readonly _RESERVED_IDS = new Set(['device', 'camera', 'url', 'screen-cast']);
+  private static readonly _RESERVED_IDS = new Set([
+    "device",
+    "camera",
+    "url",
+    "screen-cast",
+  ]);
 
   private get _mergedSources(): SourceDef[] {
     const connectors = this.config?.connectors;
@@ -2373,21 +2787,33 @@ export class SfxUploader extends LitElement {
       return this._cachedSources;
     }
 
-    const providerSources = connectors.providers.length > 0
-      ? getProviderSources(connectors.providers)
-      : [];
+    const providerSources =
+      connectors.providers.length > 0
+        ? getProviderSources(connectors.providers)
+        : [];
     const custom = connectors.customSources ?? [];
 
     // Order: device, url → providers → remaining core (camera, screen-cast) → custom
-    const priorityCore = CORE_SOURCES.filter(s => s.id === 'device' || s.id === 'url');
-    const remainingCore = CORE_SOURCES.filter(s => s.id !== 'device' && s.id !== 'url');
+    const priorityCore = CORE_SOURCES.filter(
+      (s) => s.id === "device" || s.id === "url",
+    );
+    const remainingCore = CORE_SOURCES.filter(
+      (s) => s.id !== "device" && s.id !== "url",
+    );
 
     const seen = new Set<string>();
     const merged: SourceDef[] = [];
-    for (const s of [...priorityCore, ...providerSources, ...remainingCore, ...custom]) {
+    for (const s of [
+      ...priorityCore,
+      ...providerSources,
+      ...remainingCore,
+      ...custom,
+    ]) {
       if (seen.has(s.id)) continue;
       if (SfxUploader._RESERVED_IDS.has(s.id) && s.onActivate) {
-        console.warn(`[sfx-uploader] Custom source id "${s.id}" conflicts with a built-in source and was skipped.`);
+        console.warn(
+          `[sfx-uploader] Custom source id "${s.id}" conflicts with a built-in source and was skipped.`,
+        );
         continue;
       }
       seen.add(s.id);
@@ -2403,14 +2829,17 @@ export class SfxUploader extends LitElement {
   private get _phase(): UploaderPhase {
     const s = this._storeCtrl.state;
     const files = [...s.files.values()];
-    if (files.length === 0) return 'empty';
-    if (s.isUploading) return 'uploading';
+    if (files.length === 0) return "empty";
+    if (s.isUploading) return "uploading";
     // Complete when all uploadable files finished (ignoring rejected/cancelled)
-    const terminal = new Set(['complete', 'rejected', 'cancelled', 'failed']);
-    if (files.every((f) => terminal.has(f.status)) && files.some((f) => f.status === 'complete' || f.status === 'failed')) {
-      return 'complete';
+    const terminal = new Set(["complete", "rejected", "cancelled", "failed"]);
+    if (
+      files.every((f) => terminal.has(f.status)) &&
+      files.some((f) => f.status === "complete" || f.status === "failed")
+    ) {
+      return "complete";
     }
-    return 'ready';
+    return "ready";
   }
 
   // --- File handling ---
@@ -2430,17 +2859,23 @@ export class SfxUploader extends LitElement {
 
       // Skip duplicate files (same name + size already in queue)
       const isDuplicate = [...s.files.values()].some(
-        (f) => f.name === file.name && f.size === file.size && f.status !== 'rejected' && f.status !== 'cancelled',
+        (f) =>
+          f.name === file.name &&
+          f.size === file.size &&
+          f.status !== "rejected" &&
+          f.status !== "cancelled",
       );
       if (isDuplicate) continue;
 
       const error = validateFile(file, s.restrictions, s.files);
       if (error) {
         // Create a rejected file entry so the user sees the error
-        const rejectedPreview = file.type.startsWith('image/') ? URL.createObjectURL(file) : null;
+        const rejectedPreview = file.type.startsWith("image/")
+          ? URL.createObjectURL(file)
+          : null;
         const uploadFile: UploadFile = {
           id: generateFileId(),
-          status: 'rejected',
+          status: "rejected",
           file,
           remoteUrl: null,
           name: file.name,
@@ -2461,17 +2896,21 @@ export class SfxUploader extends LitElement {
           ...TUS_DEFAULTS,
         };
         addFile(this._store, uploadFile);
-        this._dispatchPublic(PublicEvents.FILE_REJECTED, { file: uploadFile, reason: error });
+        this._dispatchPublic(PublicEvents.FILE_REJECTED, {
+          file: uploadFile,
+          reason: error,
+        });
         callbacks?.onFileRejected?.(uploadFile, error);
         // Auto-remove rejected file after configurable delay
         const delay = this.config?.rejectedFileAutoRemoveDelay;
-        const autoRemoveMs = delay === false || delay === 0 || delay === undefined ? 0 : delay;
+        const autoRemoveMs =
+          delay === false || delay === 0 || delay === undefined ? 0 : delay;
         if (autoRemoveMs > 0) {
           const rejId = uploadFile.id;
           const timer = setTimeout(() => {
             this._rejectedTimers.delete(rejId);
             const f = this._store.getState().files.get(rejId);
-            if (f && f.status === 'rejected') {
+            if (f && f.status === "rejected") {
               removeFile(this._store, rejId);
             }
           }, autoRemoveMs);
@@ -2482,13 +2921,13 @@ export class SfxUploader extends LitElement {
 
       // Create preview for images; video thumbnails are generated async below
       let previewUrl: string | null = null;
-      if (file.type.startsWith('image/')) {
+      if (file.type.startsWith("image/")) {
         previewUrl = URL.createObjectURL(file);
       }
 
       const uploadFile: UploadFile = {
         id: generateFileId(),
-        status: 'idle',
+        status: "idle",
         file,
         remoteUrl: null,
         name: file.name,
@@ -2514,7 +2953,7 @@ export class SfxUploader extends LitElement {
       callbacks?.onFileAdded?.(uploadFile);
 
       // Generate video thumbnail and extract duration asynchronously
-      if (file.type.startsWith('video/')) {
+      if (file.type.startsWith("video/")) {
         generateVideoThumbnail(file).then((thumbUrl) => {
           if (!thumbUrl) return;
           const state = this._store.getState();
@@ -2528,10 +2967,12 @@ export class SfxUploader extends LitElement {
           }
         });
         // Extract duration
-        const vid = document.createElement('video');
-        vid.preload = 'metadata';
+        const vid = document.createElement("video");
+        vid.preload = "metadata";
         vid.src = URL.createObjectURL(file);
-        vid.onerror = () => { URL.revokeObjectURL(vid.src); };
+        vid.onerror = () => {
+          URL.revokeObjectURL(vid.src);
+        };
         vid.onloadedmetadata = () => {
           const duration = vid.duration;
           URL.revokeObjectURL(vid.src);
@@ -2569,35 +3010,39 @@ export class SfxUploader extends LitElement {
   };
 
   private _handleSourceActivation = async (source: string) => {
-
     // Check for custom source with onActivate callback
-    const sourceDef = this._mergedSources.find(s => s.id === source);
+    const sourceDef = this._mergedSources.find((s) => s.id === source);
     if (sourceDef?.onActivate) {
       try {
         sourceDef.onActivate(this);
       } catch (err) {
-        console.error(`[sfx-uploader] onActivate for custom source "${source}" threw:`, err);
+        console.error(
+          `[sfx-uploader] onActivate for custom source "${source}" threw:`,
+          err,
+        );
       }
       return;
     }
 
-    if (source === 'device') {
-      const dropZone = this.shadowRoot!.querySelector('sfx-drop-zone') as SfxDropZone | null;
+    if (source === "device") {
+      const dropZone = this.shadowRoot!.querySelector(
+        "sfx-drop-zone",
+      ) as SfxDropZone | null;
       dropZone?.browse();
       return;
     }
 
-    if (source === 'url') {
+    if (source === "url") {
       this._showUrlDialog = true;
       return;
     }
 
-    if (source === 'camera') {
+    if (source === "camera") {
       this._showCameraDialog = true;
       return;
     }
 
-    if (source === 'screen-cast') {
+    if (source === "screen-cast") {
       this._showScreenCastDialog = true;
       return;
     }
@@ -2608,14 +3053,21 @@ export class SfxUploader extends LitElement {
       // Lazy-load the appropriate browser component
       const isSearch = SEARCH_PROVIDERS.has(source as ProviderId);
       if (isSearch) {
-        if (!customElements.get('sfx-search-provider-browser')) {
-          const { SfxSearchProviderBrowser } = await import('./components/search-provider-browser');
-          customElements.define('sfx-search-provider-browser', SfxSearchProviderBrowser);
+        if (!customElements.get("sfx-search-provider-browser")) {
+          const { SfxSearchProviderBrowser } = await import(
+            "./components/search-provider-browser"
+          );
+          customElements.define(
+            "sfx-search-provider-browser",
+            SfxSearchProviderBrowser,
+          );
         }
       } else {
-        if (!customElements.get('sfx-provider-browser')) {
-          const { SfxProviderBrowser } = await import('./components/provider-browser');
-          customElements.define('sfx-provider-browser', SfxProviderBrowser);
+        if (!customElements.get("sfx-provider-browser")) {
+          const { SfxProviderBrowser } = await import(
+            "./components/provider-browser"
+          );
+          customElements.define("sfx-provider-browser", SfxProviderBrowser);
         }
       }
       this._activeConnector = source as ProviderId;
@@ -2628,34 +3080,58 @@ export class SfxUploader extends LitElement {
     const callbacks = this.config?.callbacks;
 
     const type = guessMimeType(name);
-    const isImage = type.startsWith('image/');
+    const isImage = type.startsWith("image/");
 
     // Validate against restrictions (size=0 for URL imports, so size checks are skipped)
     const s = this._store.getState();
 
     // Skip duplicate URLs (same name already in queue)
     const isDuplicate = [...s.files.values()].some(
-      (f) => f.name === name && f.status !== 'rejected' && f.status !== 'cancelled',
+      (f) =>
+        f.name === name && f.status !== "rejected" && f.status !== "cancelled",
     );
     if (isDuplicate) return;
 
-    const error = validateFileInfo({ name, size: 0, type }, s.restrictions, s.files);
+    const error = validateFileInfo(
+      { name, size: 0, type },
+      s.restrictions,
+      s.files,
+    );
     if (error) {
       const rejFile: UploadFile = {
-        id: generateFileId(), status: 'rejected', file: null, remoteUrl: url,
-        name, size: 0, type, previewUrl: null, duration: null, progress: 0, speed: 0,
-        bytesUploaded: 0, error, retryCount: 0, response: null,
-        addedAt: Date.now(), meta: {}, tags: [], remoteInfo: null, ...TUS_DEFAULTS,
+        id: generateFileId(),
+        status: "rejected",
+        file: null,
+        remoteUrl: url,
+        name,
+        size: 0,
+        type,
+        previewUrl: null,
+        duration: null,
+        progress: 0,
+        speed: 0,
+        bytesUploaded: 0,
+        error,
+        retryCount: 0,
+        response: null,
+        addedAt: Date.now(),
+        meta: {},
+        tags: [],
+        remoteInfo: null,
+        ...TUS_DEFAULTS,
       };
       addFile(this._store, rejFile);
-      this._dispatchPublic(PublicEvents.FILE_REJECTED, { file: rejFile, reason: error });
+      this._dispatchPublic(PublicEvents.FILE_REJECTED, {
+        file: rejFile,
+        reason: error,
+      });
       callbacks?.onFileRejected?.(rejFile, error);
       return;
     }
 
     const uploadFile: UploadFile = {
       id: generateFileId(),
-      status: 'idle',
+      status: "idle",
       file: null,
       remoteUrl: url,
       name,
@@ -2713,8 +3189,11 @@ export class SfxUploader extends LitElement {
     // Snapshot file for the event before mutating state
     const snapshot = { ...file };
     // Reset fullscreen if this file was being viewed (before revoking URLs)
-    if ((this._fullscreenPreviewUrl && this._fullscreenPreviewUrl === file.previewUrl)
-      || (this._fullscreenVideoFile && this._fullscreenVideoFile === file.file)) {
+    if (
+      (this._fullscreenPreviewUrl &&
+        this._fullscreenPreviewUrl === file.previewUrl) ||
+      (this._fullscreenVideoFile && this._fullscreenVideoFile === file.file)
+    ) {
       this._fullscreenPreviewUrl = null;
       this._fullscreenVideoFile = null;
     }
@@ -2723,10 +3202,18 @@ export class SfxUploader extends LitElement {
     // Revoke cached video blob URL
     if (file.file) {
       const blobUrl = this._videoBlobUrls.get(file.file);
-      if (blobUrl) { URL.revokeObjectURL(blobUrl); this._videoBlobUrls.delete(file.file); }
+      if (blobUrl) {
+        URL.revokeObjectURL(blobUrl);
+        this._videoBlobUrls.delete(file.file);
+      }
     }
     // Cancel if active (including retrying/paused, which has a pending retry timer or tus handle)
-    if (file.status === 'uploading' || file.status === 'queued' || file.status === 'retrying' || file.status === 'paused') {
+    if (
+      file.status === "uploading" ||
+      file.status === "queued" ||
+      file.status === "retrying" ||
+      file.status === "paused"
+    ) {
       this._engine?.cancelFile(fileId);
     }
     removeFile(this._store, fileId);
@@ -2734,7 +3221,10 @@ export class SfxUploader extends LitElement {
     this._dimCache.delete(fileId);
     // Clear rejected timer if pending
     const rejTimer = this._rejectedTimers.get(fileId);
-    if (rejTimer) { clearTimeout(rejTimer); this._rejectedTimers.delete(fileId); }
+    if (rejTimer) {
+      clearTimeout(rejTimer);
+      this._rejectedTimers.delete(fileId);
+    }
     // Reset preview to next file if this file was being previewed
     if (this._previewFileId === fileId) {
       const remaining = [...this._store.getState().files.values()];
@@ -2757,8 +3247,8 @@ export class SfxUploader extends LitElement {
   };
 
   private _onFillMetadata = () => {
-    const files = [...this._store.getState().files.values()].filter(
-      (f) => SfxUploader._MODIFIABLE_STATUSES.has(f.status),
+    const files = [...this._store.getState().files.values()].filter((f) =>
+      SfxUploader._MODIFIABLE_STATUSES.has(f.status),
     );
     // Open built-in bulk modal if metadata schema is available
     if (this.config?.metadataConfig && this._metadataSchema) {
@@ -2768,7 +3258,11 @@ export class SfxUploader extends LitElement {
     this.config?.callbacks?.onFillMetadata?.(files);
   };
 
-  private _onBulkMetadataSaveBatch = (e: CustomEvent<{ changes: Array<{ fileId: string; meta: Record<string, unknown> }> }>) => {
+  private _onBulkMetadataSaveBatch = (
+    e: CustomEvent<{
+      changes: Array<{ fileId: string; meta: Record<string, unknown> }>;
+    }>,
+  ) => {
     const { changes } = e.detail;
     if (!changes.length) return;
     const next = new Map(this._store.getState().files);
@@ -2806,7 +3300,10 @@ export class SfxUploader extends LitElement {
     const callbacks = this.config?.callbacks;
 
     // Clear closeOnComplete timer so a stale auto-close doesn't fire after reset
-    if (this._closeOnCompleteTimer) { clearTimeout(this._closeOnCompleteTimer); this._closeOnCompleteTimer = null; }
+    if (this._closeOnCompleteTimer) {
+      clearTimeout(this._closeOnCompleteTimer);
+      this._closeOnCompleteTimer = null;
+    }
     // Cancel all active uploads first so XHRs are aborted before removal events
     this._engine?.cancelAll();
     // Snapshot files, revoke preview URLs, and dispatch removal events
@@ -2838,19 +3335,23 @@ export class SfxUploader extends LitElement {
   };
 
   private _onAddMore = () => {
-    const dropZone = this.shadowRoot!.querySelector('sfx-drop-zone') as SfxDropZone | null;
+    const dropZone = this.shadowRoot!.querySelector(
+      "sfx-drop-zone",
+    ) as SfxDropZone | null;
     if (dropZone) {
       dropZone.browse();
       return;
     }
     // Fallback: use file-list's hidden input when drop-zone is not rendered
-    const fileList = this.shadowRoot!.querySelector('sfx-file-list');
-    const input = fileList?.shadowRoot?.querySelector('input[type="file"]') as HTMLInputElement | null;
+    const fileList = this.shadowRoot!.querySelector("sfx-file-list");
+    const input = fileList?.shadowRoot?.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement | null;
     input?.click();
   };
 
   private _onUploadStart = () => {
-    if (this._phase === 'complete') {
+    if (this._phase === "complete") {
       if (this.config?.clearOnComplete !== false) {
         this._onClearAll();
       }
@@ -2872,7 +3373,10 @@ export class SfxUploader extends LitElement {
    *  re-opened the uploader after closing). */
   private _onEnterReview = () => {
     const liveFiles = [...this._store.getState().files.values()].filter(
-      (f) => f.status === 'complete' || f.status === 'failed' || f.status === 'error',
+      (f) =>
+        f.status === "complete" ||
+        f.status === "failed" ||
+        f.status === "error",
     );
     if (liveFiles.length > 0) {
       this._reviewFiles = liveFiles;
@@ -2897,7 +3401,9 @@ export class SfxUploader extends LitElement {
     this._hasStoredReview = false;
   };
 
-  private _onConnectorFilesSelected = (e: CustomEvent<{ files: RemoteFileInfo[] }>) => {
+  private _onConnectorFilesSelected = (
+    e: CustomEvent<{ files: RemoteFileInfo[] }>,
+  ) => {
     const callbacks = this.config?.callbacks;
     for (const info of e.detail.files) {
       // Re-read state each iteration so maxNumberOfFiles sees previously added files
@@ -2905,7 +3411,11 @@ export class SfxUploader extends LitElement {
 
       // Skip duplicate files (same name + size already in queue)
       const isDuplicate = [...s.files.values()].some(
-        (f) => f.name === info.name && f.size === info.size && f.status !== 'rejected' && f.status !== 'cancelled',
+        (f) =>
+          f.name === info.name &&
+          f.size === info.size &&
+          f.status !== "rejected" &&
+          f.status !== "cancelled",
       );
       if (isDuplicate) continue;
 
@@ -2916,21 +3426,39 @@ export class SfxUploader extends LitElement {
       );
       if (error) {
         const rejFile: UploadFile = {
-          id: generateFileId(), status: 'rejected', file: null, remoteUrl: null,
-          name: info.name, size: info.size, type: info.mimeType,
-          previewUrl: info.thumbnail, duration: null, progress: 0, speed: 0, bytesUploaded: 0,
-          error, retryCount: 0, response: null, addedAt: Date.now(),
-          meta: {}, tags: [], remoteInfo: info, ...TUS_DEFAULTS,
+          id: generateFileId(),
+          status: "rejected",
+          file: null,
+          remoteUrl: null,
+          name: info.name,
+          size: info.size,
+          type: info.mimeType,
+          previewUrl: info.thumbnail,
+          duration: null,
+          progress: 0,
+          speed: 0,
+          bytesUploaded: 0,
+          error,
+          retryCount: 0,
+          response: null,
+          addedAt: Date.now(),
+          meta: {},
+          tags: [],
+          remoteInfo: info,
+          ...TUS_DEFAULTS,
         };
         addFile(this._store, rejFile);
-        this._dispatchPublic(PublicEvents.FILE_REJECTED, { file: rejFile, reason: error });
+        this._dispatchPublic(PublicEvents.FILE_REJECTED, {
+          file: rejFile,
+          reason: error,
+        });
         callbacks?.onFileRejected?.(rejFile, error);
         continue;
       }
 
       const uploadFile: UploadFile = {
         id: generateFileId(),
-        status: 'idle',
+        status: "idle",
         file: null,
         remoteUrl: null,
         name: info.name,
@@ -2977,7 +3505,7 @@ export class SfxUploader extends LitElement {
     this._dispatchPublic(PublicEvents.COMPLETE_ACTION, {});
     this.config?.callbacks?.onCompleteAction?.();
     // In modal mode, close the uploader; otherwise optionally reset to initial state
-    if (this.config?.mode === 'modal') {
+    if (this.config?.mode === "modal") {
       this.close();
     } else if (this.config?.clearOnComplete !== false) {
       this._onClearAll();
@@ -2992,7 +3520,7 @@ export class SfxUploader extends LitElement {
 
   /** Close button on the success card — route to the right dismiss based on mode */
   private _onSuccessCardClose = () => {
-    if (this.config?.mode === 'inline') {
+    if (this.config?.mode === "inline") {
       // In inline mode, behave like "Done": clear files and reset
       this._dispatchPublic(PublicEvents.COMPLETE_ACTION, {});
       this.config?.callbacks?.onCompleteAction?.();
@@ -3005,7 +3533,7 @@ export class SfxUploader extends LitElement {
   /** Shared dismiss handler for X button, backdrop click, Escape */
   private _onModalDismiss = () => {
     // Cancel active uploads when closing
-    if (this._phase === 'uploading') {
+    if (this._phase === "uploading") {
       this._engine?.cancelAll();
     }
     this.config?.callbacks?.onCancel?.();
@@ -3034,7 +3562,7 @@ export class SfxUploader extends LitElement {
   private _onPillDismiss = () => {
     this._isMinimized = false;
     this._isPillExpanded = false;
-    if (this._phase === 'uploading') {
+    if (this._phase === "uploading") {
       this._engine?.cancelAll();
     }
     this.config?.callbacks?.onCancel?.();
@@ -3054,13 +3582,19 @@ export class SfxUploader extends LitElement {
 
   private _onBodyDragEnter = (e: DragEvent) => {
     e.preventDefault();
-    if (this._bodyLeaveTimer) { clearTimeout(this._bodyLeaveTimer); this._bodyLeaveTimer = null; }
+    if (this._bodyLeaveTimer) {
+      clearTimeout(this._bodyLeaveTimer);
+      this._bodyLeaveTimer = null;
+    }
     this._bodyDragOver = true;
   };
 
   private _onBodyDragOver = (e: DragEvent) => {
     e.preventDefault();
-    if (this._bodyLeaveTimer) { clearTimeout(this._bodyLeaveTimer); this._bodyLeaveTimer = null; }
+    if (this._bodyLeaveTimer) {
+      clearTimeout(this._bodyLeaveTimer);
+      this._bodyLeaveTimer = null;
+    }
     this._bodyDragOver = true;
   };
 
@@ -3075,28 +3609,31 @@ export class SfxUploader extends LitElement {
 
   private _onBodyDrop = (e: DragEvent) => {
     e.preventDefault();
-    if (this._bodyLeaveTimer) { clearTimeout(this._bodyLeaveTimer); this._bodyLeaveTimer = null; }
+    if (this._bodyLeaveTimer) {
+      clearTimeout(this._bodyLeaveTimer);
+      this._bodyLeaveTimer = null;
+    }
     this._bodyDragOver = false;
 
     const files = Array.from(e.dataTransfer?.files ?? []);
     if (files.length > 0) {
       this._onFilesSelected(
-        new CustomEvent('files-selected', { detail: { files } }),
+        new CustomEvent("files-selected", { detail: { files } }),
       );
     }
   };
 
   private _onKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'Escape') {
+    if (e.key === "Escape") {
       if (this._fullscreenPreviewUrl || this._fullscreenVideoFile) {
         this._onFsClose();
         return;
       }
-      const mode = this.config?.mode ?? 'modal';
-      const header = this.config?.header ?? (mode === 'modal' ? 'close' : true);
-      if (header === 'close' || header === 'back') {
-        if (mode === 'modal' && this._isOpen) this._onModalDismiss();
-        else if (mode === 'inline') this._onInlineDismiss();
+      const mode = this.config?.mode ?? "modal";
+      const header = this.config?.header ?? (mode === "modal" ? "close" : true);
+      if (header === "close" || header === "back") {
+        if (mode === "modal" && this._isOpen) this._onModalDismiss();
+        else if (mode === "inline") this._onInlineDismiss();
       }
     }
   };
@@ -3104,28 +3641,28 @@ export class SfxUploader extends LitElement {
   // --- Render ---
 
   render() {
-    const mode = this.config?.mode ?? 'modal';
+    const mode = this.config?.mode ?? "modal";
     const files = [...this._storeCtrl.state.files.values()];
 
-    if (mode === 'modal') {
+    if (mode === "modal") {
       return html`
-        ${this._isOpen && !this._isMinimized ? html`
-          <div class="modal-backdrop" @click=${this._onModalBackdropClick}>
-            <div class="modal-card">
-              ${this._renderHeader()}
-              ${this._renderBody()}
-              <sfx-toast></sfx-toast>
-            </div>
-          </div>
-        ` : nothing}
+        ${this._isOpen && !this._isMinimized
+          ? html`
+              <div class="modal-backdrop" @click=${this._onModalBackdropClick}>
+                <div class="modal-card">
+                  ${this._renderHeader()} ${this._renderBody()}
+                  <sfx-toast></sfx-toast>
+                </div>
+              </div>
+            `
+          : nothing}
       `;
     }
 
     // Inline mode
     return html`
-      <div class="inline ${files.length === 0 ? 'no-files' : ''}">
-        ${this._renderHeader()}
-        ${this._renderBody()}
+      <div class="inline ${files.length === 0 ? "no-files" : ""}">
+        ${this._renderHeader()} ${this._renderBody()}
         <sfx-toast></sfx-toast>
       </div>
     `;
@@ -3135,75 +3672,131 @@ export class SfxUploader extends LitElement {
     return html`
       <div class="inline-header">
         <div class="inline-header-top">
-          ${ih.accent ? html`
-            <div class="inline-header-accent">
-              <div class="accent-line"></div>
-              <span>${ih.accent}</span>
-            </div>
-          ` : nothing}
-          ${ih.title ? html`<h2 class="inline-header-title">${ih.title}</h2>` : nothing}
+          ${ih.accent
+            ? html`
+                <div class="inline-header-accent">
+                  <div class="accent-line"></div>
+                  <span>${ih.accent}</span>
+                </div>
+              `
+            : nothing}
+          ${ih.title
+            ? html`<h2 class="inline-header-title">${ih.title}</h2>`
+            : nothing}
         </div>
-        ${ih.description ? html`<div class="inline-header-desc">${ih.description}</div>` : nothing}
+        ${ih.description
+          ? html`<div class="inline-header-desc">${ih.description}</div>`
+          : nothing}
       </div>
     `;
   }
 
   private _renderHeader() {
-    if (this._phase === 'complete') return nothing;
-    const mode = this.config?.mode ?? 'modal';
-    if (this._phase === 'uploading') {
+    if (this._phase === "complete") return nothing;
+    const mode = this.config?.mode ?? "modal";
+    if (this._phase === "uploading") {
       const s = this._storeCtrl.state;
       const files = [...s.files.values()];
-      const completed = files.filter((f) => f.status === 'complete').length;
-      const eta = s.totalSpeed > 0 ? (s.totalBytes - s.totalBytesUploaded) / s.totalSpeed : 0;
+      const completed = files.filter((f) => f.status === "complete").length;
+      const eta =
+        s.totalSpeed > 0
+          ? (s.totalBytes - s.totalBytesUploaded) / s.totalSpeed
+          : 0;
       return html`
         <div class="header upload-header">
           <div class="float-header-left">
             <div class="float-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+                stroke-linecap="round"
+              >
+                <polyline points="16 16 12 12 8 16" />
+                <line x1="12" y1="12" x2="12" y2="21" />
+                <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
+              </svg>
             </div>
             <div>
-              <div class="float-title">Uploading ${files.length} ${files.length === 1 ? 'file' : 'files'}</div>
-              <div class="float-subtitle">${completed} of ${files.length}${eta > 0 ? ` · ~${formatEta(eta)} left` : ''}</div>
+              <div class="float-title">
+                Uploading ${files.length}
+                ${files.length === 1 ? "file" : "files"}
+              </div>
+              <div class="float-subtitle">
+                ${completed} of
+                ${files.length}${eta > 0 ? ` · ~${formatEta(eta)} left` : ""}
+              </div>
             </div>
           </div>
         </div>
       `;
     }
     // Inline + branded header: rendered inside _renderBody(), skip standard header here
-    if (mode === 'inline' && this.config?.inlineHeader) return nothing;
-    const header = this.config?.header ?? (mode === 'modal' ? 'close' : true);
+    if (mode === "inline" && this.config?.inlineHeader) return nothing;
+    const header = this.config?.header ?? (mode === "modal" ? "close" : true);
     if (header === false) return nothing;
-    const dismiss = mode === 'modal' ? this._onModalDismiss : this._onInlineDismiss;
+    const dismiss =
+      mode === "modal" ? this._onModalDismiss : this._onInlineDismiss;
 
-    const backBtn = header === 'back'
-      ? html`<button class="header-btn header-btn-back" aria-label="Back to Asset Picker" @click=${dismiss}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="15 18 9 12 15 6"/>
-          </svg>
-        </button>`
-      : nothing;
+    const backBtn =
+      header === "back"
+        ? html`<button
+            class="header-btn header-btn-back"
+            aria-label="Back to Asset Picker"
+            @click=${dismiss}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>`
+        : nothing;
 
-    const closeBtn = header === 'close'
-      ? html`<button class="header-btn header-btn-close" aria-label="Close" @click=${dismiss}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        </button>`
-      : nothing;
+    const closeBtn =
+      header === "close"
+        ? html`<button
+            class="header-btn header-btn-close"
+            aria-label="Close"
+            @click=${dismiss}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>`
+        : nothing;
 
     return html`
       <div class="header">
         ${backBtn}
-        ${header !== 'back' ? html`
-        <div class="header-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-            <polyline points="16 16 12 12 8 16" />
-            <line x1="12" y1="12" x2="12" y2="21" />
-            <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
-          </svg>
-        </div>` : nothing}
+        ${header !== "back"
+          ? html` <div class="header-icon">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+                stroke-linecap="round"
+              >
+                <polyline points="16 16 12 12 8 16" />
+                <line x1="12" y1="12" x2="12" y2="21" />
+                <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
+              </svg>
+            </div>`
+          : nothing}
         <div class="header-title">Upload Files</div>
         ${closeBtn}
       </div>
@@ -3212,13 +3805,23 @@ export class SfxUploader extends LitElement {
 
   private _dimCache = new Map<string, { w: number; h: number } | null>();
 
-  private _getImageDimensions(file: UploadFile): Promise<{ w: number; h: number } | null> {
+  private _getImageDimensions(
+    file: UploadFile,
+  ): Promise<{ w: number; h: number } | null> {
     if (!file.previewUrl) return Promise.resolve(null);
-    if (this._dimCache.has(file.id)) return Promise.resolve(this._dimCache.get(file.id)!);
+    if (this._dimCache.has(file.id))
+      return Promise.resolve(this._dimCache.get(file.id)!);
     return new Promise((resolve) => {
       const img = new Image();
-      img.onload = () => { const dims = { w: img.naturalWidth, h: img.naturalHeight }; this._dimCache.set(file.id, dims); resolve(dims); };
-      img.onerror = () => { this._dimCache.set(file.id, null); resolve(null); };
+      img.onload = () => {
+        const dims = { w: img.naturalWidth, h: img.naturalHeight };
+        this._dimCache.set(file.id, dims);
+        resolve(dims);
+      };
+      img.onerror = () => {
+        this._dimCache.set(file.id, null);
+        resolve(null);
+      };
       img.src = file.previewUrl!;
     });
   }
@@ -3226,19 +3829,34 @@ export class SfxUploader extends LitElement {
   private _renderUploadOverlay(files: UploadFile[]) {
     const s = this._storeCtrl.state;
     const pct = Math.round(s.totalProgress ?? 0);
-    const completed = files.filter((f) => f.status === 'complete').length;
-    const eta = s.totalSpeed > 0 ? (s.totalBytes - s.totalBytesUploaded) / s.totalSpeed : 0;
+    const completed = files.filter((f) => f.status === "complete").length;
+    const eta =
+      s.totalSpeed > 0
+        ? (s.totalBytes - s.totalBytesUploaded) / s.totalSpeed
+        : 0;
 
     return html`
       <div class="upload-overlay">
         <div class="upload-overlay-spinner"></div>
         <div class="upload-overlay-percent">${pct}%</div>
-        <div class="upload-overlay-title">Uploading ${files.length} ${files.length === 1 ? 'file' : 'files'}</div>
-        <div class="upload-overlay-subtitle">${completed} of ${files.length} complete${eta > 0 ? html` · ~${formatEta(eta)} left` : nothing}</div>
+        <div class="upload-overlay-title">
+          Uploading ${files.length} ${files.length === 1 ? "file" : "files"}
+        </div>
+        <div class="upload-overlay-subtitle">
+          ${completed} of ${files.length}
+          complete${eta > 0 ? html` · ~${formatEta(eta)} left` : nothing}
+        </div>
         <div class="upload-overlay-bar">
           <div class="upload-overlay-bar-fill" style="width:${pct}%"></div>
         </div>
-        ${this.config?.minimizeOnUpload ? html`<button class="upload-overlay-minimize" @click=${this._onMinimize}>Minimize & continue in background</button>` : nothing}
+        ${this.config?.minimizeOnUpload
+          ? html`<button
+              class="upload-overlay-minimize"
+              @click=${this._onMinimize}
+            >
+              Minimize & continue in background
+            </button>`
+          : nothing}
       </div>
     `;
   }
@@ -3246,10 +3864,13 @@ export class SfxUploader extends LitElement {
   private _renderFloatingPill(files: UploadFile[]) {
     const s = this._storeCtrl.state;
     const pct = Math.round(s.totalProgress ?? 0);
-    const isDone = this._phase === 'complete';
-    const completed = files.filter((f) => f.status === 'complete').length;
-    const failed = files.filter((f) => f.status === 'failed').length;
-    const eta = s.totalSpeed > 0 ? (s.totalBytes - s.totalBytesUploaded) / s.totalSpeed : 0;
+    const isDone = this._phase === "complete";
+    const completed = files.filter((f) => f.status === "complete").length;
+    const failed = files.filter((f) => f.status === "failed").length;
+    const eta =
+      s.totalSpeed > 0
+        ? (s.totalBytes - s.totalBytesUploaded) / s.totalSpeed
+        : 0;
 
     // Collapsed pill — compact white bar
     if (this._isPillExpanded === false) {
@@ -3259,22 +3880,101 @@ export class SfxUploader extends LitElement {
             ${isDone
               ? failed > 0
                 ? completed > 0
-                  ? html`<div class="float-collapsed-icon warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>`
-                  : html`<div class="float-collapsed-icon error"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>`
-                : html`<div class="float-collapsed-icon done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>`
+                  ? html`<div class="float-collapsed-icon warn">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path
+                          d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+                        />
+                        <line x1="12" y1="9" x2="12" y2="13" />
+                        <line x1="12" y1="17" x2="12.01" y2="17" />
+                      </svg>
+                    </div>`
+                  : html`<div class="float-collapsed-icon error">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="8" x2="12" y2="12" />
+                        <line x1="12" y1="16" x2="12.01" y2="16" />
+                      </svg>
+                    </div>`
+                : html`<div class="float-collapsed-icon done">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                    >
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </div>`
               : html`<div class="float-collapsed-spinner"></div>`}
-            <span class="float-collapsed-text">${isDone ? (failed > 0 ? (completed > 0 ? 'Partially uploaded' : 'Upload failed') : 'Upload complete') : `Uploading ${files.length} ${files.length === 1 ? 'file' : 'files'}`}</span>
-            ${!isDone ? html`<span class="float-collapsed-pct">${pct}%</span>` : nothing}
+            <span class="float-collapsed-text"
+              >${isDone
+                ? failed > 0
+                  ? completed > 0
+                    ? "Partially uploaded"
+                    : "Upload failed"
+                  : "Upload complete"
+                : `Uploading ${files.length} ${
+                    files.length === 1 ? "file" : "files"
+                  }`}</span
+            >
+            ${!isDone
+              ? html`<span class="float-collapsed-pct">${pct}%</span>`
+              : nothing}
           </div>
           <div class="float-collapsed-actions">
             <button title="Open uploader" @click=${this._onPillExpand}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="15 3 21 3 21 9" />
+                <polyline points="9 21 3 21 3 15" />
+                <line x1="21" y1="3" x2="14" y2="10" />
+                <line x1="3" y1="21" x2="10" y2="14" />
+              </svg>
             </button>
             <button title="Expand" @click=${this._onPillClick}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="18 15 12 9 6 15"/></svg>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+              >
+                <polyline points="18 15 12 9 6 15" />
+              </svg>
             </button>
             <button title="Close" @click=${this._onPillDismiss}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
             </button>
           </div>
         </div>
@@ -3286,69 +3986,268 @@ export class SfxUploader extends LitElement {
       <div class="upload-float">
         <div class="float-header">
           <div class="float-header-left">
-            <div class="float-icon ${isDone ? (failed > 0 ? (completed > 0 ? 'warn' : 'error') : 'done') : ''}">
+            <div
+              class="float-icon ${isDone
+                ? failed > 0
+                  ? completed > 0
+                    ? "warn"
+                    : "error"
+                  : "done"
+                : ""}"
+            >
               ${isDone
                 ? failed > 0
                   ? completed > 0
-                    ? html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`
-                    : html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`
-                  : html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>`
-                : html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>`}
+                    ? html`<svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path
+                          d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+                        />
+                        <line x1="12" y1="9" x2="12" y2="13" />
+                        <line x1="12" y1="17" x2="12.01" y2="17" />
+                      </svg>`
+                    : html`<svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="8" x2="12" y2="12" />
+                        <line x1="12" y1="16" x2="12.01" y2="16" />
+                      </svg>`
+                  : html`<svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                    >
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>`
+                : html`<svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.2"
+                    stroke-linecap="round"
+                  >
+                    <polyline points="16 16 12 12 8 16" />
+                    <line x1="12" y1="12" x2="12" y2="21" />
+                    <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
+                  </svg>`}
             </div>
             <div>
-              <div class="float-title">${isDone ? (failed > 0 ? (completed > 0 ? 'Partially uploaded' : 'Upload failed') : 'Upload complete') : `Uploading ${files.length} ${files.length === 1 ? 'file' : 'files'}`}</div>
-              <div class="float-subtitle">${isDone ? `${completed} ${completed === 1 ? 'file' : 'files'} uploaded${failed > 0 ? `, ${failed} failed` : ''}` : `${completed} of ${files.length}${eta > 0 ? ` · ~${formatEta(eta)} left` : ''}`}</div>
+              <div class="float-title">
+                ${isDone
+                  ? failed > 0
+                    ? completed > 0
+                      ? "Partially uploaded"
+                      : "Upload failed"
+                    : "Upload complete"
+                  : `Uploading ${files.length} ${
+                      files.length === 1 ? "file" : "files"
+                    }`}
+              </div>
+              <div class="float-subtitle">
+                ${isDone
+                  ? `${completed} ${
+                      completed === 1 ? "file" : "files"
+                    } uploaded${failed > 0 ? `, ${failed} failed` : ""}`
+                  : `${completed} of ${files.length}${
+                      eta > 0 ? ` · ~${formatEta(eta)} left` : ""
+                    }`}
+              </div>
             </div>
           </div>
           <div class="float-actions">
             <button title="Expand" @click=${this._onPillExpand}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="15 3 21 3 21 9" />
+                <polyline points="9 21 3 21 3 15" />
+                <line x1="21" y1="3" x2="14" y2="10" />
+                <line x1="3" y1="21" x2="10" y2="14" />
+              </svg>
             </button>
             <button title="Collapse" @click=${this._onPillClick}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
             </button>
             <button title="Close" @click=${this._onPillDismiss}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
             </button>
           </div>
         </div>
         <div class="float-progress">
           <div class="float-progress-top">
             <span class="float-progress-label">Overall progress</span>
-            <span class="float-progress-pct ${isDone ? (failed > 0 ? (completed > 0 ? 'warn' : 'error') : 'done') : ''}">${isDone ? 'Done' : `${pct}%`}</span>
+            <span
+              class="float-progress-pct ${isDone
+                ? failed > 0
+                  ? completed > 0
+                    ? "warn"
+                    : "error"
+                  : "done"
+                : ""}"
+              >${isDone ? "Done" : `${pct}%`}</span
+            >
           </div>
-          <div class="float-bar"><div class="float-bar-fill ${isDone ? (failed > 0 ? (completed > 0 ? 'warn' : 'error') : 'done') : ''}" style="width:${isDone ? 100 : pct}%"></div></div>
+          <div class="float-bar">
+            <div
+              class="float-bar-fill ${isDone
+                ? failed > 0
+                  ? completed > 0
+                    ? "warn"
+                    : "error"
+                  : "done"
+                : ""}"
+              style="width:${isDone ? 100 : pct}%"
+            ></div>
+          </div>
         </div>
         <div class="float-items">
           ${files.map((f) => {
-            const isFailed = f.status === 'failed' || f.status === 'error';
+            const isFailed = f.status === "failed" || f.status === "error";
             return html`
-            <div class="float-item">
-              <div class="float-item-thumb" style=${f.previewUrl ? `background-image:url(${f.previewUrl});background-size:cover;background-position:center` : ''}>
-                ${!f.previewUrl ? html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>` : nothing}
-              </div>
-              <div class="float-item-info">
-                <div class="float-item-name">${f.name}</div>
-                <div class="float-item-size">${formatFileSize(f.size)}</div>
-              </div>
-              <div class="float-item-status">
-                ${f.status === 'complete'
-                  ? html`<div class="float-item-done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>`
-                  : isFailed
-                    ? html`
-                        <div class="float-item-error-wrap">
-                          <svg class="float-item-error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                          <span class="float-item-tooltip">${f.error || 'Upload failed'}</span>
+              <div class="float-item">
+                <div
+                  class="float-item-thumb"
+                  style=${f.previewUrl
+                    ? `background-image:url(${f.previewUrl});background-size:cover;background-position:center`
+                    : ""}
+                >
+                  ${!f.previewUrl
+                    ? html`<svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                      >
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                        <circle cx="8.5" cy="8.5" r="1.5" />
+                        <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                      </svg>`
+                    : nothing}
+                </div>
+                <div class="float-item-info">
+                  <div class="float-item-name">${f.name}</div>
+                  <div class="float-item-size">${formatFileSize(f.size)}</div>
+                </div>
+                <div class="float-item-status">
+                  ${f.status === "complete"
+                    ? html`<div class="float-item-done">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2.5"
+                          stroke-linecap="round"
+                        >
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      </div>`
+                    : isFailed
+                    ? html` <div class="float-item-error-wrap">
+                          <svg
+                            class="float-item-error-icon"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          >
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="8" x2="12" y2="12" />
+                            <line x1="12" y1="16" x2="12.01" y2="16" />
+                          </svg>
+                          <span class="float-item-tooltip"
+                            >${f.error || "Upload failed"}</span
+                          >
                         </div>
-                        <button class="float-item-retry" @click=${() => { this._ensureEngine(); this._engine?.retryFile(f.id); }}>
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+                        <button
+                          class="float-item-retry"
+                          @click=${() => {
+                            this._ensureEngine();
+                            this._engine?.retryFile(f.id);
+                          }}
+                        >
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          >
+                            <path d="M21 2v6h-6" />
+                            <path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
+                            <path d="M3 22v-6h6" />
+                            <path d="M21 12a9 9 0 0 1-15 6.7L3 16" />
+                          </svg>
                         </button>`
-                    : f.status === 'paused'
-                      ? html`<svg viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" width="16" height="16"><rect x="6" y="4" width="4" height="16" rx="1" fill="#d97706"/><rect x="14" y="4" width="4" height="16" rx="1" fill="#d97706"/></svg>`
-                      : html`<div class="float-item-spinner"></div>`}
+                    : f.status === "paused"
+                    ? html`<svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#d97706"
+                        stroke-width="2"
+                        width="16"
+                        height="16"
+                      >
+                        <rect
+                          x="6"
+                          y="4"
+                          width="4"
+                          height="16"
+                          rx="1"
+                          fill="#d97706"
+                        />
+                        <rect
+                          x="14"
+                          y="4"
+                          width="4"
+                          height="16"
+                          rx="1"
+                          fill="#d97706"
+                        />
+                      </svg>`
+                    : html`<div class="float-item-spinner"></div>`}
+                </div>
               </div>
-            </div>
-          `; })}
+            `;
+          })}
         </div>
       </div>
     `;
@@ -3357,8 +4256,10 @@ export class SfxUploader extends LitElement {
   private _onSplitPointerDown = (e: PointerEvent) => {
     e.preventDefault();
     this._isResizing = true;
-    const layout = this.shadowRoot?.querySelector('.preview-layout') as HTMLElement;
-    layout?.classList.add('resizing');
+    const layout = this.shadowRoot?.querySelector(
+      ".preview-layout",
+    ) as HTMLElement;
+    layout?.classList.add("resizing");
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
   };
 
@@ -3368,7 +4269,9 @@ export class SfxUploader extends LitElement {
     const clientX = e.clientX;
     this._splitRafId = requestAnimationFrame(() => {
       this._splitRafId = 0;
-      const layout = this.shadowRoot?.querySelector('.preview-layout') as HTMLElement;
+      const layout = this.shadowRoot?.querySelector(
+        ".preview-layout",
+      ) as HTMLElement;
       if (!layout) return;
       const rect = layout.getBoundingClientRect();
       const pct = ((clientX - rect.left) / rect.width) * 100;
@@ -3382,15 +4285,21 @@ export class SfxUploader extends LitElement {
       cancelAnimationFrame(this._splitRafId);
       this._splitRafId = 0;
     }
-    const layout = this.shadowRoot?.querySelector('.preview-layout') as HTMLElement;
-    layout?.classList.remove('resizing');
+    const layout = this.shadowRoot?.querySelector(
+      ".preview-layout",
+    ) as HTMLElement;
+    layout?.classList.remove("resizing");
   };
 
   private _renderPreviewLayout(files: UploadFile[]) {
     if (files.length === 0) return nothing;
-    const previewFile = files.find((f) => f.id === this._previewFileId) ?? files[0];
-    const ext = previewFile.name.split('.').pop()?.toUpperCase() || '';
-    const addedDate = new Date(previewFile.addedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const previewFile =
+      files.find((f) => f.id === this._previewFileId) ?? files[0];
+    const ext = previewFile.name.split(".").pop()?.toUpperCase() || "";
+    const addedDate = new Date(previewFile.addedAt).toLocaleDateString(
+      "en-US",
+      { month: "short", day: "numeric", year: "numeric" },
+    );
 
     const targetFolder = this._store.getState().targetFolder;
     const totalSize = files.reduce((sum, f) => sum + (f.size || 0), 0);
@@ -3398,9 +4307,14 @@ export class SfxUploader extends LitElement {
       <div class="preview-topbar"></div>
       <div class="preview-layout">
         <div class="file-grid-side" style="flex:${this._splitPct}">
-          ${this.config?.mode === 'inline' && this.config?.inlineHeader ? this._renderInlineHeader(this.config.inlineHeader) : nothing}
+          ${this.config?.mode === "inline" && this.config?.inlineHeader
+            ? this._renderInlineHeader(this.config.inlineHeader)
+            : nothing}
           <div class="file-grid-header">
-            <span class="file-grid-header-text">${files.length} ${files.length === 1 ? 'asset' : 'assets'} · ${formatFileSize(totalSize)}</span>
+            <span class="file-grid-header-text"
+              >${files.length} ${files.length === 1 ? "asset" : "assets"} ·
+              ${formatFileSize(totalSize)}</span
+            >
           </div>
           <sfx-file-list
             .files=${files}
@@ -3411,7 +4325,8 @@ export class SfxUploader extends LitElement {
             @source-click=${this._onDropTileSourceClick}
           ></sfx-file-list>
         </div>
-        <div class="preview-divider"
+        <div
+          class="preview-divider"
           @pointerdown=${this._onSplitPointerDown}
           @pointermove=${this._onSplitPointerMove}
           @pointerup=${this._onSplitPointerUp}
@@ -3419,76 +4334,207 @@ export class SfxUploader extends LitElement {
         ></div>
         <div class="preview-panel" style="flex:${100 - this._splitPct}">
           <div class="preview-panel-header">
-            <span class="preview-header-name" title=${previewFile.name}>${previewFile.name}</span>
+            <span class="preview-header-name" title=${previewFile.name}
+              >${previewFile.name}</span
+            >
             <div class="preview-header-actions">
-              ${previewFile.previewUrl || (previewFile.type.startsWith('video/') && previewFile.file) ? html`
-                <button @click=${() => { this._fullscreenPreviewUrl = previewFile.previewUrl; this._fullscreenVideoFile = previewFile.type.startsWith('video/') && previewFile.file ? previewFile.file : null; this._fullscreenZoomed = false; }} title="Fullscreen">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="15 3 21 3 21 9" />
-                    <polyline points="9 21 3 21 3 15" />
-                    <line x1="21" y1="3" x2="14" y2="10" />
-                    <line x1="3" y1="21" x2="10" y2="14" />
-                  </svg>
-                </button>
-              ` : nothing}
-              <button @click=${() => { this._previewFileId = null; }} title="Close">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+              ${previewFile.previewUrl ||
+              (previewFile.type.startsWith("video/") && previewFile.file)
+                ? html`
+                    <button
+                      @click=${() => {
+                        this._fullscreenPreviewUrl = previewFile.previewUrl;
+                        this._fullscreenVideoFile =
+                          previewFile.type.startsWith("video/") &&
+                          previewFile.file
+                            ? previewFile.file
+                            : null;
+                        this._fullscreenZoomed = false;
+                      }}
+                      title="Fullscreen"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <polyline points="15 3 21 3 21 9" />
+                        <polyline points="9 21 3 21 3 15" />
+                        <line x1="21" y1="3" x2="14" y2="10" />
+                        <line x1="3" y1="21" x2="10" y2="14" />
+                      </svg>
+                    </button>
+                  `
+                : nothing}
+              <button
+                @click=${() => {
+                  this._previewFileId = null;
+                }}
+                title="Close"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                >
                   <line x1="18" y1="6" x2="6" y2="18" />
                   <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
               </button>
             </div>
           </div>
-          ${previewFile.type.startsWith('video/') && previewFile.file
+          ${previewFile.type.startsWith("video/") && previewFile.file
             ? html`
                 <div class="preview-media-area">
                   <div class="preview-img-wrap">
-                    <video class="preview-image" src=${this._getVideoBlobUrl(previewFile.file)} controls playsinline></video>
+                    <video
+                      class="preview-image"
+                      src=${this._getVideoBlobUrl(previewFile.file)}
+                      controls
+                      playsinline
+                    ></video>
                   </div>
-                  <button class="preview-nav prev" ?disabled=${files.indexOf(previewFile) === 0} @click=${() => this._navigatePreview(files, -1)}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                  <button
+                    class="preview-nav prev"
+                    ?disabled=${files.indexOf(previewFile) === 0}
+                    @click=${() => this._navigatePreview(files, -1)}
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                    >
+                      <polyline points="15 18 9 12 15 6" />
+                    </svg>
                   </button>
-                  <button class="preview-nav next" ?disabled=${files.indexOf(previewFile) === files.length - 1} @click=${() => this._navigatePreview(files, 1)}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 6 15 12 9 18"/></svg>
+                  <button
+                    class="preview-nav next"
+                    ?disabled=${files.indexOf(previewFile) === files.length - 1}
+                    @click=${() => this._navigatePreview(files, 1)}
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                    >
+                      <polyline points="9 6 15 12 9 18" />
+                    </svg>
                   </button>
                 </div>
               `
-          : previewFile.previewUrl
+            : previewFile.previewUrl
             ? html`
                 <div class="preview-media-area">
                   <div class="preview-img-wrap">
-                    <img class="preview-image" src=${previewFile.previewUrl} alt=${previewFile.name} />
+                    <img
+                      class="preview-image"
+                      src=${previewFile.previewUrl}
+                      alt=${previewFile.name}
+                    />
                   </div>
-                  <button class="preview-nav prev" ?disabled=${files.indexOf(previewFile) === 0} @click=${() => this._navigatePreview(files, -1)}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                  <button
+                    class="preview-nav prev"
+                    ?disabled=${files.indexOf(previewFile) === 0}
+                    @click=${() => this._navigatePreview(files, -1)}
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                    >
+                      <polyline points="15 18 9 12 15 6" />
+                    </svg>
                   </button>
-                  <button class="preview-nav next" ?disabled=${files.indexOf(previewFile) === files.length - 1} @click=${() => this._navigatePreview(files, 1)}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 6 15 12 9 18"/></svg>
+                  <button
+                    class="preview-nav next"
+                    ?disabled=${files.indexOf(previewFile) === files.length - 1}
+                    @click=${() => this._navigatePreview(files, 1)}
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                    >
+                      <polyline points="9 6 15 12 9 18" />
+                    </svg>
                   </button>
                 </div>
               `
             : html`
                 <div class="preview-media-area">
                   <div class="preview-doc-wrap ${getFileCategory(previewFile)}">
-                    <div class="preview-doc-icon ${getFileCategory(previewFile)}">
+                    <div
+                      class="preview-doc-icon ${getFileCategory(previewFile)}"
+                    >
                       ${this._renderDocTypeIcon(getFileCategory(previewFile))}
-                      <span class="preview-doc-ext ${getFileCategory(previewFile)}">${ext}</span>
+                      <span
+                        class="preview-doc-ext ${getFileCategory(previewFile)}"
+                        >${ext}</span
+                      >
                     </div>
                   </div>
-                  <button class="preview-nav prev" ?disabled=${files.indexOf(previewFile) === 0} @click=${() => this._navigatePreview(files, -1)}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                  <button
+                    class="preview-nav prev"
+                    ?disabled=${files.indexOf(previewFile) === 0}
+                    @click=${() => this._navigatePreview(files, -1)}
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                    >
+                      <polyline points="15 18 9 12 15 6" />
+                    </svg>
                   </button>
-                  <button class="preview-nav next" ?disabled=${files.indexOf(previewFile) === files.length - 1} @click=${() => this._navigatePreview(files, 1)}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 6 15 12 9 18"/></svg>
+                  <button
+                    class="preview-nav next"
+                    ?disabled=${files.indexOf(previewFile) === files.length - 1}
+                    @click=${() => this._navigatePreview(files, 1)}
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                    >
+                      <polyline points="9 6 15 12 9 18" />
+                    </svg>
                   </button>
                 </div>
               `}
           ${this._metadataSchema && this.config?.metadataConfig
-            ? html`<div class="preview-meta-list"><div class="preview-file-info">${ext}${previewFile.size ? ` \u00B7 ${formatFileSize(previewFile.size)}` : ''}${this._previewDims !== '\u2014' ? ` \u00B7 ${this._previewDims}` : ''}</div></div>`
+            ? html`<div class="preview-meta-list">
+                <div class="preview-file-info">
+                  ${ext}${previewFile.size
+                    ? ` \u00B7 ${formatFileSize(previewFile.size)}`
+                    : ""}${this._previewDims !== "\u2014"
+                    ? ` \u00B7 ${this._previewDims}`
+                    : ""}
+                </div>
+              </div>`
             : nothing}
           ${this._metadataSchema && this.config?.metadataConfig
             ? html`
-                <div class="preview-metadata" @field-blur=${this._onPreviewMetadataBlur}>
+                <div
+                  class="preview-metadata"
+                  @field-blur=${this._onPreviewMetadataBlur}
+                >
                   <sfx-metadata-form
                     .schema=${this._metadataSchema}
                     .meta=${previewFile.meta}
@@ -3499,31 +4545,60 @@ export class SfxUploader extends LitElement {
               `
             : html`
                 <div class="preview-file-info-panel">
-                  <div class="preview-file-info-header ${this._fileInfoOpen ? 'open' : ''}" @click=${() => { this._fileInfoOpen = !this._fileInfoOpen; }}>
+                  <div
+                    class="preview-file-info-header ${this._fileInfoOpen
+                      ? "open"
+                      : ""}"
+                    @click=${() => {
+                      this._fileInfoOpen = !this._fileInfoOpen;
+                    }}
+                  >
                     <span>File info</span>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                    >
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
                   </div>
-                  <div class="preview-file-info-body ${this._fileInfoOpen ? 'open' : ''}">
+                  <div
+                    class="preview-file-info-body ${this._fileInfoOpen
+                      ? "open"
+                      : ""}"
+                  >
                     <div class="preview-file-info-row">
                       <div class="preview-file-info-key">File name</div>
-                      <div class="preview-file-info-val">${previewFile.name}</div>
+                      <div class="preview-file-info-val">
+                        ${previewFile.name}
+                      </div>
                     </div>
                     <div class="preview-file-info-row">
                       <div class="preview-file-info-key">Type</div>
                       <div class="preview-file-info-val">${ext}</div>
                     </div>
-                    ${previewFile.size ? html`
-                      <div class="preview-file-info-row">
-                        <div class="preview-file-info-key">Size</div>
-                        <div class="preview-file-info-val">${formatFileSize(previewFile.size)}</div>
-                      </div>
-                    ` : nothing}
-                    ${this._previewDims !== '\u2014' ? html`
-                      <div class="preview-file-info-row">
-                        <div class="preview-file-info-key">Dimensions</div>
-                        <div class="preview-file-info-val">${this._previewDims}</div>
-                      </div>
-                    ` : nothing}
+                    ${previewFile.size
+                      ? html`
+                          <div class="preview-file-info-row">
+                            <div class="preview-file-info-key">Size</div>
+                            <div class="preview-file-info-val">
+                              ${formatFileSize(previewFile.size)}
+                            </div>
+                          </div>
+                        `
+                      : nothing}
+                    ${this._previewDims !== "\u2014"
+                      ? html`
+                          <div class="preview-file-info-row">
+                            <div class="preview-file-info-key">Dimensions</div>
+                            <div class="preview-file-info-val">
+                              ${this._previewDims}
+                            </div>
+                          </div>
+                        `
+                      : nothing}
                   </div>
                 </div>
               `}
@@ -3534,34 +4609,170 @@ export class SfxUploader extends LitElement {
 
   private _renderDocTypeIcon(category: string) {
     switch (category) {
-      case 'pdf':
-        return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
-      case 'doc':
-        return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`;
-      case 'vid':
-        return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>`;
-      case 'audio':
-        return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>`;
-      case 'sheet':
-        return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>`;
-      case 'slide':
-        return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>`;
-      case 'zip':
-        return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>`;
-      case 'code':
-        return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>`;
-      case 'markup':
-        return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/><line x1="14" y1="4" x2="10" y2="20"/></svg>`;
-      case 'font':
-        return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9.5" y1="20" x2="14.5" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>`;
-      case 'design':
-        return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="13.5" cy="6.5" r="2.5"/><path d="M17.5 10.5L20 21H4l5.5-12 4 6 4-4.5z"/></svg>`;
-      case 'binary':
-        return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/></svg>`;
-      case 'data':
-        return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>`;
+      case "pdf":
+        return html`<svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+        >
+          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+          <polyline points="14 2 14 8 20 8" />
+        </svg>`;
+      case "doc":
+        return html`<svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+        >
+          <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+          <polyline points="14 2 14 8 20 8" />
+          <line x1="16" y1="13" x2="8" y2="13" />
+          <line x1="16" y1="17" x2="8" y2="17" />
+        </svg>`;
+      case "vid":
+        return html`<svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+        >
+          <polygon points="23 7 16 12 23 17 23 7" />
+          <rect x="1" y="5" width="15" height="14" rx="2" />
+        </svg>`;
+      case "audio":
+        return html`<svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+        >
+          <path d="M9 18V5l12-2v13" />
+          <circle cx="6" cy="18" r="3" />
+          <circle cx="18" cy="16" r="3" />
+        </svg>`;
+      case "sheet":
+        return html`<svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+        >
+          <rect x="3" y="3" width="18" height="18" rx="2" />
+          <line x1="3" y1="9" x2="21" y2="9" />
+          <line x1="3" y1="15" x2="21" y2="15" />
+          <line x1="9" y1="3" x2="9" y2="21" />
+        </svg>`;
+      case "slide":
+        return html`<svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+        >
+          <rect x="2" y="3" width="20" height="14" rx="2" />
+          <line x1="8" y1="21" x2="16" y2="21" />
+          <line x1="12" y1="17" x2="12" y2="21" />
+        </svg>`;
+      case "zip":
+        return html`<svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+        >
+          <path d="M21 8v13H3V8" />
+          <path d="M1 3h22v5H1z" />
+          <path d="M10 12h4" />
+        </svg>`;
+      case "code":
+        return html`<svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+        >
+          <polyline points="16 18 22 12 16 6" />
+          <polyline points="8 6 2 12 8 18" />
+        </svg>`;
+      case "markup":
+        return html`<svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+        >
+          <polyline points="16 18 22 12 16 6" />
+          <polyline points="8 6 2 12 8 18" />
+          <line x1="14" y1="4" x2="10" y2="20" />
+        </svg>`;
+      case "font":
+        return html`<svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+        >
+          <polyline points="4 7 4 4 20 4 20 7" />
+          <line x1="9.5" y1="20" x2="14.5" y2="20" />
+          <line x1="12" y1="4" x2="12" y2="20" />
+        </svg>`;
+      case "design":
+        return html`<svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+        >
+          <circle cx="13.5" cy="6.5" r="2.5" />
+          <path d="M17.5 10.5L20 21H4l5.5-12 4 6 4-4.5z" />
+        </svg>`;
+      case "binary":
+        return html`<svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+        >
+          <rect x="4" y="4" width="16" height="16" rx="2" />
+          <path d="M9 9h6v6H9z" />
+        </svg>`;
+      case "data":
+        return html`<svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+        >
+          <ellipse cx="12" cy="5" rx="9" ry="3" />
+          <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" />
+          <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
+        </svg>`;
       default:
-        return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>`;
+        return html`<svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+        >
+          <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z" />
+          <polyline points="13 2 13 9 20 9" />
+        </svg>`;
     }
   }
 
@@ -3570,8 +4781,14 @@ export class SfxUploader extends LitElement {
     const next = idx + direction;
     if (next >= 0 && next < files.length) {
       // Pause any playing video before switching
-      const video = this.shadowRoot?.querySelector('.preview-image[controls]') as HTMLVideoElement | null;
-      if (video) { video.pause(); video.removeAttribute('src'); video.load(); }
+      const video = this.shadowRoot?.querySelector(
+        ".preview-image[controls]",
+      ) as HTMLVideoElement | null;
+      if (video) {
+        video.pause();
+        video.removeAttribute("src");
+        video.load();
+      }
       this._previewFileId = files[next].id;
     }
   }
@@ -3584,7 +4801,8 @@ export class SfxUploader extends LitElement {
     const hasFiles = files.length > 0;
 
     return html`
-      <div class="content"
+      <div
+        class="content"
         @files-selected=${this._onFilesSelected}
         @source-click=${this._onSourceClick}
         @file-remove=${this._onFileRemove}
@@ -3610,95 +4828,142 @@ export class SfxUploader extends LitElement {
         @screencast-cancel=${this._onScreenCastCancel}
       >
         <div
-          class="body ${hasFiles ? 'has-files' : ''} ${this._bodyDragOver ? 'body-drag-over' : ''} ${this._previewFileId ? 'has-preview' : ''}"
+          class="body ${hasFiles ? "has-files" : ""} ${this._bodyDragOver
+            ? "body-drag-over"
+            : ""} ${this._previewFileId ? "has-preview" : ""}"
           @dragenter=${hasFiles ? this._onBodyDragEnter : nothing}
           @dragover=${hasFiles ? this._onBodyDragOver : nothing}
           @dragleave=${hasFiles ? this._onBodyDragLeave : nothing}
           @drop=${hasFiles ? this._onBodyDrop : nothing}
         >
-          ${this.config?.mode === 'inline' && this.config?.inlineHeader && !this._previewFileId && phase !== 'uploading' && phase !== 'complete' && !this._isReviewing ? this._renderInlineHeader(this.config.inlineHeader) : nothing}
+          ${this.config?.mode === "inline" &&
+          this.config?.inlineHeader &&
+          !this._previewFileId &&
+          phase !== "uploading" &&
+          phase !== "complete" &&
+          !this._isReviewing
+            ? this._renderInlineHeader(this.config.inlineHeader)
+            : nothing}
           ${this._isReviewing
-              ? html`
-                  <sfx-last-upload-review
-                    .files=${this._reviewFiles}
-                    .getLocateUrl=${this.config?.getLocateUrl}
-                    @back=${this._onExitReview}
-                    @clear-history=${this._onClearReview}
-                  ></sfx-last-upload-review>
-                `
-              : phase === 'complete'
-              ? html`
-                  <sfx-success-card
-                    .fileCount=${files.filter((f) => f.status === 'complete').length}
-                    .totalSize=${files.filter((f) => f.status === 'complete').reduce((sum, f) => sum + (f.size || 0), 0)}
-                    .thumbnails=${files.filter((f) => f.status === 'complete' && f.previewUrl).map((f) => f.previewUrl!)}
-                    .failedFiles=${files.filter((f) => f.status === 'failed').map((f) => ({ id: f.id, name: f.name, error: f.error || 'Upload failed' }))}
-                    @close-uploader=${this._onSuccessCardClose}
-                    @file-retry=${this._onFileRetry}
-                    @retry-all=${this._onRetryAll}
-                    @review-files=${this._onEnterReview}
-                  ></sfx-success-card>
-                `
-              : phase === 'uploading'
-              ? this._renderUploadOverlay(files)
-              : html`
-                  ${hasFiles
-                    ? nothing
-                    : html`<sfx-drop-zone
+            ? html`
+                <sfx-last-upload-review
+                  .files=${this._reviewFiles}
+                  .getLocateUrl=${this.config?.getLocateUrl}
+                  @back=${this._onExitReview}
+                  @clear-history=${this._onClearReview}
+                ></sfx-last-upload-review>
+              `
+            : phase === "complete"
+            ? html`
+                <sfx-success-card
+                  .fileCount=${files.filter((f) => f.status === "complete")
+                    .length}
+                  .totalSize=${files
+                    .filter((f) => f.status === "complete")
+                    .reduce((sum, f) => sum + (f.size || 0), 0)}
+                  .thumbnails=${files
+                    .filter((f) => f.status === "complete" && f.previewUrl)
+                    .map((f) => f.previewUrl!)}
+                  .failedFiles=${files
+                    .filter((f) => f.status === "failed")
+                    .map((f) => ({
+                      id: f.id,
+                      name: f.name,
+                      error: f.error || "Upload failed",
+                    }))}
+                  @close-uploader=${this._onSuccessCardClose}
+                  @file-retry=${this._onFileRetry}
+                  @retry-all=${this._onRetryAll}
+                  @review-files=${this._onEnterReview}
+                ></sfx-success-card>
+              `
+            : phase === "uploading"
+            ? this._renderUploadOverlay(files)
+            : html`
+                ${hasFiles
+                  ? nothing
+                  : html`<sfx-drop-zone
                         .compact=${hasFiles}
                         .externalDragOver=${this._bodyDragOver}
                         .accept=${accept}
                         .sources=${this._mergedSources}
-                        .sourcesLayout=${this.config?.sourcesLayout ?? 'pills'}
-                        .mode=${this.config?.mode ?? 'modal'}
+                        .sourcesLayout=${this.config?.sourcesLayout ?? "pills"}
+                        .mode=${this.config?.mode ?? "modal"}
                       ></sfx-drop-zone>
                       ${this._hasStoredReview
-                        ? html`<button class="last-upload-pill" @click=${this._onEnterReview} title="View last upload batch">
-                            <svg viewBox="0 0 24 24"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg>
+                        ? html`<button
+                            class="last-upload-pill"
+                            @click=${this._onEnterReview}
+                            title="View last upload batch"
+                          >
+                            <svg viewBox="0 0 24 24">
+                              <path d="M12 8v4l3 3" />
+                              <circle cx="12" cy="12" r="10" />
+                            </svg>
                             View last upload
                           </button>`
                         : nothing}`}
-
-                  ${hasFiles
-                    ? this._previewFileId
-                      ? this._renderPreviewLayout(files)
-                      : html`
-                          <div class="asset-count">${files.length} ${files.length === 1 ? 'file' : 'files'} · ${formatFileSize(files.reduce((sum, f) => sum + (f.size || 0), 0))}</div>
-                          <sfx-file-list
-                            .files=${files}
-                            .showDropTile=${true}
-                            .sources=${this._mergedSources}
-                            .accept=${accept}
-                            ?drag-active=${this._bodyDragOver}
-                            @source-click=${this._onDropTileSourceClick}
-                          ></sfx-file-list>
-                        `
-                    : nothing}
-                `}
+                ${hasFiles
+                  ? this._previewFileId
+                    ? this._renderPreviewLayout(files)
+                    : html`
+                        <div class="asset-count">
+                          ${files.length}
+                          ${files.length === 1 ? "file" : "files"} ·
+                          ${formatFileSize(
+                            files.reduce((sum, f) => sum + (f.size || 0), 0),
+                          )}
+                        </div>
+                        <sfx-file-list
+                          .files=${files}
+                          .showDropTile=${true}
+                          .sources=${this._mergedSources}
+                          .accept=${accept}
+                          ?drag-active=${this._bodyDragOver}
+                          @source-click=${this._onDropTileSourceClick}
+                        ></sfx-file-list>
+                      `
+                  : nothing}
+              `}
         </div>
 
-        ${hasFiles && phase !== 'complete' && phase !== 'uploading'
+        ${hasFiles && phase !== "complete" && phase !== "uploading"
           ? html`
               <sfx-actions-bar
-                .uploadState=${'idle' as const}
+                .uploadState=${"idle" as const}
                 .fileCount=${files.length}
                 .totalSize=${files.reduce((sum, f) => sum + (f.size || 0), 0)}
-                .failedCount=${files.filter((f) => f.status === 'failed' || f.status === 'error').length}
-                .completedCount=${files.filter((f) => f.status === 'complete').length}
+                .failedCount=${files.filter(
+                  (f) => f.status === "failed" || f.status === "error",
+                ).length}
+                .completedCount=${files.filter((f) => f.status === "complete")
+                  .length}
                 .uploadProgress=${s.totalProgress ?? 0}
-                .showFillMetadata=${!!(this.config?.showFillMetadata ?? this.config?.metadataConfig)}
+                .showFillMetadata=${!!(
+                  this.config?.showFillMetadata ?? this.config?.metadataConfig
+                )}
                 .uploadDisabled=${this._hasUnfilledRequiredMetadata}
-                .uploadDisabledReason=${this._hasUnfilledRequiredMetadata ? 'Fill required metadata first' : ''}
+                .uploadDisabledReason=${this._hasUnfilledRequiredMetadata
+                  ? "Fill required metadata first"
+                  : ""}
               ></sfx-actions-bar>
             `
           : nothing}
-
-        ${this._showUrlDialog ? html`<sfx-url-dialog></sfx-url-dialog>` : nothing}
-        ${this._showCameraDialog ? html`<sfx-camera-dialog></sfx-camera-dialog>` : nothing}
-        ${this._showScreenCastDialog ? html`<sfx-screen-cast-dialog></sfx-screen-cast-dialog>` : nothing}
+        ${this._showUrlDialog
+          ? html`<sfx-url-dialog></sfx-url-dialog>`
+          : nothing}
+        ${this._showCameraDialog
+          ? html`<sfx-camera-dialog></sfx-camera-dialog>`
+          : nothing}
+        ${this._showScreenCastDialog
+          ? html`<sfx-screen-cast-dialog></sfx-screen-cast-dialog>`
+          : nothing}
         ${this._activeConnector && this.config?.connectors
           ? html`
-              <div class="connector-modal-backdrop" @click=${this._onConnectorBackdropClick}>
+              <div
+                class="connector-modal-backdrop"
+                @click=${this._onConnectorBackdropClick}
+              >
                 <div class="connector-modal">
                   ${SEARCH_PROVIDERS.has(this._activeConnector)
                     ? html`
@@ -3717,14 +4982,12 @@ export class SfxUploader extends LitElement {
               </div>
             `
           : nothing}
-
-
         ${this._bulkMetadataOpen && this._metadataSchema
           ? html`
               <sfx-bulk-metadata-modal
                 .schema=${this._metadataSchema}
-                .files=${[...this._store.getState().files.values()].filter(f =>
-                  SfxUploader._MODIFIABLE_STATUSES.has(f.status)
+                .files=${[...this._store.getState().files.values()].filter(
+                  (f) => SfxUploader._MODIFIABLE_STATUSES.has(f.status),
                 )}
                 .config=${this.config?.metadataConfig ?? null}
                 .autocomplete=${this._metadataAutocomplete}
@@ -3733,11 +4996,12 @@ export class SfxUploader extends LitElement {
               ></sfx-bulk-metadata-modal>
             `
           : nothing}
-
         ${this._fullscreenPreviewUrl || this._fullscreenVideoFile
           ? html`
               <div
-                class="fs-overlay ${this._fullscreenZoomed ? 'zoomed' : ''} ${this._fsDragging ? 'panning' : ''}"
+                class="fs-overlay ${this._fullscreenZoomed
+                  ? "zoomed"
+                  : ""} ${this._fsDragging ? "panning" : ""}"
                 @click=${this._onFsOverlayClick}
                 @mousedown=${this._onFsPanStart}
                 @mousemove=${this._onFsPanMove}
@@ -3747,15 +5011,54 @@ export class SfxUploader extends LitElement {
                 @touchmove=${this._onFsTouchMove}
                 @touchend=${this._onFsPanEnd}
               >
-                <div class="fs-toolbar" @click=${(e: Event) => e.stopPropagation()}>
-                  <button class="fs-btn" @click=${this._onFsToggleZoom} title="${this._fullscreenZoomed ? 'Zoom out' : 'Zoom in'}">
+                <div
+                  class="fs-toolbar"
+                  @click=${(e: Event) => e.stopPropagation()}
+                >
+                  <button
+                    class="fs-btn"
+                    @click=${this._onFsToggleZoom}
+                    title="${this._fullscreenZoomed ? "Zoom out" : "Zoom in"}"
+                  >
                     ${this._fullscreenZoomed
-                      ? html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>`
-                      : html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>`}
+                      ? html`<svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                        >
+                          <circle cx="11" cy="11" r="8" />
+                          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                          <line x1="8" y1="11" x2="14" y2="11" />
+                        </svg>`
+                      : html`<svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                        >
+                          <circle cx="11" cy="11" r="8" />
+                          <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                          <line x1="11" y1="8" x2="11" y2="14" />
+                          <line x1="8" y1="11" x2="14" y2="11" />
+                        </svg>`}
                   </button>
-                  <button class="fs-btn" @click=${this._onFsClose} title="Close">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                  <button
+                    class="fs-btn"
+                    @click=${this._onFsClose}
+                    title="Close"
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                    >
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
                     </svg>
                   </button>
                 </div>
@@ -3763,7 +5066,8 @@ export class SfxUploader extends LitElement {
                   ? html`<video
                       class="fs-img"
                       src=${this._getVideoBlobUrl(this._fullscreenVideoFile)}
-                      controls playsinline
+                      controls
+                      playsinline
                       draggable="false"
                       @click=${(e: Event) => e.stopPropagation()}
                     ></video>`
@@ -3771,18 +5075,57 @@ export class SfxUploader extends LitElement {
                       class="fs-img"
                       src=${this._fullscreenPreviewUrl}
                       alt=""
-                      style=${this._fullscreenZoomed ? `transform: scale(2) translate(${this._fsPanX}px, ${this._fsPanY}px)` : ''}
+                      style=${this._fullscreenZoomed
+                        ? `transform: scale(2) translate(${this._fsPanX}px, ${this._fsPanY}px)`
+                        : ""}
                       draggable="false"
                     />`}
                 ${(() => {
-                  const fsFiles = [...this._store.getState().files.values()].filter(f => f.previewUrl || (f.type.startsWith('video/') && f.file));
-                  const fsIdx = fsFiles.findIndex(f => f.id === this._previewFileId);
+                  const fsFiles = [
+                    ...this._store.getState().files.values(),
+                  ].filter(
+                    (f) =>
+                      f.previewUrl || (f.type.startsWith("video/") && f.file),
+                  );
+                  const fsIdx = fsFiles.findIndex(
+                    (f) => f.id === this._previewFileId,
+                  );
                   return html`
-                    <button class="fs-nav prev" ?disabled=${fsIdx <= 0} @click=${(e: Event) => { e.stopPropagation(); this._navigateFs(-1); }}>
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    <button
+                      class="fs-nav prev"
+                      ?disabled=${fsIdx <= 0}
+                      @click=${(e: Event) => {
+                        e.stopPropagation();
+                        this._navigateFs(-1);
+                      }}
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.5"
+                        stroke-linecap="round"
+                      >
+                        <polyline points="15 18 9 12 15 6" />
+                      </svg>
                     </button>
-                    <button class="fs-nav next" ?disabled=${fsIdx >= fsFiles.length - 1} @click=${(e: Event) => { e.stopPropagation(); this._navigateFs(1); }}>
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 6 15 12 9 18"/></svg>
+                    <button
+                      class="fs-nav next"
+                      ?disabled=${fsIdx >= fsFiles.length - 1}
+                      @click=${(e: Event) => {
+                        e.stopPropagation();
+                        this._navigateFs(1);
+                      }}
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.5"
+                        stroke-linecap="round"
+                      >
+                        <polyline points="9 6 15 12 9 18" />
+                      </svg>
                     </button>
                   `;
                 })()}
@@ -3835,7 +5178,9 @@ export class SfxUploader extends LitElement {
   private _onFsPanEnd = () => {
     this._fsDragging = false;
     // Reset _fsDragDidMove after a tick so the click event (which fires after mouseup) can still read it
-    requestAnimationFrame(() => { this._fsDragDidMove = false; });
+    requestAnimationFrame(() => {
+      this._fsDragDidMove = false;
+    });
   };
 
   // --- Pan (touch) ---
@@ -3864,7 +5209,7 @@ export class SfxUploader extends LitElement {
 
   private _navigateFs(direction: -1 | 1) {
     const files = [...this._store.getState().files.values()].filter(
-      (f) => f.previewUrl || (f.type.startsWith('video/') && f.file),
+      (f) => f.previewUrl || (f.type.startsWith("video/") && f.file),
     );
     const idx = files.findIndex((f) => f.id === this._previewFileId);
     if (idx === -1) return;
@@ -3872,7 +5217,10 @@ export class SfxUploader extends LitElement {
     if (next >= 0 && next < files.length) {
       const nextFile = files[next];
       this._fullscreenPreviewUrl = nextFile.previewUrl;
-      this._fullscreenVideoFile = nextFile.type.startsWith('video/') && nextFile.file ? nextFile.file : null;
+      this._fullscreenVideoFile =
+        nextFile.type.startsWith("video/") && nextFile.file
+          ? nextFile.file
+          : null;
       this._previewFileId = nextFile.id;
       this._fullscreenZoomed = false;
       this._fsPanX = 0;
@@ -3906,6 +5254,6 @@ export class SfxUploader extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'sfx-uploader': SfxUploader;
+    "sfx-uploader": SfxUploader;
   }
 }
