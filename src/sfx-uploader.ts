@@ -3774,12 +3774,18 @@ export class SfxUploader extends LitElement {
                       style=${this._fullscreenZoomed ? `transform: scale(2) translate(${this._fsPanX}px, ${this._fsPanY}px)` : ''}
                       draggable="false"
                     />`}
-                <button class="fs-nav prev" @click=${(e: Event) => { e.stopPropagation(); this._navigateFs(-1); }}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
-                </button>
-                <button class="fs-nav next" @click=${(e: Event) => { e.stopPropagation(); this._navigateFs(1); }}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 6 15 12 9 18"/></svg>
-                </button>
+                ${(() => {
+                  const fsFiles = [...this._store.getState().files.values()].filter(f => f.previewUrl || (f.type.startsWith('video/') && f.file));
+                  const fsIdx = fsFiles.findIndex(f => f.id === this._previewFileId);
+                  return html`
+                    <button class="fs-nav prev" ?disabled=${fsIdx <= 0} @click=${(e: Event) => { e.stopPropagation(); this._navigateFs(-1); }}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    </button>
+                    <button class="fs-nav next" ?disabled=${fsIdx >= fsFiles.length - 1} @click=${(e: Event) => { e.stopPropagation(); this._navigateFs(1); }}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 6 15 12 9 18"/></svg>
+                    </button>
+                  `;
+                })()}
               </div>
             `
           : nothing}
