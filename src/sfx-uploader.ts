@@ -272,6 +272,7 @@ export class SfxUploader extends LitElement {
       justify-content: center;
       z-index: 9999;
       padding: 24px;
+      overflow: hidden;
       animation: fadeIn 0.2s ease;
     }
 
