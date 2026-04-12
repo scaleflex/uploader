@@ -2084,6 +2084,9 @@ export class SfxUploader extends LitElement {
   private _metadataAutocomplete: any = null;
   private _videoBlobUrls = new Map<File, string>();
 
+  /** Persisted ETA — holds the last computed value so the display doesn't flicker when speed momentarily drops to 0. */
+  private _lastEta = 0;
+
   private _store!: Store<UploaderState>;
   private _storeCtrl!: StoreController;
   private _engine: UploadEngine | null = null;
@@ -2695,6 +2698,9 @@ export class SfxUploader extends LitElement {
 
     if (!prev) return;
 
+    // Reset persisted ETA when a new upload batch starts
+    if (curr.isUploading && !prev.isUploading) this._lastEta = 0;
+
     const callbacks = this.config?.callbacks;
 
     // Detect per-file status transitions
@@ -2767,7 +2773,8 @@ export class SfxUploader extends LitElement {
       const eta =
         curr.totalSpeed > 0
           ? (curr.totalBytes - curr.totalBytesUploaded) / curr.totalSpeed
-          : 0;
+          : curr.isUploading ? this._lastEta : 0;
+      if (curr.totalSpeed > 0) this._lastEta = eta;
       this._dispatchPublic(PublicEvents.TOTAL_PROGRESS, {
         percentage: curr.totalProgress,
         speed: curr.totalSpeed,
@@ -3391,6 +3398,7 @@ export class SfxUploader extends LitElement {
     this._previewFileId = null;
     this._fullscreenPreviewUrl = null;
     this._fullscreenVideoFile = null;
+    this._lastEta = 0;
     this._store.setState({
       files: new Map(),
       isUploading: false,
@@ -3818,10 +3826,6 @@ export class SfxUploader extends LitElement {
       const s = this._storeCtrl.state;
       const files = [...s.files.values()];
       const completed = files.filter((f) => f.status === "complete").length;
-      const eta =
-        s.totalSpeed > 0
-          ? (s.totalBytes - s.totalBytesUploaded) / s.totalSpeed
-          : 0;
       return html`
         <div class="header upload-header">
           <div class="float-header-left">
@@ -3845,7 +3849,7 @@ export class SfxUploader extends LitElement {
               </div>
               <div class="float-subtitle">
                 ${completed} of
-                ${files.length}${eta > 0 ? ` · ~${formatEta(eta)} left` : ""}
+                ${files.length}${this._lastEta > 0 ? ` · ~${formatEta(this._lastEta)} left` : ""}
               </div>
             </div>
           </div>
@@ -3950,10 +3954,6 @@ export class SfxUploader extends LitElement {
     const s = this._storeCtrl.state;
     const pct = Math.round(s.totalProgress ?? 0);
     const completed = files.filter((f) => f.status === "complete").length;
-    const eta =
-      s.totalSpeed > 0
-        ? (s.totalBytes - s.totalBytesUploaded) / s.totalSpeed
-        : 0;
 
     return html`
       <div class="upload-overlay">
@@ -3964,7 +3964,7 @@ export class SfxUploader extends LitElement {
         </div>
         <div class="upload-overlay-subtitle">
           ${completed} of ${files.length}
-          complete${eta > 0 ? html` · ~${formatEta(eta)} left` : nothing}
+          complete${this._lastEta > 0 ? html` · ~${formatEta(this._lastEta)} left` : nothing}
         </div>
         <div class="upload-overlay-bar">
           <div class="upload-overlay-bar-fill" style="width:${pct}%"></div>
@@ -3987,10 +3987,6 @@ export class SfxUploader extends LitElement {
     const isDone = this._phase === "complete";
     const completed = files.filter((f) => f.status === "complete").length;
     const failed = files.filter((f) => f.status === "failed").length;
-    const eta =
-      s.totalSpeed > 0
-        ? (s.totalBytes - s.totalBytesUploaded) / s.totalSpeed
-        : 0;
 
     // Collapsed pill — compact white bar
     if (this._isPillExpanded === false) {
@@ -4183,7 +4179,7 @@ export class SfxUploader extends LitElement {
                       completed === 1 ? "file" : "files"
                     } uploaded${failed > 0 ? `, ${failed} failed` : ""}`
                   : `${completed} of ${files.length}${
-                      eta > 0 ? ` · ~${formatEta(eta)} left` : ""
+                      this._lastEta > 0 ? ` · ~${formatEta(this._lastEta)} left` : ""
                     }`}
               </div>
             </div>
