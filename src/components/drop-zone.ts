@@ -58,6 +58,10 @@ export class SfxDropZone extends LitElement {
       flex: 1;
     }
 
+    :host([mode="inline"]) .drop-zone {
+      height: 100%;
+    }
+
     .drop-zone:hover {
       background: transparent;
     }
