@@ -737,7 +737,7 @@ export class SfxProviderBrowser extends LitElement {
     this._authWindow = window.open(url, '_blank', 'width=600,height=600');
 
     this._cleanupAuthListener?.();
-    this._cleanupAuthListener = listenForAuthToken(this.companionUrl, (token) => {
+    this._cleanupAuthListener = listenForAuthToken(this._authWindow, (token) => {
       this._authWindow?.close();
       this._authWindow = null;
       this._cleanupAuthListener?.();

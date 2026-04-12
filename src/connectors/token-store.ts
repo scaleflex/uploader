@@ -28,15 +28,18 @@ export function removeToken(provider: ProviderId): void {
 
 /**
  * Listen for the OAuth token sent from the Companion popup via postMessage.
+ * Validates the message comes from the popup we opened (via `e.source`) rather
+ * than checking `e.origin`, because the Companion may redirect through
+ * intermediate domains during the OAuth flow.
  * Returns a cleanup function to remove the listener.
  */
 export function listenForAuthToken(
-  expectedOrigin: string,
+  authWindow: Window | null,
   onToken: (token: string) => void,
 ): () => void {
   const handler = (e: MessageEvent) => {
-    // Validate origin matches the Companion URL
-    if (e.origin !== new URL(expectedOrigin).origin) return;
+    // Only accept messages from the popup we opened
+    if (authWindow && e.source !== authWindow) return;
 
     const data = typeof e.data === 'string' ? tryParseJSON(e.data) : e.data;
     if (data?.token) {

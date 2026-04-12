@@ -34,7 +34,7 @@ export function buildConfig(overrides: Partial<UploaderConfig> = {}): UploaderCo
     },
     autoProceed: false,
     connectors: {
-      companionUrl: 'https://companion.scaleflex.com',
+      companionUrl: 'https://eu-on-24001.connector.filerobot.com',
       providers: ['google-drive', 'dropbox', 'box', 'onedrive'],
     },
     ...overrides,
