@@ -115,6 +115,8 @@ uploader.addEventListener('sfx-upload-error', (e) => {
       ['sfx-open', () => log('sfx-open')],
       ['sfx-close', () => log('sfx-close')],
       ['sfx-cancel', () => log('sfx-cancel')],
+      ['sfx-file-locate', (e) => log('sfx-file-locate', { name: e.detail.file?.name })],
+      ['sfx-file-copy-cdn', (e) => log('sfx-file-copy-cdn', { name: e.detail.file?.name, cdnUrl: e.detail.cdnUrl })],
     ];
 
     events.forEach(([name, handler]) => {

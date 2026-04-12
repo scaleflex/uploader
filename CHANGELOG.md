@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Configurable "Locate" and "Copy CDN" buttons on review-screen file tiles — hidden by default, opt-in via `showLocateButton` and `showCopyCdnButton` config options
+  - Locate dispatches `sfx-file-locate` event and `onFileLocate` callback (no longer opens a URL directly — host app controls navigation)
+  - Copy CDN copies the CDN URL to clipboard and dispatches `sfx-file-copy-cdn` event and `onFileCopyCdn` callback
 - Bulk metadata editing modal — click "Fill Metadata" to open a full-screen overlay for editing metadata across multiple files at once
   - Sidebar field navigator with schema groups, active highlight, and filled/required indicators
   - Operation bar with SET, ADD, DELETE operations (ADD/DELETE available for array fields: multi-select, tags)
@@ -17,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Select-all / deselect-all with three-state checkbox
 - `sfx-metadata-field-edit` dispatcher component for rendering the correct field editor by type
 - `sfx-metadata-field-view` read-only value display component
+
+### Changed
+
+- **Breaking:** Last-upload review is now **disabled by default**. Set `lastUploadReview: true` (auto-scoped by `container` + `airboxPuid`) or pass an explicit string ID to enable it. Previously the feature was always on with a single global `sessionStorage` key, causing different airboxes to overwrite each other's review data.
 
 ### Fixed
 

@@ -71,6 +71,8 @@ uploader.addEventListener('sfx-all-complete', (e) => {
             <tr><td><code>sfx-file-preview</code></td><td><code>{ file: UploadFile }</code></td><td>User opened a file preview</td></tr>
             <tr><td><code>sfx-fill-metadata</code></td><td><code>{ files: UploadFile[] }</code></td><td>User clicked "Fill Metadata"</td></tr>
             <tr><td><code>sfx-complete-action</code></td><td><code>{}</code></td><td>User clicked the primary action on the completion screen (e.g. "Done")</td></tr>
+            <tr><td><code>sfx-file-locate</code></td><td><code>{ file: UploadFile }</code></td><td>User clicked "Locate" on a completed file tile (requires <code>showLocateButton: true</code>)</td></tr>
+            <tr><td><code>sfx-file-copy-cdn</code></td><td><code>{ file, cdnUrl }</code></td><td>User clicked "Copy CDN" and the URL was copied to clipboard (requires <code>showCopyCdnButton: true</code>)</td></tr>
           </tbody>
         </table>
 
@@ -107,6 +109,8 @@ uploader.addEventListener('sfx-all-complete', (e) => {
     onFilePreview: (file) => console.log('Preview:', file.name),
     onFillMetadata: (files) => console.log('Fill metadata for', files.length),
     onCompleteAction: () => console.log('User clicked Done'),
+    onFileLocate: (file) => console.log('Locate:', file.name),
+    onFileCopyCdn: (file, cdnUrl) => console.log('Copied CDN:', cdnUrl),
   },
 };`,
         )}
@@ -139,6 +143,8 @@ uploader.addEventListener('sfx-all-complete', (e) => {
             <tr><td><code>onFilePreview</code></td><td><code>(file) =&gt; void</code></td><td>User opened a file preview</td></tr>
             <tr><td><code>onFillMetadata</code></td><td><code>(files) =&gt; void</code></td><td>User clicked "Fill Metadata"</td></tr>
             <tr><td><code>onCompleteAction</code></td><td><code>() =&gt; void</code></td><td>User clicked "Done" on the completion screen</td></tr>
+            <tr><td><code>onFileLocate</code></td><td><code>(file) =&gt; void</code></td><td>User clicked "Locate" on a review tile</td></tr>
+            <tr><td><code>onFileCopyCdn</code></td><td><code>(file, cdnUrl) =&gt; void</code></td><td>CDN URL copied to clipboard from a review tile</td></tr>
             <tr><td><code>className</code></td><td><code>string</code></td><td>CSS class for the host element</td></tr>
             <tr><td><code>style</code></td><td><code>CSSProperties</code></td><td>Inline styles for the host element</td></tr>
           </tbody>

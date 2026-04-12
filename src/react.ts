@@ -51,6 +51,8 @@ export interface UploaderProps {
   onFilePreview?: (file: UploadFile) => void;
   onFillMetadata?: (files: UploadFile[]) => void;
   onCompleteAction?: () => void;
+  onFileLocate?: (file: UploadFile) => void;
+  onFileCopyCdn?: (file: UploadFile, cdnUrl: string) => void;
 
   className?: string;
   style?: CSSProperties;
@@ -78,6 +80,8 @@ export const Uploader = forwardRef<UploaderRef, UploaderProps>(
       onFilePreview,
       onFillMetadata,
       onCompleteAction,
+      onFileLocate,
+      onFileCopyCdn,
       className,
       style,
     },
@@ -103,6 +107,8 @@ export const Uploader = forwardRef<UploaderRef, UploaderProps>(
     const onFilePreviewRef = useRef(onFilePreview);
     const onFillMetadataRef = useRef(onFillMetadata);
     const onCompleteActionRef = useRef(onCompleteAction);
+    const onFileLocateRef = useRef(onFileLocate);
+    const onFileCopyCdnRef = useRef(onFileCopyCdn);
 
     // Keep callback refs current
     useLayoutEffect(() => {
@@ -123,6 +129,8 @@ export const Uploader = forwardRef<UploaderRef, UploaderProps>(
       onFilePreviewRef.current = onFilePreview;
       onFillMetadataRef.current = onFillMetadata;
       onCompleteActionRef.current = onCompleteAction;
+      onFileLocateRef.current = onFileLocate;
+      onFileCopyCdnRef.current = onFileCopyCdn;
     });
 
     useImperativeHandle(ref, () => ({
@@ -244,6 +252,16 @@ export const Uploader = forwardRef<UploaderRef, UploaderProps>(
         onCompleteActionRef.current?.();
       };
 
+      const handleFileLocate = (e: Event) => {
+        const { file } = (e as CustomEvent).detail;
+        onFileLocateRef.current?.(file);
+      };
+
+      const handleFileCopyCdn = (e: Event) => {
+        const { file, cdnUrl } = (e as CustomEvent).detail;
+        onFileCopyCdnRef.current?.(file, cdnUrl);
+      };
+
       el.addEventListener('sfx-file-added', handleFileAdded);
       el.addEventListener('sfx-file-removed', handleFileRemoved);
       el.addEventListener('sfx-file-rejected', handleFileRejected);
@@ -261,6 +279,8 @@ export const Uploader = forwardRef<UploaderRef, UploaderProps>(
       el.addEventListener('sfx-file-preview', handleFilePreview);
       el.addEventListener('sfx-fill-metadata', handleFillMetadata);
       el.addEventListener('sfx-complete-action', handleCompleteAction);
+      el.addEventListener('sfx-file-locate', handleFileLocate);
+      el.addEventListener('sfx-file-copy-cdn', handleFileCopyCdn);
 
       return () => {
         el.removeEventListener('sfx-file-added', handleFileAdded);
@@ -280,6 +300,8 @@ export const Uploader = forwardRef<UploaderRef, UploaderProps>(
         el.removeEventListener('sfx-file-preview', handleFilePreview);
         el.removeEventListener('sfx-fill-metadata', handleFillMetadata);
         el.removeEventListener('sfx-complete-action', handleCompleteAction);
+        el.removeEventListener('sfx-file-locate', handleFileLocate);
+        el.removeEventListener('sfx-file-copy-cdn', handleFileCopyCdn);
       };
     }, []);
 

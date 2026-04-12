@@ -4,12 +4,16 @@
  * when no live files are present (e.g. the user re-opened the uploader
  * after closing it within the same tab session).
  *
- * Scope: ONE batch only. Each call to `save()` overwrites the previous one.
+ * Scope: ONE batch per key. Each call to `save()` overwrites the previous one.
  * Persistence: sessionStorage (per-tab; survives reloads, lost on tab close).
+ *
+ * The storage key is scoped by a caller-supplied `id` so that multiple
+ * uploader instances (different containers / airboxes / purposes) each
+ * get their own slot: `sfx-uploader:last-upload:{id}`.
  */
 import type { UploadFile } from './store.types';
 
-const STORAGE_KEY = 'sfx-uploader:last-upload';
+const KEY_PREFIX = 'sfx-uploader:last-upload:';
 const SCHEMA_VERSION = 1;
 
 /** Persisted file shape — drops the unserializable File blob and the
@@ -37,9 +41,9 @@ function serialize(file: UploadFile): StoredFile {
 }
 
 /** sessionStorage may throw (quota, privacy mode); never crash the host. */
-function safeRead(): StoredPayload | null {
+function safeRead(id: string): StoredPayload | null {
   try {
-    const raw = sessionStorage.getItem(STORAGE_KEY);
+    const raw = sessionStorage.getItem(KEY_PREFIX + id);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as StoredPayload;
     if (parsed?.__schemaVersion !== SCHEMA_VERSION) return null;
@@ -49,9 +53,9 @@ function safeRead(): StoredPayload | null {
   }
 }
 
-function safeWrite(payload: StoredPayload): void {
+function safeWrite(id: string, payload: StoredPayload): void {
   try {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    sessionStorage.setItem(KEY_PREFIX + id, JSON.stringify(payload));
   } catch {
     // Quota exceeded or storage unavailable — silently ignore.
   }
@@ -59,9 +63,9 @@ function safeWrite(payload: StoredPayload): void {
 
 export const lastUploadStore = {
   /** Overwrite the stored batch. Pass only complete + failed files. */
-  save(files: UploadFile[]): void {
+  save(id: string, files: UploadFile[]): void {
     if (files.length === 0) {
-      this.clear();
+      this.clear(id);
       return;
     }
     const payload: StoredPayload = {
@@ -69,14 +73,14 @@ export const lastUploadStore = {
       savedAt: Date.now(),
       files: files.map(serialize),
     };
-    safeWrite(payload);
+    safeWrite(id, payload);
   },
 
   /** Returns the stored files (rehydrated back to UploadFile shape) or null.
    *  The `file` blob and `remoteUrl` are not serializable — they are set to
    *  null on restore. Downstream code must null-check `file.file` before use. */
-  load(): UploadFile[] | null {
-    const payload = safeRead();
+  load(id: string): UploadFile[] | null {
+    const payload = safeRead(id);
     if (!payload) return null;
     return payload.files.map((f): UploadFile => ({
       ...f,
@@ -85,10 +89,19 @@ export const lastUploadStore = {
     }));
   },
 
-  /** Drop the stored batch entirely. */
-  clear(): void {
+  /** Check whether a stored batch exists without deserializing it. */
+  exists(id: string): boolean {
     try {
-      sessionStorage.removeItem(STORAGE_KEY);
+      return sessionStorage.getItem(KEY_PREFIX + id) != null;
+    } catch {
+      return false;
+    }
+  },
+
+  /** Drop the stored batch entirely. */
+  clear(id: string): void {
+    try {
+      sessionStorage.removeItem(KEY_PREFIX + id);
     } catch {
       // ignore
     }

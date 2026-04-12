@@ -155,6 +155,8 @@ export class SfxLastUploadReview extends LitElement {
   @property({ attribute: false }) files: UploadFile[] = [];
   /** Forwarded to file-list → file-item for the Locate button URL override. */
   @property({ attribute: false }) getLocateUrl?: (file: UploadFile) => string | null | undefined;
+  @property({ type: Boolean }) showLocateButton = false;
+  @property({ type: Boolean }) showCopyCdnButton = false;
 
   @state() private _filter: FilterMode = 'all';
 
@@ -218,7 +220,7 @@ export class SfxLastUploadReview extends LitElement {
       <div class="body">
         ${filtered.length === 0
           ? html`<div class="empty">No files match this filter.</div>`
-          : html`<sfx-file-list .files=${filtered} mode="review" .getLocateUrl=${this.getLocateUrl}></sfx-file-list>`}
+          : html`<sfx-file-list .files=${filtered} mode="review" .getLocateUrl=${this.getLocateUrl} .showLocateButton=${this.showLocateButton} .showCopyCdnButton=${this.showCopyCdnButton}></sfx-file-list>`}
       </div>
     `;
   }

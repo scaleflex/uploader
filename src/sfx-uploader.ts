@@ -155,6 +155,30 @@ export interface UploaderConfig {
    * Default: false (hidden).
    */
   showCopyCdnButton?: boolean;
+  /**
+   * Enable the "last upload review" feature that persists the most recent
+   * upload batch to `sessionStorage` so the user can review it after
+   * closing and re-opening the uploader within the same browser tab.
+   *
+   * - `false` (default) — disabled; no data is written to sessionStorage.
+   * - `true`  — enabled; the storage key is automatically scoped by the
+   *   `auth.container` (and `auth.airboxPuid` when present), so different
+   *   airboxes never collide.
+   * - `string` — enabled with an explicit ID used as the storage key suffix.
+   *   Use this when you have multiple uploaders targeting the **same** airbox
+   *   but serving different purposes (e.g. `'product-photos'` vs `'avatars'`).
+   *
+   * Storage key format: `sfx-uploader:last-upload:{id}`
+   *
+   * @example
+   * // Auto-scoped by container + airboxPuid
+   * lastUploadReview: true
+   *
+   * @example
+   * // Explicit ID for same-airbox disambiguation
+   * lastUploadReview: 'product-photos'
+   */
+  lastUploadReview?: boolean | string;
   /** Whether closing the modal clears all files. Default: true. Set to false to preserve files across open/close. */
   clearOnClose?: boolean;
   /** Whether the "Done" action clears all files (inline mode resets, modal mode closes). Default: true. */
@@ -259,7 +283,7 @@ export class SfxUploader extends LitElement {
         0 4px 16px rgba(0, 0, 0, 0.06);
       width: 100%;
       max-width: 1100px;
-      min-height: var(--sfx-up-min-height, 660px);
+      height: var(--sfx-up-min-height, 660px);
       max-height: var(--sfx-up-max-height, 88vh);
       display: flex;
       flex-direction: column;
@@ -589,23 +613,10 @@ export class SfxUploader extends LitElement {
       padding: var(--sfx-inline-pad) var(--sfx-inline-pad) 16px;
     }
 
-    /* On the empty landing state the accent label should start flush
-       with the top of the uploader region — no extra whitespace above. */
-    .inline.no-files .inline-header {
-      padding-top: 0;
-    }
-
     /* Align drop-zone horizontally with inline-header content and
        ensure consistent 16px top spacing. */
     .inline sfx-drop-zone {
-      padding: 16px var(--sfx-inline-pad) 0;
-    }
-
-    /* In the empty landing state the negative margin collapses the
-       16px top padding so the dashed card sits right under the
-       inline-header description text. */
-    .inline.no-files sfx-drop-zone {
-      margin-top: -16px;
+      padding: 24px;
     }
     .inline-header-top {
       display: flex;
@@ -1993,7 +2004,7 @@ export class SfxUploader extends LitElement {
        so the available space is actually usable. */
     @media (max-height: 700px) {
       .modal-card {
-        min-height: auto;
+        height: 96vh;
         max-height: 96vh;
       }
       .inline {
@@ -2054,6 +2065,20 @@ export class SfxUploader extends LitElement {
   @state() private _isReviewing = false;
   /** Files loaded from sessionStorage for the review screen. */
   @state() private _reviewFiles: UploadFile[] = [];
+  /** Resolved storage key suffix for the last-upload review feature, or
+   *  `null` when the feature is disabled (`lastUploadReview` is falsy). */
+  private get _lastUploadId(): string | null {
+    const opt = this.config?.lastUploadReview;
+    if (!opt) return null;
+    if (typeof opt === 'string') return opt;
+    // Auto-derive from auth config
+    const auth = this.config?.auth;
+    if (!auth) return null;
+    return auth.airboxPuid
+      ? `${auth.container}:${auth.airboxPuid}`
+      : auth.container;
+  }
+
   /** Whether sessionStorage has a stored last-upload batch. Checked on
    *  connectedCallback and updated when batches are saved/cleared. */
   @state() private _hasStoredReview = false;
@@ -2404,7 +2429,8 @@ export class SfxUploader extends LitElement {
     // Subscribe to store changes for public event dispatching
     this._unsubStoreEvents = this._store.subscribe(() => this._onStoreChange());
     // Check if a previous upload batch exists in sessionStorage
-    this._hasStoredReview = lastUploadStore.load() != null;
+    const id = this._lastUploadId;
+    this._hasStoredReview = id != null && lastUploadStore.exists(id);
   }
 
   disconnectedCallback() {
@@ -2764,11 +2790,12 @@ export class SfxUploader extends LitElement {
         // Persist this batch to sessionStorage so the success-card "Review
         // files" button can later re-load it (e.g. after closing and
         // re-opening the uploader within the same session). Overwrites any
-        // previous batch.
-        const reviewable = [...successful, ...failed];
-        if (reviewable.length > 0) {
-          lastUploadStore.save(reviewable);
-          this._hasStoredReview = true;
+        // previous batch — or clears stale data when empty.
+        const reviewId = this._lastUploadId;
+        if (reviewId != null) {
+          const reviewable = [...successful, ...failed];
+          lastUploadStore.save(reviewId, reviewable);
+          this._hasStoredReview = reviewable.length > 0;
         }
 
         this._dispatchPublic(PublicEvents.ALL_COMPLETE, { successful, failed });
@@ -3284,6 +3311,21 @@ export class SfxUploader extends LitElement {
     this.config?.callbacks?.onFillMetadata?.(files);
   };
 
+  private _onFileLocate = (e: CustomEvent<{ fileId: string; file: UploadFile }>) => {
+    const file = e.detail.file;
+    if (!file) return;
+    this._dispatchPublic(PublicEvents.FILE_LOCATE, { file });
+    this.config?.callbacks?.onFileLocate?.(file);
+  };
+
+  private _onFileCopyCdn = (e: CustomEvent<{ fileId: string; file: UploadFile; cdnUrl: string }>) => {
+    const file = e.detail.file;
+    const cdnUrl = e.detail.cdnUrl;
+    if (!file || !cdnUrl) return;
+    this._dispatchPublic(PublicEvents.FILE_COPY_CDN, { file, cdnUrl });
+    this.config?.callbacks?.onFileCopyCdn?.(file, cdnUrl);
+  };
+
   private _onBulkMetadataSaveBatch = (
     e: CustomEvent<{
       changes: Array<{ fileId: string; meta: Record<string, unknown> }>;
@@ -3409,7 +3451,9 @@ export class SfxUploader extends LitElement {
       this._isReviewing = true;
       return;
     }
-    const stored = lastUploadStore.load();
+    const id = this._lastUploadId;
+    if (id == null) return;
+    const stored = lastUploadStore.load(id);
     if (!stored || stored.length === 0) return;
     this._reviewFiles = stored;
     this._isReviewing = true;
@@ -3421,7 +3465,8 @@ export class SfxUploader extends LitElement {
   };
 
   private _onClearReview = () => {
-    lastUploadStore.clear();
+    const id = this._lastUploadId;
+    if (id != null) lastUploadStore.clear(id);
     this._isReviewing = false;
     this._reviewFiles = [];
     this._hasStoredReview = false;
@@ -4744,6 +4789,8 @@ export class SfxUploader extends LitElement {
         @source-click=${this._onSourceClick}
         @file-remove=${this._onFileRemove}
         @file-preview=${this._onFilePreview}
+        @file-locate=${this._onFileLocate}
+        @file-copy-cdn=${this._onFileCopyCdn}
         @file-retry=${this._onFileRetry}
         @file-pause=${this._onFilePause}
         @file-resume=${this._onFileResume}
@@ -4786,6 +4833,8 @@ export class SfxUploader extends LitElement {
                 <sfx-last-upload-review
                   .files=${this._reviewFiles}
                   .getLocateUrl=${this.config?.getLocateUrl}
+                  .showLocateButton=${this.config?.showLocateButton ?? false}
+                  .showCopyCdnButton=${this.config?.showCopyCdnButton ?? false}
                   @back=${this._onExitReview}
                   @clear-history=${this._onClearReview}
                 ></sfx-last-upload-review>

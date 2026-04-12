@@ -423,6 +423,8 @@ export class SfxFileList extends LitElement {
   @property({ type: String }) mode: 'upload' | 'review' = 'upload';
   /** Forwarded to each file-item for the Locate button URL override. */
   @property({ attribute: false }) getLocateUrl?: (file: UploadFile) => string | null | undefined;
+  @property({ type: Boolean }) showLocateButton = false;
+  @property({ type: Boolean }) showCopyCdnButton = false;
 
   @state() private _moreOpen = false;
   @state() private _dropTileMaxVisible = 3;
@@ -654,7 +656,7 @@ export class SfxFileList extends LitElement {
       <div class="grid">
         ${this.showDropTile && this.mode !== 'review' ? this._renderDropTile() : nothing}
         ${this.files.map(
-          (f, i) => html`<sfx-file-item .file=${f} .mode=${this.mode} .getLocateUrl=${this.getLocateUrl} style="--tile-index:${i}"></sfx-file-item>`,
+          (f, i) => html`<sfx-file-item .file=${f} .mode=${this.mode} .getLocateUrl=${this.getLocateUrl} .showLocateButton=${this.showLocateButton} .showCopyCdnButton=${this.showCopyCdnButton} style="--tile-index:${i}"></sfx-file-item>`,
         )}
       </div>
     `;
