@@ -8323,14 +8323,14 @@ const M = (K = class extends Z {
       if ((((n = (o = this.config) == null ? void 0 : o.connectors) == null ? void 0 : n.providers) ?? []).includes(e)) {
         if (Cr.has(e)) {
           if (!customElements.get("sfx-search-provider-browser")) {
-            const { SfxSearchProviderBrowser: a } = await import("./search-provider-browser-DgY-8rWX.js");
+            const { SfxSearchProviderBrowser: a } = await import("./search-provider-browser-wwPzmhsq.js");
             customElements.define(
               "sfx-search-provider-browser",
               a
             );
           }
         } else if (!customElements.get("sfx-provider-browser")) {
-          const { SfxProviderBrowser: a } = await import("./provider-browser-DVivbvAH.js");
+          const { SfxProviderBrowser: a } = await import("./provider-browser-CJ_JtLjM.js");
           customElements.define("sfx-provider-browser", a);
         }
         this._activeConnector = e;
@@ -8971,7 +8971,7 @@ const M = (K = class extends Z {
     const t = e.metadataConfig;
     if (!(!t || !this._apiBase || !this._authHeaders))
       try {
-        const { fetchMetadataSchema: r, createTagsAutocomplete: o } = await import("./index-CaKEtBJR.js");
+        const { fetchMetadataSchema: r, createTagsAutocomplete: o } = await import("./index-CO9eXY0N.js");
         this._metadataSchema = await r(
           this._apiBase,
           this._authHeaders,
@@ -10653,12 +10653,6 @@ const M = (K = class extends Z {
       animation: inlineIn 0.25s ease;
     }
 
-    /* Only scroll inline when showing drop-zone (no files) */
-    .inline.no-files {
-      overflow-y: auto;
-      overflow-x: hidden;
-    }
-
     /* --- Inline header --- */
     .inline-header {
       display: flex;
@@ -10724,16 +10718,18 @@ const M = (K = class extends Z {
     }
 
     .inline.no-files .content {
-      flex: 1 0 auto;
+      flex: 1;
+      min-height: 0;
     }
 
-    /* Inline: body grows so .inline itself can scroll.
+    /* Inline: body fits within the remaining space after the header;
        padding: 0 in both states so the header never jumps;
        children use --sfx-inline-pad for horizontal spacing. */
     .inline .body {
-      flex: 1 0 auto;
-      overflow: visible;
+      flex: 1;
+      overflow: auto;
       padding: 0;
+      min-height: 0;
     }
     .inline .body.has-files {
       flex: 1;
