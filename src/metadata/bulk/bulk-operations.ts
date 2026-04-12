@@ -43,6 +43,8 @@ export function getAvailableOperations(
   if (ARRAY_TYPES.has(fieldType)) {
     return [
       { key: 'SET', label: 'Set' },
+      { key: 'ADD', label: 'Add to' },
+      { key: 'DELETE', label: 'Remove from' },
     ];
   }
   if (TEXT_TYPES.has(fieldType)) {

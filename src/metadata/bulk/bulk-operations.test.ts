@@ -12,9 +12,9 @@ describe('getAvailableOperations', () => {
     'numeric', 'decimal2', 'boolean', 'date', 'select-one', 'geopoint',
   ];
 
-  it.each(arrayTypes)('returns [SET] for %s', (type) => {
+  it.each(arrayTypes)('returns [SET, ADD, DELETE] for %s', (type) => {
     const ops = getAvailableOperations(type);
-    expect(ops.map(o => o.key)).toEqual(['SET']);
+    expect(ops.map(o => o.key)).toEqual(['SET', 'ADD', 'DELETE']);
   });
 
   it.each(textTypes)('returns [SET, ADD, DELETE] for %s', (type) => {
