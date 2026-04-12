@@ -4013,6 +4013,7 @@ const Q = (le = class extends Z {
       justify-content: center;
       margin-bottom: 24px;
       flex-shrink: 0;
+      overflow: hidden;
     }
 
     .drop-zone:not(.compact) .rings::before {
@@ -8323,14 +8324,14 @@ const M = (K = class extends Z {
       if ((((n = (o = this.config) == null ? void 0 : o.connectors) == null ? void 0 : n.providers) ?? []).includes(e)) {
         if (Cr.has(e)) {
           if (!customElements.get("sfx-search-provider-browser")) {
-            const { SfxSearchProviderBrowser: a } = await import("./search-provider-browser-wwPzmhsq.js");
+            const { SfxSearchProviderBrowser: a } = await import("./search-provider-browser-DBJ1J1f2.js");
             customElements.define(
               "sfx-search-provider-browser",
               a
             );
           }
         } else if (!customElements.get("sfx-provider-browser")) {
-          const { SfxProviderBrowser: a } = await import("./provider-browser-CJ_JtLjM.js");
+          const { SfxProviderBrowser: a } = await import("./provider-browser-sWM_v8sn.js");
           customElements.define("sfx-provider-browser", a);
         }
         this._activeConnector = e;
@@ -8971,7 +8972,7 @@ const M = (K = class extends Z {
     const t = e.metadataConfig;
     if (!(!t || !this._apiBase || !this._authHeaders))
       try {
-        const { fetchMetadataSchema: r, createTagsAutocomplete: o } = await import("./index-CO9eXY0N.js");
+        const { fetchMetadataSchema: r, createTagsAutocomplete: o } = await import("./index-C2CxldO3.js");
         this._metadataSchema = await r(
           this._apiBase,
           this._authHeaders,

@@ -1,4 +1,4 @@
-import{b as n}from"./index-BlsVOKjW.js";import{r as a}from"./code-block-Bk3NnwHF.js";const l={render(){return`
+import{b as n}from"./index-LNdKB7BS.js";import{r as a}from"./code-block-Bk3NnwHF.js";const l={render(){return`
       <div class="page-header">
         <h1>Inline display</h1>
         <p>Embed the uploader directly in the page flow with <code>mode: 'inline'</code>. It sizes to its container and does not use a backdrop overlay.</p>

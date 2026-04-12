@@ -1,7 +1,7 @@
 import { LitElement as y, css as _, html as s, nothing as h } from "lit";
 import { property as k, state as d } from "lit/decorators.js";
 import { unsafeHTML as m } from "lit/directives/unsafe-html.js";
-import { q as w, t as $, m as z, u as C, A as v, v as I } from "./sfx-uploader-CXtkhl-1.js";
+import { q as w, t as $, m as z, u as C, A as v, v as I } from "./sfx-uploader-CRG4Eqgk.js";
 const x = "sfx-uploader-token:";
 function p(n) {
   try {
