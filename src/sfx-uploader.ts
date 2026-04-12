@@ -578,11 +578,15 @@ export class SfxUploader extends LitElement {
       padding-top: 0;
     }
 
-    /* Lift the empty-state drop-zone 16px closer to the inline header
-       description so the dashed card's top edge sits right under the
-       text. 16px is the exact size of the gap (inline-header's bottom
-       padding); pulling more would make the card background overlap
-       the description. */
+    /* Align drop-zone horizontally with inline-header content and
+       ensure consistent 16px top spacing. */
+    .inline sfx-drop-zone {
+      padding: 16px var(--sfx-inline-pad) 0;
+    }
+
+    /* In the empty landing state the negative margin collapses the
+       16px top padding so the dashed card sits right under the
+       inline-header description text. */
     .inline.no-files sfx-drop-zone {
       margin-top: -16px;
     }
