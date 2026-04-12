@@ -12,6 +12,8 @@ export declare class SfxFileList extends LitElement {
     mode: 'upload' | 'review';
     /** Forwarded to each file-item for the Locate button URL override. */
     getLocateUrl?: (file: UploadFile) => string | null | undefined;
+    showLocateButton: boolean;
+    showCopyCdnButton: boolean;
     private _moreOpen;
     private _dropTileMaxVisible;
     private _portalContainer;

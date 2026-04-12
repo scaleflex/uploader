@@ -24,6 +24,8 @@ export interface UploaderCallbacks {
     onFilePreview?: (file: UploadFile) => void;
     onFillMetadata?: (files: UploadFile[]) => void;
     onCompleteAction?: () => void;
+    onFileLocate?: (file: UploadFile) => void;
+    onFileCopyCdn?: (file: UploadFile, cdnUrl: string) => void;
 }
 export interface InlineHeaderConfig {
     /** Small uppercase accent label (e.g. "Airbox"). */
@@ -72,6 +74,43 @@ export interface UploaderConfig {
      * ```
      */
     getLocateUrl?: (file: UploadFile) => string | null | undefined;
+    /**
+     * Show the "Locate" button on completed file tiles in the review screen.
+     * When clicked, fires the `sfx-file-locate` event and the `onFileLocate` callback.
+     * Default: false (hidden).
+     */
+    showLocateButton?: boolean;
+    /**
+     * Show the "Copy CDN" button on completed file tiles in the review screen.
+     * When clicked, copies the CDN URL to the clipboard and fires the
+     * `sfx-file-copy-cdn` event and the `onFileCopyCdn` callback.
+     * Default: false (hidden).
+     */
+    showCopyCdnButton?: boolean;
+    /**
+     * Enable the "last upload review" feature that persists the most recent
+     * upload batch to `sessionStorage` so the user can review it after
+     * closing and re-opening the uploader within the same browser tab.
+     *
+     * - `false` (default) — disabled; no data is written to sessionStorage.
+     * - `true`  — enabled; the storage key is automatically scoped by the
+     *   `auth.container` (and `auth.airboxPuid` when present), so different
+     *   airboxes never collide.
+     * - `string` — enabled with an explicit ID used as the storage key suffix.
+     *   Use this when you have multiple uploaders targeting the **same** airbox
+     *   but serving different purposes (e.g. `'product-photos'` vs `'avatars'`).
+     *
+     * Storage key format: `sfx-uploader:last-upload:{id}`
+     *
+     * @example
+     * // Auto-scoped by container + airboxPuid
+     * lastUploadReview: true
+     *
+     * @example
+     * // Explicit ID for same-airbox disambiguation
+     * lastUploadReview: 'product-photos'
+     */
+    lastUploadReview?: boolean | string;
     /** Whether closing the modal clears all files. Default: true. Set to false to preserve files across open/close. */
     clearOnClose?: boolean;
     /** Whether the "Done" action clears all files (inline mode resets, modal mode closes). Default: true. */
@@ -143,11 +182,16 @@ export declare class SfxUploader extends LitElement {
     private _isReviewing;
     /** Files loaded from sessionStorage for the review screen. */
     private _reviewFiles;
+    /** Resolved storage key suffix for the last-upload review feature, or
+     *  `null` when the feature is disabled (`lastUploadReview` is falsy). */
+    private get _lastUploadId();
     /** Whether sessionStorage has a stored last-upload batch. Checked on
      *  connectedCallback and updated when batches are saved/cleared. */
     private _hasStoredReview;
     private _metadataAutocomplete;
     private _videoBlobUrls;
+    /** Persisted ETA — holds the last computed value so the display doesn't flicker when speed momentarily drops to 0. */
+    private _lastEta;
     private _store;
     private _storeCtrl;
     private _engine;
@@ -243,6 +287,8 @@ export declare class SfxUploader extends LitElement {
     private _onFileRemove;
     private _onFilePreview;
     private _onFillMetadata;
+    private _onFileLocate;
+    private _onFileCopyCdn;
     private _onBulkMetadataSaveBatch;
     private _onBulkMetadataClose;
     private _onFileRetry;
@@ -270,6 +316,7 @@ export declare class SfxUploader extends LitElement {
     private _onSuccessCardClose;
     /** Shared dismiss handler for X button, backdrop click, Escape */
     private _onModalDismiss;
+    private _onCancelUpload;
     private _onMinimize;
     private _onPillClick;
     private _onPillExpand;

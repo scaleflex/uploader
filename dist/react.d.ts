@@ -38,6 +38,8 @@ export interface UploaderProps {
     onFilePreview?: (file: UploadFile) => void;
     onFillMetadata?: (files: UploadFile[]) => void;
     onCompleteAction?: () => void;
+    onFileLocate?: (file: UploadFile) => void;
+    onFileCopyCdn?: (file: UploadFile, cdnUrl: string) => void;
     className?: string;
     style?: CSSProperties;
 }

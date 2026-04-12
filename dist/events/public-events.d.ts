@@ -18,6 +18,8 @@ export declare const PublicEvents: {
     readonly COMPLETE_ACTION: "sfx-complete-action";
     readonly FILE_PREVIEW: "sfx-file-preview";
     readonly FILL_METADATA: "sfx-fill-metadata";
+    readonly FILE_LOCATE: "sfx-file-locate";
+    readonly FILE_COPY_CDN: "sfx-file-copy-cdn";
 };
 export type PublicEventName = typeof PublicEvents[keyof typeof PublicEvents];
 //# sourceMappingURL=public-events.d.ts.map

@@ -54,6 +54,8 @@ import{h as t,c as e,d as o}from"./doc-utils-XkOyWBCy.js";const a={render(){retu
             <tr><td><code>autoProceed</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Start uploading immediately after files are added</td></tr>
             <tr><td><code>concurrency</code></td><td><code>number</code></td><td><code>3</code></td><td>Maximum concurrent uploads</td></tr>
             <tr><td><code>showFillMetadata</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Show "Fill Metadata" button in the actions bar</td></tr>
+            <tr><td><code>showLocateButton</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Show "Locate" button on completed file tiles in the review screen. Fires <code>sfx-file-locate</code> event and <code>onFileLocate</code> callback.</td></tr>
+            <tr><td><code>showCopyCdnButton</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Show "Copy CDN" button on completed file tiles in the review screen. Copies the CDN URL to clipboard and fires <code>sfx-file-copy-cdn</code> event.</td></tr>
             <tr><td><code>targetFolder</code></td><td><code>string</code></td><td><code>'/'</code></td><td>Destination folder path in Scaleflex</td></tr>
             <tr><td><code>tusConfig</code></td><td><code>TusConfig | boolean</code></td><td><code>undefined</code></td><td>Enable resumable uploads via the tus protocol for large files. Pass <code>true</code> for defaults (10 MB threshold, 5 MB chunks) or a <code>TusConfig</code> object. See <a href="#/examples/resumable-upload">Resumable upload example</a>.</td></tr>
           </tbody>
@@ -67,6 +69,7 @@ import{h as t,c as e,d as o}from"./doc-utils-XkOyWBCy.js";const a={render(){retu
             <tr><td><code>clearOnComplete</code></td><td><code>boolean</code></td><td><code>true</code></td><td>Whether the "Done" action clears all files. In modal mode this also closes the uploader. Set to <code>false</code> to keep files after completion.</td></tr>
             <tr><td><code>closeOnComplete</code></td><td><code>boolean | number</code></td><td><code>false</code></td><td>Automatically close the uploader after all uploads finish. <code>true</code> uses a 1.5 s delay; pass a number for a custom delay in ms. Pairs well with <code>autoProceed</code> for a fully hands-off flow.</td></tr>
             <tr><td><code>minimizeOnUpload</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Show a "Minimize & continue in background" button during uploads. When clicked, the modal collapses to a floating progress pill so the user can keep working.</td></tr>
+            <tr><td><code>lastUploadReview</code></td><td><code>boolean | string</code></td><td><code>false</code></td><td>Enable the last-upload review feature. <code>true</code> auto-scopes the storage key by <code>container</code> + <code>airboxPuid</code>. Pass a string for an explicit ID when multiple uploaders share the same airbox. See <a href="#/examples/last-upload-review">Last upload review example</a>.</td></tr>
             <tr><td><code>rejectedFileAutoRemoveDelay</code></td><td><code>number | false</code></td><td><code>false</code></td><td>Auto-remove rejected files after this delay in milliseconds. Set to a number (e.g. <code>4000</code>) to enable auto-removal.</td></tr>
           </tbody>
         </table>
@@ -184,6 +187,36 @@ uploader.open();`)}
         ${e("typescript",`uploader.config = {
   auth: { /* ... */ },
   rejectedFileAutoRemoveDelay: 4000, // auto-remove after 4 seconds
+};`)}
+
+        <h3>Last upload review</h3>
+        <p>Enable the <strong>last upload review</strong> feature to let users revisit the most recent upload batch after closing and re-opening the uploader (within the same browser tab). The batch is persisted to <code>sessionStorage</code> and automatically cleared when the tab closes.</p>
+        <p>The feature is <strong>disabled by default</strong>. When enabled, the storage key is scoped so that different uploader instances (different containers, airboxes, or purposes) never collide.</p>
+
+        <h4>Auto-scoped (recommended)</h4>
+        <p>Pass <code>true</code> — the key is derived from <code>auth.container</code> and <code>auth.airboxPuid</code> (when present).</p>
+        ${e("typescript",`uploader.config = {
+  auth: {
+    mode: 'security-template',
+    container: 'my-container',
+    securityTemplateId: '...',
+    airboxPuid: 'airbox-123',   // optional — included in the key when set
+  },
+  lastUploadReview: true,       // key: "sfx-uploader:last-upload:my-container:airbox-123"
+};`)}
+
+        <h4>Explicit ID</h4>
+        <p>When you have <strong>multiple uploaders targeting the same airbox</strong> (e.g. one for product photos, one for avatars), pass a unique string to disambiguate them.</p>
+        ${e("typescript",`// Uploader A — product photos
+uploaderA.config = {
+  auth: { /* same container + airbox */ },
+  lastUploadReview: 'product-photos',  // key: "sfx-uploader:last-upload:product-photos"
+};
+
+// Uploader B — avatars
+uploaderB.config = {
+  auth: { /* same container + airbox */ },
+  lastUploadReview: 'avatars',         // key: "sfx-uploader:last-upload:avatars"
 };`)}
 
         <h3>Resizable preview panel</h3>

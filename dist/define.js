@@ -1,4 +1,4 @@
-import { g as f, a as i, d as o, e as r, c as l, b as x, f as t, S as c, n as d, o as S, p as m } from "./sfx-uploader-D_hiEh8b.js";
+import { g as f, a as i, d as o, e as r, c as l, b as x, f as t, S as c, n as d, o as S, p as m } from "./sfx-uploader-B3vZjPzf.js";
 const s = (e, a) => {
   typeof customElements < "u" && !customElements.get(e) && customElements.define(e, a);
 };

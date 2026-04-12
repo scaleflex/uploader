@@ -1,7 +1,190 @@
-import{i as y,d as w,l as _,a as $,g as z,e as C,f as m,h as I,c as s,A as h,o as v,n as k,r as d}from"./index-BbE_0G_V.js";const x="sfx-uploader-token:";function p(n){try{return localStorage.getItem(`${x}${n}`)}catch{return null}}function P(n,e){try{localStorage.setItem(`${x}${n}`,e)}catch{}}function u(n){try{localStorage.removeItem(`${x}${n}`)}catch{}}function S(n,e){const r=i=>{if(i.origin!==new URL(n).origin)return;const t=typeof i.data=="string"?M(i.data):i.data;t!=null&&t.token&&e(t.token)};return window.addEventListener("message",r),()=>window.removeEventListener("message",r)}function M(n){try{return JSON.parse(n)}catch{return null}}var L=Object.defineProperty,l=(n,e,r,i)=>{for(var t=void 0,o=n.length-1,c;o>=0;o--)(c=n[o])&&(t=c(e,r,t)||t);return t&&L(e,r,t),t};const g=class g extends y{constructor(){super(...arguments),this.provider="google-drive",this.companionUrl="",this._authenticated=!1,this._loading=!1,this._items=[],this._selectedIds=new Set,this._breadcrumbs=[],this._nextPagePath=null,this._error=null,this._loadingMore=!1,this._username=null,this._cleanupAuthListener=null,this._authWindow=null,this._handleConnect=()=>{var r;const e=w(this.companionUrl,this.provider);this._authWindow=window.open(e,"_blank","width=600,height=600"),(r=this._cleanupAuthListener)==null||r.call(this),this._cleanupAuthListener=S(this.companionUrl,i=>{var t,o;(t=this._authWindow)==null||t.close(),this._authWindow=null,(o=this._cleanupAuthListener)==null||o.call(this),this._cleanupAuthListener=null,P(this.provider,i),this._authenticated=!0,this._loadFolder("")})},this._lastClickedIndex=null,this._toggleSelectAll=()=>{const e=this._items.filter(i=>!i.isFolder);e.every(i=>this._selectedIds.has(i.id))?this._selectedIds=new Set:this._selectedIds=new Set(e.map(i=>i.id))},this._onAddSelected=()=>{const e=p(this.provider);if(!e)return;const i=this._items.filter(t=>!t.isFolder&&this._selectedIds.has(t.id)).map(t=>({companionUrl:this.companionUrl,provider:this.provider,token:e,requestPath:t.requestPath,fileId:t.id,name:t.name,mimeType:t.mimeType,size:t.size,thumbnail:t.thumbnail}));this.dispatchEvent(new CustomEvent("connector-files-selected",{detail:{files:i},bubbles:!0,composed:!0}))},this._onClose=()=>{this.dispatchEvent(new CustomEvent("connector-close",{bubbles:!0,composed:!0}))},this._handleLogout=async()=>{const e=p(this.provider);if(e){try{await _(this.companionUrl,this.provider,e)}catch{}u(this.provider)}this._reset()}}connectedCallback(){super.connectedCallback(),this._checkAuth()}disconnectedCallback(){var e;super.disconnectedCallback(),(e=this._cleanupAuthListener)==null||e.call(this),this._cleanupAuthListener=null}updated(e){e.has("provider")&&(this._reset(),this._checkAuth())}_reset(){this._authenticated=!1,this._loading=!1,this._items=[],this._selectedIds=new Set,this._breadcrumbs=[],this._nextPagePath=null,this._error=null,this._username=null}_checkAuth(){p(this.provider)&&(this._authenticated=!0,this._loadFolder(""))}get _providerDef(){return z([this.provider])[0]??null}get _providerLabel(){var e;return((e=this._providerDef)==null?void 0:e.label)??this.provider}async _loadFolder(e){const r=p(this.provider);if(!r){this._authenticated=!1;return}this.offsetHeight>0&&(this.style.minHeight=`${this.offsetHeight}px`),this._loading=!0,this._error=null,this._items=[],this._selectedIds=new Set,this._lastClickedIndex=null,this._nextPagePath=null;try{const i=await C(this.companionUrl,this.provider,r,e);this._items=i.items,this._nextPagePath=i.nextPagePath,i.username&&(this._username=i.username)}catch(i){i instanceof m?(u(this.provider),this._authenticated=!1):this._error=i instanceof Error?i.message:"Failed to load files"}finally{this._loading=!1}}_onFolderClick(e){this._breadcrumbs=[...this._breadcrumbs,{name:e.name,path:e.requestPath}],this._loadFolder(e.requestPath)}_onBreadcrumbClick(e){if(e<0)this._breadcrumbs=[],this._loadFolder("");else{const r=this._breadcrumbs[e];this._breadcrumbs=this._breadcrumbs.slice(0,e+1),this._loadFolder(r.path)}}async _onLoadMore(){const e=p(this.provider);if(!(!e||!this._nextPagePath)){this._loadingMore=!0;try{const r=await I(this.companionUrl,e,this._nextPagePath);this._items=[...this._items,...r.items],this._nextPagePath=r.nextPagePath}catch(r){r instanceof m&&(u(this.provider),this._authenticated=!1)}finally{this._loadingMore=!1}}}_toggleSelect(e,r){const i=this._items.filter(o=>!o.isFolder),t=i.findIndex(o=>o.id===e.id);if(r!=null&&r.shiftKey&&this._lastClickedIndex!==null&&t!==-1){const o=Math.min(this._lastClickedIndex,t),c=Math.max(this._lastClickedIndex,t),b=new Set(this._selectedIds);for(let f=o;f<=c;f++)b.add(i[f].id);this._selectedIds=b}else{const o=new Set(this._selectedIds);o.has(e.id)?o.delete(e.id):o.add(e.id),this._selectedIds=o}t!==-1&&(this._lastClickedIndex=t)}render(){return s`
+import { LitElement as y, css as _, html as s, nothing as h } from "lit";
+import { property as k, state as d } from "lit/decorators.js";
+import { unsafeHTML as m } from "lit/directives/unsafe-html.js";
+import { q as w, t as $, m as z, u as C, A as v, v as I } from "./sfx-uploader-B3vZjPzf.js";
+const x = "sfx-uploader-token:";
+function p(n) {
+  try {
+    return localStorage.getItem(`${x}${n}`);
+  } catch {
+    return null;
+  }
+}
+function P(n, e) {
+  try {
+    localStorage.setItem(`${x}${n}`, e);
+  } catch {
+  }
+}
+function u(n) {
+  try {
+    localStorage.removeItem(`${x}${n}`);
+  } catch {
+  }
+}
+function S(n, e) {
+  const r = (i) => {
+    if (n && i.source !== n) return;
+    const t = typeof i.data == "string" ? M(i.data) : i.data;
+    t != null && t.token && e(t.token);
+  };
+  return window.addEventListener("message", r), () => window.removeEventListener("message", r);
+}
+function M(n) {
+  try {
+    return JSON.parse(n);
+  } catch {
+    return null;
+  }
+}
+var L = Object.defineProperty, l = (n, e, r, i) => {
+  for (var t = void 0, o = n.length - 1, c; o >= 0; o--)
+    (c = n[o]) && (t = c(e, r, t) || t);
+  return t && L(e, r, t), t;
+};
+const g = class g extends y {
+  constructor() {
+    super(...arguments), this.provider = "google-drive", this.companionUrl = "", this._authenticated = !1, this._loading = !1, this._items = [], this._selectedIds = /* @__PURE__ */ new Set(), this._breadcrumbs = [], this._nextPagePath = null, this._error = null, this._loadingMore = !1, this._username = null, this._cleanupAuthListener = null, this._authWindow = null, this._handleConnect = () => {
+      var r;
+      const e = w(this.companionUrl, this.provider);
+      this._authWindow = window.open(e, "_blank", "width=600,height=600"), (r = this._cleanupAuthListener) == null || r.call(this), this._cleanupAuthListener = S(this._authWindow, (i) => {
+        var t, o;
+        (t = this._authWindow) == null || t.close(), this._authWindow = null, (o = this._cleanupAuthListener) == null || o.call(this), this._cleanupAuthListener = null, P(this.provider, i), this._authenticated = !0, this._loadFolder("");
+      });
+    }, this._lastClickedIndex = null, this._toggleSelectAll = () => {
+      const e = this._items.filter((i) => !i.isFolder);
+      e.every((i) => this._selectedIds.has(i.id)) ? this._selectedIds = /* @__PURE__ */ new Set() : this._selectedIds = new Set(e.map((i) => i.id));
+    }, this._onAddSelected = () => {
+      const e = p(this.provider);
+      if (!e) return;
+      const i = this._items.filter(
+        (t) => !t.isFolder && this._selectedIds.has(t.id)
+      ).map((t) => ({
+        companionUrl: this.companionUrl,
+        provider: this.provider,
+        token: e,
+        requestPath: t.requestPath,
+        fileId: t.id,
+        name: t.name,
+        mimeType: t.mimeType,
+        size: t.size,
+        thumbnail: t.thumbnail
+      }));
+      this.dispatchEvent(
+        new CustomEvent("connector-files-selected", {
+          detail: { files: i },
+          bubbles: !0,
+          composed: !0
+        })
+      );
+    }, this._onClose = () => {
+      this.dispatchEvent(
+        new CustomEvent("connector-close", {
+          bubbles: !0,
+          composed: !0
+        })
+      );
+    }, this._handleLogout = async () => {
+      const e = p(this.provider);
+      if (e) {
+        try {
+          await $(this.companionUrl, this.provider, e);
+        } catch {
+        }
+        u(this.provider);
+      }
+      this._reset();
+    };
+  }
+  connectedCallback() {
+    super.connectedCallback(), this._checkAuth();
+  }
+  disconnectedCallback() {
+    var e;
+    super.disconnectedCallback(), (e = this._cleanupAuthListener) == null || e.call(this), this._cleanupAuthListener = null;
+  }
+  updated(e) {
+    e.has("provider") && (this._reset(), this._checkAuth());
+  }
+  _reset() {
+    this._authenticated = !1, this._loading = !1, this._items = [], this._selectedIds = /* @__PURE__ */ new Set(), this._breadcrumbs = [], this._nextPagePath = null, this._error = null, this._username = null;
+  }
+  _checkAuth() {
+    p(this.provider) && (this._authenticated = !0, this._loadFolder(""));
+  }
+  get _providerDef() {
+    return z([this.provider])[0] ?? null;
+  }
+  get _providerLabel() {
+    var e;
+    return ((e = this._providerDef) == null ? void 0 : e.label) ?? this.provider;
+  }
+  // --- Folder navigation ---
+  async _loadFolder(e) {
+    const r = p(this.provider);
+    if (!r) {
+      this._authenticated = !1;
+      return;
+    }
+    this.offsetHeight > 0 && (this.style.minHeight = `${this.offsetHeight}px`), this._loading = !0, this._error = null, this._items = [], this._selectedIds = /* @__PURE__ */ new Set(), this._lastClickedIndex = null, this._nextPagePath = null;
+    try {
+      const i = await C(this.companionUrl, this.provider, r, e);
+      this._items = i.items, this._nextPagePath = i.nextPagePath, i.username && (this._username = i.username);
+    } catch (i) {
+      i instanceof v ? (u(this.provider), this._authenticated = !1) : this._error = i instanceof Error ? i.message : "Failed to load files";
+    } finally {
+      this._loading = !1;
+    }
+  }
+  _onFolderClick(e) {
+    this._breadcrumbs = [...this._breadcrumbs, { name: e.name, path: e.requestPath }], this._loadFolder(e.requestPath);
+  }
+  _onBreadcrumbClick(e) {
+    if (e < 0)
+      this._breadcrumbs = [], this._loadFolder("");
+    else {
+      const r = this._breadcrumbs[e];
+      this._breadcrumbs = this._breadcrumbs.slice(0, e + 1), this._loadFolder(r.path);
+    }
+  }
+  // --- Load more ---
+  async _onLoadMore() {
+    const e = p(this.provider);
+    if (!(!e || !this._nextPagePath)) {
+      this._loadingMore = !0;
+      try {
+        const r = await I(this.companionUrl, e, this._nextPagePath);
+        this._items = [...this._items, ...r.items], this._nextPagePath = r.nextPagePath;
+      } catch (r) {
+        r instanceof v && (u(this.provider), this._authenticated = !1);
+      } finally {
+        this._loadingMore = !1;
+      }
+    }
+  }
+  _toggleSelect(e, r) {
+    const i = this._items.filter((o) => !o.isFolder), t = i.findIndex((o) => o.id === e.id);
+    if (r != null && r.shiftKey && this._lastClickedIndex !== null && t !== -1) {
+      const o = Math.min(this._lastClickedIndex, t), c = Math.max(this._lastClickedIndex, t), b = new Set(this._selectedIds);
+      for (let f = o; f <= c; f++)
+        b.add(i[f].id);
+      this._selectedIds = b;
+    } else {
+      const o = new Set(this._selectedIds);
+      o.has(e.id) ? o.delete(e.id) : o.add(e.id), this._selectedIds = o;
+    }
+    t !== -1 && (this._lastClickedIndex = t);
+  }
+  // --- Render ---
+  render() {
+    return s`
       ${this._renderHeader()}
-      ${this._authenticated?this._loading?this._renderLoading():this._error?this._renderError():this._renderBrowser():this._renderAuthView()}
-    `}_renderHeader(){const e=this._providerDef;return s`
+      ${this._authenticated ? this._loading ? this._renderLoading() : this._error ? this._renderError() : this._renderBrowser() : this._renderAuthView()}
+    `;
+  }
+  _renderHeader() {
+    const e = this._providerDef;
+    return s`
       <div class="browser-header">
         <button class="back-btn" @click=${this._onClose} title="Back">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
@@ -9,22 +192,26 @@ import{i as y,d as w,l as _,a as $,g as z,e as C,f as m,h as I,c as s,A as h,o a
           </svg>
         </button>
         <div class="header-brand">
-          ${e!=null&&e.brandHtml?s`<div class="header-logo">${v(e.brandHtml)}</div>`:h}
+          ${e != null && e.brandHtml ? s`<div class="header-logo">${m(e.brandHtml)}</div>` : h}
 
           <div class="header-title-group">
             <span class="browser-title">${this._providerLabel}</span>
-            ${this._authenticated&&this._username?s`<span class="header-username">${this._username}</span>`:h}
+            ${this._authenticated && this._username ? s`<span class="header-username">${this._username}</span>` : h}
           </div>
         </div>
-        ${this._authenticated?s`<button class="logout-btn" @click=${this._handleLogout}>Sign out</button>`:h}
+        ${this._authenticated ? s`<button class="logout-btn" @click=${this._handleLogout}>Sign out</button>` : h}
       </div>
-    `}_renderAuthView(){const e=this._providerDef;return s`
+    `;
+  }
+  _renderAuthView() {
+    const e = this._providerDef;
+    return s`
       <div class="auth-view">
         <div class="auth-glow"></div>
         <div class="auth-logo-wrap">
           <div class="auth-ring">
             <div class="auth-logo">
-              ${e!=null&&e.brandHtml?s`<span style="display:flex;align-items:center;justify-content:center;transform:scale(2.2)">${v(e.brandHtml)}</span>`:s`<svg viewBox="0 0 24 24" fill="none" stroke="var(--sfx-up-primary, #2563eb)" stroke-width="1.5"><path d="M12 2a5 5 0 015 5v3h1a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2v-8a2 2 0 012-2h1V7a5 5 0 015-5zm3 8H9v-3a3 3 0 016 0v3z" fill="var(--sfx-up-primary, #2563eb)"/></svg>`}
+              ${e != null && e.brandHtml ? s`<span style="display:flex;align-items:center;justify-content:center;transform:scale(2.2)">${m(e.brandHtml)}</span>` : s`<svg viewBox="0 0 24 24" fill="none" stroke="var(--sfx-up-primary, #2563eb)" stroke-width="1.5"><path d="M12 2a5 5 0 015 5v3h1a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2v-8a2 2 0 012-2h1V7a5 5 0 015-5zm3 8H9v-3a3 3 0 016 0v3z" fill="var(--sfx-up-primary, #2563eb)"/></svg>`}
             </div>
           </div>
         </div>
@@ -41,9 +228,12 @@ import{i as y,d as w,l as _,a as $,g as z,e as C,f as m,h as I,c as s,A as h,o a
           Sign in to ${this._providerLabel}
         </button>
       </div>
-    `}_renderLoading(){return s`
+    `;
+  }
+  _renderLoading() {
+    return s`
       <div class="skeleton-list">
-        ${[1,2,3,4,5,6,7].map(()=>s`
+        ${[1, 2, 3, 4, 5, 6, 7].map(() => s`
           <div class="skeleton-row">
             <div class="skeleton-check"></div>
             <div class="skeleton-thumb"></div>
@@ -54,7 +244,10 @@ import{i as y,d as w,l as _,a as $,g as z,e as C,f as m,h as I,c as s,A as h,o a
           </div>
         `)}
       </div>
-    `}_renderError(){return s`
+    `;
+  }
+  _renderError() {
+    return s`
       <div class="error-view">
         <div class="error-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -64,15 +257,22 @@ import{i as y,d as w,l as _,a as $,g as z,e as C,f as m,h as I,c as s,A as h,o a
           </svg>
         </div>
         <div class="error-text">${this._error}</div>
-        <button class="retry-btn" @click=${()=>{const e=this._breadcrumbs[this._breadcrumbs.length-1];this._loadFolder((e==null?void 0:e.path)??"")}}>
+        <button class="retry-btn" @click=${() => {
+      const e = this._breadcrumbs[this._breadcrumbs.length - 1];
+      this._loadFolder((e == null ? void 0 : e.path) ?? "");
+    }}>
           Try again
         </button>
       </div>
-    `}_renderBrowser(){const e=this._items.filter(t=>!t.isFolder),r=this._items.filter(t=>t.isFolder),i=this._selectedIds.size;return s`
+    `;
+  }
+  _renderBrowser() {
+    const e = this._items.filter((t) => !t.isFolder), r = this._items.filter((t) => t.isFolder), i = this._selectedIds.size;
+    return s`
       ${this._renderBreadcrumbs()}
 
       <div class="file-list">
-        ${r.length===0&&e.length===0?s`
+        ${r.length === 0 && e.length === 0 ? s`
               <div class="empty-state">
                 <div class="empty-icon">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
@@ -82,10 +282,11 @@ import{i as y,d as w,l as _,a as $,g as z,e as C,f as m,h as I,c as s,A as h,o a
                 </div>
                 <div class="empty-text">This folder is empty</div>
               </div>
-            `:h}
+            ` : h}
 
-        ${r.map(t=>s`
-            <div class="file-item" @click=${()=>this._onFolderClick(t)}>
+        ${r.map(
+      (t) => s`
+            <div class="file-item" @click=${() => this._onFolderClick(t)}>
               <div class="file-thumb folder-thumb">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                   <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" />
@@ -98,23 +299,28 @@ import{i as y,d as w,l as _,a as $,g as z,e as C,f as m,h as I,c as s,A as h,o a
                 <polyline points="9 18 15 12 9 6" />
               </svg>
             </div>
-          `)}
+          `
+    )}
 
-        ${e.map(t=>s`
+        ${e.map(
+      (t) => s`
             <div
-              class="file-item ${this._selectedIds.has(t.id)?"selected":""}"
-              @click=${o=>this._toggleSelect(t,o)}
+              class="file-item ${this._selectedIds.has(t.id) ? "selected" : ""}"
+              @click=${(o) => this._toggleSelect(t, o)}
             >
               <input
                 type="checkbox"
                 .checked=${this._selectedIds.has(t.id)}
-                @click=${o=>o.stopPropagation()}
-                @change=${()=>this._toggleSelect(t)}
+                @click=${(o) => o.stopPropagation()}
+                @change=${() => this._toggleSelect(t)}
               />
               <div class="file-thumb">
-                ${t.thumbnail?s`<img src=${t.thumbnail} alt="" loading="lazy" referrerpolicy="no-referrer"
-                      @error=${o=>{const c=o.target;c.style.display="none",c.parentElement.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'}}
-                    />`:s`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                ${t.thumbnail ? s`<img src=${t.thumbnail} alt="" loading="lazy" referrerpolicy="no-referrer"
+                      @error=${(o) => {
+        const c = o.target;
+        c.style.display = "none", c.parentElement.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
+      }}
+                    />` : s`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                       <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
                       <polyline points="14 2 14 8 20 8" />
                     </svg>`}
@@ -122,56 +328,65 @@ import{i as y,d as w,l as _,a as $,g as z,e as C,f as m,h as I,c as s,A as h,o a
               <div class="file-info">
                 <div class="file-name">${t.name}</div>
                 <div class="file-meta">
-                  ${t.size?s`<span class="file-size">${A(t.size)}</span>`:h}
+                  ${t.size ? s`<span class="file-size">${A(t.size)}</span>` : h}
                 </div>
               </div>
             </div>
-          `)}
+          `
+    )}
 
-        ${this._nextPagePath?s`
+        ${this._nextPagePath ? s`
               <button
                 class="load-more-btn"
                 ?disabled=${this._loadingMore}
                 @click=${this._onLoadMore}
               >
-                ${this._loadingMore?"Loading":"Load more"}
+                ${this._loadingMore ? "Loading" : "Load more"}
               </button>
-            `:h}
+            ` : h}
       </div>
 
-      ${e.length>0||i>0?s`
+      ${e.length > 0 || i > 0 ? s`
             <div class="browser-footer">
               <div class="footer-left">
                 <button class="select-all-btn" @click=${this._toggleSelectAll}>
-                  ${e.every(t=>this._selectedIds.has(t.id))?"Deselect all":"Select all"}
+                  ${e.every((t) => this._selectedIds.has(t.id)) ? "Deselect all" : "Select all"}
                 </button>
-                <span class="selected-count ${i>0?"has-selection":""}">
-                  ${i>0?`${i} file${i===1?"":"s"} selected`:"No files selected"}
+                <span class="selected-count ${i > 0 ? "has-selection" : ""}">
+                  ${i > 0 ? `${i} file${i === 1 ? "" : "s"} selected` : "No files selected"}
                 </span>
               </div>
               <button
                 class="add-btn"
-                ?disabled=${i===0}
+                ?disabled=${i === 0}
                 @click=${this._onAddSelected}
               >
-                Add${i>0?` ${i}`:""} file${i===1?"":"s"}
+                Add${i > 0 ? ` ${i}` : ""} file${i === 1 ? "" : "s"}
               </button>
             </div>
-          `:h}
-    `}_renderBreadcrumbs(){return this._breadcrumbs.length===0?h:s`
+          ` : h}
+    `;
+  }
+  _renderBreadcrumbs() {
+    return this._breadcrumbs.length === 0 ? h : s`
       <div class="breadcrumbs">
-        <button class="crumb" @click=${()=>this._onBreadcrumbClick(-1)}>
+        <button class="crumb" @click=${() => this._onBreadcrumbClick(-1)}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:12px;height:12px;vertical-align:middle;margin-right:2px">
             <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
           </svg>
           Root
         </button>
-        ${this._breadcrumbs.map((e,r)=>s`
+        ${this._breadcrumbs.map(
+      (e, r) => s`
             <span class="crumb-sep">&rsaquo;</span>
-            ${r<this._breadcrumbs.length-1?s`<button class="crumb" @click=${()=>this._onBreadcrumbClick(r)}>${e.name}</button>`:s`<span class="crumb-current">${e.name}</span>`}
-          `)}
+            ${r < this._breadcrumbs.length - 1 ? s`<button class="crumb" @click=${() => this._onBreadcrumbClick(r)}>${e.name}</button>` : s`<span class="crumb-current">${e.name}</span>`}
+          `
+    )}
       </div>
-    `}};g.styles=$`
+    `;
+  }
+};
+g.styles = _`
     :host {
       display: flex;
       flex-direction: column;
@@ -817,4 +1032,46 @@ import{i as y,d as w,l as _,a as $,g as z,e as C,f as m,h as I,c as s,A as h,o a
       .auth-logo { animation: none; }
       .auth-view { animation: none; }
     }
-  `;let a=g;l([k({type:String})],a.prototype,"provider");l([k({type:String})],a.prototype,"companionUrl");l([d()],a.prototype,"_authenticated");l([d()],a.prototype,"_loading");l([d()],a.prototype,"_items");l([d()],a.prototype,"_selectedIds");l([d()],a.prototype,"_breadcrumbs");l([d()],a.prototype,"_nextPagePath");l([d()],a.prototype,"_error");l([d()],a.prototype,"_loadingMore");l([d()],a.prototype,"_username");function A(n){if(n===0)return"0 B";const e=["B","KB","MB","GB"],r=Math.min(Math.floor(Math.log(n)/Math.log(1024)),e.length-1);return`${(n/Math.pow(1024,r)).toFixed(r===0?0:1)} ${e[r]}`}export{a as SfxProviderBrowser};
+  `;
+let a = g;
+l([
+  k({ type: String })
+], a.prototype, "provider");
+l([
+  k({ type: String })
+], a.prototype, "companionUrl");
+l([
+  d()
+], a.prototype, "_authenticated");
+l([
+  d()
+], a.prototype, "_loading");
+l([
+  d()
+], a.prototype, "_items");
+l([
+  d()
+], a.prototype, "_selectedIds");
+l([
+  d()
+], a.prototype, "_breadcrumbs");
+l([
+  d()
+], a.prototype, "_nextPagePath");
+l([
+  d()
+], a.prototype, "_error");
+l([
+  d()
+], a.prototype, "_loadingMore");
+l([
+  d()
+], a.prototype, "_username");
+function A(n) {
+  if (n === 0) return "0 B";
+  const e = ["B", "KB", "MB", "GB"], r = Math.min(Math.floor(Math.log(n) / Math.log(1024)), e.length - 1);
+  return `${(n / Math.pow(1024, r)).toFixed(r === 0 ? 0 : 1)} ${e[r]}`;
+}
+export {
+  a as SfxProviderBrowser
+};

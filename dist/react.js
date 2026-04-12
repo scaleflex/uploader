@@ -1,33 +1,35 @@
-import { forwardRef as fe, useRef as c, useLayoutEffect as de, useImperativeHandle as ve, useEffect as ae, createElement as pe } from "react";
+import { forwardRef as me, useRef as c, useLayoutEffect as ve, useImperativeHandle as he, useEffect as pe, createElement as ge } from "react";
 typeof customElements < "u" && import("./define.js");
-const Le = fe(
+const Me = me(
   function({
-    config: I,
-    open: H,
-    onFileAdded: k,
-    onFileRemoved: q,
-    onFileRejected: z,
-    onUploadStarted: G,
-    onUploadProgress: J,
-    onUploadComplete: K,
-    onUploadError: N,
-    onUploadRetry: Q,
-    onAllComplete: U,
-    onTotalProgress: V,
-    onOpen: W,
-    onClose: X,
-    onCancel: Y,
-    onBeforeUpload: Z,
-    onFilePreview: _,
-    onFillMetadata: $,
-    onCompleteAction: B,
-    className: ue,
-    style: ie
-  }, oe) {
-    const d = c(null), i = c(k), o = c(q), f = c(z), v = c(G), p = c(J), E = c(K), x = c(N), L = c(Q), m = c(U), h = c(V), g = c(W), F = c(X), y = c(Y), M = c(Z), b = c(_), w = c($), j = c(B);
-    return de(() => {
-      i.current = k, o.current = q, f.current = z, v.current = G, p.current = J, E.current = K, x.current = N, L.current = Q, m.current = U, h.current = V, g.current = W, F.current = X, y.current = Y, M.current = Z, b.current = _, w.current = $, j.current = B;
-    }), ve(oe, () => ({
+    config: k,
+    open: U,
+    onFileAdded: q,
+    onFileRemoved: z,
+    onFileRejected: G,
+    onUploadStarted: J,
+    onUploadProgress: K,
+    onUploadComplete: N,
+    onUploadError: Q,
+    onUploadRetry: V,
+    onAllComplete: W,
+    onTotalProgress: X,
+    onOpen: Y,
+    onClose: Z,
+    onCancel: _,
+    onBeforeUpload: $,
+    onFilePreview: B,
+    onFillMetadata: O,
+    onCompleteAction: S,
+    onFileLocate: T,
+    onFileCopyCdn: A,
+    className: Ee,
+    style: xe
+  }, Le) {
+    const d = c(null), u = c(q), o = c(z), f = c(G), v = c(J), p = c(K), E = c(N), x = c(Q), L = c(V), m = c(W), h = c(X), g = c(Y), y = c(Z), F = c(_), M = c($), b = c(B), w = c(O), j = c(S), D = c(T), H = c(A);
+    return ve(() => {
+      u.current = q, o.current = z, f.current = G, v.current = J, p.current = K, E.current = N, x.current = Q, L.current = V, m.current = W, h.current = X, g.current = Y, y.current = Z, F.current = _, M.current = $, b.current = B, w.current = O, j.current = S, D.current = T, H.current = A;
+    }), he(Le, () => ({
       get element() {
         return d.current;
       },
@@ -63,28 +65,28 @@ const Le = fe(
         var l;
         return (l = d.current) == null ? void 0 : l.getFile(e);
       },
-      updateFileMeta(e, l, D) {
+      updateFileMeta(e, l, I) {
         var a;
-        (a = d.current) == null || a.updateFileMeta(e, l, D);
+        (a = d.current) == null || a.updateFileMeta(e, l, I);
       },
       updateFilesMeta(e) {
         var l;
         (l = d.current) == null || l.updateFilesMeta(e);
       }
-    })), de(() => {
+    })), ve(() => {
       const e = d.current;
-      e && (e.config = I);
-    }, [I]), ae(() => {
+      e && (e.config = k);
+    }, [k]), pe(() => {
       const e = d.current;
-      e && (H === !0 ? e.open() : H === !1 && e.close());
-    }, [H]), ae(() => {
+      e && (U === !0 ? e.open() : U === !1 && e.close());
+    }, [U]), pe(() => {
       const e = d.current;
       if (!e) return;
       const l = (t) => {
         var r;
         const { file: n } = t.detail;
-        (r = i.current) == null || r.call(i, n);
-      }, D = (t) => {
+        (r = u.current) == null || r.call(u, n);
+      }, I = (t) => {
         var r;
         const { file: n } = t.detail;
         (r = o.current) == null || r.call(o, n);
@@ -92,69 +94,77 @@ const Le = fe(
         var s;
         const { file: n, reason: r } = t.detail;
         (s = f.current) == null || s.call(f, n, r);
-      }, O = (t) => {
+      }, P = (t) => {
         var r;
         const { files: n } = t.detail;
         (r = v.current) == null || r.call(v, n);
-      }, S = (t) => {
-        var u;
+      }, C = (t) => {
+        var i;
         const { file: n, progress: r, speed: s } = t.detail;
-        (u = p.current) == null || u.call(p, n, r, s);
-      }, T = (t) => {
+        (i = p.current) == null || i.call(p, n, r, s);
+      }, R = (t) => {
         var s;
         const { file: n, response: r } = t.detail;
         (s = E.current) == null || s.call(E, n, r);
-      }, A = (t) => {
+      }, ee = (t) => {
         var s;
         const { file: n, error: r } = t.detail;
         (s = x.current) == null || s.call(x, n, r);
-      }, P = (t) => {
+      }, te = (t) => {
         var s;
         const { successful: n, failed: r } = t.detail;
         (s = m.current) == null || s.call(m, n, r);
-      }, C = (t) => {
+      }, re = (t) => {
         var s;
         const { file: n, attempt: r } = t.detail;
         (s = L.current) == null || s.call(L, n, r);
-      }, R = (t) => {
-        var u;
+      }, ne = (t) => {
+        var i;
         const { percentage: n, speed: r, eta: s } = t.detail;
-        (u = h.current) == null || u.call(h, n, r, s);
-      }, ee = () => {
+        (i = h.current) == null || i.call(h, n, r, s);
+      }, se = () => {
         var t;
         (t = g.current) == null || t.call(g);
-      }, te = () => {
-        var t;
-        (t = F.current) == null || t.call(F);
-      }, re = () => {
+      }, ce = () => {
         var t;
         (t = y.current) == null || t.call(y);
-      }, ne = (t) => {
+      }, le = () => {
+        var t;
+        (t = F.current) == null || t.call(F);
+      }, de = (t) => {
         var s;
         const { files: n } = t.detail;
         ((s = M.current) == null ? void 0 : s.call(M, n)) === !1 && t.preventDefault();
-      }, se = (t) => {
+      }, ae = (t) => {
         var r;
         const { file: n } = t.detail;
         (r = b.current) == null || r.call(b, n);
-      }, ce = (t) => {
+      }, ie = (t) => {
         var r;
         const { files: n } = t.detail;
         (r = w.current) == null || r.call(w, n);
-      }, le = () => {
+      }, ue = () => {
         var t;
         (t = j.current) == null || t.call(j);
+      }, oe = (t) => {
+        var r;
+        const { file: n } = t.detail;
+        (r = D.current) == null || r.call(D, n);
+      }, fe = (t) => {
+        var s;
+        const { file: n, cdnUrl: r } = t.detail;
+        (s = H.current) == null || s.call(H, n, r);
       };
-      return e.addEventListener("sfx-file-added", l), e.addEventListener("sfx-file-removed", D), e.addEventListener("sfx-file-rejected", a), e.addEventListener("sfx-upload-started", O), e.addEventListener("sfx-upload-progress", S), e.addEventListener("sfx-upload-complete", T), e.addEventListener("sfx-upload-error", A), e.addEventListener("sfx-upload-retry", C), e.addEventListener("sfx-all-complete", P), e.addEventListener("sfx-total-progress", R), e.addEventListener("sfx-open", ee), e.addEventListener("sfx-close", te), e.addEventListener("sfx-cancel", re), e.addEventListener("sfx-before-upload", ne), e.addEventListener("sfx-file-preview", se), e.addEventListener("sfx-fill-metadata", ce), e.addEventListener("sfx-complete-action", le), () => {
-        e.removeEventListener("sfx-file-added", l), e.removeEventListener("sfx-file-removed", D), e.removeEventListener("sfx-file-rejected", a), e.removeEventListener("sfx-upload-started", O), e.removeEventListener("sfx-upload-progress", S), e.removeEventListener("sfx-upload-complete", T), e.removeEventListener("sfx-upload-error", A), e.removeEventListener("sfx-upload-retry", C), e.removeEventListener("sfx-all-complete", P), e.removeEventListener("sfx-total-progress", R), e.removeEventListener("sfx-open", ee), e.removeEventListener("sfx-close", te), e.removeEventListener("sfx-cancel", re), e.removeEventListener("sfx-before-upload", ne), e.removeEventListener("sfx-file-preview", se), e.removeEventListener("sfx-fill-metadata", ce), e.removeEventListener("sfx-complete-action", le);
+      return e.addEventListener("sfx-file-added", l), e.addEventListener("sfx-file-removed", I), e.addEventListener("sfx-file-rejected", a), e.addEventListener("sfx-upload-started", P), e.addEventListener("sfx-upload-progress", C), e.addEventListener("sfx-upload-complete", R), e.addEventListener("sfx-upload-error", ee), e.addEventListener("sfx-upload-retry", re), e.addEventListener("sfx-all-complete", te), e.addEventListener("sfx-total-progress", ne), e.addEventListener("sfx-open", se), e.addEventListener("sfx-close", ce), e.addEventListener("sfx-cancel", le), e.addEventListener("sfx-before-upload", de), e.addEventListener("sfx-file-preview", ae), e.addEventListener("sfx-fill-metadata", ie), e.addEventListener("sfx-complete-action", ue), e.addEventListener("sfx-file-locate", oe), e.addEventListener("sfx-file-copy-cdn", fe), () => {
+        e.removeEventListener("sfx-file-added", l), e.removeEventListener("sfx-file-removed", I), e.removeEventListener("sfx-file-rejected", a), e.removeEventListener("sfx-upload-started", P), e.removeEventListener("sfx-upload-progress", C), e.removeEventListener("sfx-upload-complete", R), e.removeEventListener("sfx-upload-error", ee), e.removeEventListener("sfx-upload-retry", re), e.removeEventListener("sfx-all-complete", te), e.removeEventListener("sfx-total-progress", ne), e.removeEventListener("sfx-open", se), e.removeEventListener("sfx-close", ce), e.removeEventListener("sfx-cancel", le), e.removeEventListener("sfx-before-upload", de), e.removeEventListener("sfx-file-preview", ae), e.removeEventListener("sfx-fill-metadata", ie), e.removeEventListener("sfx-complete-action", ue), e.removeEventListener("sfx-file-locate", oe), e.removeEventListener("sfx-file-copy-cdn", fe);
       };
-    }, []), pe("sfx-uploader", {
+    }, []), ge("sfx-uploader", {
       ref: d,
-      className: ue,
-      style: ie
+      className: Ee,
+      style: xe
     });
   }
 );
 export {
-  Le as Uploader
+  Me as Uploader
 };

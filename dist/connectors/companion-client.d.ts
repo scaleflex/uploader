@@ -49,6 +49,10 @@ export declare function logout(companionUrl: string, provider: ProviderId, token
 /**
  * Convert a Companion HTTP URL to a WebSocket URL.
  * e.g. https://eu-on-24001.connector.filerobot.com → wss://eu-on-24001.connector.filerobot.com
+ *
+ * Derives ws/wss from the companion URL's own scheme (not location.protocol)
+ * so that wss:// is used when Companion is served over HTTPS — even when
+ * the page itself is on plain http://localhost during development.
  */
 export declare function getSocketHost(companionUrl: string): string;
 /** Thrown when Companion returns 401 — the OAuth token has expired. */
