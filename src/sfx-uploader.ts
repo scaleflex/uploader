@@ -90,6 +90,8 @@ export interface UploaderCallbacks {
   onFilePreview?: (file: UploadFile) => void;
   onFillMetadata?: (files: UploadFile[]) => void;
   onCompleteAction?: () => void;
+  onFileLocate?: (file: UploadFile) => void;
+  onFileCopyCdn?: (file: UploadFile, cdnUrl: string) => void;
 }
 
 export interface InlineHeaderConfig {
@@ -140,6 +142,19 @@ export interface UploaderConfig {
    * ```
    */
   getLocateUrl?: (file: UploadFile) => string | null | undefined;
+  /**
+   * Show the "Locate" button on completed file tiles in the review screen.
+   * When clicked, fires the `sfx-file-locate` event and the `onFileLocate` callback.
+   * Default: false (hidden).
+   */
+  showLocateButton?: boolean;
+  /**
+   * Show the "Copy CDN" button on completed file tiles in the review screen.
+   * When clicked, copies the CDN URL to the clipboard and fires the
+   * `sfx-file-copy-cdn` event and the `onFileCopyCdn` callback.
+   * Default: false (hidden).
+   */
+  showCopyCdnButton?: boolean;
   /** Whether closing the modal clears all files. Default: true. Set to false to preserve files across open/close. */
   clearOnClose?: boolean;
   /** Whether the "Done" action clears all files (inline mode resets, modal mode closes). Default: true. */
@@ -637,19 +652,25 @@ export class SfxUploader extends LitElement {
       width: 100%;
     }
 
+    /* When the preview sidebar is open, let the layout use the full
+       browser width so the panel sits flush against the right edge. */
+    .inline .content:has(.has-preview) {
+      max-width: none;
+    }
+
     .inline.no-files .content {
       flex: 1 0 auto;
     }
 
-    /* Inline: let body grow beyond container so .inline can scroll */
+    /* Inline: body grows so .inline itself can scroll.
+       padding: 0 in both states so the header never jumps;
+       children use --sfx-inline-pad for horizontal spacing. */
     .inline .body {
       flex: 1 0 auto;
       overflow: visible;
+      padding: 0;
     }
-
-    /* Inline horizontal alignment — driven by --sfx-inline-pad */
     .inline .body.has-files {
-      padding-left: 0;
       flex: 1;
       overflow: hidden;
     }

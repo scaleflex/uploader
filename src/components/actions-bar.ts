@@ -61,6 +61,10 @@ export class SfxActionsBar extends LitElement {
         align-items: center;
         gap: 12px;
         padding: 10px 24px 0;
+        max-width: var(--sfx-up-content-max-width, 1600px);
+        margin-inline: auto;
+        box-sizing: border-box;
+        width: 100%;
       }
 
       .progress-track {
@@ -92,6 +96,10 @@ export class SfxActionsBar extends LitElement {
         align-items: center;
         justify-content: space-between;
         padding: 14px 24px;
+        max-width: var(--sfx-up-content-max-width, 1600px);
+        margin-inline: auto;
+        box-sizing: border-box;
+        width: 100%;
       }
 
       .left {

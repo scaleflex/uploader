@@ -19,6 +19,8 @@ export const PublicEvents = {
   COMPLETE_ACTION: 'sfx-complete-action',
   FILE_PREVIEW: 'sfx-file-preview',
   FILL_METADATA: 'sfx-fill-metadata',
+  FILE_LOCATE: 'sfx-file-locate',
+  FILE_COPY_CDN: 'sfx-file-copy-cdn',
 } as const;
 
 export type PublicEventName = typeof PublicEvents[keyof typeof PublicEvents];

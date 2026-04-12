@@ -151,6 +151,7 @@ export class SfxFileItem extends LitElement {
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      padding-left: 5px;
     }
 
     .tile.done {
@@ -547,6 +548,10 @@ export class SfxFileItem extends LitElement {
    *  takes precedence over the default `response.file.url.public`. Lets
    *  host apps point Locate at their own dashboard / file manager. */
   @property({ attribute: false }) getLocateUrl?: (file: UploadFile) => string | null | undefined;
+  /** Whether to show the "Locate" hover action on completed review tiles. */
+  @property({ type: Boolean }) showLocateButton = false;
+  /** Whether to show the "Copy CDN" hover action on completed review tiles. */
+  @property({ type: Boolean }) showCopyCdnButton = false;
   @state() private _dims = '';
   /** Brief flash on the Copy CDN button after a successful copy. */
   @state() private _copied = false;
@@ -613,13 +618,7 @@ export class SfxFileItem extends LitElement {
   private _locate(e: Event) {
     e.stopPropagation();
     if (!this.file) return;
-    // Host apps can supply a custom URL via the getLocateUrl config option
-    // (e.g. a dashboard / file-manager URL where the file actually lives).
-    // If unset or returns nothing, fall back to the raw public file URL.
-    const custom = this.getLocateUrl?.(this.file);
-    const target = custom || this.file?.response?.file?.url?.public;
-    if (!target) return;
-    window.open(target, '_blank', 'noopener,noreferrer');
+    this._emit('file-locate', { file: this.file });
   }
 
   private async _copyCdn(e: Event) {
@@ -633,6 +632,7 @@ export class SfxFileItem extends LitElement {
       // skip rather than using the deprecated document.execCommand('copy').
       return;
     }
+    this._emit('file-copy-cdn', { file: this.file, cdnUrl: url });
     this._copied = true;
     if (this._copiedTimer) clearTimeout(this._copiedTimer);
     this._copiedTimer = window.setTimeout(() => {
@@ -706,16 +706,16 @@ export class SfxFileItem extends LitElement {
                Copy CDN (copy CDN URL to clipboard). Both buttons fade
                in on tile hover, only for completed files (failed files
                have no response.file.url). -->
-          ${isReview && isDone && f.response?.file?.url
+          ${isReview && isDone && f.response?.file?.url && (this.showLocateButton || this.showCopyCdnButton)
             ? html`
                 <div class="review-actions">
-                  ${f.response.file.url.public
-                    ? html`<button class="review-action secondary" @click=${this._locate} title=${f.response.file.url.public} aria-label="Locate file in storage">
+                  ${this.showLocateButton
+                    ? html`<button class="review-action secondary" @click=${this._locate} aria-label="Locate file in storage">
                         <svg viewBox="0 0 24 24"><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><circle cx="12" cy="12" r="7"/></svg>
                         Locate
                       </button>`
                     : nothing}
-                  ${f.response.file.url.cdn
+                  ${this.showCopyCdnButton && f.response.file.url.cdn
                     ? html`<button class="review-action primary ${this._copied ? 'copied' : ''}" @click=${this._copyCdn} title="Copy CDN link" aria-label="Copy CDN link to clipboard">
                         ${this._copied
                           ? html`<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>`
