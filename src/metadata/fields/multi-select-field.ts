@@ -38,7 +38,6 @@ export class SfxMetaMultiSelectField extends MetadataFieldBase {
         flex-direction: column;
         overflow: hidden;
         max-height: 340px;
-        min-width: 240px;
       }
       .dropdown .search {
         flex-shrink: 0;
