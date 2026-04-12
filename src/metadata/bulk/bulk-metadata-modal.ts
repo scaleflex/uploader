@@ -45,10 +45,20 @@ export class SfxBulkMetadataModal extends LitElement {
   disconnectedCallback() {
     super.disconnectedCallback();
     document.removeEventListener('keydown', this._onKeyDown);
+    // Resolve any dangling confirm Promise so async callers don't hang forever
+    this._confirmResolve?.(false);
+    this._confirmResolve = null;
   }
 
   private _onKeyDown = async (e: KeyboardEvent) => {
     if (e.key !== 'Escape') return;
+
+    // If the confirm dialog is open, Escape dismisses it (stay in modal)
+    if (this._confirmVisible) {
+      e.stopPropagation();
+      this._onConfirmCancel();
+      return;
+    }
 
     // Don't close modal if user is typing in a form field — let the field
     // handle Escape first (e.g., closing a dropdown). The native KeyboardEvent
@@ -171,6 +181,36 @@ export class SfxBulkMetadataModal extends LitElement {
     this._confirmResolve?.(false);
     this._confirmResolve = null;
   };
+
+  /** Trap Tab inside the confirm dialog so focus cannot escape behind the overlay. */
+  private _onConfirmKeydown = (e: KeyboardEvent) => {
+    if (e.key !== 'Tab') return;
+    const dialog = this.shadowRoot?.querySelector('.fm-confirm') as HTMLElement | null;
+    if (!dialog) return;
+    const buttons = dialog.querySelectorAll<HTMLElement>('button');
+    if (buttons.length === 0) return;
+    const first = buttons[0];
+    const last = buttons[buttons.length - 1];
+    const active = this.shadowRoot?.activeElement;
+    if (e.shiftKey && active === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && active === last) {
+      e.preventDefault();
+      first.focus();
+    }
+  };
+
+  updated(changed: Map<string, unknown>) {
+    super.updated?.(changed);
+    // Auto-focus the Cancel button when confirm dialog appears
+    if (changed.has('_confirmVisible') && this._confirmVisible) {
+      requestAnimationFrame(() => {
+        const cancel = this.shadowRoot?.querySelector('.fm-confirm .btn-ghost') as HTMLElement | null;
+        cancel?.focus();
+      });
+    }
+  }
 
   private _onPendingChange = (
     e: CustomEvent<{ operation: BulkOperation; value: unknown }>,
@@ -459,7 +499,6 @@ export class SfxBulkMetadataModal extends LitElement {
                         .selected=${this._selected}
                         .config=${this.config}
                         .autocomplete=${this.autocomplete}
-                        .pendingOp=${this._pendingOp}
                         @row-field-change=${this._onRowFieldChange}
                         @row-toggle=${this._onRowToggle}
                       ></sfx-bulk-meta-table>
@@ -480,9 +519,9 @@ export class SfxBulkMetadataModal extends LitElement {
           </div>
 
           ${this._confirmVisible ? html`
-            <div class="fm-confirm-overlay" @click=${this._onConfirmCancel}>
-              <div class="fm-confirm" @click=${(e: Event) => e.stopPropagation()}>
-                <p class="fm-confirm-text">You have unapplied bulk changes. Discard them?</p>
+            <div class="fm-confirm-overlay" @click=${this._onConfirmCancel} @keydown=${this._onConfirmKeydown}>
+              <div class="fm-confirm" role="alertdialog" aria-modal="true" aria-labelledby="fm-confirm-msg" @click=${(e: Event) => e.stopPropagation()}>
+                <p class="fm-confirm-text" id="fm-confirm-msg">You have unapplied bulk changes. Discard them?</p>
                 <div class="fm-confirm-actions">
                   <button class="btn-ghost" @click=${this._onConfirmCancel}>Cancel</button>
                   <button class="btn-primary" @click=${this._onConfirmOk}>Discard</button>

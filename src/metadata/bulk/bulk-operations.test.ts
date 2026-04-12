@@ -93,6 +93,47 @@ describe('applyBulkOperation ADD', () => {
     });
   });
 
+  describe('text (string concatenation)', () => {
+    it('appends text with space separator', () => {
+      expect(applyBulkOperation('ADD', 'hello', 'world', 'text')).toBe('hello world');
+    });
+
+    it('handles null current value', () => {
+      expect(applyBulkOperation('ADD', null, 'world', 'text')).toBe('world');
+    });
+
+    it('handles empty current value', () => {
+      expect(applyBulkOperation('ADD', '', 'world', 'text')).toBe('world');
+    });
+
+    it('returns current when incoming is empty', () => {
+      expect(applyBulkOperation('ADD', 'hello', '', 'text')).toBe('hello');
+    });
+
+    it('works with textarea type', () => {
+      expect(applyBulkOperation('ADD', 'line1', 'line2', 'textarea')).toBe('line1 line2');
+    });
+
+    it('works with attachment-uri type', () => {
+      expect(applyBulkOperation('ADD', 'https://a.com', 'https://b.com', 'attachment-uri'))
+        .toBe('https://a.com https://b.com');
+    });
+  });
+
+  describe('integer-list (array deduplication)', () => {
+    it('appends new values', () => {
+      expect(applyBulkOperation('ADD', [1, 2], [3], 'integer-list')).toEqual([1, 2, 3]);
+    });
+
+    it('deduplicates existing values', () => {
+      expect(applyBulkOperation('ADD', [1, 2], [2, 3], 'integer-list')).toEqual([1, 2, 3]);
+    });
+
+    it('handles null current value', () => {
+      expect(applyBulkOperation('ADD', null, [1], 'integer-list')).toEqual([1]);
+    });
+  });
+
   describe('multi-select (JSON.stringify deduplication)', () => {
     it('appends new values', () => {
       expect(applyBulkOperation('ADD', ['v1'], ['v2'], 'multi-select')).toEqual(['v1', 'v2']);

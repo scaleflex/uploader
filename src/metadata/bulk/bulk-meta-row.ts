@@ -2,13 +2,10 @@ import { LitElement, html, nothing } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import type { MetadataField, MetadataConfig } from '../schema/schema.types';
 import type { UploadFile } from '../../store/store.types';
-import type { PendingOp } from './bulk-operations';
 import { validateField } from '../schema/validation';
 import { mapValueToBackend, mapValueFromBackend } from '../schema/value-transforms';
-import { applyBulkOperation } from './bulk-operations';
 import { formatFileSize } from '../../utils/file-utils';
 import { bulkRowStyles } from './bulk-metadata.styles';
-import './bulk-meta-diff-view';
 
 /**
  * Per-file row in the bulk metadata table.
@@ -27,8 +24,6 @@ export class SfxBulkMetaRow extends LitElement {
   @property({ type: Boolean }) selected = false;
   @property({ attribute: false }) config: MetadataConfig | null = null;
   @property({ attribute: false }) autocomplete: unknown;
-  /** Pending bulk operation from op-bar (null when nothing pending or row unselected). */
-  @property({ attribute: false }) pendingOp: PendingOp | null = null;
 
   @state() private _error: string | null = null;
 
@@ -89,40 +84,6 @@ export class SfxBulkMetaRow extends LitElement {
   private _getExtension(name: string): string {
     const idx = name.lastIndexOf('.');
     return idx > 0 ? name.slice(idx + 1).toUpperCase() : '?';
-  }
-
-  /**
-   * Compute what the value would become if the pending bulk operation were applied.
-   * Returns null if there's no pending op or the preview equals the current value.
-   */
-  private _computePreview(): unknown | null {
-    if (!this.pendingOp) return null;
-
-    const { operation, value: frontendValue } = this.pendingOp;
-    const language = this.config?.language;
-
-    const fakeFile = {
-      meta: { ...this.file.meta, [this.field.key]: this.value },
-    } as UploadFile;
-
-    const backendValue = mapValueToBackend(
-      this.field,
-      frontendValue,
-      fakeFile,
-      language,
-    );
-
-    const result = applyBulkOperation(
-      operation,
-      this.value,
-      backendValue,
-      this.field.type,
-    );
-
-    // No visible change — don't show preview
-    if (JSON.stringify(result) === JSON.stringify(this.value)) return null;
-
-    return result;
   }
 
   render() {

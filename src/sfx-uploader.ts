@@ -214,6 +214,10 @@ export class SfxUploader extends LitElement {
       --sfx-up-max-height: 88vh;
       --sfx-up-checker-bg: #fff;
       --sfx-up-checker-tile: #f0f0f0;
+      /* Fullscreen overlay z-index stack — single source of truth so
+         mobile overrides don't drift out of sync with base values. */
+      --sfx-fs-z: 10000;
+      --sfx-fs-controls-z: 10001;
     }
 
     /* --- Modal overlay --- */
@@ -1717,7 +1721,7 @@ export class SfxUploader extends LitElement {
     .fs-overlay {
       position: fixed;
       inset: 0;
-      z-index: 10000;
+      z-index: var(--sfx-fs-z);
       background: rgba(0, 0, 0, 0.92);
       display: flex;
       align-items: center;
@@ -1762,7 +1766,7 @@ export class SfxUploader extends LitElement {
       right: 16px;
       display: flex;
       gap: 8px;
-      z-index: 10001;
+      z-index: var(--sfx-fs-controls-z);
     }
 
     .fs-btn {
@@ -1804,7 +1808,7 @@ export class SfxUploader extends LitElement {
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 10001;
+      z-index: var(--sfx-fs-controls-z);
       transition: background 0.15s;
       padding: 0;
     }
@@ -1964,6 +1968,14 @@ export class SfxUploader extends LitElement {
         min-height: auto;
       }
 
+      /* Bump fullscreen z-index stack on mobile: modal-card is now
+         position:fixed which creates a new stacking context, so the
+         overlay + controls must sit above it. */
+      :host {
+        --sfx-fs-z: 100000;
+        --sfx-fs-controls-z: 100001;
+      }
+
       /* Force fs-overlay to viewport-fill on mobile. Without these the
          shadow-DOM stacking + sibling modal-card was clipping it. */
       .fs-overlay {
@@ -1974,7 +1986,6 @@ export class SfxUploader extends LitElement {
         bottom: 0;
         width: 100vw;
         height: 100vh;
-        z-index: 100000;
       }
       .fs-img {
         max-width: 92vw;
@@ -1984,7 +1995,6 @@ export class SfxUploader extends LitElement {
          Default styling is too subtle (12% white) and gets lost over the
          dark overlay. */
       .fs-toolbar {
-        z-index: 100002;
         top: 16px;
       }
       .fs-btn {
@@ -1998,7 +2008,6 @@ export class SfxUploader extends LitElement {
         height: 22px;
       }
       .fs-nav {
-        z-index: 100002;
         width: 48px;
         height: 48px;
         background: rgba(255, 255, 255, 0.3);

@@ -24,18 +24,27 @@ export class SfxBulkMetaSidebar extends LitElement {
       on desktop and resizes to mobile ends up with fields unreachable. */
   @state() private _isNarrow = false;
 
+  private _resizeTimer: ReturnType<typeof setTimeout> | null = null;
+
   connectedCallback() {
     super.connectedCallback();
     this._updateNarrow();
-    window.addEventListener('resize', this._updateNarrow);
+    window.addEventListener('resize', this._onResize);
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
-    window.removeEventListener('resize', this._updateNarrow);
+    window.removeEventListener('resize', this._onResize);
+    if (this._resizeTimer) { clearTimeout(this._resizeTimer); this._resizeTimer = null; }
   }
 
+  private _onResize = () => {
+    if (this._resizeTimer) clearTimeout(this._resizeTimer);
+    this._resizeTimer = setTimeout(this._updateNarrow, 100);
+  };
+
   private _updateNarrow = () => {
+    this._resizeTimer = null;
     const next = window.innerWidth <= 768;
     if (next !== this._isNarrow) this._isNarrow = next;
   };
