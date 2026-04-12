@@ -1226,6 +1226,30 @@ export class SfxUploader extends LitElement {
       color: var(--sfx-up-primary, #2563eb);
     }
 
+    .upload-overlay-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .upload-overlay-cancel {
+      padding: 8px 20px;
+      border: 1px solid var(--sfx-up-border, #e2e8f0);
+      background: var(--sfx-up-bg, #fff);
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--sfx-up-text-secondary, #475569);
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+
+    .upload-overlay-cancel:hover {
+      border-color: var(--sfx-up-error, #dc2626);
+      color: var(--sfx-up-error, #dc2626);
+    }
+
     .upload-header {
       justify-content: space-between;
     }
@@ -3619,6 +3643,13 @@ export class SfxUploader extends LitElement {
     this.close();
   };
 
+  private _onCancelUpload = () => {
+    this._engine?.cancelAll();
+    this.config?.callbacks?.onCancel?.();
+    this._dispatchPublic(PublicEvents.CANCEL, {});
+    this._onClearAll();
+  };
+
   private _onMinimize = () => {
     this._isMinimized = true;
     this._isPillExpanded = true;
@@ -3969,14 +4000,22 @@ export class SfxUploader extends LitElement {
         <div class="upload-overlay-bar">
           <div class="upload-overlay-bar-fill" style="width:${pct}%"></div>
         </div>
-        ${this.config?.minimizeOnUpload
-          ? html`<button
-              class="upload-overlay-minimize"
-              @click=${this._onMinimize}
-            >
-              Minimize & continue in background
-            </button>`
-          : nothing}
+        <div class="upload-overlay-actions">
+          <button
+            class="upload-overlay-cancel"
+            @click=${this._onCancelUpload}
+          >
+            Cancel upload
+          </button>
+          ${this.config?.minimizeOnUpload
+            ? html`<button
+                class="upload-overlay-minimize"
+                @click=${this._onMinimize}
+              >
+                Minimize & continue in background
+              </button>`
+            : nothing}
+        </div>
       </div>
     `;
   }
