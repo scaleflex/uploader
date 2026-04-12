@@ -212,11 +212,15 @@ export async function logout(
 /**
  * Convert a Companion HTTP URL to a WebSocket URL.
  * e.g. https://eu-on-24001.connector.filerobot.com → wss://eu-on-24001.connector.filerobot.com
+ *
+ * Derives ws/wss from the companion URL's own scheme (not location.protocol)
+ * so that wss:// is used when Companion is served over HTTPS — even when
+ * the page itself is on plain http://localhost during development.
  */
 export function getSocketHost(companionUrl: string): string {
   const regex = /^(?:https?:\/\/|\/\/)?(?:[^@\n]+@)?(?:www\.)?([^\n]+)/i;
   const host = regex.exec(companionUrl)?.[1] ?? companionUrl;
-  const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
+  const protocol = /^https:\/\//i.test(companionUrl) ? 'wss' : 'ws';
   return `${protocol}://${host}`;
 }
 
