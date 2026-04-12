@@ -6,9 +6,8 @@ import type {
   MetadataConfig,
 } from '../schema/schema.types';
 import type { UploadFile } from '../../store/store.types';
-import { mapValueToBackend } from '../schema/value-transforms';
 import { isEmpty } from '../schema/validation';
-import { applyBulkOperation, type BulkOperation, type PendingOp } from './bulk-operations';
+import { computeBulkResult, isValueRequiredForPreview, type BulkOperation, type PendingOp } from './bulk-operations';
 import { bulkModalStyles } from './bulk-metadata.styles';
 
 /**
@@ -216,7 +215,8 @@ export class SfxBulkMetadataModal extends LitElement {
     e: CustomEvent<{ operation: BulkOperation; value: unknown }>,
   ) => {
     const { operation, value } = e.detail;
-    if (isEmpty(value)) {
+    const field = this._activeField;
+    if (isEmpty(value) && (!field || isValueRequiredForPreview(operation, field.type))) {
       this._pendingOp = null;
     } else {
       this._pendingOp = { operation, value };
@@ -237,62 +237,23 @@ export class SfxBulkMetadataModal extends LitElement {
 
     const { operation, value: frontendValue } = e.detail;
     const language = this.config?.language;
-    const lang = language ?? 'en';
-    const isRegional = !!field.regional_variants_group_uuid;
     const updates: Array<[string, string, unknown]> = [];
 
     for (const fileId of this._selected) {
       const fileStaged = this._staged.get(fileId);
-
-      // Build a fake file for mapValueToBackend to preserve regional variants
-      const fakeFile = {
-        meta: fileStaged ? Object.fromEntries(fileStaged) : {},
-      } as UploadFile;
-
-      const backendValue = mapValueToBackend(
-        field,
-        frontendValue,
-        fakeFile,
-        language,
-      );
 
       // Use staged value if available, otherwise fall back to original file meta
       const currentStaged = fileStaged?.has(field.key)
         ? fileStaged.get(field.key)
         : this._originalFiles.get(fileId)?.meta?.[field.key] ?? null;
 
-      // Regional-variant fields wrap their values as { [lang]: value }.
-      // applyBulkOperation works on the inner primitive — string concat,
-      // substring removal, etc. — so we unwrap before calling and rewrap
-      // after. Without this, ADD/DELETE on text fields would receive an
-      // object and silently fall back to the empty branch.
-      //
-      // Guard against arrays explicitly: today only text fields are
-      // regional, but a future regional multi-select would be an array
-      // that would crash the spread below.
-      const isRegionalObject = (v: unknown): v is Record<string, unknown> =>
-        isRegional && v !== null && typeof v === 'object' && !Array.isArray(v);
-
-      const innerCurrent = isRegionalObject(currentStaged)
-        ? currentStaged[lang]
-        : currentStaged;
-      const innerBackend = isRegionalObject(backendValue)
-        ? backendValue[lang]
-        : backendValue;
-
-      const innerResult = applyBulkOperation(
+      const result = computeBulkResult(
+        field,
+        currentStaged,
+        frontendValue,
         operation,
-        innerCurrent,
-        innerBackend,
-        field.type,
+        language,
       );
-
-      const result = isRegional
-        ? {
-            ...(isRegionalObject(currentStaged) ? currentStaged : {}),
-            [lang]: innerResult,
-          }
-        : innerResult;
 
       updates.push([fileId, field.key, result]);
     }
@@ -497,6 +458,7 @@ export class SfxBulkMetadataModal extends LitElement {
                         .field=${field}
                         .staged=${this._staged}
                         .selected=${this._selected}
+                        .pendingOp=${this._pendingOp}
                         .config=${this.config}
                         .autocomplete=${this.autocomplete}
                         @row-field-change=${this._onRowFieldChange}

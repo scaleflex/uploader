@@ -57,6 +57,11 @@ function toArray(v: unknown): unknown[] {
 function isEmptyValue(v: unknown): boolean {
   if (v == null || v === '') return true;
   if (Array.isArray(v) && v.length === 0) return true;
+  if (typeof v === 'object' && !Array.isArray(v)) {
+    return !Object.values(v as Record<string, unknown>).some(
+      (val) => val != null && val !== '',
+    );
+  }
   return false;
 }
 
@@ -110,6 +115,12 @@ function formatScalar(field: MetadataField, value: unknown): string {
       return lookupLabel(field, String(value));
 
     case 'geopoint': {
+      // Frontend object format from applyBulkOperation
+      if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+        const geo = value as { latitude?: string; longitude?: string };
+        if (!geo.latitude && !geo.longitude) return '';
+        return `(${geo.latitude ?? ''}, ${geo.longitude ?? ''})`;
+      }
       // Backend stores "(lat,lng)" string
       if (typeof value === 'string') {
         const m = value.match(/^\((.+),(.+)\)$/);

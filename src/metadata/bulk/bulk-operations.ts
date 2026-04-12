@@ -1,4 +1,6 @@
-import type { MetadataFieldType } from '../schema/schema.types';
+import type { MetadataField, MetadataFieldType } from '../schema/schema.types';
+import type { UploadFile } from '../../store/store.types';
+import { mapValueToBackend } from '../schema/value-transforms';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -59,6 +61,18 @@ export function getAvailableOperations(
     { key: 'SET', label: 'Set' },
     { key: 'DELETE', label: 'Clear' },
   ];
+}
+
+/** Whether a non-empty value is needed for the operation to be meaningful.
+ *  Scalar DELETE ("Clear") needs no value — it always nulls the field. */
+export function isValueRequiredForPreview(
+  operation: BulkOperation,
+  fieldType: MetadataFieldType,
+): boolean {
+  if (operation === 'DELETE') {
+    return ARRAY_TYPES.has(fieldType) || TEXT_TYPES.has(fieldType);
+  }
+  return true;
 }
 
 // ---------------------------------------------------------------------------
@@ -163,4 +177,46 @@ export function applyBulkOperation(
     default:
       return operationValue;
   }
+}
+
+// ---------------------------------------------------------------------------
+// Compute the full result of a bulk operation on a single file's field,
+// handling regional-variant unwrap/rewrap and frontend→backend conversion.
+// Used by both the live preview in rows and the actual Apply handler.
+// ---------------------------------------------------------------------------
+
+export function computeBulkResult(
+  field: MetadataField,
+  currentBackendValue: unknown,
+  frontendOpValue: unknown,
+  operation: BulkOperation,
+  language?: string,
+): unknown {
+  const lang = language ?? 'en';
+  const isRegional = !!field.regional_variants_group_uuid;
+
+  const fakeFile = {
+    meta: { [field.key]: currentBackendValue },
+  } as UploadFile;
+
+  const backendValue = mapValueToBackend(field, frontendOpValue, fakeFile, language);
+
+  const isRegionalObject = (v: unknown): v is Record<string, unknown> =>
+    isRegional && v !== null && typeof v === 'object' && !Array.isArray(v);
+
+  const innerCurrent = isRegionalObject(currentBackendValue)
+    ? currentBackendValue[lang]
+    : currentBackendValue;
+  const innerBackend = isRegionalObject(backendValue)
+    ? backendValue[lang]
+    : backendValue;
+
+  const innerResult = applyBulkOperation(operation, innerCurrent, innerBackend, field.type);
+
+  return isRegional
+    ? {
+        ...(isRegionalObject(currentBackendValue) ? currentBackendValue : {}),
+        [lang]: innerResult,
+      }
+    : innerResult;
 }

@@ -4,6 +4,7 @@ import type { MetadataField, MetadataConfig, MetadataFieldType } from '../schema
 import { isEmpty } from '../schema/validation';
 import {
   getAvailableOperations,
+  isValueRequiredForPreview,
   type BulkOperation,
   type BulkOperationDef,
 } from './bulk-operations';
@@ -165,8 +166,11 @@ export class SfxBulkMetaOpBar extends LitElement {
       }),
     );
 
-    // Reset value — _effectiveValue returns type-appropriate empty default
+    // Reset value and switch back to Set after Clear
     this._value = undefined;
+    if (this._operation === 'DELETE' && !isValueRequiredForPreview(this._operation, this.field?.type)) {
+      this._operation = 'SET';
+    }
     this._emitPendingChange();
   }
 
@@ -235,22 +239,26 @@ export class SfxBulkMetaOpBar extends LitElement {
               `}
         </div>
 
-        <div class="op-field op-field--value">
-          <span class="op-field-label">${this.field.title}</span>
-          <div
-            class="op-value"
-            @field-blur=${this._onFieldBlur}
-            @field-change=${this._onFieldChange}
-            @field-escape=${this._onFieldEscape}
-            @keydown=${this._onValueKeydown}
-          >
-            <sfx-metadata-field-edit
-              .field=${this.field}
-              .value=${this._effectiveValue}
-              .autocomplete=${this.autocomplete}
-            ></sfx-metadata-field-edit>
-          </div>
-        </div>
+        ${isValueRequiredForPreview(this._operation, this.field.type)
+          ? html`
+              <div class="op-field op-field--value">
+                <span class="op-field-label">${this.field.title}</span>
+                <div
+                  class="op-value"
+                  @field-blur=${this._onFieldBlur}
+                  @field-change=${this._onFieldChange}
+                  @field-escape=${this._onFieldEscape}
+                  @keydown=${this._onValueKeydown}
+                >
+                  <sfx-metadata-field-edit
+                    .field=${this.field}
+                    .value=${this._effectiveValue}
+                    .autocomplete=${this.autocomplete}
+                  ></sfx-metadata-field-edit>
+                </div>
+              </div>
+            `
+          : nothing}
 
         <button
           class="btn-apply"

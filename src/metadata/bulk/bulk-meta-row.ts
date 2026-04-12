@@ -5,6 +5,7 @@ import type { UploadFile } from '../../store/store.types';
 import { validateField } from '../schema/validation';
 import { mapValueToBackend, mapValueFromBackend } from '../schema/value-transforms';
 import { formatFileSize, getFileTypeIconUrl, getDefaultFileTypeIconUrl } from '../../utils/file-utils';
+import { computeBulkResult, type PendingOp } from './bulk-operations';
 import { bulkRowStyles } from './bulk-metadata.styles';
 
 /**
@@ -22,6 +23,7 @@ export class SfxBulkMetaRow extends LitElement {
   @property({ attribute: false }) field!: MetadataField;
   @property({ attribute: false }) value: unknown; // backend format (staged)
   @property({ type: Boolean }) selected = false;
+  @property({ attribute: false }) pendingOp: PendingOp | null = null;
   @property({ attribute: false }) config: MetadataConfig | null = null;
   @property({ attribute: false }) autocomplete: unknown;
 
@@ -81,6 +83,19 @@ export class SfxBulkMetaRow extends LitElement {
     );
   };
 
+  /** Compute what the value would become if the pending op were applied. */
+  private _computePreviewValue(): unknown {
+    const op = this.pendingOp;
+    if (!op || !this.field) return this.value;
+    return computeBulkResult(
+      this.field,
+      this.value,
+      op.value,
+      op.operation,
+      this.config?.language,
+    );
+  }
+
   private _getExtension(name: string): string {
     const idx = name.lastIndexOf('.');
     return idx > 0 ? name.slice(idx + 1).toUpperCase() : '?';
@@ -122,16 +137,23 @@ export class SfxBulkMetaRow extends LitElement {
           class="row-field"
           @field-blur=${this._onFieldBlur}
         >
-          <div class="row-field-edit">
-            <sfx-metadata-field-edit
-              .field=${this.field}
-              .value=${mapValueFromBackend(this.field, this.value, this.config?.language)}
-              .autocomplete=${this.autocomplete}
-            ></sfx-metadata-field-edit>
-          </div>
-          ${this._error
-            ? html`<div class="row-error" role="alert">${this._error}</div>`
-            : nothing}
+          ${this.pendingOp && this.selected
+            ? html`<sfx-bulk-meta-diff-view
+                .field=${this.field}
+                .oldValue=${this.value}
+                .newValue=${this._computePreviewValue()}
+                .config=${this.config}
+              ></sfx-bulk-meta-diff-view>`
+            : html`<div class="row-field-edit">
+                <sfx-metadata-field-edit
+                  .field=${this.field}
+                  .value=${mapValueFromBackend(this.field, this.value, this.config?.language)}
+                  .autocomplete=${this.autocomplete}
+                ></sfx-metadata-field-edit>
+              </div>
+              ${this._error
+                ? html`<div class="row-error" role="alert">${this._error}</div>`
+                : nothing}`}
         </div>
       </div>
     `;
