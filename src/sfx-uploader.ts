@@ -673,7 +673,7 @@ export class SfxUploader extends LitElement {
        children use --sfx-inline-pad for horizontal spacing. */
     .inline .body {
       flex: 1;
-      overflow: auto;
+      overflow: hidden;
       padding: 0;
       min-height: 0;
     }
