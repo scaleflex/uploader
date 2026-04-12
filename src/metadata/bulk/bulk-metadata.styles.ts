@@ -760,17 +760,10 @@ export const bulkRowStyles = css`
     object-fit: cover;
     background: var(--sfx-up-border-light, #f1f5f9);
   }
-  .row-thumb-placeholder {
-    width: 52px;
-    height: 38px;
-    flex-shrink: 0;
-    border-radius: 6px;
-    background: var(--sfx-up-border-light, #f1f5f9);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--sfx-up-text-muted, #94a3b8);
-    font-size: 11px;
+  .row-thumb-fallback {
+    object-fit: contain;
+    padding: 2px;
+    box-sizing: border-box;
   }
 
   .row-name {
@@ -834,8 +827,7 @@ export const bulkRowStyles = css`
     .row {
       padding: 10px 12px;
     }
-    .row-thumb,
-    .row-thumb-placeholder {
+    .row-thumb {
       width: 44px;
       height: 32px;
     }

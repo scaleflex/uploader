@@ -4,7 +4,7 @@ import type { MetadataField, MetadataConfig } from '../schema/schema.types';
 import type { UploadFile } from '../../store/store.types';
 import { validateField } from '../schema/validation';
 import { mapValueToBackend, mapValueFromBackend } from '../schema/value-transforms';
-import { formatFileSize } from '../../utils/file-utils';
+import { formatFileSize, getFileTypeIconUrl, getDefaultFileTypeIconUrl } from '../../utils/file-utils';
 import { bulkRowStyles } from './bulk-metadata.styles';
 
 /**
@@ -102,7 +102,18 @@ export class SfxBulkMetaRow extends LitElement {
 
         ${f.previewUrl
           ? html`<img class="row-thumb" src=${f.previewUrl} alt="" />`
-          : html`<div class="row-thumb-placeholder">${this._getExtension(f.name)}</div>`}
+          : html`<img class="row-thumb row-thumb-fallback"
+              src=${getFileTypeIconUrl(this._getExtension(f.name))}
+              alt="${this._getExtension(f.name)} file"
+              @error=${(e: Event) => {
+                const img = e.target as HTMLImageElement;
+                const fallback = getDefaultFileTypeIconUrl();
+                if (!img.dataset.fallback && img.src !== fallback) {
+                  img.dataset.fallback = '1';
+                  img.src = fallback;
+                }
+              }}
+            />`}
 
         <div class="row-name" title=${f.name}>${f.name}</div>
         <div class="row-size">${f.size ? formatFileSize(f.size) : '\u2014'}</div>
