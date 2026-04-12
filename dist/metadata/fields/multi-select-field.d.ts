@@ -14,6 +14,8 @@ export declare class SfxMetaMultiSelectField extends MetadataFieldBase {
     private _onOutsideClick;
     private _toggle;
     private _remove;
+    private _selectAll;
+    private _clearAll;
     private _scrollActive;
     private _onSearchInput;
     private _onKeydown;

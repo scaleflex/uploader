@@ -1,3 +1,4 @@
+export declare const checkboxStyles: import('lit').CSSResult;
 export declare const bulkModalStyles: import('lit').CSSResult;
 export declare const bulkSidebarStyles: import('lit').CSSResult;
 export declare const bulkOpBarStyles: import('lit').CSSResult;

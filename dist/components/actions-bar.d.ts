@@ -1,5 +1,5 @@
 import { LitElement } from 'lit';
-export type UploadButtonState = 'idle' | 'uploading' | 'done';
+export type UploadButtonState = "idle" | "uploading" | "done";
 export declare class SfxActionsBar extends LitElement {
     static styles: import('lit').CSSResult[];
     uploadState: UploadButtonState;

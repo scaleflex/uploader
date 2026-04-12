@@ -30,8 +30,16 @@ export declare class SfxBulkMetaOpBar extends LitElement {
     private _onFieldBlur;
     private _onFieldChange;
     private _onFieldEscape;
+    /**
+     * Enter inside the value input acts as Apply — but only for simple
+     * scalar inputs where Enter has no other meaning. tags/multi-select
+     * use Enter to add an entry / confirm a selection; select-one opens
+     * the dropdown on Enter; textarea inserts a newline. Hijacking those
+     * would swallow user input, so the shortcut is whitelisted.
+     */
+    private static readonly _ENTER_APPLY_TYPES;
+    private _onValueKeydown;
     private _onApply;
-    private _onClear;
     private get _isApplyDisabled();
     render(): typeof nothing | import('lit-html').TemplateResult<1>;
 }

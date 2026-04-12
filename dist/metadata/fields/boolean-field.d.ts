@@ -10,6 +10,7 @@ export declare class SfxMetaBooleanField extends MetadataFieldBase {
     private _closeAndSubmit;
     private _onOutsideClick;
     private _onSelect;
+    private _clear;
     private _scrollActive;
     private _onKeydown;
     render(): import('lit-html').TemplateResult<1>;

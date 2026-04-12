@@ -16,6 +16,8 @@ export declare class SfxBulkMetadataModal extends LitElement {
     private _selected;
     private _sortAsc;
     private _pendingOp;
+    private _confirmVisible;
+    private _confirmResolve;
     private _originalFiles;
     connectedCallback(): void;
     disconnectedCallback(): void;
@@ -29,6 +31,11 @@ export declare class SfxBulkMetadataModal extends LitElement {
     private get _hasPendingValue();
     /** Returns true if the caller should proceed; false if the user chose to stay. */
     private _confirmDiscardPending;
+    private _onConfirmOk;
+    private _onConfirmCancel;
+    /** Trap Tab inside the confirm dialog so focus cannot escape behind the overlay. */
+    private _onConfirmKeydown;
+    updated(changed: Map<string, unknown>): void;
     private _onPendingChange;
     private _onFieldSelect;
     private _onBulkApply;

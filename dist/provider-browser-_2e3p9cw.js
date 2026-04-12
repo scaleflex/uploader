@@ -1,7 +1,7 @@
 import { LitElement as y, css as w, html as s, nothing as h } from "lit";
 import { property as k, state as d } from "lit/decorators.js";
 import { unsafeHTML as b } from "lit/directives/unsafe-html.js";
-import { q as _, t as $, m as z, u as C, A as v, v as I } from "./sfx-uploader-rPA1OVpr.js";
+import { q as _, t as $, m as z, u as C, A as v, v as I } from "./sfx-uploader-D_hiEh8b.js";
 const x = "sfx-uploader-token:";
 function p(n) {
   try {
@@ -341,7 +341,7 @@ const g = class g extends y {
                 ?disabled=${this._loadingMore}
                 @click=${this._onLoadMore}
               >
-                ${this._loadingMore ? "Loading..." : "Load more"}
+                ${this._loadingMore ? "Loading" : "Load more"}
               </button>
             ` : h}
       </div>

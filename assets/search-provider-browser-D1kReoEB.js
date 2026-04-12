@@ -1,100 +1,8 @@
-import { LitElement as x, css as g, html as s, nothing as d } from "lit";
-import { property as f, state as n } from "lit/decorators.js";
-import { m as b, s as u } from "./sfx-uploader-rPA1OVpr.js";
-var m = Object.defineProperty, a = (c, r, e, t) => {
-  for (var i = void 0, l = c.length - 1, h; l >= 0; l--)
-    (h = c[l]) && (i = h(r, e, i) || i);
-  return i && m(r, e, i), i;
-};
-const p = class p extends x {
-  constructor() {
-    super(...arguments), this.provider = "unsplash", this.companionUrl = "", this._loading = !1, this._loadingMore = !1, this._items = [], this._selectedIds = /* @__PURE__ */ new Set(), this._error = null, this._searchQuery = "", this._nextPageQuery = null, this._searched = !1, this._onResultsScroll = (r) => {
-      if (!this._nextPageQuery || this._loadingMore) return;
-      const e = r.target;
-      e.scrollHeight - e.scrollTop - e.clientHeight < 200 && this._onLoadMore();
-    }, this._onSearchInput = (r) => {
-      this._searchQuery = r.target.value;
-    }, this._onSearchKeydown = (r) => {
-      r.key === "Enter" && this._doSearch();
-    }, this._onAddSelected = () => {
-      const e = this._items.filter((t) => this._selectedIds.has(t.id)).map((t) => ({
-        companionUrl: this.companionUrl,
-        provider: this.provider,
-        token: "",
-        // Search providers don't use OAuth tokens
-        requestPath: t.requestPath,
-        fileId: t.id,
-        name: t.name || t.id,
-        mimeType: t.mimeType,
-        size: t.size,
-        thumbnail: t.thumbnail
-      }));
-      this.dispatchEvent(
-        new CustomEvent("connector-files-selected", {
-          detail: { files: e },
-          bubbles: !0,
-          composed: !0
-        })
-      );
-    }, this._onClose = () => {
-      this.dispatchEvent(
-        new CustomEvent("connector-close", {
-          bubbles: !0,
-          composed: !0
-        })
-      );
-    };
-  }
-  get _providerLabel() {
-    var e;
-    return ((e = b([this.provider])[0]) == null ? void 0 : e.label) ?? this.provider;
-  }
-  async _doSearch() {
-    const r = this._searchQuery.trim();
-    if (r) {
-      this._loading = !0, this._error = null, this._items = [], this._selectedIds = /* @__PURE__ */ new Set(), this._nextPageQuery = null, this._searched = !0;
-      try {
-        const e = await u(this.companionUrl, this.provider, r), t = /* @__PURE__ */ new Set();
-        this._items = e.items.filter((i) => t.has(i.id) ? !1 : (t.add(i.id), !0)), this._nextPageQuery = e.nextPageQuery;
-      } catch (e) {
-        this._error = e instanceof Error ? e.message : "Search failed";
-      } finally {
-        this._loading = !1;
-      }
-    }
-  }
-  async _onLoadMore() {
-    if (!(!this._nextPageQuery || this._loadingMore)) {
-      this._loadingMore = !0;
-      try {
-        const r = await u(
-          this.companionUrl,
-          this.provider,
-          this._searchQuery.trim(),
-          this._nextPageQuery
-        ), e = new Set(this._items.map((i) => i.id)), t = r.items.filter((i) => !e.has(i.id));
-        this._items = [...this._items, ...t], this._nextPageQuery = r.nextPageQuery;
-      } catch {
-      } finally {
-        this._loadingMore = !1;
-      }
-    }
-  }
-  // --- Selection ---
-  _toggleSelect(r) {
-    const e = new Set(this._selectedIds);
-    e.has(r.id) ? e.delete(r.id) : e.add(r.id), this._selectedIds = e;
-  }
-  // --- Render ---
-  render() {
-    return s`
+import{i as x,a as g,g as b,s as u,c as s,A as d,n as f,r as n}from"./index-BbE_0G_V.js";var v=Object.defineProperty,a=(c,r,e,t)=>{for(var i=void 0,l=c.length-1,h;l>=0;l--)(h=c[l])&&(i=h(r,e,i)||i);return i&&v(r,e,i),i};const p=class p extends x{constructor(){super(...arguments),this.provider="unsplash",this.companionUrl="",this._loading=!1,this._loadingMore=!1,this._items=[],this._selectedIds=new Set,this._error=null,this._searchQuery="",this._nextPageQuery=null,this._searched=!1,this._onResultsScroll=r=>{if(!this._nextPageQuery||this._loadingMore)return;const e=r.target;e.scrollHeight-e.scrollTop-e.clientHeight<200&&this._onLoadMore()},this._onSearchInput=r=>{this._searchQuery=r.target.value},this._onSearchKeydown=r=>{r.key==="Enter"&&this._doSearch()},this._onAddSelected=()=>{const e=this._items.filter(t=>this._selectedIds.has(t.id)).map(t=>({companionUrl:this.companionUrl,provider:this.provider,token:"",requestPath:t.requestPath,fileId:t.id,name:t.name||t.id,mimeType:t.mimeType,size:t.size,thumbnail:t.thumbnail}));this.dispatchEvent(new CustomEvent("connector-files-selected",{detail:{files:e},bubbles:!0,composed:!0}))},this._onClose=()=>{this.dispatchEvent(new CustomEvent("connector-close",{bubbles:!0,composed:!0}))}}get _providerLabel(){var e;return((e=b([this.provider])[0])==null?void 0:e.label)??this.provider}async _doSearch(){const r=this._searchQuery.trim();if(r){this._loading=!0,this._error=null,this._items=[],this._selectedIds=new Set,this._nextPageQuery=null,this._searched=!0;try{const e=await u(this.companionUrl,this.provider,r),t=new Set;this._items=e.items.filter(i=>t.has(i.id)?!1:(t.add(i.id),!0)),this._nextPageQuery=e.nextPageQuery}catch(e){this._error=e instanceof Error?e.message:"Search failed"}finally{this._loading=!1}}}async _onLoadMore(){if(!(!this._nextPageQuery||this._loadingMore)){this._loadingMore=!0;try{const r=await u(this.companionUrl,this.provider,this._searchQuery.trim(),this._nextPageQuery),e=new Set(this._items.map(i=>i.id)),t=r.items.filter(i=>!e.has(i.id));this._items=[...this._items,...t],this._nextPageQuery=r.nextPageQuery}catch{}finally{this._loadingMore=!1}}}_toggleSelect(r){const e=new Set(this._selectedIds);e.has(r.id)?e.delete(r.id):e.add(r.id),this._selectedIds=e}render(){return s`
       ${this._renderHeader()}
       ${this._renderSearchBar()}
-      ${this._loading ? this._renderLoading() : this._error ? this._renderError() : this._renderResults()}
-    `;
-  }
-  _renderHeader() {
-    return s`
+      ${this._loading?this._renderLoading():this._error?this._renderError():this._renderResults()}
+    `}_renderHeader(){return s`
       <div class="browser-header">
         <button class="back-btn" @click=${this._onClose}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -103,96 +11,75 @@ const p = class p extends x {
         </button>
         <span class="browser-title">${this._providerLabel}</span>
       </div>
-    `;
-  }
-  _renderSearchBar() {
-    return s`
+    `}_renderSearchBar(){return s`
       <div class="search-bar">
         <input
           class="search-input"
           type="text"
-          placeholder="Search for images..."
+          placeholder="Search for images"
           .value=${this._searchQuery}
           @input=${this._onSearchInput}
           @keydown=${this._onSearchKeydown}
         />
         <button
           class="search-btn"
-          ?disabled=${!this._searchQuery.trim() || this._loading}
-          @click=${() => this._doSearch()}
+          ?disabled=${!this._searchQuery.trim()||this._loading}
+          @click=${()=>this._doSearch()}
         >
           Search
         </button>
       </div>
-    `;
-  }
-  _renderLoading() {
-    return s`
+    `}_renderLoading(){return s`
       <div class="loading">
         <div class="spinner"></div>
       </div>
-    `;
-  }
-  _renderError() {
-    return s`
+    `}_renderError(){return s`
       <div class="error-view">
         <div class="error-text">${this._error}</div>
-        <button class="retry-btn" @click=${() => this._doSearch()}>Retry</button>
+        <button class="retry-btn" @click=${()=>this._doSearch()}>Retry</button>
       </div>
-    `;
-  }
-  _renderResults() {
-    const r = this._selectedIds.size;
-    return this._searched ? this._items.length === 0 ? s`
+    `}_renderResults(){const r=this._selectedIds.size;return this._searched?this._items.length===0?s`
         <div class="empty-state">
           <div class="empty-text">No results found</div>
         </div>
-      ` : s`
+      `:s`
       <div class="results" @scroll=${this._onResultsScroll}>
         <div class="results-grid">
-          ${this._items.map(
-      (e) => {
-        var t;
-        return s`
+          ${this._items.map(e=>{var t;return s`
               <div
-                class="result-item ${this._selectedIds.has(e.id) ? "selected" : ""}"
-                @click=${() => this._toggleSelect(e)}
+                class="result-item ${this._selectedIds.has(e.id)?"selected":""}"
+                @click=${()=>this._toggleSelect(e)}
               >
-                ${e.thumbnail ? s`<img src=${e.thumbnail} alt=${e.name} loading="lazy" referrerpolicy="no-referrer" />` : d}
+                ${e.thumbnail?s`<img src=${e.thumbnail} alt=${e.name} loading="lazy" referrerpolicy="no-referrer" />`:d}
                 <div class="check">
-                  ${this._selectedIds.has(e.id) ? s`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12" /></svg>` : d}
+                  ${this._selectedIds.has(e.id)?s`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12" /></svg>`:d}
                 </div>
-                ${(t = e.author) != null && t.name ? s`<div class="author">${e.author.name}</div>` : d}
+                ${(t=e.author)!=null&&t.name?s`<div class="author">${e.author.name}</div>`:d}
               </div>
-            `;
-      }
-    )}
+            `})}
         </div>
-        ${this._loadingMore ? s`<div class="loading" style="padding:16px 0"><div class="spinner"></div></div>` : d}
+        ${this._loadingMore?s`<div class="loading" style="padding:16px 0"><div class="spinner"></div></div>`:d}
       </div>
 
-      ${this._items.length > 0 ? s`
+      ${this._items.length>0?s`
             <div class="browser-footer">
               <span class="selected-count">
-                ${r > 0 ? `${r} image${r === 1 ? "" : "s"} selected` : "Select images to add"}
+                ${r>0?`${r} image${r===1?"":"s"} selected`:"Select images to add"}
               </span>
               <button
                 class="add-btn"
-                ?disabled=${r === 0}
+                ?disabled=${r===0}
                 @click=${this._onAddSelected}
               >
-                Add ${r > 0 ? r : ""} image${r === 1 ? "" : "s"}
+                Add ${r>0?r:""} image${r===1?"":"s"}
               </button>
             </div>
-          ` : d}
-    ` : s`
+          `:d}
+    `:s`
         <div class="empty-state">
           <div class="empty-text">Enter text to search for images</div>
         </div>
-      `;
-  }
-};
-p.styles = g`
+      `}};p.styles=g`
     :host {
       display: flex;
       flex-direction: column;
@@ -500,38 +387,4 @@ p.styles = g`
     @media (prefers-reduced-motion: reduce) {
       .spinner { animation: none; }
     }
-  `;
-let o = p;
-a([
-  f({ type: String })
-], o.prototype, "provider");
-a([
-  f({ type: String })
-], o.prototype, "companionUrl");
-a([
-  n()
-], o.prototype, "_loading");
-a([
-  n()
-], o.prototype, "_loadingMore");
-a([
-  n()
-], o.prototype, "_items");
-a([
-  n()
-], o.prototype, "_selectedIds");
-a([
-  n()
-], o.prototype, "_error");
-a([
-  n()
-], o.prototype, "_searchQuery");
-a([
-  n()
-], o.prototype, "_nextPageQuery");
-a([
-  n()
-], o.prototype, "_searched");
-export {
-  o as SfxSearchProviderBrowser
-};
+  `;let o=p;a([f({type:String})],o.prototype,"provider");a([f({type:String})],o.prototype,"companionUrl");a([n()],o.prototype,"_loading");a([n()],o.prototype,"_loadingMore");a([n()],o.prototype,"_items");a([n()],o.prototype,"_selectedIds");a([n()],o.prototype,"_error");a([n()],o.prototype,"_searchQuery");a([n()],o.prototype,"_nextPageQuery");a([n()],o.prototype,"_searched");export{o as SfxSearchProviderBrowser};

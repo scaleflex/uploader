@@ -2,6 +2,7 @@ import { MetadataFieldBase } from './field-base';
 export declare class SfxMetaNumberField extends MetadataFieldBase {
     static styles: import('lit').CSSResult[];
     private get _step();
+    private get _inputMode();
     private _onInput;
     private _onBlur;
     private _onKeydown;

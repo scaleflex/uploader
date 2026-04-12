@@ -11,6 +11,10 @@ export declare function getFileCategory(file: {
 }): string;
 /** Get file extension for display. */
 export declare function getFileExtension(name: string): string;
+/** Get the CDN-hosted file type icon URL for a given extension. */
+export declare function getFileTypeIconUrl(extension: string): string;
+/** Get the default/generic file type icon URL. */
+export declare function getDefaultFileTypeIconUrl(): string;
 /** Guess MIME type from a filename. */
 export declare function guessMimeType(name: string): string;
 /** Generate a thumbnail from the first frame of a video file. Returns a blob URL or null. */

@@ -12,6 +12,16 @@ export declare class SfxBulkMetaSidebar extends LitElement {
     filledFields: Set<string>;
     config: MetadataConfig | null;
     private _collapsed;
+    /** Tracks the mobile breakpoint so collapsed groups don't hide fields
+        on narrow viewports where the group-label toggle button is itself
+        hidden (display: none). Without this a user who collapses a group
+        on desktop and resizes to mobile ends up with fields unreachable. */
+    private _isNarrow;
+    private _resizeTimer;
+    connectedCallback(): void;
+    disconnectedCallback(): void;
+    private _onResize;
+    private _updateNarrow;
     private _isRequired;
     private _toggleGroup;
     private _onFieldClick;

@@ -6,7 +6,16 @@ export declare class SfxDropZone extends LitElement {
     externalDragOver: boolean;
     accept: string;
     sources: SourceDef[];
-    sourcesLayout: 'pills' | 'cards';
+    sourcesLayout: "pills" | "cards";
+    /** Set by sfx-uploader to scope the wide-host frame to inline mode only.
+     *  Modal mode is excluded (no dashed card frame even on big modals). */
+    mode: "modal" | "inline";
+    /** Threshold (px) at which the host is considered "wide enough" for the
+     *  inline-fullscreen bordered-card layout. Tuned to fire on the actual
+     *  full-screen demo (1400+) while skipping embedded inline uploaders
+     *  (Home demo ~912, Sources Layout ~824, inline example ~824). */
+    private static readonly _WIDE_THRESHOLD_PX;
+    private _resizeObserver;
     private _dragOver;
     private _moreOpen;
     private _visiblePills;

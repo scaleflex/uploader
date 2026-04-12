@@ -36,7 +36,7 @@ export interface InlineHeaderConfig {
 export interface UploaderConfig {
     auth: AuthConfig;
     targetFolder?: string;
-    mode?: 'modal' | 'inline';
+    mode?: "modal" | "inline";
     /** Header displayed above the uploader in inline mode. All fields are optional. */
     inlineHeader?: InlineHeaderConfig;
     /**
@@ -46,7 +46,7 @@ export interface UploaderConfig {
      * - `true`    — header visible, no button (default for inline without inlineHeader)
      * - `false`   — no header at all
      */
-    header?: boolean | 'close' | 'back';
+    header?: boolean | "close" | "back";
     restrictions?: Partial<UploadRestrictions>;
     concurrency?: number;
     autoProceed?: boolean;
@@ -57,7 +57,21 @@ export interface UploaderConfig {
     /** Metadata editing configuration. When provided, enables the built-in metadata form. */
     metadataConfig?: MetadataConfig;
     /** Layout for the import-from sources section: horizontal pills (default) or cards grid. */
-    sourcesLayout?: 'pills' | 'cards';
+    sourcesLayout?: "pills" | "cards";
+    /**
+     * Override the URL opened by the "Locate" button in the last-upload review
+     * screen. Receives the completed file and should return the URL the host
+     * wants Locate to open (typically a dashboard / file-manager URL pointing
+     * at the file's containing folder). Return `null` / `undefined` to fall
+     * back to the file's own public URL (default behaviour).
+     *
+     * Example:
+     * ```ts
+     * getLocateUrl: (file) =>
+     *   `https://app.scaleflex.com/projects/${PROJECT_ID}/files?id=${file.response?.file?.uuid}`
+     * ```
+     */
+    getLocateUrl?: (file: UploadFile) => string | null | undefined;
     /** Whether closing the modal clears all files. Default: true. Set to false to preserve files across open/close. */
     clearOnClose?: boolean;
     /** Whether the "Done" action clears all files (inline mode resets, modal mode closes). Default: true. */
@@ -81,7 +95,7 @@ export interface UploaderConfig {
     closeOnComplete?: boolean | number;
     /**
      * Auto-remove rejected files after this delay in milliseconds.
-     * Default: 4000 (4 seconds). Set to 0 or false to disable auto-removal.
+     * Set to 0, false, or omit to disable auto-removal.
      */
     rejectedFileAutoRemoveDelay?: number | false;
     /**
@@ -102,9 +116,12 @@ export declare class SfxUploader extends LitElement {
     private _showScreenCastDialog;
     private _previewFileId;
     private _previewDims;
+    private _fileInfoOpen;
     private _splitPct;
     private _isResizing;
     private _splitRafId;
+    /** Has the default split (3/8 panel) been applied for the current preview session? */
+    private _previewDefaultApplied;
     private _fullscreenPreviewUrl;
     private _fullscreenVideoFile;
     private _fullscreenZoomed;
@@ -120,6 +137,15 @@ export declare class SfxUploader extends LitElement {
     private _isPillExpanded;
     private _metadataSchema;
     private _bulkMetadataOpen;
+    /** True when the user has clicked "Review files" on the success-card or
+     *  the "View last upload" pill on the drop-zone screen. Renders the
+     *  read-only last-upload-review screen instead of the normal phase view. */
+    private _isReviewing;
+    /** Files loaded from sessionStorage for the review screen. */
+    private _reviewFiles;
+    /** Whether sessionStorage has a stored last-upload batch. Checked on
+     *  connectedCallback and updated when batches are saved/cleared. */
+    private _hasStoredReview;
     private _metadataAutocomplete;
     private _videoBlobUrls;
     private _store;
@@ -166,6 +192,13 @@ export declare class SfxUploader extends LitElement {
         tags?: string[];
     }>): void;
     updated(changed: Map<string, unknown>): void;
+    /**
+     * The preview panel opens at 3/8 (~37.5%) of the modal width by default,
+     * giving the grid 5/8. On first appearance of the preview layout we set
+     * _splitPct once; after that the user's own divider drag wins until the
+     * preview layout is dismissed.
+     */
+    private _applyDefaultPreviewWidth;
     private _injectFloatStyles;
     private _updateFloatingPortal;
     private _portalContainer;
@@ -220,6 +253,13 @@ export declare class SfxUploader extends LitElement {
     private _onAddMore;
     private _onUploadStart;
     private _onUploadMore;
+    /** Enter review mode. Prefers live files from the store (they still have
+     *  objectURL previewUrls for both successful AND failed files); falls
+     *  back to sessionStorage when no live files are present (e.g. the user
+     *  re-opened the uploader after closing). */
+    private _onEnterReview;
+    private _onExitReview;
+    private _onClearReview;
     private _onConnectorFilesSelected;
     private _onConnectorClose;
     private _onConnectorBackdropClick;
@@ -242,6 +282,14 @@ export declare class SfxUploader extends LitElement {
     private _onBodyDrop;
     private _onKeyDown;
     render(): import('lit-html').TemplateResult<1>;
+    /** Fullscreen image/video overlay. Rendered at the top level (sibling
+        of modal-backdrop) so it never inherits a containing block from the
+        modal-card on mobile, where modal-card is position:fixed itself and
+        its overflow:hidden was clipping the overlay. The toolbar + nav
+        buttons are rendered as SIBLINGS of the overlay (not children) so
+        their position:fixed always resolves to the viewport, even if some
+        ancestor of fs-overlay establishes a containing block on first paint. */
+    private _renderFsOverlay;
     private _renderInlineHeader;
     private _renderHeader;
     private _dimCache;
@@ -252,7 +300,6 @@ export declare class SfxUploader extends LitElement {
     private _onSplitPointerMove;
     private _onSplitPointerUp;
     private _renderPreviewLayout;
-    private _renderDocTypeIcon;
     private _navigatePreview;
     private _renderBody;
     private _onFsToggleZoom;
@@ -270,7 +317,7 @@ export declare class SfxUploader extends LitElement {
 }
 declare global {
     interface HTMLElementTagNameMap {
-        'sfx-uploader': SfxUploader;
+        "sfx-uploader": SfxUploader;
     }
 }
 //# sourceMappingURL=sfx-uploader.d.ts.map

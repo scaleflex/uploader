@@ -13,6 +13,7 @@ export declare class SfxMetaSelectField extends MetadataFieldBase {
     private _closeAndSubmit;
     private _onOutsideClick;
     private _onSelect;
+    private _clear;
     private _scrollActive;
     private _onSearchInput;
     private _onKeydown;

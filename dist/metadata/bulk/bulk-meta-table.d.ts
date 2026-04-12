@@ -11,9 +11,9 @@ export declare class SfxBulkMetaTable extends LitElement {
     field: MetadataField;
     staged: Map<string, Map<string, unknown>>;
     selected: Set<string>;
+    pendingOp: PendingOp | null;
     config: MetadataConfig | null;
     autocomplete: unknown;
-    pendingOp: PendingOp | null;
     private _getEffectiveValue;
     render(): import('lit-html').TemplateResult<1>;
 }

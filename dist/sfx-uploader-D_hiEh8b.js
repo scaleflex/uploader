@@ -1,8 +1,8 @@
-import { LitElement as J, css as K, svg as se, html as f, render as le, nothing as C } from "lit";
-import { property as I, state as j, query as br } from "lit/decorators.js";
-import { unsafeSVG as ie } from "lit/directives/unsafe-svg.js";
-import { unsafeHTML as ae } from "lit/directives/unsafe-html.js";
-class qr {
+import { LitElement as Z, css as G, svg as pe, html as f, render as ue, nothing as S } from "lit";
+import { property as F, state as D, query as Cr } from "lit/decorators.js";
+import { unsafeSVG as ne } from "lit/directives/unsafe-svg.js";
+import { unsafeHTML as fe } from "lit/directives/unsafe-html.js";
+class Qr {
   constructor(e) {
     this.listeners = /* @__PURE__ */ new Set(), this._notifying = !1, this._pendingState = null, this.state = e;
   }
@@ -33,24 +33,24 @@ class qr {
     this.listeners.clear();
   }
 }
-function M(o, e, t) {
-  const r = o.getState().files, i = r.get(e);
-  if (!i) return;
+function q(i, e, t) {
+  const r = i.getState().files, o = r.get(e);
+  if (!o) return;
   const n = new Map(r);
-  n.set(e, { ...i, ...t }), o.setState({ files: n });
+  n.set(e, { ...o, ...t }), i.setState({ files: n });
 }
-function ge(o, e) {
-  const t = new Map(o.getState().files);
-  t.set(e.id, e), o.setState({ files: t });
+function me(i, e) {
+  const t = new Map(i.getState().files);
+  t.set(e.id, e), i.setState({ files: t });
 }
-function Mt(o, e) {
-  const t = o.getState().files;
+function Wt(i, e) {
+  const t = i.getState().files;
   if (!t.has(e)) return;
   const r = new Map(t);
-  r.delete(e), o.setState({ files: r });
+  r.delete(e), i.setState({ files: r });
 }
-function Nr() {
-  return new qr({
+function ei() {
+  return new Qr({
     files: /* @__PURE__ */ new Map(),
     queueConfig: {
       concurrency: 3,
@@ -79,7 +79,7 @@ function Nr() {
     isUploading: !1
   });
 }
-class Yr {
+class ti {
   constructor(e, t) {
     this.host = e, this.store = t, e.addController(this);
   }
@@ -99,7 +99,7 @@ class Yr {
     (e = this.unsubscribe) == null || e.call(this);
   }
 }
-function Vr(o, e) {
+function ri(i, e) {
   const t = new XMLHttpRequest();
   let r = !1;
   const n = `${e.apiBase.replace(/\/+$/, "")}/v4/files?folder=${encodeURIComponent(e.folder)}`;
@@ -124,12 +124,12 @@ function Vr(o, e) {
     r || e.onError(new Error("Upload timed out"));
   });
   const s = new FormData();
-  if (o.file) {
+  if (i.file) {
     const a = {
-      name: o.name,
-      type: o.type
+      name: i.name,
+      type: i.type
     };
-    s.append("info[files[]]", JSON.stringify(a)), Object.keys(o.meta).length > 0 && s.append("meta[files[]]", JSON.stringify(o.meta)), o.tags.length > 0 && s.append("tags[files[]]", JSON.stringify(o.tags)), s.append("files[]", o.file, o.name);
+    s.append("info[files[]]", JSON.stringify(a)), Object.keys(i.meta).length > 0 && s.append("meta[files[]]", JSON.stringify(i.meta)), i.tags.length > 0 && s.append("tags[files[]]", JSON.stringify(i.tags)), s.append("files[]", i.file, i.name);
   }
   return t.timeout = 6e4, t.send(s), {
     abort() {
@@ -137,7 +137,7 @@ function Vr(o, e) {
     }
   };
 }
-function Gr(o, e) {
+function ii(i, e) {
   const t = new XMLHttpRequest();
   let r = !1;
   const n = `${e.apiBase.replace(/\/+$/, "")}/v4/files/upload_url`;
@@ -158,11 +158,11 @@ function Gr(o, e) {
     r || e.onError(new Error("Network error — check your connection"));
   }), t.addEventListener("timeout", () => {
     r || e.onError(new Error("Upload timed out"));
-  }), !o.remoteUrl)
+  }), !i.remoteUrl)
     return e.onError(new Error("Remote URL is required for URL upload")), { abort() {
     } };
   const s = {
-    files_urls: [{ url: o.remoteUrl, name: o.name }],
+    files_urls: [{ url: i.remoteUrl, name: i.name }],
     dir: e.folder
   };
   return t.timeout = 6e4, t.send(JSON.stringify(s)), {
@@ -171,17 +171,17 @@ function Gr(o, e) {
     }
   };
 }
-function tt(o) {
+function ot(i) {
   return {
     Accept: "application/json",
     "Content-Type": "application/json",
-    "uppy-auth-token": o
+    "uppy-auth-token": i
   };
 }
-function Ce(o) {
-  return o.replace(/\/+$/, "");
+function Pe(i) {
+  return i.replace(/\/+$/, "");
 }
-const Xr = {
+const oi = {
   "google-drive": "drive",
   dropbox: "dropbox",
   onedrive: "onedrive",
@@ -190,43 +190,43 @@ const Xr = {
   facebook: "facebook",
   unsplash: "unsplash"
 };
-function Me(o) {
-  return Xr[o] ?? o;
+function Ye(i) {
+  return oi[i] ?? i;
 }
-function kn(o, e) {
-  const t = Ce(o), r = btoa(JSON.stringify({ origin: window.location.origin })), i = Me(e);
-  return `${t}/${i}/connect?state=${encodeURIComponent(r)}`;
+function In(i, e) {
+  const t = Pe(i), r = btoa(JSON.stringify({ origin: window.location.origin })), o = Ye(e);
+  return `${t}/${o}/connect?state=${encodeURIComponent(r)}`;
 }
-async function Sn(o, e, t, r = "") {
-  const i = Ce(o), n = r ? `/${r}` : "", s = Me(e), a = await fetch(`${i}/${s}/list${n}`, {
+async function Bn(i, e, t, r = "") {
+  const o = Pe(i), n = r ? `/${r}` : "", s = Ye(e), a = await fetch(`${o}/${s}/list${n}`, {
     method: "GET",
-    headers: tt(t),
+    headers: ot(t),
     credentials: "same-origin"
   });
   if (a.status === 401)
-    throw new wt();
+    throw new Ct();
   if (!a.ok) {
     const l = await a.json().catch(() => null);
     throw new Error((l == null ? void 0 : l.message) || `Companion list failed (HTTP ${a.status})`);
   }
   return a.json();
 }
-async function Cn(o, e, t) {
-  const r = Ce(o), i = await fetch(`${r}/${t}`, {
+async function Mn(i, e, t) {
+  const r = Pe(i), o = await fetch(`${r}/${t}`, {
     method: "GET",
-    headers: tt(e),
+    headers: ot(e),
     credentials: "same-origin"
   });
-  if (i.status === 401)
-    throw new wt();
-  if (!i.ok) {
-    const n = await i.json().catch(() => null);
-    throw new Error((n == null ? void 0 : n.message) || `Companion list failed (HTTP ${i.status})`);
+  if (o.status === 401)
+    throw new Ct();
+  if (!o.ok) {
+    const n = await o.json().catch(() => null);
+    throw new Error((n == null ? void 0 : n.message) || `Companion list failed (HTTP ${o.status})`);
   }
-  return i.json();
+  return o.json();
 }
-async function $n(o, e, t, r) {
-  const i = Ce(o), n = Me(e), s = r ? `q=${encodeURIComponent(t)}&${r}` : `q=${encodeURIComponent(t)}`, a = await fetch(`${i}/search/${n}/list?${s}`, {
+async function Hn(i, e, t, r) {
+  const o = Pe(i), n = Ye(e), s = r ? `q=${encodeURIComponent(t)}&${r}` : `q=${encodeURIComponent(t)}`, a = await fetch(`${o}/search/${n}/list?${s}`, {
     method: "GET",
     headers: {
       Accept: "application/json",
@@ -240,54 +240,54 @@ async function $n(o, e, t, r) {
   }
   return a.json();
 }
-async function Kr(o, e, t, r, i, n = !1) {
-  const s = Ce(o), a = Me(e), l = n ? `${s}/search/${a}/get/${r}` : `${s}/${a}/get/${r}`, p = n ? { Accept: "application/json", "Content-Type": "application/json" } : tt(t), g = await fetch(l, {
+async function ni(i, e, t, r, o, n = !1) {
+  const s = Pe(i), a = Ye(e), l = n ? `${s}/search/${a}/get/${r}` : `${s}/${a}/get/${r}`, p = n ? { Accept: "application/json", "Content-Type": "application/json" } : ot(t), h = await fetch(l, {
     method: "POST",
     headers: p,
     credentials: "same-origin",
     body: JSON.stringify({
-      ...i,
-      httpMethod: i.httpMethod ?? "POST",
-      useFormData: i.useFormData ?? !0,
-      fieldname: i.fieldname ?? "files[]"
+      ...o,
+      httpMethod: o.httpMethod ?? "POST",
+      useFormData: o.useFormData ?? !0,
+      fieldname: o.fieldname ?? "files[]"
     })
   });
-  if (g.status === 401)
-    throw new wt();
-  if (!g.ok) {
-    const k = await g.json().catch(() => null);
-    throw new Error((k == null ? void 0 : k.message) || `Companion upload failed (HTTP ${g.status})`);
+  if (h.status === 401)
+    throw new Ct();
+  if (!h.ok) {
+    const _ = await h.json().catch(() => null);
+    throw new Error((_ == null ? void 0 : _.message) || `Companion upload failed (HTTP ${h.status})`);
   }
-  return g.json();
+  return h.json();
 }
-async function Un(o, e, t) {
-  const r = Ce(o), i = Me(e), n = await fetch(`${r}/${i}/logout`, {
+async function qn(i, e, t) {
+  const r = Pe(i), o = Ye(e), n = await fetch(`${r}/${o}/logout`, {
     method: "GET",
-    headers: tt(t),
+    headers: ot(t),
     credentials: "same-origin"
   });
   return n.ok ? n.json() : { ok: !1, revoked: !1 };
 }
-function Wr(o) {
-  var i;
-  const t = ((i = /^(?:https?:\/\/|\/\/)?(?:[^@\n]+@)?(?:www\.)?([^\n]+)/i.exec(o)) == null ? void 0 : i[1]) ?? o;
+function si(i) {
+  var o;
+  const t = ((o = /^(?:https?:\/\/|\/\/)?(?:[^@\n]+@)?(?:www\.)?([^\n]+)/i.exec(i)) == null ? void 0 : o[1]) ?? i;
   return `${location.protocol === "https:" ? "wss" : "ws"}://${t}`;
 }
-class wt extends Error {
+class Ct extends Error {
   constructor() {
     super("Authentication expired"), this.name = "AuthExpiredError";
   }
 }
-function Zr(o, e) {
-  const t = o.remoteInfo;
+function ai(i, e) {
+  const t = i.remoteInfo;
   if (!t)
     return e.onError(new Error("remoteInfo is required for companion upload")), { abort() {
     } };
-  let r = !1, i = null;
+  let r = !1, o = null;
   const s = `${e.apiBase.replace(/\/+$/, "")}/v4/files?folder=${encodeURIComponent(e.folder)}`, a = {};
-  o.meta && Object.keys(o.meta).length > 0 && Object.assign(a, o.meta), o.tags && o.tags.length > 0 && (a.tags = o.tags);
+  i.meta && Object.keys(i.meta).length > 0 && Object.assign(a, i.meta), i.tags && i.tags.length > 0 && (a.tags = i.tags);
   const l = !t.token;
-  return Kr(t.companionUrl, t.provider, t.token, t.requestPath, {
+  return ni(t.companionUrl, t.provider, t.token, t.requestPath, {
     fileId: t.fileId,
     endpoint: s,
     headers: e.authHeaders,
@@ -295,34 +295,34 @@ function Zr(o, e) {
     metadata: Object.keys(a).length > 0 ? a : void 0
   }, l).then((p) => {
     if (r) return;
-    const k = `${Wr(t.companionUrl)}/api/${p.token}`;
+    const _ = `${si(t.companionUrl)}/api/${p.token}`;
     try {
-      i = new WebSocket(k);
+      o = new WebSocket(_);
     } catch {
       e.onError(new Error("Failed to connect to upload progress channel"));
       return;
     }
-    i.onmessage = (E) => {
-      var S, R, _;
+    o.onmessage = (E) => {
+      var O, P, v;
       if (!r)
         try {
-          const P = JSON.parse(E.data);
-          switch (P.action) {
+          const U = JSON.parse(E.data);
+          switch (U.action) {
             case "progress": {
-              const T = P.payload, v = T.bytesUploaded ?? 0, x = T.bytesTotal ?? (t.size || 1);
-              e.onProgress(v, x);
+              const R = U.payload, x = R.bytesUploaded ?? 0, b = R.bytesTotal ?? (t.size || 1);
+              e.onProgress(x, b);
               break;
             }
             case "success": {
-              const T = P.payload;
-              if (i == null || i.close(), (S = T.response) != null && S.responseText)
+              const R = U.payload;
+              if (o == null || o.close(), (O = R.response) != null && O.responseText)
                 try {
-                  const v = JSON.parse(T.response.responseText);
-                  if (v.status === "success") {
-                    e.onComplete(v);
+                  const x = JSON.parse(R.response.responseText);
+                  if (x.status === "success") {
+                    e.onComplete(x);
                     return;
                   }
-                  e.onError(new Error(v.msg || "Upload failed"));
+                  e.onError(new Error(x.msg || "Upload failed"));
                   return;
                 } catch {
                 }
@@ -330,176 +330,176 @@ function Zr(o, e) {
               break;
             }
             case "error": {
-              i == null || i.close();
-              const T = P.payload;
-              let v = ((R = T.error) == null ? void 0 : R.message) || "Upload failed";
-              if ((_ = T.response) != null && _.responseText)
+              o == null || o.close();
+              const R = U.payload;
+              let x = ((P = R.error) == null ? void 0 : P.message) || "Upload failed";
+              if ((v = R.response) != null && v.responseText)
                 try {
-                  const x = JSON.parse(T.response.responseText);
-                  v = x.hint || x.msg || x.message || v;
+                  const b = JSON.parse(R.response.responseText);
+                  x = b.hint || b.msg || b.message || x;
                 } catch {
                 }
-              e.onError(new Error(v));
+              e.onError(new Error(x));
               break;
             }
           }
         } catch {
         }
-    }, i.onerror = () => {
+    }, o.onerror = () => {
       r || e.onError(new Error("Upload progress connection failed"));
-    }, i.onclose = () => {
-      i = null;
+    }, o.onclose = () => {
+      o = null;
     };
   }).catch((p) => {
     r || e.onError(p instanceof Error ? p : new Error(String(p)));
   }), {
     abort() {
-      if (r = !0, i) {
+      if (r = !0, o) {
         try {
-          i.send(JSON.stringify({ action: "cancel", payload: {} }));
+          o.send(JSON.stringify({ action: "cancel", payload: {} }));
         } catch {
         }
-        i.close(), i = null;
+        o.close(), o = null;
       }
     }
   };
 }
-function at(o) {
+function ct(i) {
   "@babel/helpers - typeof";
-  return at = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(e) {
+  return ct = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(e) {
     return typeof e;
   } : function(e) {
     return e && typeof Symbol == "function" && e.constructor === Symbol && e !== Symbol.prototype ? "symbol" : typeof e;
-  }, at(o);
+  }, ct(i);
 }
-function Jr(o, e, t) {
-  return Object.defineProperty(o, "prototype", { writable: !1 }), o;
+function li(i, e, t) {
+  return Object.defineProperty(i, "prototype", { writable: !1 }), i;
 }
-function Qr(o, e) {
-  if (!(o instanceof e))
+function di(i, e) {
+  if (!(i instanceof e))
     throw new TypeError("Cannot call a class as a function");
 }
-function eo(o, e, t) {
-  return e = De(e), to(o, _t() ? Reflect.construct(e, t || [], De(o).constructor) : e.apply(o, t));
+function ci(i, e, t) {
+  return e = Le(e), pi(i, $t() ? Reflect.construct(e, t || [], Le(i).constructor) : e.apply(i, t));
 }
-function to(o, e) {
-  if (e && (at(e) === "object" || typeof e == "function"))
+function pi(i, e) {
+  if (e && (ct(e) === "object" || typeof e == "function"))
     return e;
   if (e !== void 0)
     throw new TypeError("Derived constructors may only return object or undefined");
-  return ro(o);
+  return fi(i);
 }
-function ro(o) {
-  if (o === void 0)
+function fi(i) {
+  if (i === void 0)
     throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
-  return o;
+  return i;
 }
-function oo(o, e) {
+function ui(i, e) {
   if (typeof e != "function" && e !== null)
     throw new TypeError("Super expression must either be null or a function");
-  o.prototype = Object.create(e && e.prototype, { constructor: { value: o, writable: !0, configurable: !0 } }), Object.defineProperty(o, "prototype", { writable: !1 }), e && ze(o, e);
+  i.prototype = Object.create(e && e.prototype, { constructor: { value: i, writable: !0, configurable: !0 } }), Object.defineProperty(i, "prototype", { writable: !1 }), e && Fe(i, e);
 }
-function lt(o) {
+function pt(i) {
   var e = typeof Map == "function" ? /* @__PURE__ */ new Map() : void 0;
-  return lt = function(r) {
-    if (r === null || !no(r)) return r;
+  return pt = function(r) {
+    if (r === null || !gi(r)) return r;
     if (typeof r != "function")
       throw new TypeError("Super expression must either be null or a function");
     if (typeof e < "u") {
       if (e.has(r)) return e.get(r);
-      e.set(r, i);
+      e.set(r, o);
     }
-    function i() {
-      return io(r, arguments, De(this).constructor);
+    function o() {
+      return hi(r, arguments, Le(this).constructor);
     }
-    return i.prototype = Object.create(r.prototype, { constructor: { value: i, enumerable: !1, writable: !0, configurable: !0 } }), ze(i, r);
-  }, lt(o);
+    return o.prototype = Object.create(r.prototype, { constructor: { value: o, enumerable: !1, writable: !0, configurable: !0 } }), Fe(o, r);
+  }, pt(i);
 }
-function io(o, e, t) {
-  if (_t()) return Reflect.construct.apply(null, arguments);
+function hi(i, e, t) {
+  if ($t()) return Reflect.construct.apply(null, arguments);
   var r = [null];
   r.push.apply(r, e);
-  var i = new (o.bind.apply(o, r))();
-  return t && ze(i, t.prototype), i;
+  var o = new (i.bind.apply(i, r))();
+  return t && Fe(o, t.prototype), o;
 }
-function _t() {
+function $t() {
   try {
-    var o = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function() {
+    var i = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function() {
     }));
   } catch {
   }
-  return (_t = function() {
-    return !!o;
+  return ($t = function() {
+    return !!i;
   })();
 }
-function no(o) {
+function gi(i) {
   try {
-    return Function.toString.call(o).indexOf("[native code]") !== -1;
+    return Function.toString.call(i).indexOf("[native code]") !== -1;
   } catch {
-    return typeof o == "function";
+    return typeof i == "function";
   }
 }
-function ze(o, e) {
-  return ze = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function(r, i) {
-    return r.__proto__ = i, r;
-  }, ze(o, e);
+function Fe(i, e) {
+  return Fe = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function(r, o) {
+    return r.__proto__ = o, r;
+  }, Fe(i, e);
 }
-function De(o) {
-  return De = Object.setPrototypeOf ? Object.getPrototypeOf.bind() : function(t) {
+function Le(i) {
+  return Le = Object.setPrototypeOf ? Object.getPrototypeOf.bind() : function(t) {
     return t.__proto__ || Object.getPrototypeOf(t);
-  }, De(o);
+  }, Le(i);
 }
-var Ue = /* @__PURE__ */ (function(o) {
+var Re = /* @__PURE__ */ (function(i) {
   function e(t) {
-    var r, i = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : null, n = arguments.length > 2 && arguments[2] !== void 0 ? arguments[2] : null, s = arguments.length > 3 && arguments[3] !== void 0 ? arguments[3] : null;
-    if (Qr(this, e), r = eo(this, e, [t]), r.originalRequest = n, r.originalResponse = s, r.causingError = i, i != null && (t += ", caused by ".concat(i.toString())), n != null) {
-      var a = n.getHeader("X-Request-ID") || "n/a", l = n.getMethod(), p = n.getURL(), g = s ? s.getStatus() : "n/a", k = s ? s.getBody() || "" : "n/a";
-      t += ", originated from request (method: ".concat(l, ", url: ").concat(p, ", response code: ").concat(g, ", response text: ").concat(k, ", request id: ").concat(a, ")");
+    var r, o = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : null, n = arguments.length > 2 && arguments[2] !== void 0 ? arguments[2] : null, s = arguments.length > 3 && arguments[3] !== void 0 ? arguments[3] : null;
+    if (di(this, e), r = ci(this, e, [t]), r.originalRequest = n, r.originalResponse = s, r.causingError = o, o != null && (t += ", caused by ".concat(o.toString())), n != null) {
+      var a = n.getHeader("X-Request-ID") || "n/a", l = n.getMethod(), p = n.getURL(), h = s ? s.getStatus() : "n/a", _ = s ? s.getBody() || "" : "n/a";
+      t += ", originated from request (method: ".concat(l, ", url: ").concat(p, ", response code: ").concat(h, ", response text: ").concat(_, ", request id: ").concat(a, ")");
     }
     return r.message = t, r;
   }
-  return oo(e, o), Jr(e);
-})(/* @__PURE__ */ lt(Error));
-function Te(o) {
+  return ui(e, i), li(e);
+})(/* @__PURE__ */ pt(Error));
+function Ae(i) {
   "@babel/helpers - typeof";
-  return Te = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(e) {
+  return Ae = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(e) {
     return typeof e;
   } : function(e) {
     return e && typeof Symbol == "function" && e.constructor === Symbol && e !== Symbol.prototype ? "symbol" : typeof e;
-  }, Te(o);
+  }, Ae(i);
 }
-function so(o, e) {
-  if (!(o instanceof e))
+function vi(i, e) {
+  if (!(i instanceof e))
     throw new TypeError("Cannot call a class as a function");
 }
-function ao(o, e) {
+function xi(i, e) {
   for (var t = 0; t < e.length; t++) {
     var r = e[t];
-    r.enumerable = r.enumerable || !1, r.configurable = !0, "value" in r && (r.writable = !0), Object.defineProperty(o, co(r.key), r);
+    r.enumerable = r.enumerable || !1, r.configurable = !0, "value" in r && (r.writable = !0), Object.defineProperty(i, mi(r.key), r);
   }
 }
-function lo(o, e, t) {
-  return e && ao(o.prototype, e), Object.defineProperty(o, "prototype", { writable: !1 }), o;
+function bi(i, e, t) {
+  return e && xi(i.prototype, e), Object.defineProperty(i, "prototype", { writable: !1 }), i;
 }
-function co(o) {
-  var e = po(o, "string");
-  return Te(e) == "symbol" ? e : e + "";
+function mi(i) {
+  var e = yi(i, "string");
+  return Ae(e) == "symbol" ? e : e + "";
 }
-function po(o, e) {
-  if (Te(o) != "object" || !o) return o;
-  var t = o[Symbol.toPrimitive];
+function yi(i, e) {
+  if (Ae(i) != "object" || !i) return i;
+  var t = i[Symbol.toPrimitive];
   if (t !== void 0) {
-    var r = t.call(o, e);
-    if (Te(r) != "object") return r;
+    var r = t.call(i, e);
+    if (Ae(r) != "object") return r;
     throw new TypeError("@@toPrimitive must return a primitive value.");
   }
-  return String(o);
+  return String(i);
 }
-var uo = /* @__PURE__ */ (function() {
-  function o() {
-    so(this, o);
+var wi = /* @__PURE__ */ (function() {
+  function i() {
+    vi(this, i);
   }
-  return lo(o, [{
+  return bi(i, [{
     key: "listAllUploads",
     value: function() {
       return Promise.resolve([]);
@@ -521,112 +521,112 @@ var uo = /* @__PURE__ */ (function() {
     }
   }]);
 })();
-const yr = "3.7.8", fo = yr, $e = typeof Buffer == "function", Ht = typeof TextDecoder == "function" ? new TextDecoder() : void 0, qt = typeof TextEncoder == "function" ? new TextEncoder() : void 0, ho = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=", Pe = Array.prototype.slice.call(ho), Ge = ((o) => {
+const $r = "3.7.8", _i = $r, ze = typeof Buffer == "function", Gt = typeof TextDecoder == "function" ? new TextDecoder() : void 0, Xt = typeof TextEncoder == "function" ? new TextEncoder() : void 0, ki = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=", Te = Array.prototype.slice.call(ki), Ke = ((i) => {
   let e = {};
-  return o.forEach((t, r) => e[t] = r), e;
-})(Pe), go = /^(?:[A-Za-z\d+\/]{4})*?(?:[A-Za-z\d+\/]{2}(?:==)?|[A-Za-z\d+\/]{3}=?)?$/, N = String.fromCharCode.bind(String), Nt = typeof Uint8Array.from == "function" ? Uint8Array.from.bind(Uint8Array) : (o) => new Uint8Array(Array.prototype.slice.call(o, 0)), wr = (o) => o.replace(/=/g, "").replace(/[+\/]/g, (e) => e == "+" ? "-" : "_"), _r = (o) => o.replace(/[^A-Za-z0-9\+\/]/g, ""), kr = (o) => {
-  let e, t, r, i, n = "";
-  const s = o.length % 3;
-  for (let a = 0; a < o.length; ) {
-    if ((t = o.charCodeAt(a++)) > 255 || (r = o.charCodeAt(a++)) > 255 || (i = o.charCodeAt(a++)) > 255)
+  return i.forEach((t, r) => e[t] = r), e;
+})(Te), Si = /^(?:[A-Za-z\d+\/]{4})*?(?:[A-Za-z\d+\/]{2}(?:==)?|[A-Za-z\d+\/]{3}=?)?$/, Y = String.fromCharCode.bind(String), Kt = typeof Uint8Array.from == "function" ? Uint8Array.from.bind(Uint8Array) : (i) => new Uint8Array(Array.prototype.slice.call(i, 0)), Ur = (i) => i.replace(/=/g, "").replace(/[+\/]/g, (e) => e == "+" ? "-" : "_"), Er = (i) => i.replace(/[^A-Za-z0-9\+\/]/g, ""), Pr = (i) => {
+  let e, t, r, o, n = "";
+  const s = i.length % 3;
+  for (let a = 0; a < i.length; ) {
+    if ((t = i.charCodeAt(a++)) > 255 || (r = i.charCodeAt(a++)) > 255 || (o = i.charCodeAt(a++)) > 255)
       throw new TypeError("invalid character found");
-    e = t << 16 | r << 8 | i, n += Pe[e >> 18 & 63] + Pe[e >> 12 & 63] + Pe[e >> 6 & 63] + Pe[e & 63];
+    e = t << 16 | r << 8 | o, n += Te[e >> 18 & 63] + Te[e >> 12 & 63] + Te[e >> 6 & 63] + Te[e & 63];
   }
   return s ? n.slice(0, s - 3) + "===".substring(s) : n;
-}, kt = typeof btoa == "function" ? (o) => btoa(o) : $e ? (o) => Buffer.from(o, "binary").toString("base64") : kr, dt = $e ? (o) => Buffer.from(o).toString("base64") : (o) => {
+}, Ut = typeof btoa == "function" ? (i) => btoa(i) : ze ? (i) => Buffer.from(i, "binary").toString("base64") : Pr, ft = ze ? (i) => Buffer.from(i).toString("base64") : (i) => {
   let t = [];
-  for (let r = 0, i = o.length; r < i; r += 4096)
-    t.push(N.apply(null, o.subarray(r, r + 4096)));
-  return kt(t.join(""));
-}, Ke = (o, e = !1) => e ? wr(dt(o)) : dt(o), vo = (o) => {
-  if (o.length < 2) {
-    var e = o.charCodeAt(0);
-    return e < 128 ? o : e < 2048 ? N(192 | e >>> 6) + N(128 | e & 63) : N(224 | e >>> 12 & 15) + N(128 | e >>> 6 & 63) + N(128 | e & 63);
+  for (let r = 0, o = i.length; r < o; r += 4096)
+    t.push(Y.apply(null, i.subarray(r, r + 4096)));
+  return Ut(t.join(""));
+}, Qe = (i, e = !1) => e ? Ur(ft(i)) : ft(i), Ci = (i) => {
+  if (i.length < 2) {
+    var e = i.charCodeAt(0);
+    return e < 128 ? i : e < 2048 ? Y(192 | e >>> 6) + Y(128 | e & 63) : Y(224 | e >>> 12 & 15) + Y(128 | e >>> 6 & 63) + Y(128 | e & 63);
   } else {
-    var e = 65536 + (o.charCodeAt(0) - 55296) * 1024 + (o.charCodeAt(1) - 56320);
-    return N(240 | e >>> 18 & 7) + N(128 | e >>> 12 & 63) + N(128 | e >>> 6 & 63) + N(128 | e & 63);
+    var e = 65536 + (i.charCodeAt(0) - 55296) * 1024 + (i.charCodeAt(1) - 56320);
+    return Y(240 | e >>> 18 & 7) + Y(128 | e >>> 12 & 63) + Y(128 | e >>> 6 & 63) + Y(128 | e & 63);
   }
-}, xo = /[\uD800-\uDBFF][\uDC00-\uDFFFF]|[^\x00-\x7F]/g, Sr = (o) => o.replace(xo, vo), Yt = $e ? (o) => Buffer.from(o, "utf8").toString("base64") : qt ? (o) => dt(qt.encode(o)) : (o) => kt(Sr(o)), _e = (o, e = !1) => e ? wr(Yt(o)) : Yt(o), Vt = (o) => _e(o, !0), mo = /[\xC0-\xDF][\x80-\xBF]|[\xE0-\xEF][\x80-\xBF]{2}|[\xF0-\xF7][\x80-\xBF]{3}/g, bo = (o) => {
-  switch (o.length) {
+}, $i = /[\uD800-\uDBFF][\uDC00-\uDFFFF]|[^\x00-\x7F]/g, zr = (i) => i.replace($i, Ci), Zt = ze ? (i) => Buffer.from(i, "utf8").toString("base64") : Xt ? (i) => ft(Xt.encode(i)) : (i) => Ut(zr(i)), Ce = (i, e = !1) => e ? Ur(Zt(i)) : Zt(i), Jt = (i) => Ce(i, !0), Ui = /[\xC0-\xDF][\x80-\xBF]|[\xE0-\xEF][\x80-\xBF]{2}|[\xF0-\xF7][\x80-\xBF]{3}/g, Ei = (i) => {
+  switch (i.length) {
     case 4:
-      var e = (7 & o.charCodeAt(0)) << 18 | (63 & o.charCodeAt(1)) << 12 | (63 & o.charCodeAt(2)) << 6 | 63 & o.charCodeAt(3), t = e - 65536;
-      return N((t >>> 10) + 55296) + N((t & 1023) + 56320);
+      var e = (7 & i.charCodeAt(0)) << 18 | (63 & i.charCodeAt(1)) << 12 | (63 & i.charCodeAt(2)) << 6 | 63 & i.charCodeAt(3), t = e - 65536;
+      return Y((t >>> 10) + 55296) + Y((t & 1023) + 56320);
     case 3:
-      return N((15 & o.charCodeAt(0)) << 12 | (63 & o.charCodeAt(1)) << 6 | 63 & o.charCodeAt(2));
+      return Y((15 & i.charCodeAt(0)) << 12 | (63 & i.charCodeAt(1)) << 6 | 63 & i.charCodeAt(2));
     default:
-      return N((31 & o.charCodeAt(0)) << 6 | 63 & o.charCodeAt(1));
+      return Y((31 & i.charCodeAt(0)) << 6 | 63 & i.charCodeAt(1));
   }
-}, Cr = (o) => o.replace(mo, bo), $r = (o) => {
-  if (o = o.replace(/\s+/g, ""), !go.test(o))
+}, Or = (i) => i.replace(Ui, Ei), Rr = (i) => {
+  if (i = i.replace(/\s+/g, ""), !Si.test(i))
     throw new TypeError("malformed base64.");
-  o += "==".slice(2 - (o.length & 3));
-  let e, t, r, i = [];
-  for (let n = 0; n < o.length; )
-    e = Ge[o.charAt(n++)] << 18 | Ge[o.charAt(n++)] << 12 | (t = Ge[o.charAt(n++)]) << 6 | (r = Ge[o.charAt(n++)]), t === 64 ? i.push(N(e >> 16 & 255)) : r === 64 ? i.push(N(e >> 16 & 255, e >> 8 & 255)) : i.push(N(e >> 16 & 255, e >> 8 & 255, e & 255));
-  return i.join("");
-}, St = typeof atob == "function" ? (o) => atob(_r(o)) : $e ? (o) => Buffer.from(o, "base64").toString("binary") : $r, Ur = $e ? (o) => Nt(Buffer.from(o, "base64")) : (o) => Nt(St(o).split("").map((e) => e.charCodeAt(0))), Pr = (o) => Ur(Er(o)), yo = $e ? (o) => Buffer.from(o, "base64").toString("utf8") : Ht ? (o) => Ht.decode(Ur(o)) : (o) => Cr(St(o)), Er = (o) => _r(o.replace(/[-_]/g, (e) => e == "-" ? "+" : "/")), ct = (o) => yo(Er(o)), wo = (o) => {
-  if (typeof o != "string")
+  i += "==".slice(2 - (i.length & 3));
+  let e, t, r, o = [];
+  for (let n = 0; n < i.length; )
+    e = Ke[i.charAt(n++)] << 18 | Ke[i.charAt(n++)] << 12 | (t = Ke[i.charAt(n++)]) << 6 | (r = Ke[i.charAt(n++)]), t === 64 ? o.push(Y(e >> 16 & 255)) : r === 64 ? o.push(Y(e >> 16 & 255, e >> 8 & 255)) : o.push(Y(e >> 16 & 255, e >> 8 & 255, e & 255));
+  return o.join("");
+}, Et = typeof atob == "function" ? (i) => atob(Er(i)) : ze ? (i) => Buffer.from(i, "base64").toString("binary") : Rr, Tr = ze ? (i) => Kt(Buffer.from(i, "base64")) : (i) => Kt(Et(i).split("").map((e) => e.charCodeAt(0))), Dr = (i) => Tr(jr(i)), Pi = ze ? (i) => Buffer.from(i, "base64").toString("utf8") : Gt ? (i) => Gt.decode(Tr(i)) : (i) => Or(Et(i)), jr = (i) => Er(i.replace(/[-_]/g, (e) => e == "-" ? "+" : "/")), ut = (i) => Pi(jr(i)), zi = (i) => {
+  if (typeof i != "string")
     return !1;
-  const e = o.replace(/\s+/g, "").replace(/={0,2}$/, "");
+  const e = i.replace(/\s+/g, "").replace(/={0,2}$/, "");
   return !/[^\s0-9a-zA-Z\+/]/.test(e) || !/[^\s0-9a-zA-Z\-_]/.test(e);
-}, Or = (o) => ({
-  value: o,
+}, Fr = (i) => ({
+  value: i,
   enumerable: !1,
   writable: !0,
   configurable: !0
-}), Rr = function() {
-  const o = (e, t) => Object.defineProperty(String.prototype, e, Or(t));
-  o("fromBase64", function() {
-    return ct(this);
-  }), o("toBase64", function(e) {
-    return _e(this, e);
-  }), o("toBase64URI", function() {
-    return _e(this, !0);
-  }), o("toBase64URL", function() {
-    return _e(this, !0);
-  }), o("toUint8Array", function() {
-    return Pr(this);
+}), Lr = function() {
+  const i = (e, t) => Object.defineProperty(String.prototype, e, Fr(t));
+  i("fromBase64", function() {
+    return ut(this);
+  }), i("toBase64", function(e) {
+    return Ce(this, e);
+  }), i("toBase64URI", function() {
+    return Ce(this, !0);
+  }), i("toBase64URL", function() {
+    return Ce(this, !0);
+  }), i("toUint8Array", function() {
+    return Dr(this);
   });
-}, zr = function() {
-  const o = (e, t) => Object.defineProperty(Uint8Array.prototype, e, Or(t));
-  o("toBase64", function(e) {
-    return Ke(this, e);
-  }), o("toBase64URI", function() {
-    return Ke(this, !0);
-  }), o("toBase64URL", function() {
-    return Ke(this, !0);
+}, Ar = function() {
+  const i = (e, t) => Object.defineProperty(Uint8Array.prototype, e, Fr(t));
+  i("toBase64", function(e) {
+    return Qe(this, e);
+  }), i("toBase64URI", function() {
+    return Qe(this, !0);
+  }), i("toBase64URL", function() {
+    return Qe(this, !0);
   });
-}, _o = () => {
-  Rr(), zr();
-}, ko = {
-  version: yr,
-  VERSION: fo,
-  atob: St,
-  atobPolyfill: $r,
-  btoa: kt,
-  btoaPolyfill: kr,
-  fromBase64: ct,
-  toBase64: _e,
-  encode: _e,
-  encodeURI: Vt,
-  encodeURL: Vt,
-  utob: Sr,
-  btou: Cr,
-  decode: ct,
-  isValid: wo,
-  fromUint8Array: Ke,
-  toUint8Array: Pr,
-  extendString: Rr,
-  extendUint8Array: zr,
-  extendBuiltins: _o
+}, Oi = () => {
+  Lr(), Ar();
+}, Ri = {
+  version: $r,
+  VERSION: _i,
+  atob: Et,
+  atobPolyfill: Rr,
+  btoa: Ut,
+  btoaPolyfill: Pr,
+  fromBase64: ut,
+  toBase64: Ce,
+  encode: Ce,
+  encodeURI: Jt,
+  encodeURL: Jt,
+  utob: zr,
+  btou: Or,
+  decode: ut,
+  isValid: zi,
+  fromUint8Array: Qe,
+  toUint8Array: Dr,
+  extendString: Lr,
+  extendUint8Array: Ar,
+  extendBuiltins: Oi
 };
-var Gt = typeof globalThis < "u" ? globalThis : typeof window < "u" ? window : typeof global < "u" ? global : typeof self < "u" ? self : {};
-function So(o) {
-  return o && o.__esModule && Object.prototype.hasOwnProperty.call(o, "default") ? o.default : o;
+var Qt = typeof globalThis < "u" ? globalThis : typeof window < "u" ? window : typeof global < "u" ? global : typeof self < "u" ? self : {};
+function Ti(i) {
+  return i && i.__esModule && Object.prototype.hasOwnProperty.call(i, "default") ? i.default : i;
 }
-var ot, Xt;
-function Co() {
-  return Xt || (Xt = 1, ot = function(e, t) {
+var st, er;
+function Di() {
+  return er || (er = 1, st = function(e, t) {
     if (t = t.split(":")[0], e = +e, !e) return !1;
     switch (t) {
       case "http":
@@ -643,13 +643,13 @@ function Co() {
         return !1;
     }
     return e !== 0;
-  }), ot;
+  }), st;
 }
-var Xe = {}, Kt;
-function $o() {
-  if (Kt) return Xe;
-  Kt = 1;
-  var o = Object.prototype.hasOwnProperty, e;
+var Ze = {}, tr;
+function ji() {
+  if (tr) return Ze;
+  tr = 1;
+  var i = Object.prototype.hasOwnProperty, e;
   function t(s) {
     try {
       return decodeURIComponent(s.replace(/\+/g, " "));
@@ -664,41 +664,41 @@ function $o() {
       return null;
     }
   }
-  function i(s) {
+  function o(s) {
     for (var a = /([^=?#&]+)=?([^&]*)/g, l = {}, p; p = a.exec(s); ) {
-      var g = t(p[1]), k = t(p[2]);
-      g === null || k === null || g in l || (l[g] = k);
+      var h = t(p[1]), _ = t(p[2]);
+      h === null || _ === null || h in l || (l[h] = _);
     }
     return l;
   }
   function n(s, a) {
     a = a || "";
-    var l = [], p, g;
+    var l = [], p, h;
     typeof a != "string" && (a = "?");
-    for (g in s)
-      if (o.call(s, g)) {
-        if (p = s[g], !p && (p === null || p === e || isNaN(p)) && (p = ""), g = r(g), p = r(p), g === null || p === null) continue;
-        l.push(g + "=" + p);
+    for (h in s)
+      if (i.call(s, h)) {
+        if (p = s[h], !p && (p === null || p === e || isNaN(p)) && (p = ""), h = r(h), p = r(p), h === null || p === null) continue;
+        l.push(h + "=" + p);
       }
     return l.length ? a + l.join("&") : "";
   }
-  return Xe.stringify = n, Xe.parse = i, Xe;
+  return Ze.stringify = n, Ze.parse = o, Ze;
 }
-var it, Wt;
-function Uo() {
-  if (Wt) return it;
-  Wt = 1;
-  var o = Co(), e = $o(), t = /^[\x00-\x20\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]+/, r = /[\n\r\t]/g, i = /^[A-Za-z][A-Za-z0-9+-.]*:\/\//, n = /:\d+$/, s = /^([a-z][a-z0-9.+-]*:)?(\/\/)?([\\/]+)?([\S\s]*)/i, a = /^[a-zA-Z]:/;
-  function l(v) {
-    return (v || "").toString().replace(t, "");
+var at, rr;
+function Fi() {
+  if (rr) return at;
+  rr = 1;
+  var i = Di(), e = ji(), t = /^[\x00-\x20\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]+/, r = /[\n\r\t]/g, o = /^[A-Za-z][A-Za-z0-9+-.]*:\/\//, n = /:\d+$/, s = /^([a-z][a-z0-9.+-]*:)?(\/\/)?([\\/]+)?([\S\s]*)/i, a = /^[a-zA-Z]:/;
+  function l(x) {
+    return (x || "").toString().replace(t, "");
   }
   var p = [
     ["#", "hash"],
     // Extract from the back.
     ["?", "query"],
     // Extract from the back.
-    function(x, h) {
-      return E(h.protocol) ? x.replace(/\\/g, "/") : x;
+    function(b, g) {
+      return E(g.protocol) ? b.replace(/\\/g, "/") : b;
     },
     ["/", "pathname"],
     // Extract from the back.
@@ -710,120 +710,120 @@ function Uo() {
     // RegExp the back.
     [NaN, "hostname", void 0, 1, 1]
     // Set left over.
-  ], g = { hash: 1, query: 1 };
-  function k(v) {
-    var x;
-    typeof window < "u" ? x = window : typeof Gt < "u" ? x = Gt : typeof self < "u" ? x = self : x = {};
-    var h = x.location || {};
-    v = v || h;
-    var m = {}, O = typeof v, $;
-    if (v.protocol === "blob:")
-      m = new _(unescape(v.pathname), {});
-    else if (O === "string") {
-      m = new _(v, {});
-      for ($ in g) delete m[$];
-    } else if (O === "object") {
-      for ($ in v)
-        $ in g || (m[$] = v[$]);
-      m.slashes === void 0 && (m.slashes = i.test(v.href));
+  ], h = { hash: 1, query: 1 };
+  function _(x) {
+    var b;
+    typeof window < "u" ? b = window : typeof Qt < "u" ? b = Qt : typeof self < "u" ? b = self : b = {};
+    var g = b.location || {};
+    x = x || g;
+    var m = {}, z = typeof x, C;
+    if (x.protocol === "blob:")
+      m = new v(unescape(x.pathname), {});
+    else if (z === "string") {
+      m = new v(x, {});
+      for (C in h) delete m[C];
+    } else if (z === "object") {
+      for (C in x)
+        C in h || (m[C] = x[C]);
+      m.slashes === void 0 && (m.slashes = o.test(x.href));
     }
     return m;
   }
-  function E(v) {
-    return v === "file:" || v === "ftp:" || v === "http:" || v === "https:" || v === "ws:" || v === "wss:";
+  function E(x) {
+    return x === "file:" || x === "ftp:" || x === "http:" || x === "https:" || x === "ws:" || x === "wss:";
   }
-  function S(v, x) {
-    v = l(v), v = v.replace(r, ""), x = x || {};
-    var h = s.exec(v), m = h[1] ? h[1].toLowerCase() : "", O = !!h[2], $ = !!h[3], F = 0, D;
-    return O ? $ ? (D = h[2] + h[3] + h[4], F = h[2].length + h[3].length) : (D = h[2] + h[4], F = h[2].length) : $ ? (D = h[3] + h[4], F = h[3].length) : D = h[4], m === "file:" ? F >= 2 && (D = D.slice(2)) : E(m) ? D = h[4] : m ? O && (D = D.slice(2)) : F >= 2 && E(x.protocol) && (D = h[4]), {
+  function O(x, b) {
+    x = l(x), x = x.replace(r, ""), b = b || {};
+    var g = s.exec(x), m = g[1] ? g[1].toLowerCase() : "", z = !!g[2], C = !!g[3], L = 0, j;
+    return z ? C ? (j = g[2] + g[3] + g[4], L = g[2].length + g[3].length) : (j = g[2] + g[4], L = g[2].length) : C ? (j = g[3] + g[4], L = g[3].length) : j = g[4], m === "file:" ? L >= 2 && (j = j.slice(2)) : E(m) ? j = g[4] : m ? z && (j = j.slice(2)) : L >= 2 && E(b.protocol) && (j = g[4]), {
       protocol: m,
-      slashes: O || E(m),
-      slashesCount: F,
-      rest: D
+      slashes: z || E(m),
+      slashesCount: L,
+      rest: j
     };
   }
-  function R(v, x) {
-    if (v === "") return x;
-    for (var h = (x || "/").split("/").slice(0, -1).concat(v.split("/")), m = h.length, O = h[m - 1], $ = !1, F = 0; m--; )
-      h[m] === "." ? h.splice(m, 1) : h[m] === ".." ? (h.splice(m, 1), F++) : F && (m === 0 && ($ = !0), h.splice(m, 1), F--);
-    return $ && h.unshift(""), (O === "." || O === "..") && h.push(""), h.join("/");
+  function P(x, b) {
+    if (x === "") return b;
+    for (var g = (b || "/").split("/").slice(0, -1).concat(x.split("/")), m = g.length, z = g[m - 1], C = !1, L = 0; m--; )
+      g[m] === "." ? g.splice(m, 1) : g[m] === ".." ? (g.splice(m, 1), L++) : L && (m === 0 && (C = !0), g.splice(m, 1), L--);
+    return C && g.unshift(""), (z === "." || z === "..") && g.push(""), g.join("/");
   }
-  function _(v, x, h) {
-    if (v = l(v), v = v.replace(r, ""), !(this instanceof _))
-      return new _(v, x, h);
-    var m, O, $, F, D, X, re = p.slice(), he = typeof x, U = this, Q = 0;
-    for (he !== "object" && he !== "string" && (h = x, x = null), h && typeof h != "function" && (h = e.parse), x = k(x), O = S(v || "", x), m = !O.protocol && !O.slashes, U.slashes = O.slashes || m && x.slashes, U.protocol = O.protocol || x.protocol || "", v = O.rest, (O.protocol === "file:" && (O.slashesCount !== 2 || a.test(v)) || !O.slashes && (O.protocol || O.slashesCount < 2 || !E(U.protocol))) && (re[3] = [/(.*)/, "pathname"]); Q < re.length; Q++) {
-      if (F = re[Q], typeof F == "function") {
-        v = F(v, U);
+  function v(x, b, g) {
+    if (x = l(x), x = x.replace(r, ""), !(this instanceof v))
+      return new v(x, b, g);
+    var m, z, C, L, j, X, ie = p.slice(), be = typeof b, $ = this, Q = 0;
+    for (be !== "object" && be !== "string" && (g = b, b = null), g && typeof g != "function" && (g = e.parse), b = _(b), z = O(x || "", b), m = !z.protocol && !z.slashes, $.slashes = z.slashes || m && b.slashes, $.protocol = z.protocol || b.protocol || "", x = z.rest, (z.protocol === "file:" && (z.slashesCount !== 2 || a.test(x)) || !z.slashes && (z.protocol || z.slashesCount < 2 || !E($.protocol))) && (ie[3] = [/(.*)/, "pathname"]); Q < ie.length; Q++) {
+      if (L = ie[Q], typeof L == "function") {
+        x = L(x, $);
         continue;
       }
-      $ = F[0], X = F[1], $ !== $ ? U[X] = v : typeof $ == "string" ? (D = $ === "@" ? v.lastIndexOf($) : v.indexOf($), ~D && (typeof F[2] == "number" ? (U[X] = v.slice(0, D), v = v.slice(D + F[2])) : (U[X] = v.slice(D), v = v.slice(0, D)))) : (D = $.exec(v)) && (U[X] = D[1], v = v.slice(0, D.index)), U[X] = U[X] || m && F[3] && x[X] || "", F[4] && (U[X] = U[X].toLowerCase());
+      C = L[0], X = L[1], C !== C ? $[X] = x : typeof C == "string" ? (j = C === "@" ? x.lastIndexOf(C) : x.indexOf(C), ~j && (typeof L[2] == "number" ? ($[X] = x.slice(0, j), x = x.slice(j + L[2])) : ($[X] = x.slice(j), x = x.slice(0, j)))) : (j = C.exec(x)) && ($[X] = j[1], x = x.slice(0, j.index)), $[X] = $[X] || m && L[3] && b[X] || "", L[4] && ($[X] = $[X].toLowerCase());
     }
-    h && (U.query = h(U.query)), m && x.slashes && U.pathname.charAt(0) !== "/" && (U.pathname !== "" || x.pathname !== "") && (U.pathname = R(U.pathname, x.pathname)), U.pathname.charAt(0) !== "/" && E(U.protocol) && (U.pathname = "/" + U.pathname), o(U.port, U.protocol) || (U.host = U.hostname, U.port = ""), U.username = U.password = "", U.auth && (D = U.auth.indexOf(":"), ~D ? (U.username = U.auth.slice(0, D), U.username = encodeURIComponent(decodeURIComponent(U.username)), U.password = U.auth.slice(D + 1), U.password = encodeURIComponent(decodeURIComponent(U.password))) : U.username = encodeURIComponent(decodeURIComponent(U.auth)), U.auth = U.password ? U.username + ":" + U.password : U.username), U.origin = U.protocol !== "file:" && E(U.protocol) && U.host ? U.protocol + "//" + U.host : "null", U.href = U.toString();
+    g && ($.query = g($.query)), m && b.slashes && $.pathname.charAt(0) !== "/" && ($.pathname !== "" || b.pathname !== "") && ($.pathname = P($.pathname, b.pathname)), $.pathname.charAt(0) !== "/" && E($.protocol) && ($.pathname = "/" + $.pathname), i($.port, $.protocol) || ($.host = $.hostname, $.port = ""), $.username = $.password = "", $.auth && (j = $.auth.indexOf(":"), ~j ? ($.username = $.auth.slice(0, j), $.username = encodeURIComponent(decodeURIComponent($.username)), $.password = $.auth.slice(j + 1), $.password = encodeURIComponent(decodeURIComponent($.password))) : $.username = encodeURIComponent(decodeURIComponent($.auth)), $.auth = $.password ? $.username + ":" + $.password : $.username), $.origin = $.protocol !== "file:" && E($.protocol) && $.host ? $.protocol + "//" + $.host : "null", $.href = $.toString();
   }
-  function P(v, x, h) {
+  function U(x, b, g) {
     var m = this;
-    switch (v) {
+    switch (x) {
       case "query":
-        typeof x == "string" && x.length && (x = (h || e.parse)(x)), m[v] = x;
+        typeof b == "string" && b.length && (b = (g || e.parse)(b)), m[x] = b;
         break;
       case "port":
-        m[v] = x, o(x, m.protocol) ? x && (m.host = m.hostname + ":" + x) : (m.host = m.hostname, m[v] = "");
+        m[x] = b, i(b, m.protocol) ? b && (m.host = m.hostname + ":" + b) : (m.host = m.hostname, m[x] = "");
         break;
       case "hostname":
-        m[v] = x, m.port && (x += ":" + m.port), m.host = x;
+        m[x] = b, m.port && (b += ":" + m.port), m.host = b;
         break;
       case "host":
-        m[v] = x, n.test(x) ? (x = x.split(":"), m.port = x.pop(), m.hostname = x.join(":")) : (m.hostname = x, m.port = "");
+        m[x] = b, n.test(b) ? (b = b.split(":"), m.port = b.pop(), m.hostname = b.join(":")) : (m.hostname = b, m.port = "");
         break;
       case "protocol":
-        m.protocol = x.toLowerCase(), m.slashes = !h;
+        m.protocol = b.toLowerCase(), m.slashes = !g;
         break;
       case "pathname":
       case "hash":
-        if (x) {
-          var O = v === "pathname" ? "/" : "#";
-          m[v] = x.charAt(0) !== O ? O + x : x;
+        if (b) {
+          var z = x === "pathname" ? "/" : "#";
+          m[x] = b.charAt(0) !== z ? z + b : b;
         } else
-          m[v] = x;
+          m[x] = b;
         break;
       case "username":
       case "password":
-        m[v] = encodeURIComponent(x);
+        m[x] = encodeURIComponent(b);
         break;
       case "auth":
-        var $ = x.indexOf(":");
-        ~$ ? (m.username = x.slice(0, $), m.username = encodeURIComponent(decodeURIComponent(m.username)), m.password = x.slice($ + 1), m.password = encodeURIComponent(decodeURIComponent(m.password))) : m.username = encodeURIComponent(decodeURIComponent(x));
+        var C = b.indexOf(":");
+        ~C ? (m.username = b.slice(0, C), m.username = encodeURIComponent(decodeURIComponent(m.username)), m.password = b.slice(C + 1), m.password = encodeURIComponent(decodeURIComponent(m.password))) : m.username = encodeURIComponent(decodeURIComponent(b));
     }
-    for (var F = 0; F < p.length; F++) {
-      var D = p[F];
-      D[4] && (m[D[1]] = m[D[1]].toLowerCase());
+    for (var L = 0; L < p.length; L++) {
+      var j = p[L];
+      j[4] && (m[j[1]] = m[j[1]].toLowerCase());
     }
     return m.auth = m.password ? m.username + ":" + m.password : m.username, m.origin = m.protocol !== "file:" && E(m.protocol) && m.host ? m.protocol + "//" + m.host : "null", m.href = m.toString(), m;
   }
-  function T(v) {
-    (!v || typeof v != "function") && (v = e.stringify);
-    var x, h = this, m = h.host, O = h.protocol;
-    O && O.charAt(O.length - 1) !== ":" && (O += ":");
-    var $ = O + (h.protocol && h.slashes || E(h.protocol) ? "//" : "");
-    return h.username ? ($ += h.username, h.password && ($ += ":" + h.password), $ += "@") : h.password ? ($ += ":" + h.password, $ += "@") : h.protocol !== "file:" && E(h.protocol) && !m && h.pathname !== "/" && ($ += "@"), (m[m.length - 1] === ":" || n.test(h.hostname) && !h.port) && (m += ":"), $ += m + h.pathname, x = typeof h.query == "object" ? v(h.query) : h.query, x && ($ += x.charAt(0) !== "?" ? "?" + x : x), h.hash && ($ += h.hash), $;
+  function R(x) {
+    (!x || typeof x != "function") && (x = e.stringify);
+    var b, g = this, m = g.host, z = g.protocol;
+    z && z.charAt(z.length - 1) !== ":" && (z += ":");
+    var C = z + (g.protocol && g.slashes || E(g.protocol) ? "//" : "");
+    return g.username ? (C += g.username, g.password && (C += ":" + g.password), C += "@") : g.password ? (C += ":" + g.password, C += "@") : g.protocol !== "file:" && E(g.protocol) && !m && g.pathname !== "/" && (C += "@"), (m[m.length - 1] === ":" || n.test(g.hostname) && !g.port) && (m += ":"), C += m + g.pathname, b = typeof g.query == "object" ? x(g.query) : g.query, b && (C += b.charAt(0) !== "?" ? "?" + b : b), g.hash && (C += g.hash), C;
   }
-  return _.prototype = { set: P, toString: T }, _.extractProtocol = S, _.location = k, _.trimLeft = l, _.qs = e, it = _, it;
+  return v.prototype = { set: U, toString: R }, v.extractProtocol = O, v.location = _, v.trimLeft = l, v.qs = e, at = v, at;
 }
-var Po = Uo();
-const Eo = /* @__PURE__ */ So(Po);
-function Oo() {
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(o) {
-    var e = Math.random() * 16 | 0, t = o === "x" ? e : e & 3 | 8;
+var Li = Fi();
+const Ai = /* @__PURE__ */ Ti(Li);
+function Ii() {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(i) {
+    var e = Math.random() * 16 | 0, t = i === "x" ? e : e & 3 | 8;
     return t.toString(16);
   });
 }
-function pt() {
+function ht() {
   /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */
-  pt = function() {
+  ht = function() {
     return e;
   };
-  var o, e = {}, t = Object.prototype, r = t.hasOwnProperty, i = Object.defineProperty || function(u, d, c) {
+  var i, e = {}, t = Object.prototype, r = t.hasOwnProperty, o = Object.defineProperty || function(u, d, c) {
     u[d] = c.value;
   }, n = typeof Symbol == "function" ? Symbol : {}, s = n.iterator || "@@iterator", a = n.asyncIterator || "@@asyncIterator", l = n.toStringTag || "@@toStringTag";
   function p(u, d, c) {
@@ -832,167 +832,167 @@ function pt() {
   try {
     p({}, "");
   } catch {
-    p = function(c, b, w) {
-      return c[b] = w;
+    p = function(c, y, k) {
+      return c[y] = k;
     };
   }
-  function g(u, d, c, b) {
-    var w = d && d.prototype instanceof T ? d : T, y = Object.create(w.prototype), z = new Q(b || []);
-    return i(y, "_invoke", { value: X(u, c, z) }), y;
+  function h(u, d, c, y) {
+    var k = d && d.prototype instanceof R ? d : R, w = Object.create(k.prototype), T = new Q(y || []);
+    return o(w, "_invoke", { value: X(u, c, T) }), w;
   }
-  function k(u, d, c) {
+  function _(u, d, c) {
     try {
       return { type: "normal", arg: u.call(d, c) };
-    } catch (b) {
-      return { type: "throw", arg: b };
+    } catch (y) {
+      return { type: "throw", arg: y };
     }
   }
-  e.wrap = g;
-  var E = "suspendedStart", S = "suspendedYield", R = "executing", _ = "completed", P = {};
-  function T() {
-  }
-  function v() {
+  e.wrap = h;
+  var E = "suspendedStart", O = "suspendedYield", P = "executing", v = "completed", U = {};
+  function R() {
   }
   function x() {
   }
-  var h = {};
-  p(h, s, function() {
+  function b() {
+  }
+  var g = {};
+  p(g, s, function() {
     return this;
   });
-  var m = Object.getPrototypeOf, O = m && m(m(ne([])));
-  O && O !== t && r.call(O, s) && (h = O);
-  var $ = x.prototype = T.prototype = Object.create(h);
-  function F(u) {
+  var m = Object.getPrototypeOf, z = m && m(m(de([])));
+  z && z !== t && r.call(z, s) && (g = z);
+  var C = b.prototype = R.prototype = Object.create(g);
+  function L(u) {
     ["next", "throw", "return"].forEach(function(d) {
       p(u, d, function(c) {
         return this._invoke(d, c);
       });
     });
   }
-  function D(u, d) {
-    function c(w, y, z, L) {
-      var A = k(u[w], u, y);
-      if (A.type !== "throw") {
-        var V = A.arg, q = V.value;
-        return q && de(q) == "object" && r.call(q, "__await") ? d.resolve(q.__await).then(function(G) {
-          c("next", G, z, L);
-        }, function(G) {
-          c("throw", G, z, L);
-        }) : d.resolve(q).then(function(G) {
-          V.value = G, z(V);
-        }, function(G) {
-          return c("throw", G, z, L);
+  function j(u, d) {
+    function c(k, w, T, A) {
+      var I = _(u[k], u, w);
+      if (I.type !== "throw") {
+        var V = I.arg, N = V.value;
+        return N && he(N) == "object" && r.call(N, "__await") ? d.resolve(N.__await).then(function(W) {
+          c("next", W, T, A);
+        }, function(W) {
+          c("throw", W, T, A);
+        }) : d.resolve(N).then(function(W) {
+          V.value = W, T(V);
+        }, function(W) {
+          return c("throw", W, T, A);
         });
       }
-      L(A.arg);
+      A(I.arg);
     }
-    var b;
-    i(this, "_invoke", { value: function(y, z) {
-      function L() {
-        return new d(function(A, V) {
-          c(y, z, A, V);
+    var y;
+    o(this, "_invoke", { value: function(w, T) {
+      function A() {
+        return new d(function(I, V) {
+          c(w, T, I, V);
         });
       }
-      return b = b ? b.then(L, L) : L();
+      return y = y ? y.then(A, A) : A();
     } });
   }
   function X(u, d, c) {
-    var b = E;
-    return function(w, y) {
-      if (b === R) throw Error("Generator is already running");
-      if (b === _) {
-        if (w === "throw") throw y;
-        return { value: o, done: !0 };
+    var y = E;
+    return function(k, w) {
+      if (y === P) throw Error("Generator is already running");
+      if (y === v) {
+        if (k === "throw") throw w;
+        return { value: i, done: !0 };
       }
-      for (c.method = w, c.arg = y; ; ) {
-        var z = c.delegate;
-        if (z) {
-          var L = re(z, c);
-          if (L) {
-            if (L === P) continue;
-            return L;
+      for (c.method = k, c.arg = w; ; ) {
+        var T = c.delegate;
+        if (T) {
+          var A = ie(T, c);
+          if (A) {
+            if (A === U) continue;
+            return A;
           }
         }
         if (c.method === "next") c.sent = c._sent = c.arg;
         else if (c.method === "throw") {
-          if (b === E) throw b = _, c.arg;
+          if (y === E) throw y = v, c.arg;
           c.dispatchException(c.arg);
         } else c.method === "return" && c.abrupt("return", c.arg);
-        b = R;
-        var A = k(u, d, c);
-        if (A.type === "normal") {
-          if (b = c.done ? _ : S, A.arg === P) continue;
-          return { value: A.arg, done: c.done };
+        y = P;
+        var I = _(u, d, c);
+        if (I.type === "normal") {
+          if (y = c.done ? v : O, I.arg === U) continue;
+          return { value: I.arg, done: c.done };
         }
-        A.type === "throw" && (b = _, c.method = "throw", c.arg = A.arg);
+        I.type === "throw" && (y = v, c.method = "throw", c.arg = I.arg);
       }
     };
   }
-  function re(u, d) {
-    var c = d.method, b = u.iterator[c];
-    if (b === o) return d.delegate = null, c === "throw" && u.iterator.return && (d.method = "return", d.arg = o, re(u, d), d.method === "throw") || c !== "return" && (d.method = "throw", d.arg = new TypeError("The iterator does not provide a '" + c + "' method")), P;
-    var w = k(b, u.iterator, d.arg);
-    if (w.type === "throw") return d.method = "throw", d.arg = w.arg, d.delegate = null, P;
-    var y = w.arg;
-    return y ? y.done ? (d[u.resultName] = y.value, d.next = u.nextLoc, d.method !== "return" && (d.method = "next", d.arg = o), d.delegate = null, P) : y : (d.method = "throw", d.arg = new TypeError("iterator result is not an object"), d.delegate = null, P);
+  function ie(u, d) {
+    var c = d.method, y = u.iterator[c];
+    if (y === i) return d.delegate = null, c === "throw" && u.iterator.return && (d.method = "return", d.arg = i, ie(u, d), d.method === "throw") || c !== "return" && (d.method = "throw", d.arg = new TypeError("The iterator does not provide a '" + c + "' method")), U;
+    var k = _(y, u.iterator, d.arg);
+    if (k.type === "throw") return d.method = "throw", d.arg = k.arg, d.delegate = null, U;
+    var w = k.arg;
+    return w ? w.done ? (d[u.resultName] = w.value, d.next = u.nextLoc, d.method !== "return" && (d.method = "next", d.arg = i), d.delegate = null, U) : w : (d.method = "throw", d.arg = new TypeError("iterator result is not an object"), d.delegate = null, U);
   }
-  function he(u) {
+  function be(u) {
     var d = { tryLoc: u[0] };
     1 in u && (d.catchLoc = u[1]), 2 in u && (d.finallyLoc = u[2], d.afterLoc = u[3]), this.tryEntries.push(d);
   }
-  function U(u) {
+  function $(u) {
     var d = u.completion || {};
     d.type = "normal", delete d.arg, u.completion = d;
   }
   function Q(u) {
-    this.tryEntries = [{ tryLoc: "root" }], u.forEach(he, this), this.reset(!0);
+    this.tryEntries = [{ tryLoc: "root" }], u.forEach(be, this), this.reset(!0);
   }
-  function ne(u) {
+  function de(u) {
     if (u || u === "") {
       var d = u[s];
       if (d) return d.call(u);
       if (typeof u.next == "function") return u;
       if (!isNaN(u.length)) {
-        var c = -1, b = function w() {
-          for (; ++c < u.length; ) if (r.call(u, c)) return w.value = u[c], w.done = !1, w;
-          return w.value = o, w.done = !0, w;
+        var c = -1, y = function k() {
+          for (; ++c < u.length; ) if (r.call(u, c)) return k.value = u[c], k.done = !1, k;
+          return k.value = i, k.done = !0, k;
         };
-        return b.next = b;
+        return y.next = y;
       }
     }
-    throw new TypeError(de(u) + " is not iterable");
+    throw new TypeError(he(u) + " is not iterable");
   }
-  return v.prototype = x, i($, "constructor", { value: x, configurable: !0 }), i(x, "constructor", { value: v, configurable: !0 }), v.displayName = p(x, l, "GeneratorFunction"), e.isGeneratorFunction = function(u) {
+  return x.prototype = b, o(C, "constructor", { value: b, configurable: !0 }), o(b, "constructor", { value: x, configurable: !0 }), x.displayName = p(b, l, "GeneratorFunction"), e.isGeneratorFunction = function(u) {
     var d = typeof u == "function" && u.constructor;
-    return !!d && (d === v || (d.displayName || d.name) === "GeneratorFunction");
+    return !!d && (d === x || (d.displayName || d.name) === "GeneratorFunction");
   }, e.mark = function(u) {
-    return Object.setPrototypeOf ? Object.setPrototypeOf(u, x) : (u.__proto__ = x, p(u, l, "GeneratorFunction")), u.prototype = Object.create($), u;
+    return Object.setPrototypeOf ? Object.setPrototypeOf(u, b) : (u.__proto__ = b, p(u, l, "GeneratorFunction")), u.prototype = Object.create(C), u;
   }, e.awrap = function(u) {
     return { __await: u };
-  }, F(D.prototype), p(D.prototype, a, function() {
+  }, L(j.prototype), p(j.prototype, a, function() {
     return this;
-  }), e.AsyncIterator = D, e.async = function(u, d, c, b, w) {
-    w === void 0 && (w = Promise);
-    var y = new D(g(u, d, c, b), w);
-    return e.isGeneratorFunction(d) ? y : y.next().then(function(z) {
-      return z.done ? z.value : y.next();
+  }), e.AsyncIterator = j, e.async = function(u, d, c, y, k) {
+    k === void 0 && (k = Promise);
+    var w = new j(h(u, d, c, y), k);
+    return e.isGeneratorFunction(d) ? w : w.next().then(function(T) {
+      return T.done ? T.value : w.next();
     });
-  }, F($), p($, l, "Generator"), p($, s, function() {
+  }, L(C), p(C, l, "Generator"), p(C, s, function() {
     return this;
-  }), p($, "toString", function() {
+  }), p(C, "toString", function() {
     return "[object Generator]";
   }), e.keys = function(u) {
     var d = Object(u), c = [];
-    for (var b in d) c.push(b);
-    return c.reverse(), function w() {
+    for (var y in d) c.push(y);
+    return c.reverse(), function k() {
       for (; c.length; ) {
-        var y = c.pop();
-        if (y in d) return w.value = y, w.done = !1, w;
+        var w = c.pop();
+        if (w in d) return k.value = w, k.done = !1, k;
       }
-      return w.done = !0, w;
+      return k.done = !0, k;
     };
-  }, e.values = ne, Q.prototype = { constructor: Q, reset: function(d) {
-    if (this.prev = 0, this.next = 0, this.sent = this._sent = o, this.done = !1, this.delegate = null, this.method = "next", this.arg = o, this.tryEntries.forEach(U), !d) for (var c in this) c.charAt(0) === "t" && r.call(this, c) && !isNaN(+c.slice(1)) && (this[c] = o);
+  }, e.values = de, Q.prototype = { constructor: Q, reset: function(d) {
+    if (this.prev = 0, this.next = 0, this.sent = this._sent = i, this.done = !1, this.delegate = null, this.method = "next", this.arg = i, this.tryEntries.forEach($), !d) for (var c in this) c.charAt(0) === "t" && r.call(this, c) && !isNaN(+c.slice(1)) && (this[c] = i);
   }, stop: function() {
     this.done = !0;
     var d = this.tryEntries[0].completion;
@@ -1001,140 +1001,140 @@ function pt() {
   }, dispatchException: function(d) {
     if (this.done) throw d;
     var c = this;
-    function b(V, q) {
-      return z.type = "throw", z.arg = d, c.next = V, q && (c.method = "next", c.arg = o), !!q;
+    function y(V, N) {
+      return T.type = "throw", T.arg = d, c.next = V, N && (c.method = "next", c.arg = i), !!N;
     }
-    for (var w = this.tryEntries.length - 1; w >= 0; --w) {
-      var y = this.tryEntries[w], z = y.completion;
-      if (y.tryLoc === "root") return b("end");
-      if (y.tryLoc <= this.prev) {
-        var L = r.call(y, "catchLoc"), A = r.call(y, "finallyLoc");
-        if (L && A) {
-          if (this.prev < y.catchLoc) return b(y.catchLoc, !0);
-          if (this.prev < y.finallyLoc) return b(y.finallyLoc);
-        } else if (L) {
-          if (this.prev < y.catchLoc) return b(y.catchLoc, !0);
+    for (var k = this.tryEntries.length - 1; k >= 0; --k) {
+      var w = this.tryEntries[k], T = w.completion;
+      if (w.tryLoc === "root") return y("end");
+      if (w.tryLoc <= this.prev) {
+        var A = r.call(w, "catchLoc"), I = r.call(w, "finallyLoc");
+        if (A && I) {
+          if (this.prev < w.catchLoc) return y(w.catchLoc, !0);
+          if (this.prev < w.finallyLoc) return y(w.finallyLoc);
+        } else if (A) {
+          if (this.prev < w.catchLoc) return y(w.catchLoc, !0);
         } else {
-          if (!A) throw Error("try statement without catch or finally");
-          if (this.prev < y.finallyLoc) return b(y.finallyLoc);
+          if (!I) throw Error("try statement without catch or finally");
+          if (this.prev < w.finallyLoc) return y(w.finallyLoc);
         }
       }
     }
   }, abrupt: function(d, c) {
-    for (var b = this.tryEntries.length - 1; b >= 0; --b) {
-      var w = this.tryEntries[b];
-      if (w.tryLoc <= this.prev && r.call(w, "finallyLoc") && this.prev < w.finallyLoc) {
-        var y = w;
+    for (var y = this.tryEntries.length - 1; y >= 0; --y) {
+      var k = this.tryEntries[y];
+      if (k.tryLoc <= this.prev && r.call(k, "finallyLoc") && this.prev < k.finallyLoc) {
+        var w = k;
         break;
       }
     }
-    y && (d === "break" || d === "continue") && y.tryLoc <= c && c <= y.finallyLoc && (y = null);
-    var z = y ? y.completion : {};
-    return z.type = d, z.arg = c, y ? (this.method = "next", this.next = y.finallyLoc, P) : this.complete(z);
+    w && (d === "break" || d === "continue") && w.tryLoc <= c && c <= w.finallyLoc && (w = null);
+    var T = w ? w.completion : {};
+    return T.type = d, T.arg = c, w ? (this.method = "next", this.next = w.finallyLoc, U) : this.complete(T);
   }, complete: function(d, c) {
     if (d.type === "throw") throw d.arg;
-    return d.type === "break" || d.type === "continue" ? this.next = d.arg : d.type === "return" ? (this.rval = this.arg = d.arg, this.method = "return", this.next = "end") : d.type === "normal" && c && (this.next = c), P;
+    return d.type === "break" || d.type === "continue" ? this.next = d.arg : d.type === "return" ? (this.rval = this.arg = d.arg, this.method = "return", this.next = "end") : d.type === "normal" && c && (this.next = c), U;
   }, finish: function(d) {
     for (var c = this.tryEntries.length - 1; c >= 0; --c) {
-      var b = this.tryEntries[c];
-      if (b.finallyLoc === d) return this.complete(b.completion, b.afterLoc), U(b), P;
+      var y = this.tryEntries[c];
+      if (y.finallyLoc === d) return this.complete(y.completion, y.afterLoc), $(y), U;
     }
   }, catch: function(d) {
     for (var c = this.tryEntries.length - 1; c >= 0; --c) {
-      var b = this.tryEntries[c];
-      if (b.tryLoc === d) {
-        var w = b.completion;
-        if (w.type === "throw") {
-          var y = w.arg;
-          U(b);
+      var y = this.tryEntries[c];
+      if (y.tryLoc === d) {
+        var k = y.completion;
+        if (k.type === "throw") {
+          var w = k.arg;
+          $(y);
         }
-        return y;
+        return w;
       }
     }
     throw Error("illegal catch attempt");
-  }, delegateYield: function(d, c, b) {
-    return this.delegate = { iterator: ne(d), resultName: c, nextLoc: b }, this.method === "next" && (this.arg = o), P;
+  }, delegateYield: function(d, c, y) {
+    return this.delegate = { iterator: de(d), resultName: c, nextLoc: y }, this.method === "next" && (this.arg = i), U;
   } }, e;
 }
-function Zt(o, e, t, r, i, n, s) {
+function ir(i, e, t, r, o, n, s) {
   try {
-    var a = o[n](s), l = a.value;
+    var a = i[n](s), l = a.value;
   } catch (p) {
     t(p);
     return;
   }
-  a.done ? e(l) : Promise.resolve(l).then(r, i);
+  a.done ? e(l) : Promise.resolve(l).then(r, o);
 }
-function Ro(o) {
+function Bi(i) {
   return function() {
     var e = this, t = arguments;
-    return new Promise(function(r, i) {
-      var n = o.apply(e, t);
+    return new Promise(function(r, o) {
+      var n = i.apply(e, t);
       function s(l) {
-        Zt(n, r, i, s, a, "next", l);
+        ir(n, r, o, s, a, "next", l);
       }
       function a(l) {
-        Zt(n, r, i, s, a, "throw", l);
+        ir(n, r, o, s, a, "throw", l);
       }
       s(void 0);
     });
   };
 }
-function Dr(o, e) {
-  return To(o) || Do(o, e) || Tr(o, e) || zo();
+function Ir(i, e) {
+  return qi(i) || Hi(i, e) || Br(i, e) || Mi();
 }
-function zo() {
+function Mi() {
   throw new TypeError(`Invalid attempt to destructure non-iterable instance.
 In order to be iterable, non-array objects must have a [Symbol.iterator]() method.`);
 }
-function Do(o, e) {
-  var t = o == null ? null : typeof Symbol < "u" && o[Symbol.iterator] || o["@@iterator"];
+function Hi(i, e) {
+  var t = i == null ? null : typeof Symbol < "u" && i[Symbol.iterator] || i["@@iterator"];
   if (t != null) {
-    var r, i, n, s, a = [], l = !0, p = !1;
+    var r, o, n, s, a = [], l = !0, p = !1;
     try {
-      if (n = (t = t.call(o)).next, e !== 0) for (; !(l = (r = n.call(t)).done) && (a.push(r.value), a.length !== e); l = !0) ;
-    } catch (g) {
-      p = !0, i = g;
+      if (n = (t = t.call(i)).next, e !== 0) for (; !(l = (r = n.call(t)).done) && (a.push(r.value), a.length !== e); l = !0) ;
+    } catch (h) {
+      p = !0, o = h;
     } finally {
       try {
         if (!l && t.return != null && (s = t.return(), Object(s) !== s)) return;
       } finally {
-        if (p) throw i;
+        if (p) throw o;
       }
     }
     return a;
   }
 }
-function To(o) {
-  if (Array.isArray(o)) return o;
+function qi(i) {
+  if (Array.isArray(i)) return i;
 }
-function de(o) {
+function he(i) {
   "@babel/helpers - typeof";
-  return de = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(e) {
+  return he = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(e) {
     return typeof e;
   } : function(e) {
     return e && typeof Symbol == "function" && e.constructor === Symbol && e !== Symbol.prototype ? "symbol" : typeof e;
-  }, de(o);
+  }, he(i);
 }
-function jo(o, e) {
-  var t = typeof Symbol < "u" && o[Symbol.iterator] || o["@@iterator"];
+function Ni(i, e) {
+  var t = typeof Symbol < "u" && i[Symbol.iterator] || i["@@iterator"];
   if (!t) {
-    if (Array.isArray(o) || (t = Tr(o)) || e) {
-      t && (o = t);
-      var r = 0, i = function() {
+    if (Array.isArray(i) || (t = Br(i)) || e) {
+      t && (i = t);
+      var r = 0, o = function() {
       };
-      return { s: i, n: function() {
-        return r >= o.length ? { done: !0 } : { done: !1, value: o[r++] };
+      return { s: o, n: function() {
+        return r >= i.length ? { done: !0 } : { done: !1, value: i[r++] };
       }, e: function(p) {
         throw p;
-      }, f: i };
+      }, f: o };
     }
     throw new TypeError(`Invalid attempt to iterate non-iterable instance.
 In order to be iterable, non-array objects must have a [Symbol.iterator]() method.`);
   }
   var n = !0, s = !1, a;
   return { s: function() {
-    t = t.call(o);
+    t = t.call(i);
   }, n: function() {
     var p = t.next();
     return n = p.done, p;
@@ -1148,71 +1148,71 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
     }
   } };
 }
-function Tr(o, e) {
-  if (o) {
-    if (typeof o == "string") return Jt(o, e);
-    var t = Object.prototype.toString.call(o).slice(8, -1);
-    if (t === "Object" && o.constructor && (t = o.constructor.name), t === "Map" || t === "Set") return Array.from(o);
-    if (t === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t)) return Jt(o, e);
+function Br(i, e) {
+  if (i) {
+    if (typeof i == "string") return or(i, e);
+    var t = Object.prototype.toString.call(i).slice(8, -1);
+    if (t === "Object" && i.constructor && (t = i.constructor.name), t === "Map" || t === "Set") return Array.from(i);
+    if (t === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t)) return or(i, e);
   }
 }
-function Jt(o, e) {
-  (e == null || e > o.length) && (e = o.length);
-  for (var t = 0, r = new Array(e); t < e; t++) r[t] = o[t];
+function or(i, e) {
+  (e == null || e > i.length) && (e = i.length);
+  for (var t = 0, r = new Array(e); t < e; t++) r[t] = i[t];
   return r;
 }
-function Qt(o, e) {
-  var t = Object.keys(o);
+function nr(i, e) {
+  var t = Object.keys(i);
   if (Object.getOwnPropertySymbols) {
-    var r = Object.getOwnPropertySymbols(o);
-    e && (r = r.filter(function(i) {
-      return Object.getOwnPropertyDescriptor(o, i).enumerable;
+    var r = Object.getOwnPropertySymbols(i);
+    e && (r = r.filter(function(o) {
+      return Object.getOwnPropertyDescriptor(i, o).enumerable;
     })), t.push.apply(t, r);
   }
   return t;
 }
-function ve(o) {
+function ye(i) {
   for (var e = 1; e < arguments.length; e++) {
     var t = arguments[e] != null ? arguments[e] : {};
-    e % 2 ? Qt(Object(t), !0).forEach(function(r) {
-      Fo(o, r, t[r]);
-    }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(o, Object.getOwnPropertyDescriptors(t)) : Qt(Object(t)).forEach(function(r) {
-      Object.defineProperty(o, r, Object.getOwnPropertyDescriptor(t, r));
+    e % 2 ? nr(Object(t), !0).forEach(function(r) {
+      Yi(i, r, t[r]);
+    }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(i, Object.getOwnPropertyDescriptors(t)) : nr(Object(t)).forEach(function(r) {
+      Object.defineProperty(i, r, Object.getOwnPropertyDescriptor(t, r));
     });
   }
-  return o;
+  return i;
 }
-function Fo(o, e, t) {
-  return e = jr(e), e in o ? Object.defineProperty(o, e, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : o[e] = t, o;
+function Yi(i, e, t) {
+  return e = Mr(e), e in i ? Object.defineProperty(i, e, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : i[e] = t, i;
 }
-function Lo(o, e) {
-  if (!(o instanceof e))
+function Vi(i, e) {
+  if (!(i instanceof e))
     throw new TypeError("Cannot call a class as a function");
 }
-function er(o, e) {
+function sr(i, e) {
   for (var t = 0; t < e.length; t++) {
     var r = e[t];
-    r.enumerable = r.enumerable || !1, r.configurable = !0, "value" in r && (r.writable = !0), Object.defineProperty(o, jr(r.key), r);
+    r.enumerable = r.enumerable || !1, r.configurable = !0, "value" in r && (r.writable = !0), Object.defineProperty(i, Mr(r.key), r);
   }
 }
-function Ao(o, e, t) {
-  return e && er(o.prototype, e), t && er(o, t), Object.defineProperty(o, "prototype", { writable: !1 }), o;
+function Wi(i, e, t) {
+  return e && sr(i.prototype, e), t && sr(i, t), Object.defineProperty(i, "prototype", { writable: !1 }), i;
 }
-function jr(o) {
-  var e = Bo(o, "string");
-  return de(e) == "symbol" ? e : e + "";
+function Mr(i) {
+  var e = Gi(i, "string");
+  return he(e) == "symbol" ? e : e + "";
 }
-function Bo(o, e) {
-  if (de(o) != "object" || !o) return o;
-  var t = o[Symbol.toPrimitive];
+function Gi(i, e) {
+  if (he(i) != "object" || !i) return i;
+  var t = i[Symbol.toPrimitive];
   if (t !== void 0) {
-    var r = t.call(o, e);
-    if (de(r) != "object") return r;
+    var r = t.call(i, e);
+    if (he(r) != "object") return r;
     throw new TypeError("@@toPrimitive must return a primitive value.");
   }
-  return String(o);
+  return String(i);
 }
-var We = "tus-v1", Ze = "ietf-draft-03", Ee = "ietf-draft-05", Io = {
+var et = "tus-v1", tt = "ietf-draft-03", De = "ietf-draft-05", Xi = {
   endpoint: null,
   uploadUrl: null,
   metadata: {},
@@ -1229,7 +1229,7 @@ var We = "tus-v1", Ze = "ietf-draft-03", Ee = "ietf-draft-05", Io = {
   addRequestId: !1,
   onBeforeRequest: null,
   onAfterResponse: null,
-  onShouldRetry: Fr,
+  onShouldRetry: Hr,
   chunkSize: Number.POSITIVE_INFINITY,
   retryDelays: [0, 1e3, 3e3, 5e3],
   parallelUploads: 1,
@@ -1241,12 +1241,12 @@ var We = "tus-v1", Ze = "ietf-draft-03", Ee = "ietf-draft-05", Io = {
   urlStorage: null,
   fileReader: null,
   httpStack: null,
-  protocol: We
-}, Je = /* @__PURE__ */ (function() {
-  function o(e, t) {
-    Lo(this, o), "resume" in t && console.log("tus: The `resume` option has been removed in tus-js-client v2. Please use the URL storage API instead."), this.options = t, this.options.chunkSize = Number(this.options.chunkSize), this._urlStorage = this.options.urlStorage, this.file = e, this.url = null, this._req = null, this._fingerprint = null, this._urlStorageKey = null, this._offset = null, this._aborted = !1, this._size = null, this._source = null, this._retryAttempt = 0, this._retryTimeout = null, this._offsetBeforeRetry = 0, this._parallelUploads = null, this._parallelUploadUrls = null;
+  protocol: et
+}, rt = /* @__PURE__ */ (function() {
+  function i(e, t) {
+    Vi(this, i), "resume" in t && console.log("tus: The `resume` option has been removed in tus-js-client v2. Please use the URL storage API instead."), this.options = t, this.options.chunkSize = Number(this.options.chunkSize), this._urlStorage = this.options.urlStorage, this.file = e, this.url = null, this._req = null, this._fingerprint = null, this._urlStorageKey = null, this._offset = null, this._aborted = !1, this._size = null, this._source = null, this._retryAttempt = 0, this._retryTimeout = null, this._offsetBeforeRetry = 0, this._parallelUploads = null, this._parallelUploadUrls = null;
   }
-  return Ao(o, [{
+  return Wi(i, [{
     key: "findPreviousUploads",
     value: function() {
       var t = this;
@@ -1267,7 +1267,7 @@ var We = "tus-v1", Ze = "ietf-draft-03", Ee = "ietf-draft-05", Io = {
         this._emitError(new Error("tus: no file or stream to upload provided"));
         return;
       }
-      if (![We, Ze, Ee].includes(this.options.protocol)) {
+      if (![et, tt, De].includes(this.options.protocol)) {
         this._emitError(new Error("tus: unsupported protocol ".concat(this.options.protocol)));
         return;
       }
@@ -1275,8 +1275,8 @@ var We = "tus-v1", Ze = "ietf-draft-03", Ee = "ietf-draft-05", Io = {
         this._emitError(new Error("tus: neither an endpoint or an upload URL is provided"));
         return;
       }
-      var i = this.options.retryDelays;
-      if (i != null && Object.prototype.toString.call(i) !== "[object Array]") {
+      var o = this.options.retryDelays;
+      if (o != null && Object.prototype.toString.call(o) !== "[object Array]") {
         this._emitError(new Error("tus: the `retryDelays` option must either be an array or null"));
         return;
       }
@@ -1326,20 +1326,20 @@ var We = "tus-v1", Ze = "ietf-draft-03", Ee = "ietf-draft-05", Io = {
   }, {
     key: "_startParallelUpload",
     value: function() {
-      var t, r = this, i = this._size, n = 0;
+      var t, r = this, o = this._size, n = 0;
       this._parallelUploads = [];
-      var s = this._parallelUploadUrls != null ? this._parallelUploadUrls.length : this.options.parallelUploads, a = (t = this.options.parallelUploadBoundaries) !== null && t !== void 0 ? t : Ho(this._source.size, s);
-      this._parallelUploadUrls && a.forEach(function(g, k) {
-        g.uploadUrl = r._parallelUploadUrls[k] || null;
+      var s = this._parallelUploadUrls != null ? this._parallelUploadUrls.length : this.options.parallelUploads, a = (t = this.options.parallelUploadBoundaries) !== null && t !== void 0 ? t : Zi(this._source.size, s);
+      this._parallelUploadUrls && a.forEach(function(h, _) {
+        h.uploadUrl = r._parallelUploadUrls[_] || null;
       }), this._parallelUploadUrls = new Array(a.length);
-      var l = a.map(function(g, k) {
+      var l = a.map(function(h, _) {
         var E = 0;
-        return r._source.slice(g.start, g.end).then(function(S) {
-          var R = S.value;
-          return new Promise(function(_, P) {
-            var T = ve(ve({}, r.options), {}, {
+        return r._source.slice(h.start, h.end).then(function(O) {
+          var P = O.value;
+          return new Promise(function(v, U) {
+            var R = ye(ye({}, r.options), {}, {
               // If available, the partial upload should be resumed from a previous URL.
-              uploadUrl: g.uploadUrl || null,
+              uploadUrl: h.uploadUrl || null,
               // We take manually care of resuming for partial uploads, so they should
               // not be stored in the URL storage.
               storeFingerprintForResuming: !1,
@@ -1350,46 +1350,46 @@ var We = "tus-v1", Ze = "ietf-draft-03", Ee = "ietf-draft-05", Io = {
               parallelUploadBoundaries: null,
               metadata: r.options.metadataForPartialUploads,
               // Add the header to indicate the this is a partial upload.
-              headers: ve(ve({}, r.options.headers), {}, {
+              headers: ye(ye({}, r.options.headers), {}, {
                 "Upload-Concat": "partial"
               }),
               // Reject or resolve the promise if the upload errors or completes.
-              onSuccess: _,
-              onError: P,
+              onSuccess: v,
+              onError: U,
               // Based in the progress for this partial upload, calculate the progress
               // for the entire final upload.
-              onProgress: function(h) {
-                n = n - E + h, E = h, r._emitProgress(n, i);
+              onProgress: function(g) {
+                n = n - E + g, E = g, r._emitProgress(n, o);
               },
               // Wait until every partial upload has an upload URL, so we can add
               // them to the URL storage.
               onUploadUrlAvailable: function() {
-                r._parallelUploadUrls[k] = v.url, r._parallelUploadUrls.filter(function(h) {
-                  return !!h;
+                r._parallelUploadUrls[_] = x.url, r._parallelUploadUrls.filter(function(g) {
+                  return !!g;
                 }).length === a.length && r._saveUploadInUrlStorage();
               }
-            }), v = new o(R, T);
-            v.start(), r._parallelUploads.push(v);
+            }), x = new i(P, R);
+            x.start(), r._parallelUploads.push(x);
           });
         });
       }), p;
       Promise.all(l).then(function() {
         p = r._openRequest("POST", r.options.endpoint), p.setHeader("Upload-Concat", "final;".concat(r._parallelUploadUrls.join(" ")));
-        var g = tr(r.options.metadata);
-        return g !== "" && p.setHeader("Upload-Metadata", g), r._sendRequest(p, null);
-      }).then(function(g) {
-        if (!be(g.getStatus(), 200)) {
-          r._emitHttpError(p, g, "tus: unexpected response while creating upload");
+        var h = ar(r.options.metadata);
+        return h !== "" && p.setHeader("Upload-Metadata", h), r._sendRequest(p, null);
+      }).then(function(h) {
+        if (!ke(h.getStatus(), 200)) {
+          r._emitHttpError(p, h, "tus: unexpected response while creating upload");
           return;
         }
-        var k = g.getHeader("Location");
-        if (k == null) {
-          r._emitHttpError(p, g, "tus: invalid or missing Location header");
+        var _ = h.getHeader("Location");
+        if (_ == null) {
+          r._emitHttpError(p, h, "tus: invalid or missing Location header");
           return;
         }
-        r.url = nr(r.options.endpoint, k), "Created upload at ".concat(r.url), r._emitSuccess(g);
-      }).catch(function(g) {
-        r._emitError(g);
+        r.url = pr(r.options.endpoint, _), "Created upload at ".concat(r.url), r._emitSuccess(h);
+      }).catch(function(h) {
+        r._emitError(h);
       });
     }
     /**
@@ -1426,26 +1426,26 @@ var We = "tus-v1", Ze = "ietf-draft-03", Ee = "ietf-draft-05", Io = {
     value: function(t) {
       var r = this;
       if (this._parallelUploads != null) {
-        var i = jo(this._parallelUploads), n;
+        var o = Ni(this._parallelUploads), n;
         try {
-          for (i.s(); !(n = i.n()).done; ) {
+          for (o.s(); !(n = o.n()).done; ) {
             var s = n.value;
             s.abort(t);
           }
         } catch (a) {
-          i.e(a);
+          o.e(a);
         } finally {
-          i.f();
+          o.f();
         }
       }
-      return this._req !== null && this._req.abort(), this._aborted = !0, this._retryTimeout != null && (clearTimeout(this._retryTimeout), this._retryTimeout = null), !t || this.url == null ? Promise.resolve() : o.terminate(this.url, this.options).then(function() {
+      return this._req !== null && this._req.abort(), this._aborted = !0, this._retryTimeout != null && (clearTimeout(this._retryTimeout), this._retryTimeout = null), !t || this.url == null ? Promise.resolve() : i.terminate(this.url, this.options).then(function() {
         return r._removeFromUrlStorage();
       });
     }
   }, {
     key: "_emitHttpError",
-    value: function(t, r, i, n) {
-      this._emitError(new Ue(i, n, t, r));
+    value: function(t, r, o, n) {
+      this._emitError(new Re(o, n, t, r));
     }
   }, {
     key: "_emitError",
@@ -1453,8 +1453,8 @@ var We = "tus-v1", Ze = "ietf-draft-03", Ee = "ietf-draft-05", Io = {
       var r = this;
       if (!this._aborted) {
         if (this.options.retryDelays != null) {
-          var i = this._offset != null && this._offset > this._offsetBeforeRetry;
-          if (i && (this._retryAttempt = 0), ir(t, this._retryAttempt, this.options)) {
+          var o = this._offset != null && this._offset > this._offsetBeforeRetry;
+          if (o && (this._retryAttempt = 0), cr(t, this._retryAttempt, this.options)) {
             var n = this.options.retryDelays[this._retryAttempt++];
             this._offsetBeforeRetry = this._offset, this._retryTimeout = setTimeout(function() {
               r.start();
@@ -1505,8 +1505,8 @@ var We = "tus-v1", Ze = "ietf-draft-03", Ee = "ietf-draft-05", Io = {
      */
   }, {
     key: "_emitChunkComplete",
-    value: function(t, r, i) {
-      typeof this.options.onChunkComplete == "function" && this.options.onChunkComplete(t, r, i);
+    value: function(t, r, o) {
+      typeof this.options.onChunkComplete == "function" && this.options.onChunkComplete(t, r, o);
     }
     /**
      * Create a new upload using the creation extension by sending a POST
@@ -1525,11 +1525,11 @@ var We = "tus-v1", Ze = "ietf-draft-03", Ee = "ietf-draft-05", Io = {
       }
       var r = this._openRequest("POST", this.options.endpoint);
       this.options.uploadLengthDeferred ? r.setHeader("Upload-Defer-Length", "1") : r.setHeader("Upload-Length", "".concat(this._size));
-      var i = tr(this.options.metadata);
-      i !== "" && r.setHeader("Upload-Metadata", i);
+      var o = ar(this.options.metadata);
+      o !== "" && r.setHeader("Upload-Metadata", o);
       var n;
-      this.options.uploadDataDuringCreation && !this.options.uploadLengthDeferred ? (this._offset = 0, n = this._addChunkToRequest(r)) : ((this.options.protocol === Ze || this.options.protocol === Ee) && r.setHeader("Upload-Complete", "?0"), n = this._sendRequest(r, null)), n.then(function(s) {
-        if (!be(s.getStatus(), 200)) {
+      this.options.uploadDataDuringCreation && !this.options.uploadLengthDeferred ? (this._offset = 0, n = this._addChunkToRequest(r)) : ((this.options.protocol === tt || this.options.protocol === De) && r.setHeader("Upload-Complete", "?0"), n = this._sendRequest(r, null)), n.then(function(s) {
+        if (!ke(s.getStatus(), 200)) {
           t._emitHttpError(r, s, "tus: unexpected response while creating upload");
           return;
         }
@@ -1538,7 +1538,7 @@ var We = "tus-v1", Ze = "ietf-draft-03", Ee = "ietf-draft-05", Io = {
           t._emitHttpError(r, s, "tus: invalid or missing Location header");
           return;
         }
-        if (t.url = nr(t.options.endpoint, a), "Created upload at ".concat(t.url), typeof t.options.onUploadUrlAvailable == "function" && t.options.onUploadUrlAvailable(), t._size === 0) {
+        if (t.url = pr(t.options.endpoint, a), "Created upload at ".concat(t.url), typeof t.options.onUploadUrlAvailable == "function" && t.options.onUploadUrlAvailable(), t._size === 0) {
           t._emitSuccess(s), t._source.close();
           return;
         }
@@ -1559,15 +1559,15 @@ var We = "tus-v1", Ze = "ietf-draft-03", Ee = "ietf-draft-05", Io = {
   }, {
     key: "_resumeUpload",
     value: function() {
-      var t = this, r = this._openRequest("HEAD", this.url), i = this._sendRequest(r, null);
-      i.then(function(n) {
+      var t = this, r = this._openRequest("HEAD", this.url), o = this._sendRequest(r, null);
+      o.then(function(n) {
         var s = n.getStatus();
-        if (!be(s, 200)) {
+        if (!ke(s, 200)) {
           if (s === 423) {
             t._emitHttpError(r, n, "tus: upload is currently locked; retry later");
             return;
           }
-          if (be(s, 400) && t._removeFromUrlStorage(), !t.options.endpoint) {
+          if (ke(s, 400) && t._removeFromUrlStorage(), !t.options.endpoint) {
             t._emitHttpError(r, n, "tus: unable to resume upload (new upload cannot be created without an endpoint)");
             return;
           }
@@ -1580,7 +1580,7 @@ var We = "tus-v1", Ze = "ietf-draft-03", Ee = "ietf-draft-05", Io = {
           return;
         }
         var l = Number.parseInt(n.getHeader("Upload-Length"), 10);
-        if (Number.isNaN(l) && !t.options.uploadLengthDeferred && t.options.protocol === We) {
+        if (Number.isNaN(l) && !t.options.uploadLengthDeferred && t.options.protocol === et) {
           t._emitHttpError(r, n, "tus: invalid or missing length value");
           return;
         }
@@ -1609,9 +1609,9 @@ var We = "tus-v1", Ze = "ietf-draft-03", Ee = "ietf-draft-05", Io = {
       if (!this._aborted) {
         var r;
         this.options.overridePatchMethod ? (r = this._openRequest("POST", this.url), r.setHeader("X-HTTP-Method-Override", "PATCH")) : r = this._openRequest("PATCH", this.url), r.setHeader("Upload-Offset", "".concat(this._offset));
-        var i = this._addChunkToRequest(r);
-        i.then(function(n) {
-          if (!be(n.getStatus(), 200)) {
+        var o = this._addChunkToRequest(r);
+        o.then(function(n) {
+          if (!ke(n.getStatus(), 200)) {
             t._emitHttpError(r, n, "tus: unexpected response while uploading chunk");
             return;
           }
@@ -1630,14 +1630,14 @@ var We = "tus-v1", Ze = "ietf-draft-03", Ee = "ietf-draft-05", Io = {
   }, {
     key: "_addChunkToRequest",
     value: function(t) {
-      var r = this, i = this._offset, n = this._offset + this.options.chunkSize;
+      var r = this, o = this._offset, n = this._offset + this.options.chunkSize;
       return t.setProgressHandler(function(s) {
-        r._emitProgress(i + s, r._size);
-      }), this.options.protocol === We ? t.setHeader("Content-Type", "application/offset+octet-stream") : this.options.protocol === Ee && t.setHeader("Content-Type", "application/partial-upload"), (n === Number.POSITIVE_INFINITY || n > this._size) && !this.options.uploadLengthDeferred && (n = this._size), this._source.slice(i, n).then(function(s) {
+        r._emitProgress(o + s, r._size);
+      }), this.options.protocol === et ? t.setHeader("Content-Type", "application/offset+octet-stream") : this.options.protocol === De && t.setHeader("Content-Type", "application/partial-upload"), (n === Number.POSITIVE_INFINITY || n > this._size) && !this.options.uploadLengthDeferred && (n = this._size), this._source.slice(o, n).then(function(s) {
         var a = s.value, l = s.done, p = a != null && a.size ? a.size : 0;
         r.options.uploadLengthDeferred && l && (r._size = r._offset + p, t.setHeader("Upload-Length", "".concat(r._size)));
-        var g = r._offset + p;
-        return !r.options.uploadLengthDeferred && l && g !== r._size ? Promise.reject(new Error("upload was configured with a size of ".concat(r._size, " bytes, but the source is done after ").concat(g, " bytes"))) : a === null ? r._sendRequest(t) : ((r.options.protocol === Ze || r.options.protocol === Ee) && t.setHeader("Upload-Complete", l ? "?1" : "?0"), r._emitProgress(r._offset, r._size), r._sendRequest(t, a));
+        var h = r._offset + p;
+        return !r.options.uploadLengthDeferred && l && h !== r._size ? Promise.reject(new Error("upload was configured with a size of ".concat(r._size, " bytes, but the source is done after ").concat(h, " bytes"))) : a === null ? r._sendRequest(t) : ((r.options.protocol === tt || r.options.protocol === De) && t.setHeader("Upload-Complete", l ? "?1" : "?0"), r._emitProgress(r._offset, r._size), r._sendRequest(t, a));
       });
     }
     /**
@@ -1649,12 +1649,12 @@ var We = "tus-v1", Ze = "ietf-draft-03", Ee = "ietf-draft-05", Io = {
   }, {
     key: "_handleUploadResponse",
     value: function(t, r) {
-      var i = Number.parseInt(r.getHeader("Upload-Offset"), 10);
-      if (Number.isNaN(i)) {
+      var o = Number.parseInt(r.getHeader("Upload-Offset"), 10);
+      if (Number.isNaN(o)) {
         this._emitHttpError(t, r, "tus: invalid or missing offset value");
         return;
       }
-      if (this._emitProgress(i, this._size), this._emitChunkComplete(i - this._offset, i, this._size), this._offset = i, i === this._size) {
+      if (this._emitProgress(o, this._size), this._emitChunkComplete(o - this._offset, o, this._size), this._offset = o, o === this._size) {
         this._emitSuccess(r), this._source.close();
         return;
       }
@@ -1668,8 +1668,8 @@ var We = "tus-v1", Ze = "ietf-draft-03", Ee = "ietf-draft-05", Io = {
   }, {
     key: "_openRequest",
     value: function(t, r) {
-      var i = rr(t, r, this.options);
-      return this._req = i, i;
+      var o = lr(t, r, this.options);
+      return this._req = o, o;
     }
     /**
      * Remove the entry in the URL storage, if it has been saved before.
@@ -1700,8 +1700,8 @@ var We = "tus-v1", Ze = "ietf-draft-03", Ee = "ietf-draft-05", Io = {
         metadata: this.options.metadata,
         creationTime: (/* @__PURE__ */ new Date()).toString()
       };
-      return this._parallelUploads ? r.parallelUploadUrls = this._parallelUploadUrls : r.uploadUrl = this.url, this._urlStorage.addUpload(this._fingerprint, r).then(function(i) {
-        t._urlStorageKey = i;
+      return this._parallelUploads ? r.parallelUploadUrls = this._parallelUploadUrls : r.uploadUrl = this.url, this._urlStorage.addUpload(this._fingerprint, r).then(function(o) {
+        t._urlStorageKey = o;
       });
     }
     /**
@@ -1713,59 +1713,59 @@ var We = "tus-v1", Ze = "ietf-draft-03", Ee = "ietf-draft-05", Io = {
     key: "_sendRequest",
     value: function(t) {
       var r = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : null;
-      return or(t, r, this.options);
+      return dr(t, r, this.options);
     }
   }], [{
     key: "terminate",
     value: function(t) {
-      var r = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : {}, i = rr("DELETE", t, r);
-      return or(i, null, r).then(function(n) {
+      var r = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : {}, o = lr("DELETE", t, r);
+      return dr(o, null, r).then(function(n) {
         if (n.getStatus() !== 204)
-          throw new Ue("tus: unexpected response while terminating upload", null, i, n);
+          throw new Re("tus: unexpected response while terminating upload", null, o, n);
       }).catch(function(n) {
-        if (n instanceof Ue || (n = new Ue("tus: failed to terminate upload", n, i, null)), !ir(n, 0, r))
+        if (n instanceof Re || (n = new Re("tus: failed to terminate upload", n, o, null)), !cr(n, 0, r))
           throw n;
-        var s = r.retryDelays[0], a = r.retryDelays.slice(1), l = ve(ve({}, r), {}, {
+        var s = r.retryDelays[0], a = r.retryDelays.slice(1), l = ye(ye({}, r), {}, {
           retryDelays: a
         });
         return new Promise(function(p) {
           return setTimeout(p, s);
         }).then(function() {
-          return o.terminate(t, l);
+          return i.terminate(t, l);
         });
       });
     }
   }]);
 })();
-function tr(o) {
-  return Object.entries(o).map(function(e) {
-    var t = Dr(e, 2), r = t[0], i = t[1];
-    return "".concat(r, " ").concat(ko.encode(String(i)));
+function ar(i) {
+  return Object.entries(i).map(function(e) {
+    var t = Ir(e, 2), r = t[0], o = t[1];
+    return "".concat(r, " ").concat(Ri.encode(String(o)));
   }).join(",");
 }
-function be(o, e) {
-  return o >= e && o < e + 100;
+function ke(i, e) {
+  return i >= e && i < e + 100;
 }
-function rr(o, e, t) {
-  var r = t.httpStack.createRequest(o, e);
-  t.protocol === Ze ? r.setHeader("Upload-Draft-Interop-Version", "5") : t.protocol === Ee ? r.setHeader("Upload-Draft-Interop-Version", "6") : r.setHeader("Tus-Resumable", "1.0.0");
-  for (var i = t.headers || {}, n = 0, s = Object.entries(i); n < s.length; n++) {
-    var a = Dr(s[n], 2), l = a[0], p = a[1];
+function lr(i, e, t) {
+  var r = t.httpStack.createRequest(i, e);
+  t.protocol === tt ? r.setHeader("Upload-Draft-Interop-Version", "5") : t.protocol === De ? r.setHeader("Upload-Draft-Interop-Version", "6") : r.setHeader("Tus-Resumable", "1.0.0");
+  for (var o = t.headers || {}, n = 0, s = Object.entries(o); n < s.length; n++) {
+    var a = Ir(s[n], 2), l = a[0], p = a[1];
     r.setHeader(l, p);
   }
   if (t.addRequestId) {
-    var g = Oo();
-    r.setHeader("X-Request-ID", g);
+    var h = Ii();
+    r.setHeader("X-Request-ID", h);
   }
   return r;
 }
-function or(o, e, t) {
-  return ut.apply(this, arguments);
+function dr(i, e, t) {
+  return gt.apply(this, arguments);
 }
-function ut() {
-  return ut = Ro(/* @__PURE__ */ pt().mark(function o(e, t, r) {
-    var i;
-    return pt().wrap(function(s) {
+function gt() {
+  return gt = Bi(/* @__PURE__ */ ht().mark(function i(e, t, r) {
+    var o;
+    return ht().wrap(function(s) {
       for (; ; ) switch (s.prev = s.next) {
         case 0:
           if (typeof r.onBeforeRequest != "function") {
@@ -1776,120 +1776,120 @@ function ut() {
         case 3:
           return s.next = 5, e.send(t);
         case 5:
-          if (i = s.sent, typeof r.onAfterResponse != "function") {
+          if (o = s.sent, typeof r.onAfterResponse != "function") {
             s.next = 9;
             break;
           }
-          return s.next = 9, r.onAfterResponse(e, i);
+          return s.next = 9, r.onAfterResponse(e, o);
         case 9:
-          return s.abrupt("return", i);
+          return s.abrupt("return", o);
         case 10:
         case "end":
           return s.stop();
       }
-    }, o);
-  })), ut.apply(this, arguments);
+    }, i);
+  })), gt.apply(this, arguments);
 }
-function Mo() {
-  var o = !0;
-  return typeof navigator < "u" && navigator.onLine === !1 && (o = !1), o;
+function Ki() {
+  var i = !0;
+  return typeof navigator < "u" && navigator.onLine === !1 && (i = !1), i;
 }
-function ir(o, e, t) {
-  return t.retryDelays == null || e >= t.retryDelays.length || o.originalRequest == null ? !1 : t && typeof t.onShouldRetry == "function" ? t.onShouldRetry(o, e, t) : Fr(o);
+function cr(i, e, t) {
+  return t.retryDelays == null || e >= t.retryDelays.length || i.originalRequest == null ? !1 : t && typeof t.onShouldRetry == "function" ? t.onShouldRetry(i, e, t) : Hr(i);
 }
-function Fr(o) {
-  var e = o.originalResponse ? o.originalResponse.getStatus() : 0;
-  return (!be(e, 400) || e === 409 || e === 423) && Mo();
+function Hr(i) {
+  var e = i.originalResponse ? i.originalResponse.getStatus() : 0;
+  return (!ke(e, 400) || e === 409 || e === 423) && Ki();
 }
-function nr(o, e) {
-  return new Eo(e, o).toString();
+function pr(i, e) {
+  return new Ai(e, i).toString();
 }
-function Ho(o, e) {
-  for (var t = Math.floor(o / e), r = [], i = 0; i < e; i++)
+function Zi(i, e) {
+  for (var t = Math.floor(i / e), r = [], o = 0; o < e; o++)
     r.push({
-      start: t * i,
-      end: t * (i + 1)
+      start: t * o,
+      end: t * (o + 1)
     });
-  return r[e - 1].end = o, r;
+  return r[e - 1].end = i, r;
 }
-Je.defaultOptions = Io;
-var Lr = function() {
+rt.defaultOptions = Xi;
+var qr = function() {
   return typeof navigator < "u" && typeof navigator.product == "string" && navigator.product.toLowerCase() === "reactnative";
 };
-function qo(o) {
+function Ji(i) {
   return new Promise(function(e, t) {
     var r = new XMLHttpRequest();
     r.responseType = "blob", r.onload = function() {
-      var i = r.response;
-      e(i);
-    }, r.onerror = function(i) {
-      t(i);
-    }, r.open("GET", o), r.send();
+      var o = r.response;
+      e(o);
+    }, r.onerror = function(o) {
+      t(o);
+    }, r.open("GET", i), r.send();
   });
 }
-var No = function() {
+var Qi = function() {
   return typeof window < "u" && (typeof window.PhoneGap < "u" || typeof window.Cordova < "u" || typeof window.cordova < "u");
 };
-function Yo(o) {
+function eo(i) {
   return new Promise(function(e, t) {
     var r = new FileReader();
     r.onload = function() {
-      var i = new Uint8Array(r.result);
+      var o = new Uint8Array(r.result);
       e({
-        value: i
+        value: o
       });
-    }, r.onerror = function(i) {
-      t(i);
-    }, r.readAsArrayBuffer(o);
+    }, r.onerror = function(o) {
+      t(o);
+    }, r.readAsArrayBuffer(i);
   });
 }
-function je(o) {
+function Ie(i) {
   "@babel/helpers - typeof";
-  return je = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(e) {
+  return Ie = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(e) {
     return typeof e;
   } : function(e) {
     return e && typeof Symbol == "function" && e.constructor === Symbol && e !== Symbol.prototype ? "symbol" : typeof e;
-  }, je(o);
+  }, Ie(i);
 }
-function Vo(o, e) {
-  if (!(o instanceof e))
+function to(i, e) {
+  if (!(i instanceof e))
     throw new TypeError("Cannot call a class as a function");
 }
-function Go(o, e) {
+function ro(i, e) {
   for (var t = 0; t < e.length; t++) {
     var r = e[t];
-    r.enumerable = r.enumerable || !1, r.configurable = !0, "value" in r && (r.writable = !0), Object.defineProperty(o, Ko(r.key), r);
+    r.enumerable = r.enumerable || !1, r.configurable = !0, "value" in r && (r.writable = !0), Object.defineProperty(i, oo(r.key), r);
   }
 }
-function Xo(o, e, t) {
-  return e && Go(o.prototype, e), Object.defineProperty(o, "prototype", { writable: !1 }), o;
+function io(i, e, t) {
+  return e && ro(i.prototype, e), Object.defineProperty(i, "prototype", { writable: !1 }), i;
 }
-function Ko(o) {
-  var e = Wo(o, "string");
-  return je(e) == "symbol" ? e : e + "";
+function oo(i) {
+  var e = no(i, "string");
+  return Ie(e) == "symbol" ? e : e + "";
 }
-function Wo(o, e) {
-  if (je(o) != "object" || !o) return o;
-  var t = o[Symbol.toPrimitive];
+function no(i, e) {
+  if (Ie(i) != "object" || !i) return i;
+  var t = i[Symbol.toPrimitive];
   if (t !== void 0) {
-    var r = t.call(o, e);
-    if (je(r) != "object") return r;
+    var r = t.call(i, e);
+    if (Ie(r) != "object") return r;
     throw new TypeError("@@toPrimitive must return a primitive value.");
   }
-  return String(o);
+  return String(i);
 }
-var sr = /* @__PURE__ */ (function() {
-  function o(e) {
-    Vo(this, o), this._file = e, this.size = e.size;
+var fr = /* @__PURE__ */ (function() {
+  function i(e) {
+    to(this, i), this._file = e, this.size = e.size;
   }
-  return Xo(o, [{
+  return io(i, [{
     key: "slice",
     value: function(t, r) {
-      if (No())
-        return Yo(this._file.slice(t, r));
-      var i = this._file.slice(t, r), n = r >= this.size;
+      if (Qi())
+        return eo(this._file.slice(t, r));
+      var o = this._file.slice(t, r), n = r >= this.size;
       return Promise.resolve({
-        value: i,
+        value: o,
         done: n
       });
     }
@@ -1899,62 +1899,62 @@ var sr = /* @__PURE__ */ (function() {
     }
   }]);
 })();
-function Fe(o) {
+function Be(i) {
   "@babel/helpers - typeof";
-  return Fe = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(e) {
+  return Be = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(e) {
     return typeof e;
   } : function(e) {
     return e && typeof Symbol == "function" && e.constructor === Symbol && e !== Symbol.prototype ? "symbol" : typeof e;
-  }, Fe(o);
+  }, Be(i);
 }
-function Zo(o, e) {
-  if (!(o instanceof e))
+function so(i, e) {
+  if (!(i instanceof e))
     throw new TypeError("Cannot call a class as a function");
 }
-function Jo(o, e) {
+function ao(i, e) {
   for (var t = 0; t < e.length; t++) {
     var r = e[t];
-    r.enumerable = r.enumerable || !1, r.configurable = !0, "value" in r && (r.writable = !0), Object.defineProperty(o, ei(r.key), r);
+    r.enumerable = r.enumerable || !1, r.configurable = !0, "value" in r && (r.writable = !0), Object.defineProperty(i, co(r.key), r);
   }
 }
-function Qo(o, e, t) {
-  return e && Jo(o.prototype, e), Object.defineProperty(o, "prototype", { writable: !1 }), o;
+function lo(i, e, t) {
+  return e && ao(i.prototype, e), Object.defineProperty(i, "prototype", { writable: !1 }), i;
 }
-function ei(o) {
-  var e = ti(o, "string");
-  return Fe(e) == "symbol" ? e : e + "";
+function co(i) {
+  var e = po(i, "string");
+  return Be(e) == "symbol" ? e : e + "";
 }
-function ti(o, e) {
-  if (Fe(o) != "object" || !o) return o;
-  var t = o[Symbol.toPrimitive];
+function po(i, e) {
+  if (Be(i) != "object" || !i) return i;
+  var t = i[Symbol.toPrimitive];
   if (t !== void 0) {
-    var r = t.call(o, e);
-    if (Fe(r) != "object") return r;
+    var r = t.call(i, e);
+    if (Be(r) != "object") return r;
     throw new TypeError("@@toPrimitive must return a primitive value.");
   }
-  return String(o);
+  return String(i);
 }
-function ar(o) {
-  return o === void 0 ? 0 : o.size !== void 0 ? o.size : o.length;
+function ur(i) {
+  return i === void 0 ? 0 : i.size !== void 0 ? i.size : i.length;
 }
-function ri(o, e) {
-  if (o.concat)
-    return o.concat(e);
-  if (o instanceof Blob)
-    return new Blob([o, e], {
-      type: o.type
+function fo(i, e) {
+  if (i.concat)
+    return i.concat(e);
+  if (i instanceof Blob)
+    return new Blob([i, e], {
+      type: i.type
     });
-  if (o.set) {
-    var t = new o.constructor(o.length + e.length);
-    return t.set(o), t.set(e, o.length), t;
+  if (i.set) {
+    var t = new i.constructor(i.length + e.length);
+    return t.set(i), t.set(e, i.length), t;
   }
   throw new Error("Unknown data type");
 }
-var oi = /* @__PURE__ */ (function() {
-  function o(e) {
-    Zo(this, o), this._buffer = void 0, this._bufferOffset = 0, this._reader = e, this._done = !1;
+var uo = /* @__PURE__ */ (function() {
+  function i(e) {
+    so(this, i), this._buffer = void 0, this._bufferOffset = 0, this._reader = e, this._done = !1;
   }
-  return Qo(o, [{
+  return lo(i, [{
     key: "slice",
     value: function(t, r) {
       return t < this._bufferOffset ? Promise.reject(new Error("Requested data is before the reader's current offset")) : this._readUntilEnoughDataOrDone(t, r);
@@ -1962,7 +1962,7 @@ var oi = /* @__PURE__ */ (function() {
   }, {
     key: "_readUntilEnoughDataOrDone",
     value: function(t, r) {
-      var i = this, n = r <= this._bufferOffset + ar(this._buffer);
+      var o = this, n = r <= this._bufferOffset + ur(this._buffer);
       if (this._done || n) {
         var s = this._getDataFromBuffer(t, r), a = s == null ? this._done : !1;
         return Promise.resolve({
@@ -1971,16 +1971,16 @@ var oi = /* @__PURE__ */ (function() {
         });
       }
       return this._reader.read().then(function(l) {
-        var p = l.value, g = l.done;
-        return g ? i._done = !0 : i._buffer === void 0 ? i._buffer = p : i._buffer = ri(i._buffer, p), i._readUntilEnoughDataOrDone(t, r);
+        var p = l.value, h = l.done;
+        return h ? o._done = !0 : o._buffer === void 0 ? o._buffer = p : o._buffer = fo(o._buffer, p), o._readUntilEnoughDataOrDone(t, r);
       });
     }
   }, {
     key: "_getDataFromBuffer",
     value: function(t, r) {
       t > this._bufferOffset && (this._buffer = this._buffer.slice(t - this._bufferOffset), this._bufferOffset = t);
-      var i = ar(this._buffer) === 0;
-      return this._done && i ? null : this._buffer.slice(0, r - t);
+      var o = ur(this._buffer) === 0;
+      return this._done && o ? null : this._buffer.slice(0, r - t);
     }
   }, {
     key: "close",
@@ -1989,20 +1989,20 @@ var oi = /* @__PURE__ */ (function() {
     }
   }]);
 })();
-function ce(o) {
+function ge(i) {
   "@babel/helpers - typeof";
-  return ce = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(e) {
+  return ge = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(e) {
     return typeof e;
   } : function(e) {
     return e && typeof Symbol == "function" && e.constructor === Symbol && e !== Symbol.prototype ? "symbol" : typeof e;
-  }, ce(o);
+  }, ge(i);
 }
-function ft() {
+function vt() {
   /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */
-  ft = function() {
+  vt = function() {
     return e;
   };
-  var o, e = {}, t = Object.prototype, r = t.hasOwnProperty, i = Object.defineProperty || function(u, d, c) {
+  var i, e = {}, t = Object.prototype, r = t.hasOwnProperty, o = Object.defineProperty || function(u, d, c) {
     u[d] = c.value;
   }, n = typeof Symbol == "function" ? Symbol : {}, s = n.iterator || "@@iterator", a = n.asyncIterator || "@@asyncIterator", l = n.toStringTag || "@@toStringTag";
   function p(u, d, c) {
@@ -2011,167 +2011,167 @@ function ft() {
   try {
     p({}, "");
   } catch {
-    p = function(c, b, w) {
-      return c[b] = w;
+    p = function(c, y, k) {
+      return c[y] = k;
     };
   }
-  function g(u, d, c, b) {
-    var w = d && d.prototype instanceof T ? d : T, y = Object.create(w.prototype), z = new Q(b || []);
-    return i(y, "_invoke", { value: X(u, c, z) }), y;
+  function h(u, d, c, y) {
+    var k = d && d.prototype instanceof R ? d : R, w = Object.create(k.prototype), T = new Q(y || []);
+    return o(w, "_invoke", { value: X(u, c, T) }), w;
   }
-  function k(u, d, c) {
+  function _(u, d, c) {
     try {
       return { type: "normal", arg: u.call(d, c) };
-    } catch (b) {
-      return { type: "throw", arg: b };
+    } catch (y) {
+      return { type: "throw", arg: y };
     }
   }
-  e.wrap = g;
-  var E = "suspendedStart", S = "suspendedYield", R = "executing", _ = "completed", P = {};
-  function T() {
-  }
-  function v() {
+  e.wrap = h;
+  var E = "suspendedStart", O = "suspendedYield", P = "executing", v = "completed", U = {};
+  function R() {
   }
   function x() {
   }
-  var h = {};
-  p(h, s, function() {
+  function b() {
+  }
+  var g = {};
+  p(g, s, function() {
     return this;
   });
-  var m = Object.getPrototypeOf, O = m && m(m(ne([])));
-  O && O !== t && r.call(O, s) && (h = O);
-  var $ = x.prototype = T.prototype = Object.create(h);
-  function F(u) {
+  var m = Object.getPrototypeOf, z = m && m(m(de([])));
+  z && z !== t && r.call(z, s) && (g = z);
+  var C = b.prototype = R.prototype = Object.create(g);
+  function L(u) {
     ["next", "throw", "return"].forEach(function(d) {
       p(u, d, function(c) {
         return this._invoke(d, c);
       });
     });
   }
-  function D(u, d) {
-    function c(w, y, z, L) {
-      var A = k(u[w], u, y);
-      if (A.type !== "throw") {
-        var V = A.arg, q = V.value;
-        return q && ce(q) == "object" && r.call(q, "__await") ? d.resolve(q.__await).then(function(G) {
-          c("next", G, z, L);
-        }, function(G) {
-          c("throw", G, z, L);
-        }) : d.resolve(q).then(function(G) {
-          V.value = G, z(V);
-        }, function(G) {
-          return c("throw", G, z, L);
+  function j(u, d) {
+    function c(k, w, T, A) {
+      var I = _(u[k], u, w);
+      if (I.type !== "throw") {
+        var V = I.arg, N = V.value;
+        return N && ge(N) == "object" && r.call(N, "__await") ? d.resolve(N.__await).then(function(W) {
+          c("next", W, T, A);
+        }, function(W) {
+          c("throw", W, T, A);
+        }) : d.resolve(N).then(function(W) {
+          V.value = W, T(V);
+        }, function(W) {
+          return c("throw", W, T, A);
         });
       }
-      L(A.arg);
+      A(I.arg);
     }
-    var b;
-    i(this, "_invoke", { value: function(y, z) {
-      function L() {
-        return new d(function(A, V) {
-          c(y, z, A, V);
+    var y;
+    o(this, "_invoke", { value: function(w, T) {
+      function A() {
+        return new d(function(I, V) {
+          c(w, T, I, V);
         });
       }
-      return b = b ? b.then(L, L) : L();
+      return y = y ? y.then(A, A) : A();
     } });
   }
   function X(u, d, c) {
-    var b = E;
-    return function(w, y) {
-      if (b === R) throw Error("Generator is already running");
-      if (b === _) {
-        if (w === "throw") throw y;
-        return { value: o, done: !0 };
+    var y = E;
+    return function(k, w) {
+      if (y === P) throw Error("Generator is already running");
+      if (y === v) {
+        if (k === "throw") throw w;
+        return { value: i, done: !0 };
       }
-      for (c.method = w, c.arg = y; ; ) {
-        var z = c.delegate;
-        if (z) {
-          var L = re(z, c);
-          if (L) {
-            if (L === P) continue;
-            return L;
+      for (c.method = k, c.arg = w; ; ) {
+        var T = c.delegate;
+        if (T) {
+          var A = ie(T, c);
+          if (A) {
+            if (A === U) continue;
+            return A;
           }
         }
         if (c.method === "next") c.sent = c._sent = c.arg;
         else if (c.method === "throw") {
-          if (b === E) throw b = _, c.arg;
+          if (y === E) throw y = v, c.arg;
           c.dispatchException(c.arg);
         } else c.method === "return" && c.abrupt("return", c.arg);
-        b = R;
-        var A = k(u, d, c);
-        if (A.type === "normal") {
-          if (b = c.done ? _ : S, A.arg === P) continue;
-          return { value: A.arg, done: c.done };
+        y = P;
+        var I = _(u, d, c);
+        if (I.type === "normal") {
+          if (y = c.done ? v : O, I.arg === U) continue;
+          return { value: I.arg, done: c.done };
         }
-        A.type === "throw" && (b = _, c.method = "throw", c.arg = A.arg);
+        I.type === "throw" && (y = v, c.method = "throw", c.arg = I.arg);
       }
     };
   }
-  function re(u, d) {
-    var c = d.method, b = u.iterator[c];
-    if (b === o) return d.delegate = null, c === "throw" && u.iterator.return && (d.method = "return", d.arg = o, re(u, d), d.method === "throw") || c !== "return" && (d.method = "throw", d.arg = new TypeError("The iterator does not provide a '" + c + "' method")), P;
-    var w = k(b, u.iterator, d.arg);
-    if (w.type === "throw") return d.method = "throw", d.arg = w.arg, d.delegate = null, P;
-    var y = w.arg;
-    return y ? y.done ? (d[u.resultName] = y.value, d.next = u.nextLoc, d.method !== "return" && (d.method = "next", d.arg = o), d.delegate = null, P) : y : (d.method = "throw", d.arg = new TypeError("iterator result is not an object"), d.delegate = null, P);
+  function ie(u, d) {
+    var c = d.method, y = u.iterator[c];
+    if (y === i) return d.delegate = null, c === "throw" && u.iterator.return && (d.method = "return", d.arg = i, ie(u, d), d.method === "throw") || c !== "return" && (d.method = "throw", d.arg = new TypeError("The iterator does not provide a '" + c + "' method")), U;
+    var k = _(y, u.iterator, d.arg);
+    if (k.type === "throw") return d.method = "throw", d.arg = k.arg, d.delegate = null, U;
+    var w = k.arg;
+    return w ? w.done ? (d[u.resultName] = w.value, d.next = u.nextLoc, d.method !== "return" && (d.method = "next", d.arg = i), d.delegate = null, U) : w : (d.method = "throw", d.arg = new TypeError("iterator result is not an object"), d.delegate = null, U);
   }
-  function he(u) {
+  function be(u) {
     var d = { tryLoc: u[0] };
     1 in u && (d.catchLoc = u[1]), 2 in u && (d.finallyLoc = u[2], d.afterLoc = u[3]), this.tryEntries.push(d);
   }
-  function U(u) {
+  function $(u) {
     var d = u.completion || {};
     d.type = "normal", delete d.arg, u.completion = d;
   }
   function Q(u) {
-    this.tryEntries = [{ tryLoc: "root" }], u.forEach(he, this), this.reset(!0);
+    this.tryEntries = [{ tryLoc: "root" }], u.forEach(be, this), this.reset(!0);
   }
-  function ne(u) {
+  function de(u) {
     if (u || u === "") {
       var d = u[s];
       if (d) return d.call(u);
       if (typeof u.next == "function") return u;
       if (!isNaN(u.length)) {
-        var c = -1, b = function w() {
-          for (; ++c < u.length; ) if (r.call(u, c)) return w.value = u[c], w.done = !1, w;
-          return w.value = o, w.done = !0, w;
+        var c = -1, y = function k() {
+          for (; ++c < u.length; ) if (r.call(u, c)) return k.value = u[c], k.done = !1, k;
+          return k.value = i, k.done = !0, k;
         };
-        return b.next = b;
+        return y.next = y;
       }
     }
-    throw new TypeError(ce(u) + " is not iterable");
+    throw new TypeError(ge(u) + " is not iterable");
   }
-  return v.prototype = x, i($, "constructor", { value: x, configurable: !0 }), i(x, "constructor", { value: v, configurable: !0 }), v.displayName = p(x, l, "GeneratorFunction"), e.isGeneratorFunction = function(u) {
+  return x.prototype = b, o(C, "constructor", { value: b, configurable: !0 }), o(b, "constructor", { value: x, configurable: !0 }), x.displayName = p(b, l, "GeneratorFunction"), e.isGeneratorFunction = function(u) {
     var d = typeof u == "function" && u.constructor;
-    return !!d && (d === v || (d.displayName || d.name) === "GeneratorFunction");
+    return !!d && (d === x || (d.displayName || d.name) === "GeneratorFunction");
   }, e.mark = function(u) {
-    return Object.setPrototypeOf ? Object.setPrototypeOf(u, x) : (u.__proto__ = x, p(u, l, "GeneratorFunction")), u.prototype = Object.create($), u;
+    return Object.setPrototypeOf ? Object.setPrototypeOf(u, b) : (u.__proto__ = b, p(u, l, "GeneratorFunction")), u.prototype = Object.create(C), u;
   }, e.awrap = function(u) {
     return { __await: u };
-  }, F(D.prototype), p(D.prototype, a, function() {
+  }, L(j.prototype), p(j.prototype, a, function() {
     return this;
-  }), e.AsyncIterator = D, e.async = function(u, d, c, b, w) {
-    w === void 0 && (w = Promise);
-    var y = new D(g(u, d, c, b), w);
-    return e.isGeneratorFunction(d) ? y : y.next().then(function(z) {
-      return z.done ? z.value : y.next();
+  }), e.AsyncIterator = j, e.async = function(u, d, c, y, k) {
+    k === void 0 && (k = Promise);
+    var w = new j(h(u, d, c, y), k);
+    return e.isGeneratorFunction(d) ? w : w.next().then(function(T) {
+      return T.done ? T.value : w.next();
     });
-  }, F($), p($, l, "Generator"), p($, s, function() {
+  }, L(C), p(C, l, "Generator"), p(C, s, function() {
     return this;
-  }), p($, "toString", function() {
+  }), p(C, "toString", function() {
     return "[object Generator]";
   }), e.keys = function(u) {
     var d = Object(u), c = [];
-    for (var b in d) c.push(b);
-    return c.reverse(), function w() {
+    for (var y in d) c.push(y);
+    return c.reverse(), function k() {
       for (; c.length; ) {
-        var y = c.pop();
-        if (y in d) return w.value = y, w.done = !1, w;
+        var w = c.pop();
+        if (w in d) return k.value = w, k.done = !1, k;
       }
-      return w.done = !0, w;
+      return k.done = !0, k;
     };
-  }, e.values = ne, Q.prototype = { constructor: Q, reset: function(d) {
-    if (this.prev = 0, this.next = 0, this.sent = this._sent = o, this.done = !1, this.delegate = null, this.method = "next", this.arg = o, this.tryEntries.forEach(U), !d) for (var c in this) c.charAt(0) === "t" && r.call(this, c) && !isNaN(+c.slice(1)) && (this[c] = o);
+  }, e.values = de, Q.prototype = { constructor: Q, reset: function(d) {
+    if (this.prev = 0, this.next = 0, this.sent = this._sent = i, this.done = !1, this.delegate = null, this.method = "next", this.arg = i, this.tryEntries.forEach($), !d) for (var c in this) c.charAt(0) === "t" && r.call(this, c) && !isNaN(+c.slice(1)) && (this[c] = i);
   }, stop: function() {
     this.done = !0;
     var d = this.tryEntries[0].completion;
@@ -2180,141 +2180,141 @@ function ft() {
   }, dispatchException: function(d) {
     if (this.done) throw d;
     var c = this;
-    function b(V, q) {
-      return z.type = "throw", z.arg = d, c.next = V, q && (c.method = "next", c.arg = o), !!q;
+    function y(V, N) {
+      return T.type = "throw", T.arg = d, c.next = V, N && (c.method = "next", c.arg = i), !!N;
     }
-    for (var w = this.tryEntries.length - 1; w >= 0; --w) {
-      var y = this.tryEntries[w], z = y.completion;
-      if (y.tryLoc === "root") return b("end");
-      if (y.tryLoc <= this.prev) {
-        var L = r.call(y, "catchLoc"), A = r.call(y, "finallyLoc");
-        if (L && A) {
-          if (this.prev < y.catchLoc) return b(y.catchLoc, !0);
-          if (this.prev < y.finallyLoc) return b(y.finallyLoc);
-        } else if (L) {
-          if (this.prev < y.catchLoc) return b(y.catchLoc, !0);
+    for (var k = this.tryEntries.length - 1; k >= 0; --k) {
+      var w = this.tryEntries[k], T = w.completion;
+      if (w.tryLoc === "root") return y("end");
+      if (w.tryLoc <= this.prev) {
+        var A = r.call(w, "catchLoc"), I = r.call(w, "finallyLoc");
+        if (A && I) {
+          if (this.prev < w.catchLoc) return y(w.catchLoc, !0);
+          if (this.prev < w.finallyLoc) return y(w.finallyLoc);
+        } else if (A) {
+          if (this.prev < w.catchLoc) return y(w.catchLoc, !0);
         } else {
-          if (!A) throw Error("try statement without catch or finally");
-          if (this.prev < y.finallyLoc) return b(y.finallyLoc);
+          if (!I) throw Error("try statement without catch or finally");
+          if (this.prev < w.finallyLoc) return y(w.finallyLoc);
         }
       }
     }
   }, abrupt: function(d, c) {
-    for (var b = this.tryEntries.length - 1; b >= 0; --b) {
-      var w = this.tryEntries[b];
-      if (w.tryLoc <= this.prev && r.call(w, "finallyLoc") && this.prev < w.finallyLoc) {
-        var y = w;
+    for (var y = this.tryEntries.length - 1; y >= 0; --y) {
+      var k = this.tryEntries[y];
+      if (k.tryLoc <= this.prev && r.call(k, "finallyLoc") && this.prev < k.finallyLoc) {
+        var w = k;
         break;
       }
     }
-    y && (d === "break" || d === "continue") && y.tryLoc <= c && c <= y.finallyLoc && (y = null);
-    var z = y ? y.completion : {};
-    return z.type = d, z.arg = c, y ? (this.method = "next", this.next = y.finallyLoc, P) : this.complete(z);
+    w && (d === "break" || d === "continue") && w.tryLoc <= c && c <= w.finallyLoc && (w = null);
+    var T = w ? w.completion : {};
+    return T.type = d, T.arg = c, w ? (this.method = "next", this.next = w.finallyLoc, U) : this.complete(T);
   }, complete: function(d, c) {
     if (d.type === "throw") throw d.arg;
-    return d.type === "break" || d.type === "continue" ? this.next = d.arg : d.type === "return" ? (this.rval = this.arg = d.arg, this.method = "return", this.next = "end") : d.type === "normal" && c && (this.next = c), P;
+    return d.type === "break" || d.type === "continue" ? this.next = d.arg : d.type === "return" ? (this.rval = this.arg = d.arg, this.method = "return", this.next = "end") : d.type === "normal" && c && (this.next = c), U;
   }, finish: function(d) {
     for (var c = this.tryEntries.length - 1; c >= 0; --c) {
-      var b = this.tryEntries[c];
-      if (b.finallyLoc === d) return this.complete(b.completion, b.afterLoc), U(b), P;
+      var y = this.tryEntries[c];
+      if (y.finallyLoc === d) return this.complete(y.completion, y.afterLoc), $(y), U;
     }
   }, catch: function(d) {
     for (var c = this.tryEntries.length - 1; c >= 0; --c) {
-      var b = this.tryEntries[c];
-      if (b.tryLoc === d) {
-        var w = b.completion;
-        if (w.type === "throw") {
-          var y = w.arg;
-          U(b);
+      var y = this.tryEntries[c];
+      if (y.tryLoc === d) {
+        var k = y.completion;
+        if (k.type === "throw") {
+          var w = k.arg;
+          $(y);
         }
-        return y;
+        return w;
       }
     }
     throw Error("illegal catch attempt");
-  }, delegateYield: function(d, c, b) {
-    return this.delegate = { iterator: ne(d), resultName: c, nextLoc: b }, this.method === "next" && (this.arg = o), P;
+  }, delegateYield: function(d, c, y) {
+    return this.delegate = { iterator: de(d), resultName: c, nextLoc: y }, this.method === "next" && (this.arg = i), U;
   } }, e;
 }
-function lr(o, e, t, r, i, n, s) {
+function hr(i, e, t, r, o, n, s) {
   try {
-    var a = o[n](s), l = a.value;
+    var a = i[n](s), l = a.value;
   } catch (p) {
     t(p);
     return;
   }
-  a.done ? e(l) : Promise.resolve(l).then(r, i);
+  a.done ? e(l) : Promise.resolve(l).then(r, o);
 }
-function ii(o) {
+function ho(i) {
   return function() {
     var e = this, t = arguments;
-    return new Promise(function(r, i) {
-      var n = o.apply(e, t);
+    return new Promise(function(r, o) {
+      var n = i.apply(e, t);
       function s(l) {
-        lr(n, r, i, s, a, "next", l);
+        hr(n, r, o, s, a, "next", l);
       }
       function a(l) {
-        lr(n, r, i, s, a, "throw", l);
+        hr(n, r, o, s, a, "throw", l);
       }
       s(void 0);
     });
   };
 }
-function ni(o, e) {
-  if (!(o instanceof e))
+function go(i, e) {
+  if (!(i instanceof e))
     throw new TypeError("Cannot call a class as a function");
 }
-function si(o, e) {
+function vo(i, e) {
   for (var t = 0; t < e.length; t++) {
     var r = e[t];
-    r.enumerable = r.enumerable || !1, r.configurable = !0, "value" in r && (r.writable = !0), Object.defineProperty(o, li(r.key), r);
+    r.enumerable = r.enumerable || !1, r.configurable = !0, "value" in r && (r.writable = !0), Object.defineProperty(i, bo(r.key), r);
   }
 }
-function ai(o, e, t) {
-  return e && si(o.prototype, e), Object.defineProperty(o, "prototype", { writable: !1 }), o;
+function xo(i, e, t) {
+  return e && vo(i.prototype, e), Object.defineProperty(i, "prototype", { writable: !1 }), i;
 }
-function li(o) {
-  var e = di(o, "string");
-  return ce(e) == "symbol" ? e : e + "";
+function bo(i) {
+  var e = mo(i, "string");
+  return ge(e) == "symbol" ? e : e + "";
 }
-function di(o, e) {
-  if (ce(o) != "object" || !o) return o;
-  var t = o[Symbol.toPrimitive];
+function mo(i, e) {
+  if (ge(i) != "object" || !i) return i;
+  var t = i[Symbol.toPrimitive];
   if (t !== void 0) {
-    var r = t.call(o, e);
-    if (ce(r) != "object") return r;
+    var r = t.call(i, e);
+    if (ge(r) != "object") return r;
     throw new TypeError("@@toPrimitive must return a primitive value.");
   }
-  return String(o);
+  return String(i);
 }
-var ci = /* @__PURE__ */ (function() {
-  function o() {
-    ni(this, o);
+var yo = /* @__PURE__ */ (function() {
+  function i() {
+    go(this, i);
   }
-  return ai(o, [{
+  return xo(i, [{
     key: "openFile",
     value: (function() {
-      var e = ii(/* @__PURE__ */ ft().mark(function r(i, n) {
+      var e = ho(/* @__PURE__ */ vt().mark(function r(o, n) {
         var s;
-        return ft().wrap(function(l) {
+        return vt().wrap(function(l) {
           for (; ; ) switch (l.prev = l.next) {
             case 0:
-              if (!(Lr() && i && typeof i.uri < "u")) {
+              if (!(qr() && o && typeof o.uri < "u")) {
                 l.next = 11;
                 break;
               }
-              return l.prev = 1, l.next = 4, qo(i.uri);
+              return l.prev = 1, l.next = 4, Ji(o.uri);
             case 4:
-              return s = l.sent, l.abrupt("return", new sr(s));
+              return s = l.sent, l.abrupt("return", new fr(s));
             case 8:
               throw l.prev = 8, l.t0 = l.catch(1), new Error("tus: cannot fetch `file.uri` as Blob, make sure the uri is correct and accessible. ".concat(l.t0));
             case 11:
-              if (!(typeof i.slice == "function" && typeof i.size < "u")) {
+              if (!(typeof o.slice == "function" && typeof o.size < "u")) {
                 l.next = 13;
                 break;
               }
-              return l.abrupt("return", Promise.resolve(new sr(i)));
+              return l.abrupt("return", Promise.resolve(new fr(o)));
             case 13:
-              if (typeof i.read != "function") {
+              if (typeof o.read != "function") {
                 l.next = 18;
                 break;
               }
@@ -2324,7 +2324,7 @@ var ci = /* @__PURE__ */ (function() {
               }
               return l.abrupt("return", Promise.reject(new Error("cannot create source for stream without a finite value for the `chunkSize` option")));
             case 17:
-              return l.abrupt("return", Promise.resolve(new oi(i, n)));
+              return l.abrupt("return", Promise.resolve(new uo(o, n)));
             case 18:
               return l.abrupt("return", Promise.reject(new Error("source object may only be an instance of File, Blob, or Reader in this environment")));
             case 19:
@@ -2333,73 +2333,73 @@ var ci = /* @__PURE__ */ (function() {
           }
         }, r, null, [[1, 8]]);
       }));
-      function t(r, i) {
+      function t(r, o) {
         return e.apply(this, arguments);
       }
       return t;
     })()
   }]);
 })();
-function pi(o, e) {
-  return Lr() ? Promise.resolve(ui(o, e)) : Promise.resolve(["tus-br", o.name, o.type, o.size, o.lastModified, e.endpoint].join("-"));
+function wo(i, e) {
+  return qr() ? Promise.resolve(_o(i, e)) : Promise.resolve(["tus-br", i.name, i.type, i.size, i.lastModified, e.endpoint].join("-"));
 }
-function ui(o, e) {
-  var t = o.exif ? fi(JSON.stringify(o.exif)) : "noexif";
-  return ["tus-rn", o.name || "noname", o.size || "nosize", t, e.endpoint].join("/");
+function _o(i, e) {
+  var t = i.exif ? ko(JSON.stringify(i.exif)) : "noexif";
+  return ["tus-rn", i.name || "noname", i.size || "nosize", t, e.endpoint].join("/");
 }
-function fi(o) {
+function ko(i) {
   var e = 0;
-  if (o.length === 0)
+  if (i.length === 0)
     return e;
-  for (var t = 0; t < o.length; t++) {
-    var r = o.charCodeAt(t);
+  for (var t = 0; t < i.length; t++) {
+    var r = i.charCodeAt(t);
     e = (e << 5) - e + r, e &= e;
   }
   return e;
 }
-function Le(o) {
+function Me(i) {
   "@babel/helpers - typeof";
-  return Le = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(e) {
+  return Me = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(e) {
     return typeof e;
   } : function(e) {
     return e && typeof Symbol == "function" && e.constructor === Symbol && e !== Symbol.prototype ? "symbol" : typeof e;
-  }, Le(o);
+  }, Me(i);
 }
-function Ct(o, e) {
-  if (!(o instanceof e))
+function Pt(i, e) {
+  if (!(i instanceof e))
     throw new TypeError("Cannot call a class as a function");
 }
-function hi(o, e) {
+function So(i, e) {
   for (var t = 0; t < e.length; t++) {
     var r = e[t];
-    r.enumerable = r.enumerable || !1, r.configurable = !0, "value" in r && (r.writable = !0), Object.defineProperty(o, gi(r.key), r);
+    r.enumerable = r.enumerable || !1, r.configurable = !0, "value" in r && (r.writable = !0), Object.defineProperty(i, Co(r.key), r);
   }
 }
-function $t(o, e, t) {
-  return e && hi(o.prototype, e), Object.defineProperty(o, "prototype", { writable: !1 }), o;
+function zt(i, e, t) {
+  return e && So(i.prototype, e), Object.defineProperty(i, "prototype", { writable: !1 }), i;
 }
-function gi(o) {
-  var e = vi(o, "string");
-  return Le(e) == "symbol" ? e : e + "";
+function Co(i) {
+  var e = $o(i, "string");
+  return Me(e) == "symbol" ? e : e + "";
 }
-function vi(o, e) {
-  if (Le(o) != "object" || !o) return o;
-  var t = o[Symbol.toPrimitive];
+function $o(i, e) {
+  if (Me(i) != "object" || !i) return i;
+  var t = i[Symbol.toPrimitive];
   if (t !== void 0) {
-    var r = t.call(o, e);
-    if (Le(r) != "object") return r;
+    var r = t.call(i, e);
+    if (Me(r) != "object") return r;
     throw new TypeError("@@toPrimitive must return a primitive value.");
   }
-  return String(o);
+  return String(i);
 }
-var xi = /* @__PURE__ */ (function() {
-  function o() {
-    Ct(this, o);
+var Uo = /* @__PURE__ */ (function() {
+  function i() {
+    Pt(this, i);
   }
-  return $t(o, [{
+  return zt(i, [{
     key: "createRequest",
     value: function(t, r) {
-      return new mi(t, r);
+      return new Eo(t, r);
     }
   }, {
     key: "getName",
@@ -2407,11 +2407,11 @@ var xi = /* @__PURE__ */ (function() {
       return "XHRHttpStack";
     }
   }]);
-})(), mi = /* @__PURE__ */ (function() {
-  function o(e, t) {
-    Ct(this, o), this._xhr = new XMLHttpRequest(), this._xhr.open(e, t, !0), this._method = e, this._url = t, this._headers = {};
+})(), Eo = /* @__PURE__ */ (function() {
+  function i(e, t) {
+    Pt(this, i), this._xhr = new XMLHttpRequest(), this._xhr.open(e, t, !0), this._method = e, this._url = t, this._headers = {};
   }
-  return $t(o, [{
+  return zt(i, [{
     key: "getMethod",
     value: function() {
       return this._method;
@@ -2442,9 +2442,9 @@ var xi = /* @__PURE__ */ (function() {
     key: "send",
     value: function() {
       var t = this, r = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : null;
-      return new Promise(function(i, n) {
+      return new Promise(function(o, n) {
         t._xhr.onload = function() {
-          i(new bi(t._xhr));
+          o(new Po(t._xhr));
         }, t._xhr.onerror = function(s) {
           n(s);
         }, t._xhr.send(r);
@@ -2461,11 +2461,11 @@ var xi = /* @__PURE__ */ (function() {
       return this._xhr;
     }
   }]);
-})(), bi = /* @__PURE__ */ (function() {
-  function o(e) {
-    Ct(this, o), this._xhr = e;
+})(), Po = /* @__PURE__ */ (function() {
+  function i(e) {
+    Pt(this, i), this._xhr = e;
   }
-  return $t(o, [{
+  return zt(i, [{
     key: "getStatus",
     value: function() {
       return this._xhr.status;
@@ -2487,57 +2487,57 @@ var xi = /* @__PURE__ */ (function() {
     }
   }]);
 })();
-function Ae(o) {
+function He(i) {
   "@babel/helpers - typeof";
-  return Ae = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(e) {
+  return He = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(e) {
     return typeof e;
   } : function(e) {
     return e && typeof Symbol == "function" && e.constructor === Symbol && e !== Symbol.prototype ? "symbol" : typeof e;
-  }, Ae(o);
+  }, He(i);
 }
-function yi(o, e) {
-  if (!(o instanceof e))
+function zo(i, e) {
+  if (!(i instanceof e))
     throw new TypeError("Cannot call a class as a function");
 }
-function wi(o, e) {
+function Oo(i, e) {
   for (var t = 0; t < e.length; t++) {
     var r = e[t];
-    r.enumerable = r.enumerable || !1, r.configurable = !0, "value" in r && (r.writable = !0), Object.defineProperty(o, ki(r.key), r);
+    r.enumerable = r.enumerable || !1, r.configurable = !0, "value" in r && (r.writable = !0), Object.defineProperty(i, To(r.key), r);
   }
 }
-function _i(o, e, t) {
-  return e && wi(o.prototype, e), Object.defineProperty(o, "prototype", { writable: !1 }), o;
+function Ro(i, e, t) {
+  return e && Oo(i.prototype, e), Object.defineProperty(i, "prototype", { writable: !1 }), i;
 }
-function ki(o) {
-  var e = Si(o, "string");
-  return Ae(e) == "symbol" ? e : e + "";
+function To(i) {
+  var e = Do(i, "string");
+  return He(e) == "symbol" ? e : e + "";
 }
-function Si(o, e) {
-  if (Ae(o) != "object" || !o) return o;
-  var t = o[Symbol.toPrimitive];
+function Do(i, e) {
+  if (He(i) != "object" || !i) return i;
+  var t = i[Symbol.toPrimitive];
   if (t !== void 0) {
-    var r = t.call(o, e);
-    if (Ae(r) != "object") return r;
+    var r = t.call(i, e);
+    if (He(r) != "object") return r;
     throw new TypeError("@@toPrimitive must return a primitive value.");
   }
-  return String(o);
+  return String(i);
 }
-var ht = !1;
+var xt = !1;
 try {
-  ht = "localStorage" in window;
-  var nt = "tusSupport", dr = localStorage.getItem(nt);
-  localStorage.setItem(nt, dr), dr === null && localStorage.removeItem(nt);
-} catch (o) {
-  if (o.code === o.SECURITY_ERR || o.code === o.QUOTA_EXCEEDED_ERR)
-    ht = !1;
+  xt = "localStorage" in window;
+  var lt = "tusSupport", gr = localStorage.getItem(lt);
+  localStorage.setItem(lt, gr), gr === null && localStorage.removeItem(lt);
+} catch (i) {
+  if (i.code === i.SECURITY_ERR || i.code === i.QUOTA_EXCEEDED_ERR)
+    xt = !1;
   else
-    throw o;
+    throw i;
 }
-var Ci = ht, $i = /* @__PURE__ */ (function() {
-  function o() {
-    yi(this, o);
+var jo = xt, Fo = /* @__PURE__ */ (function() {
+  function i() {
+    zo(this, i);
   }
-  return _i(o, [{
+  return Ro(i, [{
     key: "findAllUploads",
     value: function() {
       var t = this._findEntries("tus::");
@@ -2557,14 +2557,14 @@ var Ci = ht, $i = /* @__PURE__ */ (function() {
   }, {
     key: "addUpload",
     value: function(t, r) {
-      var i = Math.round(Math.random() * 1e12), n = "tus::".concat(t, "::").concat(i);
+      var o = Math.round(Math.random() * 1e12), n = "tus::".concat(t, "::").concat(o);
       return localStorage.setItem(n, JSON.stringify(r)), Promise.resolve(n);
     }
   }, {
     key: "_findEntries",
     value: function(t) {
-      for (var r = [], i = 0; i < localStorage.length; i++) {
-        var n = localStorage.key(i);
+      for (var r = [], o = 0; o < localStorage.length; o++) {
+        var n = localStorage.key(o);
         if (n.indexOf(t) === 0)
           try {
             var s = JSON.parse(localStorage.getItem(n));
@@ -2576,261 +2576,261 @@ var Ci = ht, $i = /* @__PURE__ */ (function() {
     }
   }]);
 })();
-function ke(o) {
+function $e(i) {
   "@babel/helpers - typeof";
-  return ke = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(e) {
+  return $e = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(e) {
     return typeof e;
   } : function(e) {
     return e && typeof Symbol == "function" && e.constructor === Symbol && e !== Symbol.prototype ? "symbol" : typeof e;
-  }, ke(o);
+  }, $e(i);
 }
-function Ui(o, e) {
-  if (!(o instanceof e))
+function Lo(i, e) {
+  if (!(i instanceof e))
     throw new TypeError("Cannot call a class as a function");
 }
-function Pi(o, e) {
+function Ao(i, e) {
   for (var t = 0; t < e.length; t++) {
     var r = e[t];
-    r.enumerable = r.enumerable || !1, r.configurable = !0, "value" in r && (r.writable = !0), Object.defineProperty(o, Br(r.key), r);
+    r.enumerable = r.enumerable || !1, r.configurable = !0, "value" in r && (r.writable = !0), Object.defineProperty(i, Yr(r.key), r);
   }
 }
-function Ei(o, e, t) {
-  return t && Pi(o, t), Object.defineProperty(o, "prototype", { writable: !1 }), o;
+function Io(i, e, t) {
+  return t && Ao(i, t), Object.defineProperty(i, "prototype", { writable: !1 }), i;
 }
-function Oi(o, e, t) {
-  return e = Qe(e), Ri(o, Ar() ? Reflect.construct(e, t || [], Qe(o).constructor) : e.apply(o, t));
+function Bo(i, e, t) {
+  return e = it(e), Mo(i, Nr() ? Reflect.construct(e, t || [], it(i).constructor) : e.apply(i, t));
 }
-function Ri(o, e) {
-  if (e && (ke(e) === "object" || typeof e == "function"))
+function Mo(i, e) {
+  if (e && ($e(e) === "object" || typeof e == "function"))
     return e;
   if (e !== void 0)
     throw new TypeError("Derived constructors may only return object or undefined");
-  return zi(o);
+  return Ho(i);
 }
-function zi(o) {
-  if (o === void 0)
+function Ho(i) {
+  if (i === void 0)
     throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
-  return o;
+  return i;
 }
-function Ar() {
+function Nr() {
   try {
-    var o = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function() {
+    var i = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function() {
     }));
   } catch {
   }
-  return (Ar = function() {
-    return !!o;
+  return (Nr = function() {
+    return !!i;
   })();
 }
-function Qe(o) {
-  return Qe = Object.setPrototypeOf ? Object.getPrototypeOf.bind() : function(t) {
+function it(i) {
+  return it = Object.setPrototypeOf ? Object.getPrototypeOf.bind() : function(t) {
     return t.__proto__ || Object.getPrototypeOf(t);
-  }, Qe(o);
+  }, it(i);
 }
-function Di(o, e) {
+function qo(i, e) {
   if (typeof e != "function" && e !== null)
     throw new TypeError("Super expression must either be null or a function");
-  o.prototype = Object.create(e && e.prototype, { constructor: { value: o, writable: !0, configurable: !0 } }), Object.defineProperty(o, "prototype", { writable: !1 }), e && gt(o, e);
+  i.prototype = Object.create(e && e.prototype, { constructor: { value: i, writable: !0, configurable: !0 } }), Object.defineProperty(i, "prototype", { writable: !1 }), e && bt(i, e);
 }
-function gt(o, e) {
-  return gt = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function(r, i) {
-    return r.__proto__ = i, r;
-  }, gt(o, e);
+function bt(i, e) {
+  return bt = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function(r, o) {
+    return r.__proto__ = o, r;
+  }, bt(i, e);
 }
-function cr(o, e) {
-  var t = Object.keys(o);
+function vr(i, e) {
+  var t = Object.keys(i);
   if (Object.getOwnPropertySymbols) {
-    var r = Object.getOwnPropertySymbols(o);
-    e && (r = r.filter(function(i) {
-      return Object.getOwnPropertyDescriptor(o, i).enumerable;
+    var r = Object.getOwnPropertySymbols(i);
+    e && (r = r.filter(function(o) {
+      return Object.getOwnPropertyDescriptor(i, o).enumerable;
     })), t.push.apply(t, r);
   }
   return t;
 }
-function ye(o) {
+function Se(i) {
   for (var e = 1; e < arguments.length; e++) {
     var t = arguments[e] != null ? arguments[e] : {};
-    e % 2 ? cr(Object(t), !0).forEach(function(r) {
-      Ti(o, r, t[r]);
-    }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(o, Object.getOwnPropertyDescriptors(t)) : cr(Object(t)).forEach(function(r) {
-      Object.defineProperty(o, r, Object.getOwnPropertyDescriptor(t, r));
+    e % 2 ? vr(Object(t), !0).forEach(function(r) {
+      No(i, r, t[r]);
+    }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(i, Object.getOwnPropertyDescriptors(t)) : vr(Object(t)).forEach(function(r) {
+      Object.defineProperty(i, r, Object.getOwnPropertyDescriptor(t, r));
     });
   }
-  return o;
+  return i;
 }
-function Ti(o, e, t) {
-  return e = Br(e), e in o ? Object.defineProperty(o, e, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : o[e] = t, o;
+function No(i, e, t) {
+  return e = Yr(e), e in i ? Object.defineProperty(i, e, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : i[e] = t, i;
 }
-function Br(o) {
-  var e = ji(o, "string");
-  return ke(e) == "symbol" ? e : e + "";
+function Yr(i) {
+  var e = Yo(i, "string");
+  return $e(e) == "symbol" ? e : e + "";
 }
-function ji(o, e) {
-  if (ke(o) != "object" || !o) return o;
-  var t = o[Symbol.toPrimitive];
+function Yo(i, e) {
+  if ($e(i) != "object" || !i) return i;
+  var t = i[Symbol.toPrimitive];
   if (t !== void 0) {
-    var r = t.call(o, e);
-    if (ke(r) != "object") return r;
+    var r = t.call(i, e);
+    if ($e(r) != "object") return r;
     throw new TypeError("@@toPrimitive must return a primitive value.");
   }
-  return (e === "string" ? String : Number)(o);
+  return (e === "string" ? String : Number)(i);
 }
-var pr = ye(ye({}, Je.defaultOptions), {}, {
-  httpStack: new xi(),
-  fileReader: new ci(),
-  urlStorage: Ci ? new $i() : new uo(),
-  fingerprint: pi
-}), Fi = /* @__PURE__ */ (function(o) {
+var xr = Se(Se({}, rt.defaultOptions), {}, {
+  httpStack: new Uo(),
+  fileReader: new yo(),
+  urlStorage: jo ? new Fo() : new wi(),
+  fingerprint: wo
+}), Vo = /* @__PURE__ */ (function(i) {
   function e() {
     var t = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : null, r = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : {};
-    return Ui(this, e), r = ye(ye({}, pr), r), Oi(this, e, [t, r]);
+    return Lo(this, e), r = Se(Se({}, xr), r), Bo(this, e, [t, r]);
   }
-  return Di(e, o), Ei(e, null, [{
+  return qo(e, i), Io(e, null, [{
     key: "terminate",
     value: function(r) {
-      var i = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : {};
-      return i = ye(ye({}, pr), i), Je.terminate(r, i);
+      var o = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : {};
+      return o = Se(Se({}, xr), o), rt.terminate(r, o);
     }
   }]);
-})(Je);
-const Li = 10 * 1024 * 1024, Ai = 5 * 1024 * 1024, Bi = "https://eu-on-24001.connector.filerobot.com/files", Ii = "https://eu-on-24001.connector.filerobot.com/json";
-function Mi(o, e) {
-  if (!e || !o.file) return !1;
-  const t = e.sizeThreshold ?? Li;
-  return o.size >= t;
+})(rt);
+const Wo = 10 * 1024 * 1024, Go = 5 * 1024 * 1024, Xo = "https://eu-on-24001.connector.filerobot.com/files", Ko = "https://eu-on-24001.connector.filerobot.com/json";
+function Zo(i, e) {
+  if (!e || !i.file) return !1;
+  const t = e.sizeThreshold ?? Wo;
+  return i.size >= t;
 }
-function Hi(o, e) {
-  const { tusConfig: t } = e, r = e.apiBase.replace(/\/+$/, ""), i = t.endpoint || Bi, n = t.chunkSize ?? Ai, s = t.resumable !== !1, a = t.parallelChunks ?? 1, l = t.retryDelays ?? [0, 1e3, 3e3, 5e3], p = r.split("/").pop() || "";
-  let g = !1, k = !1, E = !1;
-  const S = {
-    name: o.name,
-    type: o.type,
+function Jo(i, e) {
+  const { tusConfig: t } = e, r = e.apiBase.replace(/\/+$/, ""), o = t.endpoint || Xo, n = t.chunkSize ?? Go, s = t.resumable !== !1, a = t.parallelChunks ?? 1, l = t.retryDelays ?? [0, 1e3, 3e3, 5e3], p = r.split("/").pop() || "";
+  let h = !1, _ = !1, E = !1;
+  const O = {
+    name: i.name,
+    type: i.type,
     "filerobot-folder": e.folder
-  }, R = async () => `tus-${o.id}-${i}`, _ = new Fi(o.file, {
-    endpoint: i,
+  }, P = async () => `tus-${i.id}-${o}`, v = new Vo(i.file, {
+    endpoint: o,
     chunkSize: n,
     retryDelays: l,
     parallelUploads: a,
     storeFingerprintForResuming: s,
     removeFingerprintOnSuccess: !0,
     headers: {},
-    metadata: S,
-    fingerprint: R,
+    metadata: O,
+    fingerprint: P,
     // --- Dynamic auth headers (v5 pattern: onBeforeRequest) ---
     // Single source of auth headers for every tus request.
     // Uses getAuthHeaders() for latest SASS key, falls back to initial headers.
-    onBeforeRequest(h) {
+    onBeforeRequest(g) {
       const m = e.getAuthHeaders ? e.getAuthHeaders() : e.authHeaders;
-      for (const [O, $] of Object.entries(m))
-        h.setHeader(O, $);
-      h.setHeader("X-Filerobot-Token", p);
+      for (const [z, C] of Object.entries(m))
+        g.setHeader(z, C);
+      g.setHeader("X-Filerobot-Token", p);
     },
     // --- Store upload URL for cross-session resume (v5's onReceiveUploadUrl) ---
     // Only notify once to avoid redundant store updates (v5 checks uploadUrl !== existing).
     onUploadUrlAvailable() {
-      _.url && e.onUploadUrlAvailable && !E && (E = !0, e.onUploadUrlAvailable(_.url));
+      v.url && e.onUploadUrlAvailable && !E && (E = !0, e.onUploadUrlAvailable(v.url));
     },
-    onProgress(h, m) {
-      !k && !g && e.onProgress(h, m);
+    onProgress(g, m) {
+      !_ && !h && e.onProgress(g, m);
     },
     onSuccess() {
-      var O;
-      if (k) return;
-      v();
-      const h = _.url || "", m = (O = h.match(/files\/([^/?]+)/)) == null ? void 0 : O[1];
-      m ? Ni(m, o.size).then(($) => {
-        k || e.onComplete($);
-      }).catch(($) => {
-        k || e.onError($);
+      var z;
+      if (_) return;
+      x();
+      const g = v.url || "", m = (z = g.match(/files\/([^/?]+)/)) == null ? void 0 : z[1];
+      m ? en(m, i.size).then((C) => {
+        _ || e.onComplete(C);
+      }).catch((C) => {
+        _ || e.onError(C);
       }) : e.onComplete({
         status: "success",
         file: {
           uuid: "",
-          name: o.name,
-          extension: o.name.split(".").pop() || "",
-          type: o.type,
-          size: o.size,
-          url: { public: h, cdn: h },
-          meta: o.meta,
-          tags: o.tags,
+          name: i.name,
+          extension: i.name.split(".").pop() || "",
+          type: i.type,
+          size: i.size,
+          url: { public: g, cdn: g },
+          meta: i.meta,
+          tags: i.tags,
           info: {},
           created_at: (/* @__PURE__ */ new Date()).toISOString(),
           modified_at: (/* @__PURE__ */ new Date()).toISOString()
         }
       });
     },
-    onError(h) {
-      k || (v(), qi(h) ? e.onError(new Error(
+    onError(g) {
+      _ || (x(), Qo(g) ? e.onError(new Error(
         "Network error during upload — check your connection or firewall settings"
-      )) : e.onError(h instanceof Error ? h : new Error(String(h))));
+      )) : e.onError(g instanceof Error ? g : new Error(String(g))));
     },
     // --- 429 rate-limit and retry handling (matches v5's defaultOnShouldRetry) ---
-    onShouldRetry(h, m, O) {
-      var F;
-      const $ = (F = h.originalResponse) == null ? void 0 : F.getStatus();
-      return $ === 429 ? !0 : !($ && $ > 400 && $ < 500 && $ !== 409);
+    onShouldRetry(g, m, z) {
+      var L;
+      const C = (L = g.originalResponse) == null ? void 0 : L.getStatus();
+      return C === 429 ? !0 : !(C && C > 400 && C < 500 && C !== 409);
     }
   });
-  let P = null, T = null;
-  typeof window < "u" && (P = () => {
-    var h;
-    !g && !k && (g = !0, _.abort(!1), (h = e.onPause) == null || h.call(e));
-  }, T = () => {
-    var h;
-    g && !k && (g = !1, _.start(), (h = e.onResume) == null || h.call(e));
-  }, window.addEventListener("offline", P), window.addEventListener("online", T));
-  const v = () => {
-    P && window.removeEventListener("offline", P), T && window.removeEventListener("online", T);
-  }, x = () => {
+  let U = null, R = null;
+  typeof window < "u" && (U = () => {
+    var g;
+    !h && !_ && (h = !0, v.abort(!1), (g = e.onPause) == null || g.call(e));
+  }, R = () => {
+    var g;
+    h && !_ && (h = !1, v.start(), (g = e.onResume) == null || g.call(e));
+  }, window.addEventListener("offline", U), window.addEventListener("online", R));
+  const x = () => {
+    U && window.removeEventListener("offline", U), R && window.removeEventListener("online", R);
+  }, b = () => {
     try {
-      _.start();
-    } catch (h) {
-      v(), e.onError(h instanceof Error ? h : new Error(String(h)));
+      v.start();
+    } catch (g) {
+      x(), e.onError(g instanceof Error ? g : new Error(String(g)));
     }
   };
-  return s ? _.findPreviousUploads().then((h) => {
-    h.length > 0 && !k && _.resumeFromPreviousUpload(h[0]), k || x();
-  }) : x(), {
+  return s ? v.findPreviousUploads().then((g) => {
+    g.length > 0 && !_ && v.resumeFromPreviousUpload(g[0]), _ || b();
+  }) : b(), {
     abort() {
-      k = !0, g = !1, v(), _.abort(!0);
+      _ = !0, h = !1, x(), v.abort(!0);
     },
     pause() {
-      !g && !k && (g = !0, _.abort(!1));
+      !h && !_ && (h = !0, v.abort(!1));
     },
     resume() {
-      g && !k && (g = !1, _.start());
+      h && !_ && (h = !1, v.start());
     },
     isPaused() {
-      return g;
+      return h;
     }
   };
 }
-function qi(o) {
+function Qo(i) {
   var e;
-  if (o instanceof Ue) {
-    const t = (e = o.originalRequest) == null ? void 0 : e.getUnderlyingObject();
-    return t && typeof t.readyState == "number" && typeof t.status == "number" ? t.readyState !== 0 && t.readyState !== 4 || t.status === 0 : o.originalResponse == null && o.causingError != null;
+  if (i instanceof Re) {
+    const t = (e = i.originalRequest) == null ? void 0 : e.getUnderlyingObject();
+    return t && typeof t.readyState == "number" && typeof t.status == "number" ? t.readyState !== 0 && t.readyState !== 4 || t.status === 0 : i.originalResponse == null && i.causingError != null;
   }
   return !1;
 }
-async function Ni(o, e) {
-  const t = `${Ii}/${o}`, r = e > 1e8 ? 13e3 : 6e3, i = 3;
-  for (let n = 0; n <= i; n++) {
+async function en(i, e) {
+  const t = `${Ko}/${i}`, r = e > 1e8 ? 13e3 : 6e3, o = 3;
+  for (let n = 0; n <= o; n++) {
     n > 0 && await new Promise((l) => setTimeout(l, r));
     const s = await fetch(t);
-    if (s.status === 404 && n < i) continue;
+    if (s.status === 404 && n < o) continue;
     if (!s.ok)
       throw new Error(`Failed to fetch file record (HTTP ${s.status})`);
     const a = await s.json();
     if (a.file)
       return { status: "success", file: a.file };
     if (a.status === "success") return a;
-    if (!(n < i))
+    if (!(n < o))
       throw new Error(a.msg || "File record not available after upload");
   }
   throw new Error("File record not available after upload");
 }
-class Yi {
+class tn {
   constructor(e, t) {
     this.activeUploads = /* @__PURE__ */ new Map(), this.pausedUploads = /* @__PURE__ */ new Map(), this.retryTimers = /* @__PURE__ */ new Map(), this.unsubscribe = null, this.store = e, this.config = t;
   }
@@ -2848,7 +2848,7 @@ class Yi {
     const { files: e } = this.store.getState();
     let t = !1;
     for (const r of e.values())
-      r.status === "idle" ? (M(this.store, r.id, { status: "queued" }), t = !0) : r.status === "queued" && (t = !0);
+      r.status === "idle" ? (q(this.store, r.id, { status: "queued" }), t = !0) : r.status === "queued" && (t = !0);
     t && (this.store.setState({ isUploading: !0 }), this.processQueue());
   }
   /**
@@ -2856,7 +2856,7 @@ class Yi {
    */
   retryFile(e) {
     const t = this.store.getState().files.get(e);
-    !t || t.status !== "error" && t.status !== "failed" || (M(this.store, e, {
+    !t || t.status !== "error" && t.status !== "failed" || (q(this.store, e, {
       status: "queued",
       error: null,
       progress: 0,
@@ -2870,7 +2870,7 @@ class Yi {
   retryAll() {
     const { files: e } = this.store.getState();
     for (const t of e.values())
-      (t.status === "error" || t.status === "failed") && M(this.store, t.id, {
+      (t.status === "error" || t.status === "failed") && q(this.store, t.id, {
         status: "queued",
         error: null,
         progress: 0,
@@ -2885,7 +2885,7 @@ class Yi {
    */
   pauseFile(e) {
     const t = this.activeUploads.get(e);
-    t && "pause" in t && (t.pause(), this.activeUploads.delete(e), this.pausedUploads.set(e, t), M(this.store, e, { status: "paused" }), this.processQueue());
+    t && "pause" in t && (t.pause(), this.activeUploads.delete(e), this.pausedUploads.set(e, t), q(this.store, e, { status: "paused" }), this.processQueue());
   }
   /**
    * Resume a single paused tus upload.
@@ -2895,14 +2895,14 @@ class Yi {
     const t = this.pausedUploads.get(e);
     if (!t) return;
     const { concurrency: r } = this.store.getState().queueConfig;
-    this.activeUploads.size < r ? (this.pausedUploads.delete(e), t.resume(), this.activeUploads.set(e, t), M(this.store, e, { status: "uploading" })) : M(this.store, e, { status: "queued" });
+    this.activeUploads.size < r ? (this.pausedUploads.delete(e), t.resume(), this.activeUploads.set(e, t), q(this.store, e, { status: "uploading" })) : q(this.store, e, { status: "queued" });
   }
   /**
    * Cancel a single file upload.
    */
   cancelFile(e) {
     const t = this.store.getState().files.get(e);
-    !t || !ur(t.status) || (this.abortPausedUpload(e), this.abortUpload(e), M(this.store, e, { status: "cancelled" }));
+    !t || !br(t.status) || (this.abortPausedUpload(e), this.abortUpload(e), q(this.store, e, { status: "cancelled" }));
   }
   /**
    * Cancel all active/queued uploads.
@@ -2910,7 +2910,7 @@ class Yi {
   cancelAll() {
     const { files: e } = this.store.getState();
     for (const t of e.values())
-      ur(t.status) && (this.abortPausedUpload(t.id), this.abortUpload(t.id), M(this.store, t.id, { status: "cancelled" }));
+      br(t.status) && (this.abortPausedUpload(t.id), this.abortUpload(t.id), q(this.store, t.id, { status: "cancelled" }));
     this.store.setState({ isUploading: !1 });
   }
   /**
@@ -2936,65 +2936,65 @@ class Yi {
   processQueue() {
     const e = this.store.getState();
     if (e.isPaused) return;
-    const { concurrency: t } = e.queueConfig, r = this.activeUploads.size, i = t - r;
-    if (i <= 0) return;
-    const s = [...e.files.values()].filter((a) => a.status === "queued").sort((a, l) => a.retryCount !== l.retryCount ? l.retryCount - a.retryCount : a.addedAt - l.addedAt).slice(0, i);
+    const { concurrency: t } = e.queueConfig, r = this.activeUploads.size, o = t - r;
+    if (o <= 0) return;
+    const s = [...e.files.values()].filter((a) => a.status === "queued").sort((a, l) => a.retryCount !== l.retryCount ? l.retryCount - a.retryCount : a.addedAt - l.addedAt).slice(0, o);
     for (const a of s) {
       const l = this.pausedUploads.get(a.id);
-      l ? (this.pausedUploads.delete(a.id), l.resume(), this.activeUploads.set(a.id, l), M(this.store, a.id, { status: "uploading" })) : this.startUpload(a);
+      l ? (this.pausedUploads.delete(a.id), l.resume(), this.activeUploads.set(a.id, l), q(this.store, a.id, { status: "uploading" })) : this.startUpload(a);
     }
   }
   startUpload(e) {
-    const t = !e.remoteInfo && !e.remoteUrl && Mi(e, this.config.tusConfig);
-    M(this.store, e.id, { status: "uploading", error: null, isTus: t });
-    let r = 0, i = Date.now(), n = 0;
+    const t = !e.remoteInfo && !e.remoteUrl && Zo(e, this.config.tusConfig);
+    q(this.store, e.id, { status: "uploading", error: null, isTus: t });
+    let r = 0, o = Date.now(), n = 0;
     const s = {
       apiBase: this.config.apiBase,
       authHeaders: this.config.authHeaders,
       folder: this.store.getState().targetFolder,
       onComplete: (p) => this.handleComplete(e.id, p),
       onError: (p) => this.handleError(e.id, p)
-    }, a = (p, g) => {
-      const k = Date.now(), E = (k - i) / 1e3;
+    }, a = (p, h) => {
+      const _ = Date.now(), E = (_ - o) / 1e3;
       if (E > 0) {
-        const R = (p - r) / E;
-        n = n === 0 ? R : 0.3 * R + 0.7 * n;
+        const P = (p - r) / E;
+        n = n === 0 ? P : 0.3 * P + 0.7 * n;
       }
-      r = p, i = k;
-      const S = g > 0 ? Math.min(p / g * 100, 100) : 0;
-      M(this.store, e.id, { progress: S, bytesUploaded: p, speed: n }), this.updateTotalProgress();
+      r = p, o = _;
+      const O = h > 0 ? Math.min(p / h * 100, 100) : 0;
+      q(this.store, e.id, { progress: O, bytesUploaded: p, speed: n }), this.updateTotalProgress();
     };
     let l;
     if (e.remoteInfo)
-      l = Zr(e, { ...s, onProgress: a });
+      l = ai(e, { ...s, onProgress: a });
     else if (e.remoteUrl)
-      l = Gr(e, s);
+      l = ii(e, s);
     else if (t) {
-      const p = Hi(e, {
+      const p = Jo(e, {
         ...s,
         onProgress: a,
         tusConfig: this.config.tusConfig,
         // Supply a getter so tus picks up renewed SASS keys mid-upload
         getAuthHeaders: () => this.config.authHeaders,
         // Store the tus upload URL on file state for cross-session resume
-        onUploadUrlAvailable: (g) => {
-          M(this.store, e.id, { tusUploadUrl: g });
+        onUploadUrlAvailable: (h) => {
+          q(this.store, e.id, { tusUploadUrl: h });
         },
         // Sync UI state when tus pauses/resumes internally (e.g. network offline/online)
         onPause: () => {
-          this.activeUploads.delete(e.id), this.pausedUploads.set(e.id, p), M(this.store, e.id, { status: "paused" }), this.processQueue();
+          this.activeUploads.delete(e.id), this.pausedUploads.set(e.id, p), q(this.store, e.id, { status: "paused" }), this.processQueue();
         },
         onResume: () => {
-          this.pausedUploads.delete(e.id), this.activeUploads.set(e.id, p), M(this.store, e.id, { status: "uploading" });
+          this.pausedUploads.delete(e.id), this.activeUploads.set(e.id, p), q(this.store, e.id, { status: "uploading" });
         }
       });
       l = p;
     } else
-      l = Vr(e, { ...s, onProgress: a });
+      l = ri(e, { ...s, onProgress: a });
     this.activeUploads.set(e.id, l);
   }
   handleComplete(e, t) {
-    this.activeUploads.delete(e), M(this.store, e, {
+    this.activeUploads.delete(e), q(this.store, e, {
       status: "complete",
       progress: 100,
       response: t
@@ -3004,23 +3004,23 @@ class Yi {
     this.activeUploads.delete(e);
     const r = this.store.getState().files.get(e);
     if (!r) return;
-    const { retryConfig: i } = this.store.getState().queueConfig, n = r.retryCount + 1;
-    if (n <= i.maxRetries) {
+    const { retryConfig: o } = this.store.getState().queueConfig, n = r.retryCount + 1;
+    if (n <= o.maxRetries) {
       const s = Math.min(
-        i.baseDelay * Math.pow(i.backoffFactor, r.retryCount),
-        i.maxDelay
+        o.baseDelay * Math.pow(o.backoffFactor, r.retryCount),
+        o.maxDelay
       );
-      M(this.store, e, {
+      q(this.store, e, {
         status: "retrying",
         error: t.message,
         retryCount: n
       });
       const a = setTimeout(() => {
-        this.retryTimers.delete(e), M(this.store, e, { status: "queued" }), this.processQueue();
+        this.retryTimers.delete(e), q(this.store, e, { status: "queued" }), this.processQueue();
       }, s);
       this.retryTimers.set(e, a);
     } else
-      M(this.store, e, {
+      q(this.store, e, {
         status: "failed",
         error: t.message
       }), this.checkAllComplete(), this.processQueue();
@@ -3037,13 +3037,13 @@ class Yi {
   }
   updateTotalProgress() {
     const { files: e } = this.store.getState();
-    let t = 0, r = 0, i = 0;
+    let t = 0, r = 0, o = 0;
     for (const n of e.values())
-      (n.status === "queued" || n.status === "uploading" || n.status === "paused" || n.status === "retrying" || n.status === "complete" || n.status === "failed") && (t += n.size, r += n.status === "complete" ? n.size : n.bytesUploaded), n.status === "uploading" && (i += n.speed);
+      (n.status === "queued" || n.status === "uploading" || n.status === "paused" || n.status === "retrying" || n.status === "complete" || n.status === "failed") && (t += n.size, r += n.status === "complete" ? n.size : n.bytesUploaded), n.status === "uploading" && (o += n.speed);
     this.store.setState({
       totalBytes: t,
       totalBytesUploaded: r,
-      totalSpeed: i,
+      totalSpeed: o,
       totalProgress: t > 0 ? Math.min(r / t * 100, 100) : 0
     });
   }
@@ -3054,29 +3054,29 @@ class Yi {
     ) && this.store.getState().isUploading && this.store.setState({ isUploading: !1 });
   }
 }
-function ur(o) {
-  return o === "queued" || o === "uploading" || o === "retrying" || o === "paused";
+function br(i) {
+  return i === "queued" || i === "uploading" || i === "retrying" || i === "paused";
 }
-function Ut(o) {
-  return `https://api.filerobot.com/${o}`;
+function Ot(i) {
+  return `https://api.filerobot.com/${i}`;
 }
-async function Vi(o, e) {
-  const t = `${Ut(o)}/key/${encodeURIComponent(e)}`, r = new AbortController(), i = setTimeout(() => r.abort(), 3e4);
+async function rn(i, e) {
+  const t = `${Ot(i)}/key/${encodeURIComponent(e)}`, r = new AbortController(), o = setTimeout(() => r.abort(), 3e4);
   try {
     const n = await fetch(t, { signal: r.signal });
-    if (clearTimeout(i), !n.ok)
+    if (clearTimeout(o), !n.ok)
       throw new Error(`SASS key exchange failed (HTTP ${n.status})`);
     const s = await n.json();
     if (s.status === "error")
       throw new Error(`SASS key exchange failed: ${s.msg || "Unknown error"}`);
     return s.key;
   } catch (n) {
-    throw clearTimeout(i), n instanceof DOMException && n.name === "AbortError" ? new Error("SASS key exchange timed out") : n;
+    throw clearTimeout(o), n instanceof DOMException && n.name === "AbortError" ? new Error("SASS key exchange timed out") : n;
   }
 }
-function vt(o, e) {
+function mt(i, e) {
   const t = {};
-  switch (o.mode) {
+  switch (i.mode) {
     case "security-template":
       if (!e)
         throw new Error(
@@ -3085,20 +3085,74 @@ function vt(o, e) {
       t["X-Filerobot-Key"] = e;
       break;
     case "sass-key":
-      t["X-Filerobot-Key"] = o.sassKey;
+      t["X-Filerobot-Key"] = i.sassKey;
       break;
   }
-  return o.airboxPuid && (t["X-Filerobot-Airbox-Puid"] = o.airboxPuid), t;
+  return i.airboxPuid && (t["X-Filerobot-Airbox-Puid"] = i.airboxPuid), t;
 }
-async function Gi(o) {
-  const e = Ut(o.container);
-  if (o.mode === "security-template") {
-    const t = await Vi(o.container, o.securityTemplateId);
-    return { apiBase: e, headers: vt(o, t), sassKey: t };
+async function on(i) {
+  const e = Ot(i.container);
+  if (i.mode === "security-template") {
+    const t = await rn(i.container, i.securityTemplateId);
+    return { apiBase: e, headers: mt(i, t), sassKey: t };
   }
-  return { apiBase: e, headers: vt(o) };
+  return { apiBase: e, headers: mt(i) };
 }
-const B = {
+const Rt = "sfx-uploader:last-upload", Vr = 1;
+function nn(i) {
+  var n, s, a;
+  const { file: e, previewUrl: t, ...r } = i, o = i.status === "complete" && ((a = (s = (n = i.response) == null ? void 0 : n.file) == null ? void 0 : s.url) != null && a.cdn) ? i.response.file.url.cdn : null;
+  return { ...r, previewUrl: o };
+}
+function sn() {
+  try {
+    const i = sessionStorage.getItem(Rt);
+    if (!i) return null;
+    const e = JSON.parse(i);
+    return (e == null ? void 0 : e.__schemaVersion) !== Vr ? null : e;
+  } catch {
+    return null;
+  }
+}
+function an(i) {
+  try {
+    sessionStorage.setItem(Rt, JSON.stringify(i));
+  } catch {
+  }
+}
+const Je = {
+  /** Overwrite the stored batch. Pass only complete + failed files. */
+  save(i) {
+    if (i.length === 0) {
+      this.clear();
+      return;
+    }
+    const e = {
+      __schemaVersion: Vr,
+      savedAt: Date.now(),
+      files: i.map(nn)
+    };
+    an(e);
+  },
+  /** Returns the stored files (rehydrated back to UploadFile shape) or null.
+   *  The `file` blob and `remoteUrl` are not serializable — they are set to
+   *  null on restore. Downstream code must null-check `file.file` before use. */
+  load() {
+    const i = sn();
+    return i ? i.files.map((e) => ({
+      ...e,
+      file: null,
+      previewUrl: e.previewUrl ?? null
+    })) : null;
+  },
+  /** Drop the stored batch entirely. */
+  clear() {
+    try {
+      sessionStorage.removeItem(Rt);
+    } catch {
+    }
+  }
+}, B = {
   FILE_ADDED: "sfx-file-added",
   FILE_REMOVED: "sfx-file-removed",
   FILE_REJECTED: "sfx-file-rejected",
@@ -3119,32 +3173,142 @@ const B = {
   FILE_PREVIEW: "sfx-file-preview",
   FILL_METADATA: "sfx-fill-metadata"
 };
-let Xi = 0;
-function xe() {
-  return `file-${Date.now()}-${++Xi}`;
+let ln = 0;
+function we() {
+  return `file-${Date.now()}-${++ln}`;
 }
-function we(o) {
-  if (o <= 0) return "0 B";
-  const e = ["B", "KB", "MB", "GB"], t = Math.min(Math.floor(Math.log(o) / Math.log(1024)), e.length - 1), r = o / Math.pow(1024, t);
+function ce(i) {
+  if (i <= 0) return "0 B";
+  const e = ["B", "KB", "MB", "GB"], t = Math.min(Math.floor(Math.log(i) / Math.log(1024)), e.length - 1), r = i / Math.pow(1024, t);
   return `${t === 0 ? r : r.toFixed(1)} ${e[t]}`;
 }
-function st(o) {
-  if (!isFinite(o) || o <= 0) return "0s";
-  const e = Math.round(o);
+function dt(i) {
+  if (!isFinite(i) || i <= 0) return "0s";
+  const e = Math.round(i);
   if (e < 60) return `${e}s`;
   const t = Math.floor(e / 60), r = e % 60;
   return r > 0 ? `${t}m ${r}s` : `${t}m`;
 }
-function Oe(o) {
+function Wr(i) {
   var t;
-  const e = ((t = o.name.split(".").pop()) == null ? void 0 : t.toLowerCase()) ?? "";
-  return o.type.startsWith("image/") ? "image" : o.type.startsWith("video/") || ["mp4", "mov", "avi", "webm", "mkv"].includes(e) ? "vid" : o.type === "application/pdf" || e === "pdf" ? "pdf" : ["doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "rtf", "odt"].includes(e) ? "doc" : ["zip", "rar", "7z", "tar", "gz", "bz2"].includes(e) ? "zip" : "gen";
+  const e = ((t = i.name.split(".").pop()) == null ? void 0 : t.toLowerCase()) ?? "";
+  return i.type.startsWith("image/") ? "image" : i.type.startsWith("video/") || ["mp4", "mov", "avi", "webm", "mkv", "flv", "wmv"].includes(e) ? "vid" : i.type.startsWith("audio/") || ["mp3", "wav", "ogg", "flac", "aac", "m4a", "wma"].includes(e) ? "audio" : i.type === "application/pdf" || e === "pdf" ? "pdf" : ["xls", "xlsx", "csv", "tsv", "ods"].includes(e) ? "sheet" : ["doc", "docx", "txt", "rtf", "odt", "pages"].includes(e) ? "doc" : ["ppt", "pptx", "key", "odp"].includes(e) ? "slide" : ["zip", "rar", "7z", "tar", "gz", "bz2", "xz", "zst"].includes(e) ? "zip" : ["js", "ts", "jsx", "tsx", "py", "rb", "go", "rs", "java", "c", "cpp", "h", "cs", "php", "swift", "kt", "sh", "bash"].includes(e) ? "code" : ["html", "css", "scss", "xml", "svg", "json", "yaml", "yml", "toml", "md", "mdx", "ini", "env", "log"].includes(e) ? "markup" : ["ttf", "otf", "woff", "woff2", "eot"].includes(e) ? "font" : ["ai", "psd", "sketch", "fig", "xd", "indd", "eps"].includes(e) ? "design" : ["exe", "dmg", "app", "msi", "deb", "rpm", "apk", "ipa"].includes(e) ? "binary" : ["sql", "db", "sqlite", "mdb"].includes(e) ? "data" : "gen";
 }
-function Ki(o) {
-  const e = o.lastIndexOf(".");
-  return e >= 0 ? o.slice(e + 1).toUpperCase() : "";
+function dn(i) {
+  const e = i.lastIndexOf(".");
+  return e >= 0 ? i.slice(e + 1).toUpperCase() : "";
 }
-const Wi = {
+const cn = "https://scaleflex.cloudimg.io/v7/assets/file-types/v3/", Gr = {
+  _default: "9a518a",
+  // Images
+  png: "96cd9a",
+  jpg: "06e819",
+  jpg2: "f0eb7f",
+  jpeg: "6a65e9",
+  gif: "c3c2c3",
+  bmp: "d2243a",
+  webp: "fedd74",
+  svg: "a15e46",
+  tiff: "1f30c3",
+  tif: "b383c9",
+  heic: "84adfe",
+  avif: "536b30",
+  ico: "79063d",
+  psd: "be6140",
+  psb: "678646",
+  ai: "84b254",
+  dwg: "971fb3",
+  // Video
+  mp4: "42f175",
+  webm: "26a84a",
+  avi: "d22ba8",
+  mpeg: "ba93bb",
+  ogv: "74d453",
+  "3gp": "f0d388",
+  "3g2": "04c652",
+  swf: "3955e2",
+  fla: "daf585",
+  m3u8: "7d5e62",
+  // Audio
+  mp3: "66bbef",
+  wav: "d7a7d5",
+  aac: "07f3f9",
+  oga: "a5c622",
+  opus: "9548b1",
+  weba: "4dcf70",
+  mid: "3f0e29",
+  midi: "9fedec",
+  cda: "85b83b",
+  // Documents
+  pdf: "18c5f7",
+  doc: "d1b47c",
+  docx: "1eb6b0",
+  txt: "307979",
+  rtf: "978c5f",
+  xls: "13b5f7",
+  xlsx: "79d64a",
+  ppt: "4ee29b",
+  pptx: "8b1568",
+  csv: "4add78",
+  odt: "940781",
+  ods: "9fbe9a",
+  odp: "bf892d",
+  dbf: "457bd4",
+  vsd: "8a9ccb",
+  abw: "313dc7",
+  epub: "15263d",
+  azw: "a018b1",
+  ics: "909f63",
+  ogx: "f694d2",
+  // Archives
+  zip: "84f98b",
+  rar: "1d6423",
+  "7z": "e007e5",
+  tar: "603aed",
+  gz: "de13f7",
+  bz: "0374ff",
+  bz2: "e14294",
+  arc: "942fad",
+  jar: "149796",
+  mpkg: "dea655",
+  // Fonts
+  ttf: "d2e2c1",
+  otf: "c904fd",
+  woff: "4b8177",
+  woff2: "b532d3",
+  eot: "a54980",
+  // Code / Scripts
+  js: "524691",
+  mjs: "d57921",
+  ts: "9af3ae",
+  css: "287863",
+  html: "fa7a87",
+  htm: "21323d",
+  xhtml: "e6d6a9",
+  xul: "6c9c71",
+  json: "104c9e",
+  jsonld: "f30c0f",
+  xml: "7f7194",
+  php: "503e36",
+  sh: "3b820e",
+  csh: "08c0cc",
+  // Executables / Disk images
+  exe: "ccca53",
+  iso: "064b8f",
+  bin: "1e9618"
+};
+function yt(i) {
+  const e = i === "_default" ? "GENERIC" : i.toUpperCase();
+  return `${cn}${e}.svg?vh=${Gr[i]}`;
+}
+function Xr(i) {
+  const e = (i == null ? void 0 : i.toLowerCase().replaceAll(".", "")) || "";
+  return e in Gr ? yt(e) : yt("_default");
+}
+function Kr() {
+  return yt("_default");
+}
+const pn = {
   jpg: "image/jpeg",
   jpeg: "image/jpeg",
   png: "image/png",
@@ -3162,19 +3326,19 @@ const Wi = {
   doc: "application/msword",
   docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 };
-function Zi(o) {
+function fn(i) {
   var t;
-  const e = ((t = o.split(".").pop()) == null ? void 0 : t.toLowerCase()) ?? "";
-  return Wi[e] || "";
+  const e = ((t = i.split(".").pop()) == null ? void 0 : t.toLowerCase()) ?? "";
+  return pn[e] || "";
 }
-function Ji(o) {
+function un(i) {
   return new Promise((e) => {
     const t = document.createElement("video");
     t.preload = "metadata", t.muted = !0, t.playsInline = !0;
-    const r = URL.createObjectURL(o);
-    let i = !1;
+    const r = URL.createObjectURL(i);
+    let o = !1;
     const n = () => {
-      i || (i = !0, e(null)), t.removeAttribute("src"), t.load(), URL.revokeObjectURL(r);
+      o || (o = !0, e(null)), t.removeAttribute("src"), t.load(), URL.revokeObjectURL(r);
     };
     t.addEventListener("seeked", () => {
       try {
@@ -3183,7 +3347,7 @@ function Ji(o) {
         const a = s.getContext("2d");
         if (a) {
           a.drawImage(t, 0, 0, s.width, s.height), s.toBlob((l) => {
-            i || (i = !0, e(l ? URL.createObjectURL(l) : null), t.removeAttribute("src"), t.load(), URL.revokeObjectURL(r));
+            o || (o = !0, e(l ? URL.createObjectURL(l) : null), t.removeAttribute("src"), t.load(), URL.revokeObjectURL(r));
           }, "image/jpeg", 0.7);
           return;
         }
@@ -3195,12 +3359,12 @@ function Ji(o) {
     }, { once: !0 });
   });
 }
-function xt(o, e, t) {
-  var r, i;
-  if (e.maxFileSize != null && o.size > 0 && o.size > e.maxFileSize)
+function wt(i, e, t) {
+  var r, o;
+  if (e.maxFileSize != null && i.size > 0 && i.size > e.maxFileSize)
     return `File exceeds ${(e.maxFileSize / 1048576).toFixed(1)} MB limit`;
-  if (e.maxTotalFilesSize != null && o.size > 0) {
-    let n = o.size;
+  if (e.maxTotalFilesSize != null && i.size > 0) {
+    let n = i.size;
     for (const s of t.values())
       s.status !== "rejected" && s.status !== "cancelled" && (n += s.size);
     if (n > e.maxTotalFilesSize)
@@ -3214,22 +3378,22 @@ function xt(o, e, t) {
       return `Maximum ${e.maxNumberOfFiles} files allowed`;
   }
   if (e.allowedFileTypes != null) {
-    const n = e.allowedFileTypes, s = "." + (((r = o.name.split(".").pop()) == null ? void 0 : r.toLowerCase()) ?? "");
-    if (!n.some((l) => l.startsWith(".") ? s === l.toLowerCase() : l.endsWith("/*") ? o.type.startsWith(l.slice(0, -1)) : o.type === l)) return "File type not allowed";
+    const n = e.allowedFileTypes, s = "." + (((r = i.name.split(".").pop()) == null ? void 0 : r.toLowerCase()) ?? "");
+    if (!n.some((l) => l.startsWith(".") ? s === l.toLowerCase() : l.endsWith("/*") ? i.type.startsWith(l.slice(0, -1)) : i.type === l)) return "File type not allowed";
   }
   if (e.blockedFileTypes != null) {
-    const n = e.blockedFileTypes, s = "." + (((i = o.name.split(".").pop()) == null ? void 0 : i.toLowerCase()) ?? "");
-    if (n.some((l) => l.startsWith(".") ? s === l.toLowerCase() : l.endsWith("/*") ? o.type.startsWith(l.slice(0, -1)) : o.type === l)) return "File type is blocked";
+    const n = e.blockedFileTypes, s = "." + (((o = i.name.split(".").pop()) == null ? void 0 : o.toLowerCase()) ?? "");
+    if (n.some((l) => l.startsWith(".") ? s === l.toLowerCase() : l.endsWith("/*") ? i.type.startsWith(l.slice(0, -1)) : i.type === l)) return "File type is blocked";
   }
   return null;
 }
-function Qi(o, e, t) {
-  return xt(o, e, t);
+function hn(i, e, t) {
+  return wt(i, e, t);
 }
-function fr(o) {
-  return o.allowedFileTypes ? o.allowedFileTypes.join(",") : "";
+function mr(i) {
+  return i.allowedFileTypes ? i.allowedFileTypes.join(",") : "";
 }
-const hr = {
+const yr = {
   "google-drive": {
     id: "google-drive",
     label: "Google Drive",
@@ -3280,22 +3444,22 @@ const hr = {
     brandHtml: '<span class="brand-ico" style="background:#111"><svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M8.5 11.5v5h7v-5h5.5V21h-18v-9.5h5.5zm7-8v5h-7v-5h7z"/></svg></span>'
   }
 };
-function en(o) {
-  return o.filter((e) => e in hr).map((e) => hr[e]);
+function gn(i) {
+  return i.filter((e) => e in yr).map((e) => yr[e]);
 }
-var tn = Object.defineProperty, rn = (o, e, t, r) => {
-  for (var i = void 0, n = o.length - 1, s; n >= 0; n--)
-    (s = o[n]) && (i = s(e, t, i) || i);
-  return i && tn(e, t, i), i;
+var vn = Object.defineProperty, xn = (i, e, t, r) => {
+  for (var o = void 0, n = i.length - 1, s; n >= 0; n--)
+    (s = i[n]) && (o = s(e, t, o) || o);
+  return o && vn(e, t, o), o;
 };
-const on = '<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>', nn = '<path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>', sn = '<path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/>', an = '<rect x="2" y="3" width="20" height="14" rx="2"/><circle cx="12" cy="10" r="1"/><path d="M7 21l5-5 5 5"/>', Re = [
-  { id: "device", label: "My Device", icon: on, iconColor: "#2563eb" },
-  { id: "url", label: "URL link", icon: nn, iconColor: "#16a34a" },
-  { id: "camera", label: "Camera", icon: sn, iconColor: "#7c3aed" },
-  { id: "screen-cast", label: "Screen capture", icon: an, iconColor: "#ea580c" }
-], Ot = class Ot extends J {
+const bn = '<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>', mn = '<path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>', yn = '<path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/>', wn = '<rect x="2" y="3" width="20" height="14" rx="2"/><circle cx="12" cy="10" r="1"/><path d="M7 21l5-5 5 5"/>', je = [
+  { id: "device", label: "My Device", icon: bn, iconColor: "#2563eb" },
+  { id: "url", label: "URL link", icon: mn, iconColor: "#16a34a" },
+  { id: "camera", label: "Camera", icon: yn, iconColor: "#7c3aed" },
+  { id: "screen-cast", label: "Screen capture", icon: wn, iconColor: "#ea580c" }
+], Ft = class Ft extends Z {
   constructor() {
-    super(...arguments), this.sources = Re;
+    super(...arguments), this.sources = je;
   }
   _handleClick(e) {
     this.dispatchEvent(
@@ -3311,7 +3475,7 @@ const on = '<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21
       ${this.sources.map(
       (e) => f`
           <button @click=${() => this._handleClick(e)}>
-            ${e.brandHtml ? ae(e.brandHtml) : se`<svg viewBox="0 0 24 24" class=${e.fillIcon ? "fill-icon" : ""}>${ie(e.icon)}</svg>`}
+            ${e.brandHtml ? fe(e.brandHtml) : pe`<svg viewBox="0 0 24 24" class=${e.fillIcon ? "fill-icon" : ""}>${ne(e.icon)}</svg>`}
             ${e.label}
           </button>
         `
@@ -3319,7 +3483,7 @@ const on = '<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21
     `;
   }
 };
-Ot.styles = K`
+Ft.styles = G`
     :host {
       display: flex;
       flex-wrap: wrap;
@@ -3392,12 +3556,12 @@ Ot.styles = K`
       stroke-width: 0;
     }
   `;
-let mt = Ot;
-rn([
-  I({ type: Array })
-], mt.prototype, "sources");
-function Ir(o) {
-  let e = o;
+let _t = Ft;
+xn([
+  F({ type: Array })
+], _t.prototype, "sources");
+function Zr(i) {
+  let e = i;
   for (; e; ) {
     if (e instanceof ShadowRoot) {
       e = e.host;
@@ -3414,13 +3578,13 @@ function Ir(o) {
   }
   return document.body;
 }
-var ln = Object.defineProperty, te = (o, e, t, r) => {
-  for (var i = void 0, n = o.length - 1, s; n >= 0; n--)
-    (s = o[n]) && (i = s(e, t, i) || i);
-  return i && ln(e, t, i), i;
+var _n = Object.defineProperty, te = (i, e, t, r) => {
+  for (var o = void 0, n = i.length - 1, s; n >= 0; n--)
+    (s = i[n]) && (o = s(e, t, o) || o);
+  return o && _n(e, t, o), o;
 };
-const gr = 3, bt = new CSSStyleSheet();
-bt.replaceSync(`
+const wr = 3, kt = new CSSStyleSheet();
+kt.replaceSync(`
   [data-sfx-more-dropdown] { position:absolute; top:0; left:0; width:0; height:0; overflow:visible; pointer-events:none; }
   [data-sfx-more-dropdown] .sfx-more-dropdown { position:fixed; background:#fff; border-radius:12px; box-shadow:0 12px 40px rgba(0,0,0,0.14),0 2px 8px rgba(0,0,0,0.06); border:1px solid #e8edf5; padding:6px; min-width:210px; max-height:340px; overflow-y:auto; z-index:99999; opacity:0; visibility:hidden; pointer-events:none; transition:opacity .18s ease,visibility .18s ease,transform .18s ease; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; }
   [data-sfx-more-dropdown] .sfx-more-dropdown.open { opacity:1; visibility:visible; pointer-events:all; }
@@ -3433,9 +3597,10 @@ bt.replaceSync(`
   [data-sfx-more-dropdown] .sfx-more-item .canva-ico { width:22px; height:22px; }
   [data-sfx-more-dropdown] .sfx-more-item .canva-ico svg { width:22px; height:22px; }
 `);
-const Rt = class Rt extends J {
+var se;
+const J = (se = class extends Z {
   constructor() {
-    super(...arguments), this.compact = !1, this.externalDragOver = !1, this.accept = "", this.sources = [], this.sourcesLayout = "pills", this._dragOver = !1, this._moreOpen = !1, this._visiblePills = gr, this._dragCounter = 0, this._onDragEnter = (e) => {
+    super(...arguments), this.compact = !1, this.externalDragOver = !1, this.accept = "", this.sources = [], this.sourcesLayout = "pills", this.mode = "modal", this._resizeObserver = null, this._dragOver = !1, this._moreOpen = !1, this._visiblePills = wr, this._dragCounter = 0, this._onDragEnter = (e) => {
       e.preventDefault(), this._dragCounter++, this._dragCounter === 1 && (this._dragOver = !0);
     }, this._onDragOver = (e) => {
       e.preventDefault();
@@ -3459,9 +3624,9 @@ const Rt = class Rt extends J {
       const t = e.target, r = Array.from(t.files ?? []);
       r.length > 0 && this._emitFiles(r), t.value = "";
     }, this._onPaste = (e) => {
-      var i;
+      var o;
       if (!this.isConnected || this.offsetWidth === 0) return;
-      const t = (i = e.clipboardData) == null ? void 0 : i.items;
+      const t = (o = e.clipboardData) == null ? void 0 : o.items;
       if (!t) return;
       const r = [];
       for (const n of t)
@@ -3508,13 +3673,23 @@ const Rt = class Rt extends J {
   _updateDropdownPortal() {
     if (this._moreOpen) {
       const e = this.sources.slice(this._visiblePills);
-      this._portalContainer || (this._portalContainer = document.createElement("div"), this._portalContainer.setAttribute("data-sfx-more-dropdown", ""), Ir(this).appendChild(this._portalContainer), this._injectDropdownStyles()), le(
+      this._portalContainer || (this._portalContainer = document.createElement("div"), this._portalContainer.setAttribute("data-sfx-more-dropdown", ""), Zr(this).appendChild(this._portalContainer), this._injectDropdownStyles()), ue(
         f`<div class="sfx-more-dropdown open">
           ${e.map(
           (t) => f`
-              <button class="sfx-more-item" @click=${(r) => this._onMoreItemClick(t, r)}>
+              <button
+                class="sfx-more-item"
+                @click=${(r) => this._onMoreItemClick(t, r)}
+              >
                 <div class="sfx-more-item-ico">
-                  ${t.brandHtml ? ae(t.brandHtml) : t.iconColor ? f`<svg viewBox="0 0 24 24" style="color:${t.iconColor}">${ie(t.icon)}</svg>` : se`<svg viewBox="0 0 24 24">${ie(t.icon)}</svg>`}
+                  ${t.brandHtml ? fe(t.brandHtml) : t.iconColor ? f`<svg
+                        viewBox="0 0 24 24"
+                        style="color:${t.iconColor}"
+                      >
+                        ${ne(t.icon)}
+                      </svg>` : pe`<svg viewBox="0 0 24 24">${ne(
+            t.icon
+          )}</svg>`}
                 </div>
                 ${t.label}
               </button>
@@ -3523,38 +3698,46 @@ const Rt = class Rt extends J {
         </div>`,
         this._portalContainer
       ), requestAnimationFrame(() => this._positionDropdown());
-    } else this._portalContainer && (le(C, this._portalContainer), this._portalContainer.remove(), this._portalContainer = null);
+    } else this._portalContainer && (ue(S, this._portalContainer), this._portalContainer.remove(), this._portalContainer = null);
   }
   _injectDropdownStyles() {
     var t;
     const e = (t = this._portalContainer) == null ? void 0 : t.getRootNode();
-    e && (e.adoptedStyleSheets.includes(bt) || (e.adoptedStyleSheets = [...e.adoptedStyleSheets, bt]));
+    e && (e.adoptedStyleSheets.includes(kt) || (e.adoptedStyleSheets = [...e.adoptedStyleSheets, kt]));
   }
   /** Position the fixed dropdown, choosing above or below based on available space. */
   _positionDropdown() {
-    var k, E;
-    const e = (k = this.shadowRoot) == null ? void 0 : k.querySelector(".more-wrap > button"), t = (E = this._portalContainer) == null ? void 0 : E.querySelector(".sfx-more-dropdown");
+    var _, E;
+    const e = (_ = this.shadowRoot) == null ? void 0 : _.querySelector(
+      ".more-wrap > button"
+    ), t = (E = this._portalContainer) == null ? void 0 : E.querySelector(
+      ".sfx-more-dropdown"
+    );
     if (!e || !t) return;
-    const r = e.getBoundingClientRect(), i = 8, n = t.scrollHeight, s = t.offsetWidth, a = r.top, l = window.innerHeight - r.bottom;
-    a >= n + i || a > l ? t.style.top = `${r.top - n - i}px` : t.style.top = `${r.bottom + i}px`;
-    let g = r.right - s;
-    g = Math.max(8, Math.min(g, window.innerWidth - s - 8)), t.style.left = `${g}px`;
+    const r = e.getBoundingClientRect(), o = 8, n = t.scrollHeight, s = t.offsetWidth, a = r.top, l = window.innerHeight - r.bottom;
+    a >= n + o || a > l ? t.style.top = `${r.top - n - o}px` : t.style.top = `${r.bottom + o}px`;
+    let h = r.right - s;
+    h = Math.max(8, Math.min(h, window.innerWidth - s - 8)), t.style.left = `${h}px`;
   }
   _onMoreItemClick(e, t) {
     t.stopPropagation(), this._moreOpen = !1, this._updateDropdownPortal(), this._onSourceIconClick(e);
   }
   _updateVisiblePills() {
     const e = window.innerWidth;
-    this.sourcesLayout === "cards" ? e <= 480 ? this._visiblePills = 2 : e <= 768 ? this._visiblePills = 3 : this._visiblePills = 5 : e <= 480 ? this._visiblePills = 1 : e <= 768 ? this._visiblePills = 2 : this._visiblePills = gr;
+    this.sourcesLayout === "cards" ? e <= 480 ? this._visiblePills = 2 : e <= 768 ? this._visiblePills = 3 : this._visiblePills = 5 : e <= 768 ? this._visiblePills = 1 : this._visiblePills = wr;
   }
   connectedCallback() {
-    super.connectedCallback(), document.addEventListener("paste", this._onPaste), document.addEventListener("click", this._onDocClick), document.addEventListener("keydown", this._onDocKeyDown), window.addEventListener("scroll", this._onScrollOrResize, !0), window.addEventListener("resize", this._onScrollOrResize), this._updateVisiblePills();
+    super.connectedCallback(), document.addEventListener("paste", this._onPaste), document.addEventListener("click", this._onDocClick), document.addEventListener("keydown", this._onDocKeyDown), window.addEventListener("scroll", this._onScrollOrResize, !0), window.addEventListener("resize", this._onScrollOrResize), this._updateVisiblePills(), typeof ResizeObserver < "u" && (this._resizeObserver = new ResizeObserver((e) => {
+      var o;
+      const r = (((o = e[0]) == null ? void 0 : o.contentRect.width) ?? this.getBoundingClientRect().width) >= se._WIDE_THRESHOLD_PX;
+      r && !this.hasAttribute("data-wide") ? this.setAttribute("data-wide", "") : !r && this.hasAttribute("data-wide") && this.removeAttribute("data-wide");
+    }), this._resizeObserver.observe(this));
   }
   updated(e) {
     e.has("sourcesLayout") && this._updateVisiblePills();
   }
   disconnectedCallback() {
-    super.disconnectedCallback(), document.removeEventListener("paste", this._onPaste), document.removeEventListener("click", this._onDocClick), document.removeEventListener("keydown", this._onDocKeyDown), window.removeEventListener("scroll", this._onScrollOrResize, !0), window.removeEventListener("resize", this._onScrollOrResize), this._resizeTimer && clearTimeout(this._resizeTimer), this._portalContainer && (le(C, this._portalContainer), this._portalContainer.remove(), this._portalContainer = null);
+    super.disconnectedCallback(), document.removeEventListener("paste", this._onPaste), document.removeEventListener("click", this._onDocClick), document.removeEventListener("keydown", this._onDocKeyDown), window.removeEventListener("scroll", this._onScrollOrResize, !0), window.removeEventListener("resize", this._onScrollOrResize), this._resizeTimer && clearTimeout(this._resizeTimer), this._resizeObserver && (this._resizeObserver.disconnect(), this._resizeObserver = null), this._portalContainer && (ue(S, this._portalContainer), this._portalContainer.remove(), this._portalContainer = null);
   }
   _renderPill(e) {
     return f`
@@ -3564,8 +3747,11 @@ const Rt = class Rt extends J {
       t.stopPropagation(), this._onSourceIconClick(e);
     }}
       >
-        ${e.brandHtml ? ae(e.brandHtml) : f`<span class="pill-ico" style=${e.iconColor ? `color:${e.iconColor}` : ""}>
-              ${se`<svg viewBox="0 0 24 24" class=${e.fillIcon ? "fill-icon" : ""}>${ie(e.icon)}</svg>`}
+        ${e.brandHtml ? fe(e.brandHtml) : f`<span
+              class="pill-ico"
+              style=${e.iconColor ? `color:${e.iconColor}` : ""}
+            >
+              ${pe`<svg viewBox="0 0 24 24" class=${e.fillIcon ? "fill-icon" : ""}>${ne(e.icon)}</svg>`}
             </span>`}
         ${e.label}
       </button>
@@ -3580,8 +3766,11 @@ const Rt = class Rt extends J {
       t.stopPropagation(), this._onSourceIconClick(e);
     }}
       >
-        ${e.brandHtml ? f`<span class="card-ico">${ae(e.brandHtml)}</span>` : f`<span class="card-ico" style=${e.iconColor ? `color:${e.iconColor}` : ""}>
-              ${se`<svg viewBox="0 0 24 24" class=${e.fillIcon ? "fill-icon" : ""}>${ie(e.icon)}</svg>`}
+        ${e.brandHtml ? f`<span class="card-ico">${fe(e.brandHtml)}</span>` : f`<span
+              class="card-ico"
+              style=${e.iconColor ? `color:${e.iconColor}` : ""}
+            >
+              ${pe`<svg viewBox="0 0 24 24" class=${e.fillIcon ? "fill-icon" : ""}>${ne(e.icon)}</svg>`}
             </span>`}
         <span class="card-label">${e.label}</span>
       </button>
@@ -3590,12 +3779,18 @@ const Rt = class Rt extends J {
   _renderMoreCard() {
     return f`
       <div class="more-wrap ${this._moreOpen ? "open" : ""}">
-        <button class="src-card" @click=${(e) => this._toggleMore(e)}>
-          <span class="card-ico" style="color: var(--sfx-up-text-muted, #94a3b8)">
+        <button
+          class="src-card"
+          @click=${(e) => this._toggleMore(e)}
+        >
+          <span
+            class="card-ico"
+            style="color: var(--sfx-up-text-muted, #94a3b8)"
+          >
             <svg viewBox="0 0 24 24" style="fill: currentColor; stroke: none">
-              <circle cx="5" cy="12" r="2.5"/>
-              <circle cx="12" cy="12" r="2.5"/>
-              <circle cx="19" cy="12" r="2.5"/>
+              <circle cx="5" cy="12" r="2.5" />
+              <circle cx="12" cy="12" r="2.5" />
+              <circle cx="19" cy="12" r="2.5" />
             </svg>
           </span>
           <span class="card-label">More</span>
@@ -3606,9 +3801,14 @@ const Rt = class Rt extends J {
   _renderMoreDropdown() {
     return f`
       <div class="more-wrap ${this._moreOpen ? "open" : ""}">
-        <button class="more-pill" @click=${(e) => this._toggleMore(e)}>
+        <button
+          class="more-pill"
+          @click=${(e) => this._toggleMore(e)}
+        >
           More
-          <svg class="more-chevron" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
+          <svg class="more-chevron" viewBox="0 0 24 24">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
         </button>
       </div>
     `;
@@ -3637,7 +3837,13 @@ const Rt = class Rt extends J {
           <div class="ring"></div>
           <div class="ring"></div>
           <div class="core">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+            >
               <polyline points="16 16 12 12 8 16" />
               <line x1="12" y1="12" x2="12" y2="21" />
               <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
@@ -3645,63 +3851,61 @@ const Rt = class Rt extends J {
           </div>
         </div>
 
-        <div class="title">
-          Drag & Drop or click to <span>browse</span>
-        </div>
-        ${this.compact ? C : f`<div class="subtitle">Drop files anywhere on this page</div>`}
-
+        <div class="title">Drag & Drop or click to <span>browse</span></div>
+        ${this.compact ? S : f`<div class="subtitle">Drop files anywhere on this page</div>`}
         ${!this.compact && this.sources.length > 0 ? f`
               <div class="import-divider"><span>or import from</span></div>
               ${this.sourcesLayout === "cards" ? f`
                     <div class="sources-cards">
-                      ${t.map((i) => this._renderCard(i))}
-                      ${r.length > 0 ? this._renderMoreCard() : C}
+                      ${t.map((o) => this._renderCard(o))}
+                      ${r.length > 0 ? this._renderMoreCard() : S}
                     </div>
                   ` : f`
                     <div class="sources-grid">
-                      ${t.map((i) => this._renderPill(i))}
-                      ${r.length > 0 ? this._renderMoreDropdown() : C}
+                      ${t.map((o) => this._renderPill(o))}
+                      ${r.length > 0 ? this._renderMoreDropdown() : S}
                     </div>
                   `}
-            ` : C}
-
+            ` : S}
         ${this.compact && this.sources.length > 0 ? f`
               <div class="sources-row">
                 ${this.sources.map(
-      (i) => f`
+      (o) => f`
                     <button
                       class="src-ico"
-                      style=${i.iconColor && !i.brandHtml ? `color:${i.iconColor}` : ""}
-                      data-tip=${i.label}
-                      aria-label=${i.label}
+                      style=${o.iconColor && !o.brandHtml ? `color:${o.iconColor}` : ""}
+                      data-tip=${o.label}
+                      aria-label=${o.label}
                       @click=${(n) => {
-        n.stopPropagation(), this._onSourceIconClick(i);
+        n.stopPropagation(), this._onSourceIconClick(o);
       }}
                     >
-                      ${i.brandHtml ? ae(i.brandHtml) : se`<svg viewBox="0 0 24 24" class=${i.fillIcon ? "fill-icon" : ""}>${ie(i.icon)}</svg>`}
+                      ${o.brandHtml ? fe(o.brandHtml) : pe`<svg viewBox="0 0 24 24" class=${o.fillIcon ? "fill-icon" : ""}>${ne(o.icon)}</svg>`}
                     </button>
                   `
     )}
               </div>
-            ` : C}
+            ` : S}
 
         <div class="ripple"></div>
         <input
           type="file"
           multiple
-          accept=${this.accept || C}
+          accept=${this.accept || S}
           @change=${this._onFileChange}
         />
       </div>
     `;
   }
-};
-Rt.styles = K`
+}, se.styles = G`
     :host {
       display: flex;
-      flex-shrink: 0;
+      flex-shrink: 1;
       flex: 1;
       min-height: 0;
+      min-width: 0;
+      max-width: 100%;
+      overflow: hidden;
     }
 
     :host([compact]) {
@@ -3720,7 +3924,7 @@ Rt.styles = K`
       text-align: center;
       cursor: pointer;
       position: relative;
-      overflow: visible;
+      overflow: auto;
       transition: background 0.22s;
       user-select: none;
       flex: 1;
@@ -3776,21 +3980,12 @@ Rt.styles = K`
       }
     }
 
-    /* --- Radial glow --- */
+    /* Legacy radial glow element — kept hidden for back-compat.
+       The real glow is now drawn as a pseudo-element of .rings so
+       it is always centered on the cloud icon regardless of the
+       drop-zone's size (previously .dz-glow was pinned to top: 20px
+       which misaligned when the drop-zone stretched vertically). */
     .dz-glow {
-      position: absolute;
-      width: 260px;
-      height: 260px;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: radial-gradient(circle at center, rgba(37, 99, 235, 0.04) 0%, rgba(37, 99, 235, 0.02) 40%, transparent 70%);
-      border-radius: 50%;
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    .compact .dz-glow {
       display: none;
     }
 
@@ -3804,6 +3999,24 @@ Rt.styles = K`
       justify-content: center;
       margin-bottom: 24px;
       flex-shrink: 0;
+    }
+
+    .drop-zone:not(.compact) .rings::before {
+      content: "";
+      position: absolute;
+      width: 260px;
+      height: 260px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(
+        circle at center,
+        rgba(37, 99, 235, 0.04) 0%,
+        rgba(37, 99, 235, 0.02) 40%,
+        transparent 70%
+      );
+      border-radius: 50%;
+      pointer-events: none;
     }
 
     .ring {
@@ -3858,7 +4071,9 @@ Rt.styles = K`
       font-weight: 700;
       color: var(--sfx-up-text, #1e293b);
       margin-bottom: 6px;
-      transition: font-size 0.3s, margin 0.3s;
+      transition:
+        font-size 0.3s,
+        margin 0.3s;
     }
 
     .title span {
@@ -3898,7 +4113,7 @@ Rt.styles = K`
 
     .import-divider::before,
     .import-divider::after {
-      content: '';
+      content: "";
       flex: 1;
       height: 1px;
       background: var(--sfx-up-border, #e2e8f0);
@@ -4194,7 +4409,9 @@ Rt.styles = K`
       position: fixed;
       background: var(--sfx-up-bg, #fff);
       border-radius: 12px;
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.14), 0 2px 8px rgba(0, 0, 0, 0.06);
+      box-shadow:
+        0 12px 40px rgba(0, 0, 0, 0.14),
+        0 2px 8px rgba(0, 0, 0, 0.06);
       border: 1px solid var(--sfx-up-border, #e8edf5);
       padding: 6px;
       min-width: 210px;
@@ -4204,7 +4421,10 @@ Rt.styles = K`
       opacity: 0;
       visibility: hidden;
       pointer-events: none;
-      transition: opacity 0.18s ease, visibility 0.18s ease, transform 0.18s ease;
+      transition:
+        opacity 0.18s ease,
+        visibility 0.18s ease,
+        transform 0.18s ease;
     }
 
     .more-dropdown.above {
@@ -4398,7 +4618,9 @@ Rt.styles = K`
       white-space: nowrap;
       opacity: 0;
       visibility: hidden;
-      transition: opacity 0.15s, visibility 0.15s;
+      transition:
+        opacity 0.15s,
+        visibility 0.15s;
       pointer-events: none;
       z-index: 50;
       font-family: inherit;
@@ -4426,7 +4648,7 @@ Rt.styles = K`
     }
 
     /* --- Hidden input --- */
-    input[type='file'] {
+    input[type="file"] {
       display: none;
     }
 
@@ -4461,10 +4683,62 @@ Rt.styles = K`
       .drop-zone:not(.compact) {
         padding: 32px 20px;
       }
-      .title { font-size: 16px; }
-      .rings { width: 90px; height: 90px; }
-      .core { width: 44px; height: 44px; }
-      .core svg { width: 20px; height: 20px; }
+      .title {
+        font-size: 16px;
+      }
+      .rings {
+        width: 90px;
+        height: 90px;
+      }
+      .core {
+        width: 44px;
+        height: 44px;
+      }
+      .core svg {
+        width: 20px;
+        height: 20px;
+      }
+    }
+
+    /* Inline mode on a TRULY wide host (e.g. full-screen) — frame the empty
+       drop-zone as a bounded bordered card so it doesn't float lost in a
+       sea of whitespace. The data-wide attribute is set imperatively by a
+       ResizeObserver in the component (see _onHostResize). Threshold is
+       1200px of host width, which only the full-screen example reliably
+       hits — embedded inline uploaders (Home demo, Sources Layout, plain
+       inline) are all narrower and stay untouched. Modal mode is always
+       excluded via the [mode="inline"] selector. */
+    :host([mode="inline"][data-wide]) .drop-zone:not(.compact) {
+      flex: 1 1 auto;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      align-self: center;
+      margin-inline: auto;
+      padding: 64px 48px;
+      border: 1.5px dashed var(--sfx-up-ring-color, #c4d5ef);
+      border-radius: 24px;
+    }
+    :host([mode="inline"][data-wide]) .drop-zone:not(.compact) .rings {
+      width: 140px;
+      height: 140px;
+      margin-bottom: 28px;
+    }
+    :host([mode="inline"][data-wide]) .drop-zone:not(.compact) .core {
+      width: 68px;
+      height: 68px;
+    }
+    :host([mode="inline"][data-wide]) .drop-zone:not(.compact) .core svg {
+      width: 30px;
+      height: 30px;
+    }
+    :host([mode="inline"][data-wide]) .drop-zone:not(.compact) .title {
+      font-size: 22px;
+      margin-bottom: 8px;
+    }
+    :host([mode="inline"][data-wide]) .drop-zone:not(.compact) .subtitle {
+      font-size: 15px;
+      margin-bottom: 28px;
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -4478,39 +4752,83 @@ Rt.styles = K`
         animation: none;
       }
     }
-  `;
-let Z = Rt;
+
+    /* Mobile responsive — placed at the END of the stylesheet so these
+       overrides win the cascade against the base .src-pill, .title,
+       .drop-zone rules declared earlier above. */
+    @media (max-width: 768px) {
+      :host {
+        max-width: 100vw;
+      }
+      .drop-zone:not(.compact) {
+        padding: 32px 16px;
+      }
+      .import-divider {
+        max-width: 100%;
+        margin-bottom: 14px;
+      }
+      .sources-grid {
+        max-width: 100%;
+        min-height: 0;
+      }
+      .src-pill {
+        padding: 9px 14px;
+        font-size: 13px;
+      }
+      .title {
+        font-size: 18px;
+      }
+    }
+
+    /* Galaxy Z Fold / Samsung S8+ / iPhone SE — extra narrow. */
+    @media (max-width: 400px) {
+      .drop-zone:not(.compact) {
+        padding: 24px 12px;
+      }
+      .sources-grid {
+        gap: 6px;
+      }
+      .src-pill {
+        padding: 8px 12px;
+        font-size: 13px;
+      }
+    }
+  `, se._WIDE_THRESHOLD_PX = 1200, se);
 te([
-  I({ type: Boolean, reflect: !0 })
-], Z.prototype, "compact");
+  F({ type: Boolean, reflect: !0 })
+], J.prototype, "compact");
 te([
-  I({ type: Boolean, attribute: "external-drag-over" })
-], Z.prototype, "externalDragOver");
+  F({ type: Boolean, attribute: "external-drag-over" })
+], J.prototype, "externalDragOver");
 te([
-  I({ type: String })
-], Z.prototype, "accept");
+  F({ type: String })
+], J.prototype, "accept");
 te([
-  I({ type: Array })
-], Z.prototype, "sources");
+  F({ type: Array })
+], J.prototype, "sources");
 te([
-  I({ type: String, attribute: "sources-layout" })
-], Z.prototype, "sourcesLayout");
+  F({ type: String, attribute: "sources-layout" })
+], J.prototype, "sourcesLayout");
 te([
-  j()
-], Z.prototype, "_dragOver");
+  F({ type: String, reflect: !0 })
+], J.prototype, "mode");
 te([
-  j()
-], Z.prototype, "_moreOpen");
+  D()
+], J.prototype, "_dragOver");
 te([
-  j()
-], Z.prototype, "_visiblePills");
+  D()
+], J.prototype, "_moreOpen");
 te([
-  br(".ripple")
-], Z.prototype, "_rippleEl");
+  D()
+], J.prototype, "_visiblePills");
 te([
-  br('input[type="file"]')
-], Z.prototype, "fileInput");
-const zt = class zt extends J {
+  Cr(".ripple")
+], J.prototype, "_rippleEl");
+te([
+  Cr('input[type="file"]')
+], J.prototype, "fileInput");
+let Nn = J;
+const Lt = class Lt extends Z {
   render() {
     return f`
       <div class="line"></div>
@@ -4519,7 +4837,7 @@ const zt = class zt extends J {
     `;
   }
 };
-zt.styles = K`
+Lt.styles = G`
     :host {
       display: flex;
       align-items: center;
@@ -4542,16 +4860,16 @@ zt.styles = K`
       white-space: nowrap;
     }
   `;
-let vr = zt;
-var dn = Object.defineProperty, He = (o, e, t, r) => {
-  for (var i = void 0, n = o.length - 1, s; n >= 0; n--)
-    (s = o[n]) && (i = s(e, t, i) || i);
-  return i && dn(e, t, i), i;
+let _r = Lt;
+var kn = Object.defineProperty, le = (i, e, t, r) => {
+  for (var o = void 0, n = i.length - 1, s; n >= 0; n--)
+    (s = i[n]) && (o = s(e, t, o) || o);
+  return o && kn(e, t, o), o;
 };
-const yt = new CSSStyleSheet();
-yt.replaceSync(`
+const St = new CSSStyleSheet();
+St.replaceSync(`
   [data-sfx-tile-dropdown] { position:absolute; top:0; left:0; width:0; height:0; overflow:visible; pointer-events:none; }
-  [data-sfx-tile-dropdown] .sfx-tile-dropdown { position:fixed; background:#fff; border:1px solid #e2e8f0; border-radius:10px; box-shadow:0 4px 20px rgba(0,0,0,0.12); padding:6px; z-index:99999; min-width:180px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; animation:sfxTileDropIn .15s ease; }
+  [data-sfx-tile-dropdown] .sfx-tile-dropdown { position:fixed; background:#fff; border:1px solid #e2e8f0; border-radius:10px; box-shadow:0 4px 20px rgba(0,0,0,0.12); padding:6px; z-index:99999; min-width:180px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; animation:sfxTileDropIn .15s ease; pointer-events:all; }
   [data-sfx-tile-dropdown] .sfx-tile-dropdown-item { display:flex; align-items:center; gap:10px; width:100%; padding:8px 12px; border:none; background:none; border-radius:6px; cursor:pointer; font-size:13px; font-weight:500; color:#1e293b; white-space:nowrap; transition:background .15s; font-family:inherit; }
   [data-sfx-tile-dropdown] .sfx-tile-dropdown-item:hover { background:#f5f7fa; }
   [data-sfx-tile-dropdown] .sfx-tile-dropdown-ico { width:32px; height:32px; border-radius:8px; background:#f8fafc; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
@@ -4563,17 +4881,20 @@ yt.replaceSync(`
   [data-sfx-tile-dropdown] .sfx-tile-dropdown-ico .canva-ico svg { width:22px; height:22px; }
   @keyframes sfxTileDropIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
 `);
-const Dt = class Dt extends J {
+const At = class At extends Z {
   constructor() {
-    super(...arguments), this.files = [], this.showDropTile = !1, this.sources = [], this.accept = "", this._moreOpen = !1, this._portalContainer = null, this._outsideClickHandler = (e) => {
-      var i;
-      if ((i = this._portalContainer) != null && i.contains(e.target)) return;
+    super(...arguments), this.files = [], this.showDropTile = !1, this.sources = [], this.accept = "", this.mode = "upload", this._moreOpen = !1, this._dropTileMaxVisible = 3, this._portalContainer = null, this._outsideClickHandler = (e) => {
+      var o;
+      if ((o = this._portalContainer) != null && o.contains(e.target)) return;
       const t = this.renderRoot.querySelector(".drop-tile-more-wrap"), r = e.composedPath();
       t && r.includes(t) || (this._moreOpen = !1, this._closePortal(), document.removeEventListener("click", this._outsideClickHandler, !0));
     }, this._onScrollOrResize = () => {
       this._moreOpen && this._positionPortal();
     }, this._onKeyDown = (e) => {
       e.key === "Escape" && this._moreOpen && (this._moreOpen = !1, this._closePortal(), this._removeGlobalListeners());
+    }, this._updateDropTileMaxVisible = () => {
+      const e = window.innerWidth <= 768 ? 1 : 3;
+      e !== this._dropTileMaxVisible && (this._dropTileMaxVisible = e);
     };
   }
   _onDropTileClick() {
@@ -4602,8 +4923,8 @@ const Dt = class Dt extends J {
     e.stopPropagation(), this._moreOpen = !this._moreOpen, this._moreOpen ? (this._openPortal(), this._addGlobalListeners()) : (this._closePortal(), this._removeGlobalListeners());
   }
   _openPortal() {
-    const e = this.sources.slice(3);
-    this._portalContainer || (this._portalContainer = document.createElement("div"), this._portalContainer.setAttribute("data-sfx-tile-dropdown", ""), Ir(this).appendChild(this._portalContainer), this._injectTileDropdownStyles()), le(
+    const e = this.sources.slice(this._dropTileMaxVisible);
+    this._portalContainer || (this._portalContainer = document.createElement("div"), this._portalContainer.setAttribute("data-sfx-tile-dropdown", ""), Zr(this).appendChild(this._portalContainer), this._injectTileDropdownStyles()), ue(
       f`<div class="sfx-tile-dropdown">
         ${e.map((t) => f`
           <button
@@ -4611,7 +4932,7 @@ const Dt = class Dt extends J {
             @click=${(r) => this._onMoreSourceClick(r, t)}
           >
             <span class="sfx-tile-dropdown-ico" style=${t.iconColor && !t.brandHtml ? `color:${t.iconColor}` : ""}>
-              ${t.brandHtml ? ae(t.brandHtml) : se`<svg viewBox="0 0 24 24" class=${t.fillIcon ? "fill-icon" : ""}>${ie(t.icon)}</svg>`}
+              ${t.brandHtml ? fe(t.brandHtml) : pe`<svg viewBox="0 0 24 24" class=${t.fillIcon ? "fill-icon" : ""}>${ne(t.icon)}</svg>`}
             </span>
             ${t.label}
           </button>
@@ -4621,79 +4942,86 @@ const Dt = class Dt extends J {
     ), requestAnimationFrame(() => this._positionPortal());
   }
   _positionPortal() {
-    var k;
-    const e = this.renderRoot.querySelector(".drop-tile-more"), t = (k = this._portalContainer) == null ? void 0 : k.querySelector(".sfx-tile-dropdown");
+    var _;
+    const e = this.renderRoot.querySelector(".drop-tile-more"), t = (_ = this._portalContainer) == null ? void 0 : _.querySelector(".sfx-tile-dropdown");
     if (!e || !t) return;
-    const r = e.getBoundingClientRect(), i = 6, n = t.scrollHeight, s = t.offsetWidth, a = r.top, l = window.innerHeight - r.bottom;
-    a >= n + i || a > l ? t.style.top = `${r.top - n - i}px` : t.style.top = `${r.bottom + i}px`;
-    let g = r.right - s;
-    g = Math.max(8, Math.min(g, window.innerWidth - s - 8)), t.style.left = `${g}px`;
+    const r = e.getBoundingClientRect(), o = 6, n = t.scrollHeight, s = t.offsetWidth, a = r.top, l = window.innerHeight - r.bottom;
+    a >= n + o || a > l ? t.style.top = `${r.top - n - o}px` : t.style.top = `${r.bottom + o}px`;
+    let h = r.right - s;
+    h = Math.max(8, Math.min(h, window.innerWidth - s - 8)), t.style.left = `${h}px`;
   }
   _closePortal() {
-    this._portalContainer && (le(C, this._portalContainer), this._portalContainer.remove(), this._portalContainer = null);
+    this._portalContainer && (ue(S, this._portalContainer), this._portalContainer.remove(), this._portalContainer = null);
   }
   _injectTileDropdownStyles() {
     var t;
     const e = (t = this._portalContainer) == null ? void 0 : t.getRootNode();
-    e && (e.adoptedStyleSheets.includes(yt) || (e.adoptedStyleSheets = [...e.adoptedStyleSheets, yt]));
+    e && (e.adoptedStyleSheets.includes(St) || (e.adoptedStyleSheets = [...e.adoptedStyleSheets, St]));
+  }
+  connectedCallback() {
+    super.connectedCallback(), this._updateDropTileMaxVisible(), window.addEventListener("resize", this._updateDropTileMaxVisible);
   }
   disconnectedCallback() {
-    super.disconnectedCallback(), this._moreOpen = !1, this._closePortal(), this._removeGlobalListeners();
+    super.disconnectedCallback(), this._moreOpen = !1, this._closePortal(), this._removeGlobalListeners(), window.removeEventListener("resize", this._updateDropTileMaxVisible);
   }
   _onMoreSourceClick(e, t) {
     this._moreOpen = !1, this._closePortal(), this._removeGlobalListeners(), this._onSourceClick(e, t);
   }
   _renderDropTile() {
-    const t = this.sources.slice(0, 3), r = this.sources.slice(3);
+    const e = this._dropTileMaxVisible, t = this.sources.slice(0, e), r = this.sources.slice(e);
     return f`
       <div class="drop-tile" @click=${this._onDropTileClick}>
-        <div class="drop-tile-rings">
-          <div class="drop-tile-ring"></div>
-          <div class="drop-tile-ring"></div>
-          <div class="drop-tile-core">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-              <polyline points="16 16 12 12 8 16" />
-              <line x1="12" y1="12" x2="12" y2="21" />
-              <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
-            </svg>
+        <div class="drop-tile-preview">
+          <div class="drop-tile-rings">
+            <div class="drop-tile-ring"></div>
+            <div class="drop-tile-ring"></div>
+            <div class="drop-tile-core">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                <polyline points="16 16 12 12 8 16" />
+                <line x1="12" y1="12" x2="12" y2="21" />
+                <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
+              </svg>
+            </div>
           </div>
         </div>
-        <div class="drop-tile-text">Drop files or<br>click to <span>browse</span></div>
-        ${t.length > 0 ? f`
-          <div class="drop-tile-sources">
-            ${t.map((i) => f`
-              <button
-                class="drop-tile-src"
-                style=${i.iconColor && !i.brandHtml ? `color:${i.iconColor}` : ""}
-                title=${i.label}
-                @click=${(n) => this._onSourceClick(n, i)}
-              >
-                ${i.brandHtml ? ae(i.brandHtml) : se`<svg viewBox="0 0 24 24" class=${i.fillIcon ? "fill-icon" : ""}>${ie(i.icon)}</svg>`}
-              </button>
-            `)}
-            ${r.length > 0 ? f`
-              <div class="drop-tile-more-wrap">
-                <button class="drop-tile-more" title="More sources" @click=${(i) => this._toggleMore(i)}>···</button>
-              </div>
-            ` : C}
-          </div>
-        ` : C}
-        <input type="file" multiple accept=${this.accept || C} @change=${this._onFileInput} />
+        <div class="drop-tile-info">
+          <div class="drop-tile-text">Drop or click to <span>browse</span></div>
+          ${t.length > 0 ? f`
+            <div class="drop-tile-sources">
+              ${t.map((o) => f`
+                <button
+                  class="drop-tile-src"
+                  style=${o.iconColor && !o.brandHtml ? `color:${o.iconColor}` : ""}
+                  title=${o.label}
+                  @click=${(n) => this._onSourceClick(n, o)}
+                >
+                  ${o.brandHtml ? fe(o.brandHtml) : pe`<svg viewBox="0 0 24 24" class=${o.fillIcon ? "fill-icon" : ""}>${ne(o.icon)}</svg>`}
+                </button>
+              `)}
+              ${r.length > 0 ? f`
+                <div class="drop-tile-more-wrap">
+                  <button class="drop-tile-more" title="More sources" @click=${(o) => this._toggleMore(o)}>···</button>
+                </div>
+              ` : S}
+            </div>
+          ` : S}
+        </div>
+        <input type="file" multiple accept=${this.accept || S} @change=${this._onFileInput} />
       </div>
     `;
   }
   render() {
     return f`
       <div class="grid">
-        ${this.showDropTile ? this._renderDropTile() : C}
+        ${this.showDropTile && this.mode !== "review" ? this._renderDropTile() : S}
         ${this.files.map(
-      (e, t) => f`<sfx-file-item .file=${e} style="--tile-index:${t}"></sfx-file-item>`
+      (e, t) => f`<sfx-file-item .file=${e} .mode=${this.mode} .getLocateUrl=${this.getLocateUrl} style="--tile-index:${t}"></sfx-file-item>`
     )}
       </div>
     `;
   }
 };
-Dt.styles = K`
+At.styles = G`
     :host {
       display: block;
       flex: 1;
@@ -4724,45 +5052,84 @@ Dt.styles = K`
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(var(--sfx-up-grid-min, max(24%, 170px)), 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(var(--sfx-up-grid-min, 200px), 1fr));
       gap: 12px;
-      padding: 0 var(--sfx-grid-pad-r, 12px) 16px var(--sfx-grid-pad-l, 16px);
+      padding: 0 var(--sfx-grid-pad-r, 8px) 16px var(--sfx-grid-pad-l, 16px);
     }
 
-    @media (max-width: 480px) {
+    /* Mobile: 2 cols at <=768, 1 col at <=440. Use viewport @media not
+       container queries — container queries fire on local file-list width
+       which is narrow in desktop preview mode, breaking desktop layout. */
+    @media (max-width: 768px) {
+      :host {
+        scrollbar-gutter: auto;
+        padding-bottom: 0;
+      }
       .grid {
-        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-        gap: 8px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+        padding: 0 12px 16px;
       }
     }
 
-    /* --- Drop tile (first card in grid) --- */
+    @media (max-width: 440px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* --- Drop tile (first card in grid) — mirrors file-item structure
+       so its natural height matches a file card at any column width */
     .drop-tile {
       border-radius: 10px;
       border: 1.5px dashed var(--sfx-up-border, #c4d5ef);
       background: var(--sfx-up-surface, #f8fafc);
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
       cursor: pointer;
       transition: all 0.18s ease;
-      padding: 12px 10px;
       position: relative;
       z-index: 1;
       min-height: 0;
       overflow: hidden;
     }
 
-    .drop-tile:hover {
+    .drop-tile:hover,
+    :host([drag-active]) .drop-tile {
       border-color: var(--sfx-up-primary, #2563eb);
       background: var(--sfx-up-primary-bg, #eff6ff);
     }
 
+    /* Preview area — flex:1 absorbs remaining row height so drop-tile total
+       always matches the file-card height (info bar handles its own size).
+       container-type lets the inner rings/icon scale with tile width via cqi. */
+    .drop-tile-preview {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      container-type: inline-size;
+      container-name: drop-tile-preview;
+    }
+
+    /* Info area — wider bottom padding so the source pills don't hug the
+       card edge. Natural height stays close to the file-card .info area. */
+    .drop-tile-info {
+      padding: 12px 12px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+      container-type: inline-size;
+      container-name: drop-tile-info;
+    }
+
     .drop-tile-rings {
-      width: clamp(40px, 6vw, 60px);
-      height: clamp(40px, 6vw, 60px);
+      width: clamp(48px, 24cqi, 100px);
+      height: clamp(48px, 24cqi, 100px);
       position: relative;
       display: flex;
       align-items: center;
@@ -4791,8 +5158,8 @@ Dt.styles = K`
     }
 
     .drop-tile-core {
-      width: clamp(24px, 4vw, 34px);
-      height: clamp(24px, 4vw, 34px);
+      width: clamp(32px, 14cqi, 52px);
+      height: clamp(32px, 14cqi, 52px);
       border-radius: 50%;
       background: var(--sfx-up-primary-bg, #eff6ff);
       color: var(--sfx-up-primary, #2563eb);
@@ -4810,16 +5177,16 @@ Dt.styles = K`
     }
 
     .drop-tile-core svg {
-      width: 16px;
-      height: 16px;
+      width: clamp(16px, 7cqi, 26px);
+      height: clamp(16px, 7cqi, 26px);
     }
 
     .drop-tile-text {
-      font-size: 11px;
+      font-size: clamp(12px, 3.5cqi, 15px);
       font-weight: 500;
       color: var(--sfx-up-text-secondary, #475569);
       text-align: center;
-      line-height: 1.3;
+      line-height: 1.2;
     }
 
     .drop-tile-text span {
@@ -4829,14 +5196,14 @@ Dt.styles = K`
 
     .drop-tile-sources {
       display: flex;
-      gap: 3px;
-      margin-top: 2px;
+      gap: clamp(3px, 1.2cqi, 8px);
+      margin-top: 8px;
     }
 
     .drop-tile-src {
-      width: 28px;
-      height: 28px;
-      border-radius: 6px;
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
       border: 1px solid var(--sfx-up-border, #e2e8f0);
       background: var(--sfx-up-bg, #fff);
       display: flex;
@@ -4856,8 +5223,8 @@ Dt.styles = K`
     }
 
     .drop-tile-src svg {
-      width: 14px;
-      height: 14px;
+      width: clamp(20px, 6cqi, 24px);
+      height: clamp(20px, 6cqi, 24px);
       fill: none;
       stroke: currentColor;
       stroke-width: 2;
@@ -4870,14 +5237,30 @@ Dt.styles = K`
       stroke: none;
     }
 
+    .drop-tile-src .brand-ico {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .drop-tile-src .brand-ico svg {
+      width: 20px;
+      height: 20px;
+      stroke: none;
+      stroke-width: 0;
+    }
+
     .drop-tile-more-wrap {
       position: relative;
     }
 
     .drop-tile-more {
-      width: 28px;
-      height: 28px;
-      border-radius: 6px;
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
       border: 1px solid var(--sfx-up-border, #e2e8f0);
       background: var(--sfx-up-bg, #fff);
       display: flex;
@@ -4994,41 +5377,91 @@ Dt.styles = K`
     input[type="file"] {
       display: none;
     }
+
+    /* Single full-width drop-tile (mobile, 1-col grid): base clamp() rules
+       already size rings/core/svg smoothly (max caps are tight enough that
+       the full-width tile doesn't balloon). We only bump the source buttons
+       here so they're tappable on a large card. */
+    @media (max-width: 440px) {
+      .drop-tile-info {
+        padding: 16px 12px 24px;
+        gap: 6px;
+      }
+      .drop-tile-src,
+      .drop-tile-more {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+      }
+      .drop-tile-src svg {
+        width: 22px;
+        height: 22px;
+      }
+      .drop-tile-src .brand-ico {
+        width: 32px;
+        height: 32px;
+      }
+      .drop-tile-src .brand-ico svg {
+        width: 24px;
+        height: 24px;
+      }
+      .drop-tile-sources {
+        gap: 10px;
+        margin-top: 12px;
+      }
+    }
   `;
-let pe = Dt;
-He([
-  I({ attribute: !1 })
-], pe.prototype, "files");
-He([
-  I({ type: Boolean })
-], pe.prototype, "showDropTile");
-He([
-  I({ attribute: !1 })
-], pe.prototype, "sources");
-He([
-  I({ type: String })
-], pe.prototype, "accept");
-He([
-  j()
-], pe.prototype, "_moreOpen");
-var cn = Object.defineProperty, Mr = (o, e, t, r) => {
-  for (var i = void 0, n = o.length - 1, s; n >= 0; n--)
-    (s = o[n]) && (i = s(e, t, i) || i);
-  return i && cn(e, t, i), i;
+let re = At;
+le([
+  F({ attribute: !1 })
+], re.prototype, "files");
+le([
+  F({ type: Boolean })
+], re.prototype, "showDropTile");
+le([
+  F({ attribute: !1 })
+], re.prototype, "sources");
+le([
+  F({ type: String })
+], re.prototype, "accept");
+le([
+  F({ type: String })
+], re.prototype, "mode");
+le([
+  F({ attribute: !1 })
+], re.prototype, "getLocateUrl");
+le([
+  D()
+], re.prototype, "_moreOpen");
+le([
+  D()
+], re.prototype, "_dropTileMaxVisible");
+var Sn = Object.defineProperty, Ve = (i, e, t, r) => {
+  for (var o = void 0, n = i.length - 1, s; n >= 0; n--)
+    (s = i[n]) && (o = s(e, t, o) || o);
+  return o && Sn(e, t, o), o;
 };
-const Tt = class Tt extends J {
+const It = class It extends Z {
   constructor() {
-    super(...arguments), this._dims = "";
+    super(...arguments), this.mode = "upload", this._dims = "", this._copied = !1, this._copiedTimer = null;
   }
   updated(e) {
-    var t;
-    if (e.has("file") && (this._dims = "", (t = this.file) != null && t.previewUrl)) {
-      const r = this.file.previewUrl, i = new Image();
-      i.onload = () => {
-        var n;
-        ((n = this.file) == null ? void 0 : n.previewUrl) === r && (this._dims = `${i.naturalWidth}×${i.naturalHeight}`);
-      }, i.src = r;
+    var t, r, o, n, s;
+    if (e.has("file")) {
+      if (this._dims = "", (r = (t = this.file) == null ? void 0 : t.previewUrl) != null && r.startsWith("blob:")) {
+        const a = this.file.previewUrl, l = new Image();
+        l.onload = () => {
+          var p;
+          ((p = this.file) == null ? void 0 : p.previewUrl) === a && (this._dims = `${l.naturalWidth}×${l.naturalHeight}`);
+        }, l.src = a;
+      } else if ((s = (n = (o = this.file) == null ? void 0 : o.response) == null ? void 0 : n.file) != null && s.info) {
+        const a = this.file.response.file.info;
+        a.img_w && a.img_h && (this._dims = `${a.img_w}×${a.img_h}`);
+      }
     }
+  }
+  disconnectedCallback() {
+    super.disconnectedCallback(), this._copiedTimer != null && (clearTimeout(this._copiedTimer), this._copiedTimer = null);
   }
   _emit(e, t) {
     this.dispatchEvent(
@@ -5058,32 +5491,61 @@ const Tt = class Tt extends J {
   _preview(e) {
     e.stopPropagation(), this._emit("file-preview");
   }
+  _locate(e) {
+    var o, n, s, a, l;
+    if (e.stopPropagation(), !this.file) return;
+    const r = ((o = this.getLocateUrl) == null ? void 0 : o.call(this, this.file)) || ((l = (a = (s = (n = this.file) == null ? void 0 : n.response) == null ? void 0 : s.file) == null ? void 0 : a.url) == null ? void 0 : l.public);
+    r && window.open(r, "_blank", "noopener,noreferrer");
+  }
+  async _copyCdn(e) {
+    var r, o, n, s;
+    e.stopPropagation();
+    const t = (s = (n = (o = (r = this.file) == null ? void 0 : r.response) == null ? void 0 : o.file) == null ? void 0 : n.url) == null ? void 0 : s.cdn;
+    if (t) {
+      try {
+        await navigator.clipboard.writeText(t);
+      } catch {
+        return;
+      }
+      this._copied = !0, this._copiedTimer && clearTimeout(this._copiedTimer), this._copiedTimer = window.setTimeout(() => {
+        this._copied = !1, this._copiedTimer = null;
+      }, 1400);
+    }
+  }
   render() {
+    var _, E;
     const e = this.file;
-    if (!e) return C;
-    const t = Oe(e), r = e.status === "complete", i = e.status === "uploading", n = e.status === "paused", s = e.status === "error" || e.status === "failed", a = e.status === "rejected", l = Ki(e.name), p = [
+    if (!e) return S;
+    const t = Wr(e), r = e.status === "complete", o = e.status === "uploading", n = e.status === "paused", s = e.status === "error" || e.status === "failed", a = e.status === "rejected", l = this.mode === "review", p = dn(e.name), h = [
       "tile",
       r ? "done" : "",
-      i ? "uploading" : "",
+      o ? "uploading" : "",
       n ? "paused" : "",
-      a ? "rejected" : ""
+      a ? "rejected" : "",
+      l ? "review" : ""
     ].filter(Boolean).join(" ");
     return f`
-      <div class=${p} tabindex="0">
+      <div class=${h} tabindex="0">
         <!-- Preview area -->
         <div class="preview">
           ${e.previewUrl ? f`<img class="preview-img" src=${e.previewUrl} alt="" />` : f`
                 <div class="preview-bg ${t}"></div>
                 <div class="type-icon">
-                  <div class="type-icon-inner ${t}">
-                    ${this._renderTypeIcon(t)}
-                    ${l ? f`<div class="ext-label">${l}</div>` : C}
-                  </div>
+                  <img
+                    class="type-icon-img"
+                    src=${Xr(p)}
+                    alt="${p ? `${p} file` : "File"}"
+                    @error=${(O) => {
+      const P = O.target, v = Kr();
+      !P.dataset.fallback && P.src !== v && (P.dataset.fallback = "1", P.src = v);
+    }}
+                  />
                 </div>
               `}
 
-          <!-- Preview button -->
-          ${!r && !i && !n && !s && e.status !== "rejected" ? f`
+          <!-- Preview button (not in review mode — review uses its own
+               stacked Locate / Copy CDN actions instead) -->
+          ${!l && !r && !o && !n && !s && e.status !== "rejected" ? f`
                 <button class="preview-btn" @click=${this._preview} aria-label="Details">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
@@ -5091,7 +5553,24 @@ const Tt = class Tt extends J {
                   </svg>
                   Details
                 </button>
-              ` : C}
+              ` : S}
+
+          <!-- Review-mode hover actions: Locate (open in storage) +
+               Copy CDN (copy CDN URL to clipboard). Both buttons fade
+               in on tile hover, only for completed files (failed files
+               have no response.file.url). -->
+          ${l && r && ((E = (_ = e.response) == null ? void 0 : _.file) != null && E.url) ? f`
+                <div class="review-actions">
+                  ${e.response.file.url.public ? f`<button class="review-action secondary" @click=${this._locate} title=${e.response.file.url.public} aria-label="Locate file in storage">
+                        <svg viewBox="0 0 24 24"><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><circle cx="12" cy="12" r="7"/></svg>
+                        Locate
+                      </button>` : S}
+                  ${e.response.file.url.cdn ? f`<button class="review-action primary ${this._copied ? "copied" : ""}" @click=${this._copyCdn} title="Copy CDN link" aria-label="Copy CDN link to clipboard">
+                        ${this._copied ? f`<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>` : f`<svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`}
+                        ${this._copied ? "Copied" : "Copy CDN"}
+                      </button>` : S}
+                </div>
+              ` : S}
 
           <!-- Spinner overlay (uploading = spinner, paused = pause icon) -->
           <div class="spinner-overlay">
@@ -5109,39 +5588,48 @@ const Tt = class Tt extends J {
                 <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round">
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
-              </div>` : C}
+              </div>` : S}
 
-          <!-- Progress bar (visible during upload and when paused) -->
-          ${e.status === "uploading" || e.status === "paused" ? f`
+          <!-- Failed badge (review mode only — failed files get a visible status) -->
+          ${l && s ? f`<div class="failed-badge" title=${e.error || "Upload failed"}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                </svg>
+              </div>` : S}
+
+          <!-- Progress bar (visible during upload and when paused; not in review mode) -->
+          ${!l && (e.status === "uploading" || e.status === "paused") ? f`
                 <div class="progress">
                   <div class="progress-fill" style="transform:scaleX(${Math.min(e.progress, 100) / 100})"></div>
                 </div>
-              ` : C}
+              ` : S}
 
-          <!-- Error / rejected badge -->
-          ${(s || a) && e.error ? f`<div class="error-badge" title=${e.error}>${e.error}</div>` : C}
+          <!-- Error / rejected text overlay (suppressed in review mode — failed-badge takes over) -->
+          ${(s || a) && e.error && !l ? f`<div class="error-badge" title=${e.error}>${e.error}</div>` : S}
 
           <!-- Video duration badge (hidden when error badge is shown to avoid overlap) -->
-          ${!(s || a) && e.duration != null && e.duration > 0 ? f`<div class="duration-badge">${this._formatDuration(e.duration)}</div>` : C}
+          ${!(s || a) && e.duration != null && e.duration > 0 ? f`<div class="duration-badge">${this._formatDuration(e.duration)}</div>` : S}
         </div>
 
-        <!-- Action buttons -->
+        <!-- Action buttons (hidden in review mode — files are read-only) -->
+        ${l ? S : f`
         <div class="actions">
-          ${i && e.isTus ? f`
+          ${o && e.isTus ? f`
                 <button class="act-btn pause" @click=${this._pause} title="Pause" aria-label="Pause upload">
                   <svg viewBox="0 0 24 24" fill="currentColor">
                     <rect x="6" y="4" width="4" height="16" rx="1" />
                     <rect x="14" y="4" width="4" height="16" rx="1" />
                   </svg>
                 </button>
-              ` : C}
+              ` : S}
           ${n ? f`
                 <button class="act-btn resume" @click=${this._resume} title="Resume" aria-label="Resume upload">
                   <svg viewBox="0 0 24 24" fill="currentColor">
                     <polygon points="5,3 19,12 5,21" />
                   </svg>
                 </button>
-              ` : C}
+              ` : S}
           ${s ? f`
                 <button class="act-btn retry" @click=${this._retry} title="Retry" aria-label="Retry upload">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
@@ -5149,7 +5637,7 @@ const Tt = class Tt extends J {
                     <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10" />
                   </svg>
                 </button>
-              ` : C}
+              ` : S}
           <button class="act-btn del" @click=${this._remove} title="Remove" aria-label="Remove file">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="3 6 5 6 21 6" />
@@ -5160,13 +5648,15 @@ const Tt = class Tt extends J {
             </svg>
           </button>
         </div>
+        `}
 
         <!-- Info bar -->
         <div class="info">
           <input class="name-input" type="text" .value=${e.name} title=${e.name}
             aria-label="File name"
-            @change=${this._rename} @click=${(g) => g.stopPropagation()} />
-          <div class="meta">${l || ""}${e.size ? ` · ${we(e.size)}` : ""}${this._dims ? ` · ${this._dims}` : ""}</div>
+            ?readonly=${l}
+            @change=${l ? S : this._rename} @click=${(O) => O.stopPropagation()} />
+          <div class="meta">${p || ""}${e.size ? ` · ${ce(e.size)}` : ""}${this._dims ? ` · ${this._dims}` : ""}</div>
         </div>
       </div>
     `;
@@ -5175,22 +5665,8 @@ const Tt = class Tt extends J {
     const t = Math.floor(e / 60), r = Math.floor(e % 60);
     return `${t}:${r.toString().padStart(2, "0")}`;
   }
-  _renderTypeIcon(e) {
-    switch (e) {
-      case "pdf":
-        return f`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
-      case "doc":
-        return f`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`;
-      case "vid":
-        return f`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>`;
-      case "zip":
-        return f`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>`;
-      default:
-        return f`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>`;
-    }
-  }
 };
-Tt.styles = K`
+It.styles = G`
     :host {
       display: block;
     }
@@ -5208,6 +5684,8 @@ Tt.styles = K`
       display: flex;
       flex-direction: column;
       position: relative;
+      min-width: 0;
+      overflow: hidden;
     }
 
     .tile:hover {
@@ -5245,11 +5723,20 @@ Tt.styles = K`
       max-height: 100%;
     }
 
-    .preview-bg.pdf { background: linear-gradient(135deg, var(--destructive-10, #fef2f2), var(--destructive-10, #fee2e2)); }
-    .preview-bg.doc { background: linear-gradient(135deg, var(--sfx-up-primary-bg, #eff6ff), var(--sfx-up-primary-bg, #dbeafe)); }
+    .preview-bg.pdf { background: linear-gradient(135deg, #fef2f2, #fee2e2); }
+    .preview-bg.doc { background: linear-gradient(135deg, #eff6ff, #dbeafe); }
     .preview-bg.vid { background: linear-gradient(135deg, #f5f3ff, #ede9fe); }
-    .preview-bg.zip { background: linear-gradient(135deg, var(--warning-10, #fffbeb), var(--warning-10, #fef3c7)); }
-    .preview-bg.gen { background: linear-gradient(135deg, var(--sfx-up-border-light, #f8fafc), var(--sfx-up-border-light, #f1f5f9)); }
+    .preview-bg.audio { background: linear-gradient(135deg, #fdf4ff, #fae8ff); }
+    .preview-bg.sheet { background: linear-gradient(135deg, #f0fdf4, #dcfce7); }
+    .preview-bg.slide { background: linear-gradient(135deg, #fff7ed, #ffedd5); }
+    .preview-bg.zip { background: linear-gradient(135deg, #fffbeb, #fef3c7); }
+    .preview-bg.code { background: linear-gradient(135deg, #f0f9ff, #e0f2fe); }
+    .preview-bg.markup { background: linear-gradient(135deg, #f0fdfa, #ccfbf1); }
+    .preview-bg.font { background: linear-gradient(135deg, #faf5ff, #f3e8ff); }
+    .preview-bg.design { background: linear-gradient(135deg, #fdf2f8, #fce7f3); }
+    .preview-bg.binary { background: linear-gradient(135deg, #f8fafc, #f1f5f9); }
+    .preview-bg.data { background: linear-gradient(135deg, #ecfdf5, #d1fae5); }
+    .preview-bg.gen { background: linear-gradient(135deg, #f8fafc, #f1f5f9); }
 
     /* --- File type icon --- */
     .type-icon {
@@ -5261,33 +5748,10 @@ Tt.styles = K`
       pointer-events: none;
     }
 
-    .type-icon-inner {
-      width: 44px;
-      height: 44px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(255, 255, 255, 0.9);
-      box-shadow: 0 2px 10px var(--sfx-up-shadow, rgba(0, 0, 0, 0.08));
-    }
-
-    .type-icon-inner svg {
-      width: 22px;
-      height: 22px;
-    }
-
-    .type-icon-inner.pdf { color: var(--sfx-up-error, #dc2626); }
-    .type-icon-inner.doc { color: var(--sfx-up-primary, #1d4ed8); }
-    .type-icon-inner.vid { color: #7c3aed; }
-    .type-icon-inner.zip { color: var(--warning-foreground, #b45309); }
-    .type-icon-inner.gen { color: var(--sfx-up-text-muted, #64748b); }
-
-    .ext-label {
-      font-size: 12px;
-      font-weight: 800;
-      text-transform: uppercase;
-      margin-top: 2px;
+    .type-icon-img {
+      max-width: 72px;
+      max-height: 72px;
+      object-fit: contain;
     }
 
     .duration-badge {
@@ -5309,13 +5773,17 @@ Tt.styles = K`
     .info {
       padding: 8px 12px;
       min-width: 0;
+      overflow: hidden;
     }
 
     .name-input {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
       margin-bottom: 2px;
-      flex: 1;
       min-width: 0;
-      font-size: 14px;
+      font-size: 12px;
       font-weight: 400;
       color: var(--foreground, var(--sfx-up-text, #111827));
       border: 1px solid transparent;
@@ -5324,6 +5792,9 @@ Tt.styles = K`
       background: transparent;
       font-family: inherit;
       outline: none;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
       transition: border-color 0.15s, background 0.15s;
     }
     .name-input:hover {
@@ -5335,11 +5806,10 @@ Tt.styles = K`
       background: var(--sfx-up-bg, #fff);
     }
 
-
     .meta {
       font-size: 12px;
       font-weight: 400;
-      color: var(--sfx-up-text-muted, #9ca3af);
+      color: var(--sfx-up-text-muted, #94a3b8);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -5347,6 +5817,13 @@ Tt.styles = K`
 
     .tile.done {
       box-shadow: 0 0 0 2px var(--sfx-up-primary, #2563eb);
+    }
+
+    /* In review mode every tile is complete — the per-tile blue ring would
+       turn the whole grid into a wall of borders, so suppress it. The status
+       badge in the corner already conveys "uploaded successfully". */
+    .tile.review.done {
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.06);
     }
 
     /* --- Action buttons --- */
@@ -5518,6 +5995,119 @@ Tt.styles = K`
       height: 14px;
     }
 
+    /* --- Review mode: failed badge (mirrors done-badge) --- */
+    .failed-badge {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--sfx-up-error, #dc2626);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 10;
+      color: #fff;
+    }
+
+    .failed-badge svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    /* --- Review mode: stacked hover actions (Locate / Copy CDN) --- */
+    .review-actions {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+      z-index: 6;
+      pointer-events: none;
+    }
+
+    .tile.review:hover .review-actions,
+    .tile.review:focus-within .review-actions {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    @media (hover: none) {
+      .tile.review .review-actions {
+        opacity: 1;
+        pointer-events: auto;
+      }
+    }
+
+    .review-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 10px;
+      border: none;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: transform 0.18s cubic-bezier(0.34, 1.3, 0.64, 1),
+                  box-shadow 0.18s ease,
+                  background 0.15s ease;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18),
+                  0 1px 2px rgba(15, 23, 42, 0.08);
+    }
+
+    .review-action:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.22),
+                  0 1px 3px rgba(15, 23, 42, 0.1);
+    }
+
+    .review-action:active {
+      transform: scale(1.02);
+    }
+
+    .review-action svg {
+      width: 15px;
+      height: 15px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    /* Secondary — white card style (matches Preview in design system) */
+    .review-action.secondary {
+      background: rgba(255, 255, 255, 0.96);
+      color: var(--sfx-up-text, #1e293b);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    /* Primary — solid blue (matches + Select in design system) */
+    .review-action.primary {
+      background: var(--sfx-up-primary, #2563eb);
+      color: #fff;
+    }
+
+    .review-action.primary:hover {
+      background: var(--sfx-up-primary-hover, #1d4ed8);
+    }
+
+    /* Brief green flash after a successful clipboard copy */
+    .review-action.copied {
+      background: #16a34a !important;
+      color: #fff;
+    }
+
     /* --- Error / rejected state --- */
     .error-badge {
       position: absolute;
@@ -5590,13 +6180,6 @@ Tt.styles = K`
       }
     }
 
-    @keyframes popBounce {
-      0% { transform: scale(0); opacity: 0; }
-      55% { transform: scale(1.2); opacity: 1; }
-      75% { transform: scale(0.94); }
-      100% { transform: scale(1); }
-    }
-
     @keyframes spinRing {
       to { transform: rotate(360deg); }
     }
@@ -5617,14 +6200,23 @@ Tt.styles = K`
       .spin-ring { animation: none; }
     }
   `;
-let et = Tt;
-Mr([
-  I({ attribute: !1 })
-], et.prototype, "file");
-Mr([
-  j()
-], et.prototype, "_dims");
-const qe = K`
+let ve = It;
+Ve([
+  F({ attribute: !1 })
+], ve.prototype, "file");
+Ve([
+  F({ type: String })
+], ve.prototype, "mode");
+Ve([
+  F({ attribute: !1 })
+], ve.prototype, "getLocateUrl");
+Ve([
+  D()
+], ve.prototype, "_dims");
+Ve([
+  D()
+], ve.prototype, "_copied");
+const We = G`
   .btn,
   .btn-ghost,
   .btn-primary,
@@ -5693,24 +6285,38 @@ const qe = K`
     opacity: 0.55;
     cursor: not-allowed;
   }
-`, Ne = K`
+`, Ge = G`
   button:focus-visible {
     outline: 2px solid var(--sfx-up-ring, oklch(0.578 0.198 268.129 / 0.7));
     outline-offset: 2px;
   }
 `;
-var pn = Object.defineProperty, Ye = (o, e, t, r) => {
-  for (var i = void 0, n = o.length - 1, s; n >= 0; n--)
-    (s = o[n]) && (i = s(e, t, i) || i);
-  return i && pn(e, t, i), i;
+var Cn = Object.defineProperty, Oe = (i, e, t, r) => {
+  for (var o = void 0, n = i.length - 1, s; n >= 0; n--)
+    (s = i[n]) && (o = s(e, t, o) || o);
+  return o && Cn(e, t, o), o;
 };
-const xr = 7, jt = class jt extends J {
+const kr = 7, $n = 4, Bt = class Bt extends Z {
   constructor() {
-    super(...arguments), this.fileCount = 0, this.totalSize = 0, this.thumbnails = [], this.primaryLabel = "Done", this.failedFiles = [];
+    super(...arguments), this.fileCount = 0, this.totalSize = 0, this.thumbnails = [], this.primaryLabel = "Done", this.failedFiles = [], this._maxThumbs = kr, this._updateMaxThumbs = () => {
+      const e = window.innerWidth <= 768 ? $n : kr;
+      e !== this._maxThumbs && (this._maxThumbs = e);
+    };
+  }
+  connectedCallback() {
+    super.connectedCallback(), this._updateMaxThumbs(), window.addEventListener("resize", this._updateMaxThumbs);
+  }
+  disconnectedCallback() {
+    super.disconnectedCallback(), window.removeEventListener("resize", this._updateMaxThumbs);
   }
   _uploadMore() {
     this.dispatchEvent(
       new CustomEvent("upload-more", { bubbles: !0, composed: !0 })
+    );
+  }
+  _reviewFiles() {
+    this.dispatchEvent(
+      new CustomEvent("review-files", { bubbles: !0, composed: !0 })
     );
   }
   _primaryAction() {
@@ -5734,36 +6340,36 @@ const xr = 7, jt = class jt extends J {
     );
   }
   render() {
-    const e = this.thumbnails.slice(0, xr), t = this.thumbnails.length - xr, r = this.fileCount > 0, i = this.failedFiles.length > 0, n = i && !r;
+    const e = this.thumbnails.slice(0, this._maxThumbs), t = this.thumbnails.length - this._maxThumbs, r = this.fileCount > 0, o = this.failedFiles.length > 0, n = o && !r;
     return f`
       <button class="close-btn" title="Close" @click=${this._close}>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
       <div class="card" role="status" aria-live="polite">
-        <div class="icon ${n ? "error" : i ? "warning" : ""}">
+        <div class="icon ${n ? "error" : o ? "warning" : ""}">
           ${n ? f`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-              </svg>` : i ? f`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              </svg>` : o ? f`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
                 </svg>` : f`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
                   <polyline points="20 6 9 17 4 12" />
                 </svg>`}
         </div>
-        <div class="title">${n ? "Upload failed" : i ? "Partially uploaded" : "Uploaded successfully!"}</div>
-        <div class="subtitle">${n ? `${this.failedFiles.length === 1 ? "File" : "Files"} could not be uploaded` : i ? `${this.fileCount} ${this.fileCount === 1 ? "file" : "files"} uploaded, ${this.failedFiles.length} failed` : "All files are ready for use"}</div>
+        <div class="title">${n ? "Upload failed" : o ? "Partially uploaded" : "Uploaded successfully!"}</div>
+        <div class="subtitle">${n ? `${this.failedFiles.length === 1 ? "File" : "Files"} could not be uploaded` : o ? `${this.fileCount} ${this.fileCount === 1 ? "file" : "files"} uploaded, ${this.failedFiles.length} failed` : "All files are ready for use"}</div>
 
         ${e.length > 0 ? f`
               <div class="thumbs">
                 ${e.map(
       (s) => f`<img class="thumb" src=${s} alt="" />`
     )}
-                ${t > 0 ? f`<div class="thumb-more">+${t}</div>` : C}
+                ${t > 0 ? f`<div class="thumb-more">+${t}</div>` : S}
               </div>
-            ` : C}
+            ` : S}
 
-        ${r ? f`<div class="summary">${this.fileCount} ${this.fileCount === 1 ? "file" : "files"} · ${we(this.totalSize)} uploaded</div>` : C}
+        ${r ? f`<div class="summary">${this.fileCount} ${this.fileCount === 1 ? "file" : "files"} · ${ce(this.totalSize)} uploaded</div>` : S}
 
-        ${i ? f`
+        ${o ? f`
             <div class="failed-list">
               ${this.failedFiles.map((s) => f`
                 <div class="failed-item">
@@ -5778,18 +6384,19 @@ const xr = 7, jt = class jt extends J {
                 </div>
               `)}
             </div>
-          ` : C}
+          ` : S}
 
         <div class="actions">
           <button class="btn-ghost" @click=${this._uploadMore}>Upload more</button>
-          ${i ? f`<button class="btn-retry-all" @click=${this._retryAll}>Retry all (${this.failedFiles.length})</button>` : C}
+          ${r || o ? f`<button class="btn-ghost" @click=${this._reviewFiles}>Review files (${this.fileCount + this.failedFiles.length})</button>` : S}
+          ${o ? f`<button class="btn-retry-all" @click=${this._retryAll}>Retry all (${this.failedFiles.length})</button>` : S}
           <button class="btn-primary" @click=${this._primaryAction}>${this.primaryLabel}</button>
         </div>
       </div>
     `;
   }
 };
-jt.styles = [qe, Ne, K`
+Bt.styles = [We, Ge, G`
     :host {
       display: flex;
       flex: 1;
@@ -6057,11 +6664,53 @@ jt.styles = [qe, Ne, K`
       100% { transform: scale(1); }
     }
 
+    @media (max-width: 768px) {
+      :host {
+        padding: 16px 12px;
+        align-items: flex-start;
+      }
+      .card {
+        width: 100%;
+        max-width: 100%;
+        padding-top: 8px;
+      }
+      .icon { width: 56px; height: 56px; margin-bottom: 14px; }
+      .icon svg { width: 26px; height: 26px; }
+      .title { font-size: 18px; }
+      .subtitle { font-size: 13px; max-width: 100%; padding: 0 8px; }
+      .thumb, .thumb-more { width: 48px; height: 48px; }
+      .failed-list { max-width: 100%; }
+
+      /* Stack action buttons two-up on mobile so labels don't wrap. */
+      .actions {
+        width: 100%;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+        padding: 0 8px;
+        box-sizing: border-box;
+      }
+      .actions > button {
+        flex: 1 1 calc(50% - 8px);
+        min-width: 0;
+        white-space: nowrap;
+      }
+    }
+
     @media (max-width: 480px) {
       .icon { width: 48px; height: 48px; margin-bottom: 12px; }
       .icon svg { width: 24px; height: 24px; }
-      .title { font-size: 18px; }
+      .title { font-size: 17px; }
+      .subtitle { max-width: 90vw; padding: 0 4px; }
       .thumb, .thumb-more { width: 44px; height: 44px; }
+    }
+
+    /* Galaxy Z Fold / S8+ — extra narrow: tighten thumb grid so 5+
+       thumbs don't force horizontal overflow. */
+    @media (max-width: 380px) {
+      .thumbs { gap: 4px; }
+      .thumb, .thumb-more { width: 40px; height: 40px; }
+      .failed-list { max-width: calc(100vw - 24px); }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -6069,327 +6718,676 @@ jt.styles = [qe, Ne, K`
       .icon { animation: none; }
     }
   `];
-let ue = jt;
-Ye([
-  I({ type: Number })
-], ue.prototype, "fileCount");
-Ye([
-  I({ type: Number })
-], ue.prototype, "totalSize");
-Ye([
-  I({ type: Array })
-], ue.prototype, "thumbnails");
-Ye([
-  I({ type: String })
-], ue.prototype, "primaryLabel");
-Ye([
-  I({ type: Array })
-], ue.prototype, "failedFiles");
-var un = Object.defineProperty, oe = (o, e, t, r) => {
-  for (var i = void 0, n = o.length - 1, s; n >= 0; n--)
-    (s = o[n]) && (i = s(e, t, i) || i);
-  return i && un(e, t, i), i;
+let ae = Bt;
+Oe([
+  F({ type: Number })
+], ae.prototype, "fileCount");
+Oe([
+  F({ type: Number })
+], ae.prototype, "totalSize");
+Oe([
+  F({ type: Array })
+], ae.prototype, "thumbnails");
+Oe([
+  F({ type: String })
+], ae.prototype, "primaryLabel");
+Oe([
+  F({ type: Array })
+], ae.prototype, "failedFiles");
+Oe([
+  D()
+], ae.prototype, "_maxThumbs");
+var Un = Object.defineProperty, Tt = (i, e, t, r) => {
+  for (var o = void 0, n = i.length - 1, s; n >= 0; n--)
+    (s = i[n]) && (o = s(e, t, o) || o);
+  return o && Un(e, t, o), o;
 };
-const Ft = class Ft extends J {
+const Mt = class Mt extends Z {
+  constructor() {
+    super(...arguments), this.files = [], this._filter = "all", this._setFilter = (e) => () => {
+      this._filter = e;
+    }, this._onBack = () => {
+      this.dispatchEvent(new CustomEvent("back", { bubbles: !0, composed: !0 }));
+    }, this._onClear = () => {
+      this.dispatchEvent(new CustomEvent("clear-history", { bubbles: !0, composed: !0 }));
+    };
+  }
+  get _filtered() {
+    return this._filter === "success" ? this.files.filter((e) => e.status === "complete") : this._filter === "failed" ? this.files.filter((e) => e.status === "failed" || e.status === "error") : this.files;
+  }
+  get _successCount() {
+    return this.files.filter((e) => e.status === "complete").length;
+  }
+  get _failedCount() {
+    return this.files.filter((e) => e.status === "failed" || e.status === "error").length;
+  }
+  render() {
+    const e = this._filtered, t = this.files.length;
+    return f`
+      <div class="topbar">
+        <button class="back-btn" @click=${this._onBack} title="Back">
+          <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+          Back
+        </button>
+        <span class="title">Last upload <span class="count">— ${t} ${t === 1 ? "file" : "files"}</span></span>
+        <div class="filters">
+          <button class="chip ${this._filter === "all" ? "active" : ""}" @click=${this._setFilter("all")}>
+            All (${t})
+          </button>
+          <button class="chip ${this._filter === "success" ? "active" : ""}" @click=${this._setFilter("success")}>
+            ✓ Uploaded (${this._successCount})
+          </button>
+          ${this._failedCount > 0 ? f`<button class="chip ${this._filter === "failed" ? "active" : ""}" @click=${this._setFilter("failed")}>
+                ✗ Failed (${this._failedCount})
+              </button>` : S}
+          <button class="clear-btn" @click=${this._onClear} title="Clear last upload from this browser">Clear</button>
+        </div>
+      </div>
+
+      <div class="body">
+        ${e.length === 0 ? f`<div class="empty">No files match this filter.</div>` : f`<sfx-file-list .files=${e} mode="review" .getLocateUrl=${this.getLocateUrl}></sfx-file-list>`}
+      </div>
+    `;
+  }
+};
+Mt.styles = G`
+    :host {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--sfx-up-border, #e2e8f0);
+      flex-shrink: 0;
+      flex-wrap: wrap;
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--sfx-up-text-secondary, #475569);
+      background: transparent;
+      border: 1px solid var(--sfx-up-border, #e2e8f0);
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .back-btn:hover {
+      background: var(--sfx-up-surface, #f8fafc);
+      color: var(--sfx-up-text, #1e293b);
+    }
+
+    .back-btn svg {
+      width: 14px;
+      height: 14px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--sfx-up-text, #0f172a);
+      margin-right: 8px;
+    }
+
+    .count {
+      color: var(--sfx-up-text-muted, #94a3b8);
+      font-weight: 400;
+    }
+
+    .filters {
+      display: flex;
+      gap: 6px;
+      margin-left: auto;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--sfx-up-text-secondary, #475569);
+      background: transparent;
+      border: 1px solid var(--sfx-up-border, #e2e8f0);
+      border-radius: 999px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .chip:hover {
+      background: var(--sfx-up-surface, #f8fafc);
+    }
+
+    .chip.active {
+      background: var(--sfx-up-primary-bg, #eff6ff);
+      border-color: var(--sfx-up-primary, #2563eb);
+      color: var(--sfx-up-primary, #2563eb);
+    }
+
+    .clear-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--sfx-up-error, #dc2626);
+      background: transparent;
+      border: 1px solid color-mix(in srgb, var(--sfx-up-error, #dc2626) 30%, transparent);
+      border-radius: 999px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .clear-btn:hover {
+      background: color-mix(in srgb, var(--sfx-up-error, #dc2626) 8%, transparent);
+    }
+
+    .back-btn:focus-visible,
+    .chip:focus-visible,
+    .clear-btn:focus-visible {
+      outline: 2px solid var(--sfx-up-ring, oklch(0.578 0.198 268.129 / 0.7));
+      outline-offset: 2px;
+    }
+
+    .body {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 16px 0 0;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+    }
+
+    .empty {
+      padding: 48px 24px;
+      text-align: center;
+      color: var(--sfx-up-text-muted, #94a3b8);
+      font-size: 14px;
+    }
+
+    @media (max-width: 480px) {
+      .topbar { padding: 12px 16px; }
+    }
+  `;
+let Ue = Mt;
+Tt([
+  F({ attribute: !1 })
+], Ue.prototype, "files");
+Tt([
+  F({ attribute: !1 })
+], Ue.prototype, "getLocateUrl");
+Tt([
+  D()
+], Ue.prototype, "_filter");
+customElements.define("sfx-last-upload-review", Ue);
+var En = Object.defineProperty, oe = (i, e, t, r) => {
+  for (var o = void 0, n = i.length - 1, s; n >= 0; n--)
+    (s = i[n]) && (o = s(e, t, o) || o);
+  return o && En(e, t, o), o;
+};
+const Ht = class Ht extends Z {
   constructor() {
     super(...arguments), this.uploadState = "idle", this.fileCount = 0, this.totalSize = 0, this.failedCount = 0, this.showFillMetadata = !1, this.uploadDisabled = !1, this.uploadDisabledReason = "", this.completedCount = 0, this.uploadProgress = 0;
   }
   _clear() {
-    this.dispatchEvent(new CustomEvent("clear-all", { bubbles: !0, composed: !0 }));
+    this.dispatchEvent(
+      new CustomEvent("clear-all", { bubbles: !0, composed: !0 })
+    );
   }
   _addMore() {
-    this.dispatchEvent(new CustomEvent("add-more", { bubbles: !0, composed: !0 }));
+    this.dispatchEvent(
+      new CustomEvent("add-more", { bubbles: !0, composed: !0 })
+    );
   }
   _fillMetadata() {
-    this.dispatchEvent(new CustomEvent("fill-metadata", { bubbles: !0, composed: !0 }));
+    this.dispatchEvent(
+      new CustomEvent("fill-metadata", { bubbles: !0, composed: !0 })
+    );
   }
   _upload() {
-    this.dispatchEvent(new CustomEvent("upload-start", { bubbles: !0, composed: !0 }));
+    this.dispatchEvent(
+      new CustomEvent("upload-start", { bubbles: !0, composed: !0 })
+    );
   }
   _retryAll() {
-    this.dispatchEvent(new CustomEvent("retry-all", { bubbles: !0, composed: !0 }));
+    this.dispatchEvent(
+      new CustomEvent("retry-all", { bubbles: !0, composed: !0 })
+    );
   }
   render() {
     const e = this.uploadState === "uploading";
     return f`
       ${e ? f`
             <div class="progress-row">
-              <div class="progress-track" role="progressbar" aria-valuenow=${Math.round(this.uploadProgress)} aria-valuemin="0" aria-valuemax="100" aria-label="Upload progress">
-                <div class="progress-fill" style="width:${this.uploadProgress}%"></div>
+              <div
+                class="progress-track"
+                role="progressbar"
+                aria-valuenow=${Math.round(this.uploadProgress)}
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-label="Upload progress"
+              >
+                <div
+                  class="progress-fill"
+                  style="width:${this.uploadProgress}%"
+                ></div>
               </div>
-              <span class="progress-label">${this.completedCount}/${this.fileCount} files</span>
+              <span class="progress-label"
+                >${this.completedCount}/${this.fileCount} files</span
+              >
             </div>
-          ` : C}
+          ` : S}
       <div class="buttons-row">
         <div class="left">
           ${this.showFillMetadata && this.uploadState === "idle" ? f`
-                <button class="btn-sec" @click=${this._fillMetadata}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                    <polyline points="14 2 14 8 20 8"/>
-                    <line x1="16" y1="13" x2="8" y2="13"/>
-                    <line x1="16" y1="17" x2="8" y2="17"/>
-                    <line x1="10" y1="9" x2="8" y2="9"/>
+                <button class="btn-sec" @click=${this._fillMetadata} aria-label="Fill Metadata">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path
+                      d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                    />
+                    <polyline points="14 2 14 8 20 8" />
+                    <line x1="16" y1="13" x2="8" y2="13" />
+                    <line x1="16" y1="17" x2="8" y2="17" />
+                    <line x1="10" y1="9" x2="8" y2="9" />
                   </svg>
-                  Fill Metadata
+                  <span class="btn-label">Fill Metadata</span>
                 </button>
-              ` : C}
+              ` : S}
         </div>
         <div class="right">
-          <button class="btn-ghost" @click=${this._clear}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <button class="btn-ghost" @click=${this._clear} aria-label="Clear">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
               <path d="M3 6h18" />
               <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
               <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
               <line x1="10" y1="11" x2="10" y2="17" />
               <line x1="14" y1="11" x2="14" y2="17" />
             </svg>
-            Clear
+            <span class="btn-label">Clear</span>
           </button>
-          <button class="btn-sec" @click=${this._addMore}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+          <button class="btn-sec" @click=${this._addMore} aria-label="Add more">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linecap="round"
+            >
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
-            Add more
+            <span class="btn-label">Add more</span>
           </button>
           ${this.failedCount > 0 ? f`
-                <button class="btn-retry" @click=${this._retryAll}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                <button
+                  class="btn-retry"
+                  @click=${this._retryAll}
+                  aria-label="Retry all (${this.failedCount})"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.2"
+                    stroke-linecap="round"
+                  >
                     <polyline points="23 4 23 10 17 10" />
                     <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10" />
                   </svg>
-                  Retry all (${this.failedCount})
+                  <span class="btn-label">Retry all (${this.failedCount})</span>
                 </button>
-              ` : C}
+              ` : S}
           ${this._renderUploadButton()}
         </div>
       </div>
     `;
   }
   _renderUploadButton() {
-    const e = this.uploadState === "uploading", t = this.uploadState === "done", r = ["btn-primary", t ? "done-state" : ""].filter(Boolean).join(" ");
+    const e = this.uploadState === "uploading", t = this.uploadState === "done", r = ["btn-primary", t ? "done-state" : ""].filter(Boolean).join(" "), o = e ? "Uploading" : t ? "Done" : "Upload";
     return f`
       <button
         class=${r}
         @click=${this._upload}
         ?disabled=${e || this.uploadDisabled}
         title=${this.uploadDisabled ? this.uploadDisabledReason : ""}
+        aria-label=${o}
       >
-        ${e ? f`<span class="btn-spin"></span> Uploading\u2026` : t ? f`
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-                Done!
-              ` : f`
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-                  <polyline points="16 16 12 12 8 16" />
-                  <line x1="12" y1="12" x2="12" y2="21" />
-                  <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
-                </svg>
-                Upload
-              `}
+        ${e ? f`<span class="btn-spin"></span
+              ><span class="btn-label">Uploading…</span>` : t ? f`
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+              >
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              <span class="btn-label">Done!</span>
+            ` : f`
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+                stroke-linecap="round"
+              >
+                <polyline points="16 16 12 12 8 16" />
+                <line x1="12" y1="12" x2="12" y2="21" />
+                <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
+              </svg>
+              <span class="btn-label">Upload</span>
+            `}
       </button>
     `;
   }
 };
-Ft.styles = [qe, Ne, K`
-    :host {
-      display: flex;
-      flex-direction: column;
-      background: var(--sfx-up-bg, #ffffff);
-      border-top: 1px solid var(--sfx-up-border, #e2e8f0);
-      flex-shrink: 0;
-      box-shadow: none;
-      animation: barSlideUp 0.3s cubic-bezier(0.34, 1.2, 0.64, 1) both;
-    }
-
-    @keyframes barSlideUp {
-      from {
-        opacity: 0;
-        transform: translateY(12px);
+Ht.styles = [
+  We,
+  Ge,
+  G`
+      :host {
+        display: flex;
+        flex-direction: column;
+        background: var(--sfx-up-bg, #ffffff);
+        flex-shrink: 0;
+        box-shadow: none;
+        position: relative;
+        animation: barSlideUp 0.3s cubic-bezier(0.34, 1.2, 0.64, 1) both;
+        container-type: inline-size;
+        container-name: actions-bar;
       }
-      to {
-        opacity: 1;
-        transform: translateY(0);
+
+      /* Full-column-width divider above the actions bar.
+       The bar sits inside .content which is capped at
+       --sfx-up-content-max-width (1600px), so a plain :host border-top
+       would leave visible gaps on ultra-wide viewports. Instead we
+       draw the line as a pseudo-element on the first child and push
+       it 100vw to each side — the outer .inline { overflow: hidden }
+       clips it back to the column width. */
+      :host > :first-child {
+        position: relative;
       }
-    }
 
-    /* --- Progress row --- */
-    .progress-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 24px 0;
-    }
+      :host > :first-child::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100vw;
+        right: -100vw;
+        height: 1px;
+        background: var(--sfx-up-border, #e2e8f0);
+        pointer-events: none;
+        z-index: 1;
+      }
 
-    .progress-track {
-      flex: 1;
-      height: 4px;
-      background: var(--sfx-up-border, #e2e8f0);
-      border-radius: 2px;
-      overflow: hidden;
-    }
+      @keyframes barSlideUp {
+        from {
+          opacity: 0;
+          transform: translateY(12px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
 
-    .progress-fill {
-      height: 100%;
-      background: var(--sfx-up-primary, #2563eb);
-      border-radius: 2px;
-      transition: width 0.3s ease;
-    }
+      /* --- Progress row --- */
+      .progress-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 24px 0;
+      }
 
-    .progress-label {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--sfx-up-text, #1e293b);
-      white-space: nowrap;
-      flex-shrink: 0;
-    }
+      .progress-track {
+        flex: 1;
+        height: 4px;
+        background: var(--sfx-up-border, #e2e8f0);
+        border-radius: 2px;
+        overflow: hidden;
+      }
 
-    /* --- Buttons row --- */
-    .buttons-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px 24px;
-    }
+      .progress-fill {
+        height: 100%;
+        background: var(--sfx-up-primary, #2563eb);
+        border-radius: 2px;
+        transition: width 0.3s ease;
+      }
 
-    .left {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+      .progress-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--sfx-up-text, #1e293b);
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
 
-    .right {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    /* --- Button overrides (base in shared-styles) --- */
-
-    .btn-sec {
-      background: var(--sfx-up-primary-bg, #eff6ff);
-      color: var(--sfx-up-primary, #2563eb);
-      border: 1.5px solid var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.15));
-    }
-
-    .btn-sec:hover {
-      background: var(--sfx-up-primary-bg, #dbeafe);
-    }
-
-    .btn-retry {
-      background: var(--destructive-10, #fef2f2);
-      color: var(--sfx-up-error, #dc2626);
-      border: 1.5px solid var(--sfx-up-error, rgba(220, 38, 38, 0.2));
-    }
-
-    .btn-retry:hover {
-      background: var(--destructive-10, #fee2e2);
-      color: var(--destructive-foreground, #b91c1c);
-      border-color: var(--sfx-up-error, rgba(220, 38, 38, 0.35));
-    }
-
-    .btn-primary {
-      min-width: 110px;
-    }
-
-    .btn-primary.done-state {
-      background: var(--sfx-up-success, #16a34a);
-      box-shadow: 0 2px 10px var(--sfx-up-shadow, rgba(22, 163, 74, 0.28));
-    }
-
-    /* --- Spinner --- */
-    .btn-spin {
-      width: 14px;
-      height: 14px;
-      border: 2px solid rgba(255, 255, 255, 0.3);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spinRing 0.7s linear infinite;
-    }
-
-    /* --- Count --- */
-    .count {
-      font-size: 14px;
-      font-weight: 700;
-      color: var(--sfx-up-text, #1e293b);
-    }
-
-    .count span {
-      font-weight: 400;
-      color: var(--sfx-up-text-muted, #94a3b8);
-    }
-
-    @keyframes spinRing {
-      to { transform: rotate(360deg); }
-    }
-
-    @media (max-width: 480px) {
+      /* --- Buttons row --- */
       .buttons-row {
-        padding: 10px 12px;
-        flex-wrap: wrap;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 24px;
+      }
+
+      .left {
+        display: flex;
+        align-items: center;
         gap: 8px;
       }
-      button {
-        height: 32px;
-        font-size: 12px;
-      }
-    }
 
-    @media (prefers-reduced-motion: reduce) {
-      :host { animation: none; }
-      .btn-spin { animation: none; }
-    }
-  `];
-let ee = Ft;
+      .right {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      /* --- Button overrides (base in shared-styles) --- */
+
+      .btn-sec {
+        background: var(--sfx-up-primary-bg, #eff6ff);
+        color: var(--sfx-up-primary, #2563eb);
+        border: 1.5px solid var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.15));
+      }
+
+      .btn-sec:hover {
+        background: var(--sfx-up-primary-bg, #dbeafe);
+      }
+
+      .btn-retry {
+        background: var(--destructive-10, #fef2f2);
+        color: var(--sfx-up-error, #dc2626);
+        border: 1.5px solid var(--sfx-up-error, rgba(220, 38, 38, 0.2));
+      }
+
+      .btn-retry:hover {
+        background: var(--destructive-10, #fee2e2);
+        color: var(--destructive-foreground, #b91c1c);
+        border-color: var(--sfx-up-error, rgba(220, 38, 38, 0.35));
+      }
+
+      .btn-primary {
+        min-width: 110px;
+      }
+
+      .btn-primary.done-state {
+        background: var(--sfx-up-success, #16a34a);
+        box-shadow: 0 2px 10px var(--sfx-up-shadow, rgba(22, 163, 74, 0.28));
+      }
+
+      /* --- Spinner --- */
+      .btn-spin {
+        width: 14px;
+        height: 14px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top-color: #fff;
+        border-radius: 50%;
+        animation: spinRing 0.7s linear infinite;
+      }
+
+      /* --- Count --- */
+      .count {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--sfx-up-text, #1e293b);
+      }
+
+      .count span {
+        font-weight: 400;
+        color: var(--sfx-up-text-muted, #94a3b8);
+      }
+
+      @keyframes spinRing {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Collapse the right group to icon-only when the actions bar
+         itself is narrow — not when the viewport is. @container beats
+         @media here because inline uploaders can live inside a column
+         narrower than the browser window. */
+      @container actions-bar (max-width: 560px) {
+        .buttons-row {
+          padding: 10px 12px;
+          gap: 6px;
+        }
+        .left,
+        .right {
+          gap: 6px;
+        }
+        button {
+          height: 36px;
+          font-size: 12px;
+        }
+        .right .btn-ghost,
+        .right .btn-sec,
+        .right .btn-retry,
+        .right .btn-primary {
+          padding: 0;
+          width: 36px;
+          min-width: 36px;
+          gap: 0;
+        }
+        .right .btn-label {
+          display: none;
+        }
+        .right svg {
+          width: 16px;
+          height: 16px;
+        }
+      }
+
+      /* Very narrow: also collapse the left Fill Metadata pill. */
+      @container actions-bar (max-width: 380px) {
+        .left .btn-sec {
+          padding: 0;
+          width: 36px;
+          min-width: 36px;
+          gap: 0;
+        }
+        .left .btn-label {
+          display: none;
+        }
+        .left svg {
+          width: 16px;
+          height: 16px;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        :host {
+          animation: none;
+        }
+        .btn-spin {
+          animation: none;
+        }
+      }
+    `
+];
+let ee = Ht;
 oe([
-  I({ type: String })
+  F({ type: String })
 ], ee.prototype, "uploadState");
 oe([
-  I({ type: Number })
+  F({ type: Number })
 ], ee.prototype, "fileCount");
 oe([
-  I({ type: Number })
+  F({ type: Number })
 ], ee.prototype, "totalSize");
 oe([
-  I({ type: Number })
+  F({ type: Number })
 ], ee.prototype, "failedCount");
 oe([
-  I({ type: Boolean })
+  F({ type: Boolean })
 ], ee.prototype, "showFillMetadata");
 oe([
-  I({ type: Boolean })
+  F({ type: Boolean })
 ], ee.prototype, "uploadDisabled");
 oe([
-  I({ type: String })
+  F({ type: String })
 ], ee.prototype, "uploadDisabledReason");
 oe([
-  I({ type: Number })
+  F({ type: Number })
 ], ee.prototype, "completedCount");
 oe([
-  I({ type: Number })
+  F({ type: Number })
 ], ee.prototype, "uploadProgress");
-const fn = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
-function Pt(o, e) {
+const Pn = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+function Dt(i, e) {
   return (t) => {
     if (t.key !== "Tab") return;
-    const r = o();
+    const r = i();
     if (!r) return;
-    const i = r.querySelector(e);
-    if (!i) return;
-    const n = Array.from(i.querySelectorAll(fn));
+    const o = r.querySelector(e);
+    if (!o) return;
+    const n = Array.from(o.querySelectorAll(Pn));
     if (n.length === 0) return;
     const s = n[0], a = n[n.length - 1], l = r.activeElement;
-    t.shiftKey ? (l === s || !i.contains(l)) && (t.preventDefault(), a.focus()) : (l === a || !i.contains(l)) && (t.preventDefault(), s.focus());
+    t.shiftKey ? (l === s || !o.contains(l)) && (t.preventDefault(), a.focus()) : (l === a || !o.contains(l)) && (t.preventDefault(), s.focus());
   };
 }
-var hn = Object.defineProperty, Et = (o, e, t, r) => {
-  for (var i = void 0, n = o.length - 1, s; n >= 0; n--)
-    (s = o[n]) && (i = s(e, t, i) || i);
-  return i && hn(e, t, i), i;
+var zn = Object.defineProperty, jt = (i, e, t, r) => {
+  for (var o = void 0, n = i.length - 1, s; n >= 0; n--)
+    (s = i[n]) && (o = s(e, t, o) || o);
+  return o && zn(e, t, o), o;
 };
-const Lt = class Lt extends J {
+const qt = class qt extends Z {
   constructor() {
     super(...arguments), this._url = "", this._name = "", this._error = "", this._onBackdropClick = (e) => {
       e.target === e.currentTarget && this._cancel();
@@ -6397,7 +7395,7 @@ const Lt = class Lt extends J {
       this._url = e.target.value, this._error = "", this._autoName();
     }, this._onNameInput = (e) => {
       this._name = e.target.value;
-    }, this._focusTrap = Pt(() => this.shadowRoot, ".card"), this._onKeyDown = (e) => {
+    }, this._focusTrap = Dt(() => this.shadowRoot, ".card"), this._onKeyDown = (e) => {
       var t;
       e.key === "Escape" && this._cancel(), e.key === "Enter" && ((t = e.target) == null ? void 0 : t.tagName) === "INPUT" && this._submit(), this._focusTrap(e);
     };
@@ -6408,8 +7406,8 @@ const Lt = class Lt extends J {
       try {
         const t = new URL(this._url).pathname.split("/"), r = t[t.length - 1];
         if (r) {
-          const i = (e = this.shadowRoot) == null ? void 0 : e.querySelector("#nameInput");
-          i && (i.placeholder = r);
+          const o = (e = this.shadowRoot) == null ? void 0 : e.querySelector("#nameInput");
+          o && (o.placeholder = r);
         }
       } catch {
       }
@@ -6500,7 +7498,7 @@ const Lt = class Lt extends J {
     `;
   }
 };
-Lt.styles = [qe, Ne, K`
+qt.styles = [We, Ge, G`
     :host {
       display: block;
     }
@@ -6674,30 +7672,30 @@ Lt.styles = [qe, Ne, K`
     }
 
   `];
-let Be = Lt;
-Et([
-  j()
-], Be.prototype, "_url");
-Et([
-  j()
-], Be.prototype, "_name");
-Et([
-  j()
-], Be.prototype, "_error");
-var gn = Object.defineProperty, rt = (o, e, t, r) => {
-  for (var i = void 0, n = o.length - 1, s; n >= 0; n--)
-    (s = o[n]) && (i = s(e, t, i) || i);
-  return i && gn(e, t, i), i;
+let qe = qt;
+jt([
+  D()
+], qe.prototype, "_url");
+jt([
+  D()
+], qe.prototype, "_name");
+jt([
+  D()
+], qe.prototype, "_error");
+var On = Object.defineProperty, nt = (i, e, t, r) => {
+  for (var o = void 0, n = i.length - 1, s; n >= 0; n--)
+    (s = i[n]) && (o = s(e, t, o) || o);
+  return o && On(e, t, o), o;
 };
-const At = class At extends J {
+const Nt = class Nt extends Z {
   constructor() {
     super(...arguments), this._stream = null, this._error = "", this._captured = null, this._previewUrl = "", this._onBackdropClick = (e) => {
       e.target === e.currentTarget && this._cancel();
-    }, this._focusTrap = Pt(() => this.shadowRoot, ".card"), this._onKeyDown = (e) => {
+    }, this._focusTrap = Dt(() => this.shadowRoot, ".card"), this._onKeyDown = (e) => {
       e.key === "Escape" && this._cancel(), this._focusTrap(e);
     }, this._capture = () => {
-      var i, n;
-      const e = (i = this.shadowRoot) == null ? void 0 : i.querySelector("video"), t = (n = this.shadowRoot) == null ? void 0 : n.querySelector("canvas");
+      var o, n;
+      const e = (o = this.shadowRoot) == null ? void 0 : o.querySelector("video"), t = (n = this.shadowRoot) == null ? void 0 : n.querySelector("canvas");
       if (!e || !t) return;
       t.width = e.videoWidth, t.height = e.videoHeight, t.getContext("2d").drawImage(e, 0, 0), t.toBlob((s) => {
         s && (this._captured = s, this._previewUrl = URL.createObjectURL(s), this._stopStream());
@@ -6767,7 +7765,7 @@ const At = class At extends J {
     `;
   }
 };
-At.styles = [qe, Ne, K`
+Nt.styles = [We, Ge, G`
     :host { display: block; }
 
     .backdrop {
@@ -6848,29 +7846,29 @@ At.styles = [qe, Ne, K`
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes slideUp { from { transform: translateY(18px) scale(0.97); } to { transform: translateY(0) scale(1); } }
   `];
-let Se = At;
-rt([
-  j()
-], Se.prototype, "_stream");
-rt([
-  j()
-], Se.prototype, "_error");
-rt([
-  j()
-], Se.prototype, "_captured");
-rt([
-  j()
-], Se.prototype, "_previewUrl");
-var vn = Object.defineProperty, Ve = (o, e, t, r) => {
-  for (var i = void 0, n = o.length - 1, s; n >= 0; n--)
-    (s = o[n]) && (i = s(e, t, i) || i);
-  return i && vn(e, t, i), i;
+let Ee = Nt;
+nt([
+  D()
+], Ee.prototype, "_stream");
+nt([
+  D()
+], Ee.prototype, "_error");
+nt([
+  D()
+], Ee.prototype, "_captured");
+nt([
+  D()
+], Ee.prototype, "_previewUrl");
+var Rn = Object.defineProperty, Xe = (i, e, t, r) => {
+  for (var o = void 0, n = i.length - 1, s; n >= 0; n--)
+    (s = i[n]) && (o = s(e, t, o) || o);
+  return o && Rn(e, t, o), o;
 };
-const Bt = class Bt extends J {
+const Yt = class Yt extends Z {
   constructor() {
     super(...arguments), this._stream = null, this._recording = !1, this._error = "", this._recordedBlob = null, this._previewUrl = "", this._recorder = null, this._chunks = [], this._onBackdropClick = (e) => {
       e.target === e.currentTarget && this._cancel();
-    }, this._focusTrap = Pt(() => this.shadowRoot, ".card"), this._onKeyDown = (e) => {
+    }, this._focusTrap = Dt(() => this.shadowRoot, ".card"), this._onKeyDown = (e) => {
       e.key === "Escape" && this._cancel(), this._focusTrap(e);
     }, this._startRecording = async () => {
       var e;
@@ -6884,12 +7882,12 @@ const Bt = class Bt extends J {
         const t = (e = this.shadowRoot) == null ? void 0 : e.querySelector("video");
         t && (t.srcObject = this._stream), this._chunks = [];
         const r = MediaRecorder.isTypeSupported("video/webm;codecs=vp9") ? "video/webm;codecs=vp9" : "video/webm";
-        this._recorder = new MediaRecorder(this._stream, { mimeType: r }), this._recorder.ondataavailable = (i) => {
-          i.data.size > 0 && this._chunks.push(i.data);
+        this._recorder = new MediaRecorder(this._stream, { mimeType: r }), this._recorder.ondataavailable = (o) => {
+          o.data.size > 0 && this._chunks.push(o.data);
         }, this._recorder.onstop = () => {
           var n;
-          const i = new Blob(this._chunks, { type: "video/webm" });
-          this._recordedBlob = i, this._previewUrl = URL.createObjectURL(i), (n = this._stream) == null || n.getTracks().forEach((s) => s.stop()), this._stream = null;
+          const o = new Blob(this._chunks, { type: "video/webm" });
+          this._recordedBlob = o, this._previewUrl = URL.createObjectURL(o), (n = this._stream) == null || n.getTracks().forEach((s) => s.stop()), this._stream = null;
         }, this._recorder.start();
       } catch {
         this._error = "Could not start screen capture. Please check your permissions.";
@@ -6965,7 +7963,7 @@ const Bt = class Bt extends J {
     `;
   }
 };
-Bt.styles = [qe, Ne, K`
+Yt.styles = [We, Ge, G`
     :host { display: block; }
 
     .backdrop {
@@ -7064,28 +8062,28 @@ Bt.styles = [qe, Ne, K`
     @keyframes slideUp { from { transform: translateY(18px) scale(0.97); } to { transform: translateY(0) scale(1); } }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
   `];
-let fe = Bt;
-Ve([
-  j()
-], fe.prototype, "_stream");
-Ve([
-  j()
-], fe.prototype, "_recording");
-Ve([
-  j()
-], fe.prototype, "_error");
-Ve([
-  j()
-], fe.prototype, "_recordedBlob");
-Ve([
-  j()
-], fe.prototype, "_previewUrl");
-var xn = Object.defineProperty, Hr = (o, e, t, r) => {
-  for (var i = void 0, n = o.length - 1, s; n >= 0; n--)
-    (s = o[n]) && (i = s(e, t, i) || i);
-  return i && xn(e, t, i), i;
+let xe = Yt;
+Xe([
+  D()
+], xe.prototype, "_stream");
+Xe([
+  D()
+], xe.prototype, "_recording");
+Xe([
+  D()
+], xe.prototype, "_error");
+Xe([
+  D()
+], xe.prototype, "_recordedBlob");
+Xe([
+  D()
+], xe.prototype, "_previewUrl");
+var Tn = Object.defineProperty, Jr = (i, e, t, r) => {
+  for (var o = void 0, n = i.length - 1, s; n >= 0; n--)
+    (s = i[n]) && (o = s(e, t, o) || o);
+  return o && Tn(e, t, o), o;
 };
-const It = class It extends J {
+const Vt = class Vt extends Z {
   constructor() {
     super(...arguments), this.duration = 6e3, this._toasts = [], this._nextId = 0;
   }
@@ -7094,11 +8092,11 @@ const It = class It extends J {
     this._toasts = [...this._toasts, { id: r, message: e, type: t, leaving: !1 }], setTimeout(() => this._dismiss(r), this.duration);
   }
   _dismiss(e) {
-    const t = this._toasts.findIndex((i) => i.id === e);
+    const t = this._toasts.findIndex((o) => o.id === e);
     if (t === -1) return;
     const r = [...this._toasts];
     r[t] = { ...r[t], leaving: !0 }, this._toasts = r, setTimeout(() => {
-      this._toasts = this._toasts.filter((i) => i.id !== e);
+      this._toasts = this._toasts.filter((o) => o.id !== e);
     }, 200);
   }
   _iconForType(e) {
@@ -7130,7 +8128,7 @@ const It = class It extends J {
     `;
   }
 };
-It.styles = K`
+Vt.styles = G`
     :host {
       display: block;
       position: absolute;
@@ -7219,51 +8217,56 @@ It.styles = K`
       to   { opacity: 0; transform: translateY(8px) scale(0.96); }
     }
   `;
-let Ie = It;
-Hr([
-  I({ type: Number })
-], Ie.prototype, "duration");
-Hr([
-  j()
-], Ie.prototype, "_toasts");
-customElements.define("sfx-toast", Ie);
-var mn = Object.defineProperty, Y = (o, e, t, r) => {
-  for (var i = void 0, n = o.length - 1, s; n >= 0; n--)
-    (s = o[n]) && (i = s(e, t, i) || i);
-  return i && mn(e, t, i), i;
+let Ne = Vt;
+Jr([
+  F({ type: Number })
+], Ne.prototype, "duration");
+Jr([
+  D()
+], Ne.prototype, "_toasts");
+customElements.define("sfx-toast", Ne);
+var Dn = Object.defineProperty, H = (i, e, t, r) => {
+  for (var o = void 0, n = i.length - 1, s; n >= 0; n--)
+    (s = i[n]) && (o = s(e, t, o) || o);
+  return o && Dn(e, t, o), o;
 };
-const mr = /* @__PURE__ */ new Set(["unsplash"]), me = { isTus: !1, tusUploadUrl: null };
-var W;
-const H = (W = class extends J {
+const Sr = /* @__PURE__ */ new Set(["unsplash"]), _e = { isTus: !1, tusUploadUrl: null };
+var K;
+const M = (K = class extends Z {
   constructor() {
-    super(), this.config = null, this._isOpen = !1, this._activeConnector = null, this._showUrlDialog = !1, this._showCameraDialog = !1, this._showScreenCastDialog = !1, this._previewFileId = null, this._previewDims = "—", this._splitPct = 58, this._isResizing = !1, this._splitRafId = 0, this._fullscreenPreviewUrl = null, this._fullscreenVideoFile = null, this._fullscreenZoomed = !1, this._fsPanX = 0, this._fsPanY = 0, this._fsDragging = !1, this._fsDragStartX = 0, this._fsDragStartY = 0, this._fsPanStartX = 0, this._fsPanStartY = 0, this._bodyDragOver = !1, this._isMinimized = !1, this._isPillExpanded = !1, this._metadataSchema = null, this._bulkMetadataOpen = !1, this._metadataAutocomplete = null, this._videoBlobUrls = /* @__PURE__ */ new Map(), this._engine = null, this._cachedSources = Re, this._cachedSourcesConfig = void 0, this._rejectedTimers = /* @__PURE__ */ new Map(), this._closeOnCompleteTimer = null, this._apiBase = null, this._authHeaders = null, this._authResolveId = 0, this._prevStoreState = null, this._unsubStoreEvents = null, this._portalContainer = null, this._onFileRename = (e) => {
+    super(), this.config = null, this._isOpen = !1, this._activeConnector = null, this._showUrlDialog = !1, this._showCameraDialog = !1, this._showScreenCastDialog = !1, this._previewFileId = null, this._previewDims = "—", this._fileInfoOpen = !0, this._splitPct = 58, this._isResizing = !1, this._splitRafId = 0, this._previewDefaultApplied = !1, this._fullscreenPreviewUrl = null, this._fullscreenVideoFile = null, this._fullscreenZoomed = !1, this._fsPanX = 0, this._fsPanY = 0, this._fsDragging = !1, this._fsDragStartX = 0, this._fsDragStartY = 0, this._fsPanStartX = 0, this._fsPanStartY = 0, this._bodyDragOver = !1, this._isMinimized = !1, this._isPillExpanded = !1, this._metadataSchema = null, this._bulkMetadataOpen = !1, this._isReviewing = !1, this._reviewFiles = [], this._hasStoredReview = !1, this._metadataAutocomplete = null, this._videoBlobUrls = /* @__PURE__ */ new Map(), this._engine = null, this._cachedSources = je, this._cachedSourcesConfig = void 0, this._rejectedTimers = /* @__PURE__ */ new Map(), this._closeOnCompleteTimer = null, this._apiBase = null, this._authHeaders = null, this._authResolveId = 0, this._prevStoreState = null, this._unsubStoreEvents = null, this._portalContainer = null, this._onFileRename = (e) => {
       this._onPreviewRename(e.detail.fileId, e.detail.name);
     }, this._onPreviewMetadataBlur = (e) => {
       const t = this._previewFileId;
       if (!t) return;
-      const { key: r, value: i } = e.detail, n = this._store.getState().files.get(t);
+      const { key: r, value: o } = e.detail, n = this._store.getState().files.get(t);
       if (!n) return;
       const s = new Map(this._store.getState().files);
-      s.set(t, { ...n, meta: { ...n.meta, [r]: i } }), this._store.setState({ files: s });
+      s.set(t, { ...n, meta: { ...n.meta, [r]: o } }), this._store.setState({ files: s });
     }, this._onFilesSelected = (e) => {
       this._processIncomingFiles(e.detail.files);
     }, this._onDropTileSourceClick = (e) => {
-      this._handleSourceActivation(e.detail.source.id);
+      e.stopPropagation(), this._handleSourceActivation(e.detail.source.id);
     }, this._onSourceClick = async (e) => {
       this._handleSourceActivation(e.detail.source);
     }, this._handleSourceActivation = async (e) => {
-      var i, n;
+      var o, n;
       const t = this._mergedSources.find((s) => s.id === e);
       if (t != null && t.onActivate) {
         try {
           t.onActivate(this);
         } catch (s) {
-          console.error(`[sfx-uploader] onActivate for custom source "${e}" threw:`, s);
+          console.error(
+            `[sfx-uploader] onActivate for custom source "${e}" threw:`,
+            s
+          );
         }
         return;
       }
       if (e === "device") {
-        const s = this.shadowRoot.querySelector("sfx-drop-zone");
+        const s = this.shadowRoot.querySelector(
+          "sfx-drop-zone"
+        );
         s == null || s.browse();
         return;
       }
@@ -7279,25 +8282,36 @@ const H = (W = class extends J {
         this._showScreenCastDialog = !0;
         return;
       }
-      if ((((n = (i = this.config) == null ? void 0 : i.connectors) == null ? void 0 : n.providers) ?? []).includes(e)) {
-        if (mr.has(e)) {
+      if ((((n = (o = this.config) == null ? void 0 : o.connectors) == null ? void 0 : n.providers) ?? []).includes(e)) {
+        if (Sr.has(e)) {
           if (!customElements.get("sfx-search-provider-browser")) {
-            const { SfxSearchProviderBrowser: a } = await import("./search-provider-browser-DExLx-hP.js");
-            customElements.define("sfx-search-provider-browser", a);
+            const { SfxSearchProviderBrowser: a } = await import("./search-provider-browser-8oKVjic7.js");
+            customElements.define(
+              "sfx-search-provider-browser",
+              a
+            );
           }
         } else if (!customElements.get("sfx-provider-browser")) {
-          const { SfxProviderBrowser: a } = await import("./provider-browser-CqMcnx-N.js");
+          const { SfxProviderBrowser: a } = await import("./provider-browser-_2e3p9cw.js");
           customElements.define("sfx-provider-browser", a);
         }
         this._activeConnector = e;
       }
     }, this._onUrlSubmit = (e) => {
-      var g, k, E;
+      var _, E, O;
       this._showUrlDialog = !1;
-      const { url: t, name: r } = e.detail, i = (g = this.config) == null ? void 0 : g.callbacks, n = Zi(r), s = n.startsWith("image/"), a = this._store.getState(), l = xt({ name: r, size: 0, type: n }, a.restrictions, a.files);
-      if (l) {
-        const S = {
-          id: xe(),
+      const { url: t, name: r } = e.detail, o = (_ = this.config) == null ? void 0 : _.callbacks, n = fn(r), s = n.startsWith("image/"), a = this._store.getState();
+      if ([...a.files.values()].some(
+        (P) => P.name === r && P.status !== "rejected" && P.status !== "cancelled"
+      )) return;
+      const p = wt(
+        { name: r, size: 0, type: n },
+        a.restrictions,
+        a.files
+      );
+      if (p) {
+        const P = {
+          id: we(),
           status: "rejected",
           file: null,
           remoteUrl: t,
@@ -7309,20 +8323,23 @@ const H = (W = class extends J {
           progress: 0,
           speed: 0,
           bytesUploaded: 0,
-          error: l,
+          error: p,
           retryCount: 0,
           response: null,
           addedAt: Date.now(),
           meta: {},
           tags: [],
           remoteInfo: null,
-          ...me
+          ..._e
         };
-        ge(this._store, S), this._dispatchPublic(B.FILE_REJECTED, { file: S, reason: l }), (k = i == null ? void 0 : i.onFileRejected) == null || k.call(i, S, l);
+        me(this._store, P), this._dispatchPublic(B.FILE_REJECTED, {
+          file: P,
+          reason: p
+        }), (E = o == null ? void 0 : o.onFileRejected) == null || E.call(o, P, p);
         return;
       }
-      const p = {
-        id: xe(),
+      const h = {
+        id: we(),
         status: "idle",
         file: null,
         remoteUrl: t,
@@ -7341,9 +8358,9 @@ const H = (W = class extends J {
         meta: {},
         tags: [],
         remoteInfo: null,
-        ...me
+        ..._e
       };
-      ge(this._store, p), this._dispatchPublic(B.FILE_ADDED, { file: p }), (E = i == null ? void 0 : i.onFileAdded) == null || E.call(i, p), this._store.getState().queueConfig.autoProceed && this.upload();
+      me(this._store, h), this._dispatchPublic(B.FILE_ADDED, { file: h }), (O = o == null ? void 0 : o.onFileAdded) == null || O.call(o, h), this._store.getState().queueConfig.autoProceed && this.upload();
     }, this._onUrlCancel = () => {
       this._showUrlDialog = !1;
     }, this._onCameraCapture = (e) => {
@@ -7357,22 +8374,22 @@ const H = (W = class extends J {
     }, this._onFileRemove = (e) => {
       this._removeFile(e.detail.fileId);
     }, this._onFilePreview = (e) => {
-      var r, i, n;
+      var r, o, n;
       const t = this._store.getState().files.get(e.detail.fileId);
-      t && (this._previewFileId = t.id, this._dispatchPublic(B.FILE_PREVIEW, { file: t }), (n = (i = (r = this.config) == null ? void 0 : r.callbacks) == null ? void 0 : i.onFilePreview) == null || n.call(i, t));
+      t && (this._previewFileId = t.id, this._dispatchPublic(B.FILE_PREVIEW, { file: t }), (n = (o = (r = this.config) == null ? void 0 : r.callbacks) == null ? void 0 : o.onFilePreview) == null || n.call(o, t));
     }, this._onFillMetadata = () => {
-      var t, r, i, n;
+      var t, r, o, n;
       const e = [...this._store.getState().files.values()].filter(
-        (s) => W._MODIFIABLE_STATUSES.has(s.status)
+        (s) => K._MODIFIABLE_STATUSES.has(s.status)
       );
-      (t = this.config) != null && t.metadataConfig && this._metadataSchema && (this._bulkMetadataOpen = !0), this._dispatchPublic(B.FILL_METADATA, { files: e }), (n = (i = (r = this.config) == null ? void 0 : r.callbacks) == null ? void 0 : i.onFillMetadata) == null || n.call(i, e);
+      (t = this.config) != null && t.metadataConfig && this._metadataSchema && (this._bulkMetadataOpen = !0), this._dispatchPublic(B.FILL_METADATA, { files: e }), (n = (o = (r = this.config) == null ? void 0 : r.callbacks) == null ? void 0 : o.onFillMetadata) == null || n.call(o, e);
     }, this._onBulkMetadataSaveBatch = (e) => {
       const { changes: t } = e.detail;
       if (!t.length) return;
       const r = new Map(this._store.getState().files);
-      for (const { fileId: i, meta: n } of t) {
-        const s = r.get(i);
-        s && r.set(i, { ...s, meta: { ...s.meta, ...n } });
+      for (const { fileId: o, meta: n } of t) {
+        const s = r.get(o);
+        s && r.set(o, { ...s, meta: { ...s.meta, ...n } });
       }
       this._store.setState({ files: r });
     }, this._onBulkMetadataClose = () => {
@@ -7390,9 +8407,9 @@ const H = (W = class extends J {
       var e;
       this._ensureEngine(), (e = this._engine) == null || e.retryAll();
     }, this._onClearAll = () => {
-      var r, i, n;
+      var r, o, n;
       const e = (r = this.config) == null ? void 0 : r.callbacks;
-      this._closeOnCompleteTimer && (clearTimeout(this._closeOnCompleteTimer), this._closeOnCompleteTimer = null), (i = this._engine) == null || i.cancelAll();
+      this._closeOnCompleteTimer && (clearTimeout(this._closeOnCompleteTimer), this._closeOnCompleteTimer = null), (o = this._engine) == null || o.cancelAll();
       const t = [...this._store.getState().files.values()];
       for (const s of t)
         s.previewUrl && URL.revokeObjectURL(s.previewUrl), this._dispatchPublic(B.FILE_REMOVED, { file: s }), (n = e == null ? void 0 : e.onFileRemoved) == null || n.call(e, s);
@@ -7407,13 +8424,17 @@ const H = (W = class extends J {
         totalBytes: 0
       });
     }, this._onAddMore = () => {
-      var i;
-      const e = this.shadowRoot.querySelector("sfx-drop-zone");
+      var o;
+      const e = this.shadowRoot.querySelector(
+        "sfx-drop-zone"
+      );
       if (e) {
         e.browse();
         return;
       }
-      const t = this.shadowRoot.querySelector("sfx-file-list"), r = (i = t == null ? void 0 : t.shadowRoot) == null ? void 0 : i.querySelector('input[type="file"]');
+      const t = this.shadowRoot.querySelector("sfx-file-list"), r = (o = t == null ? void 0 : t.shadowRoot) == null ? void 0 : o.querySelector(
+        'input[type="file"]'
+      );
       r == null || r.click();
     }, this._onUploadStart = () => {
       var e;
@@ -7424,18 +8445,36 @@ const H = (W = class extends J {
       this._hasUnfilledRequiredMetadata || this.upload();
     }, this._onUploadMore = () => {
       this._onClearAll();
+    }, this._onEnterReview = () => {
+      const e = [...this._store.getState().files.values()].filter(
+        (r) => r.status === "complete" || r.status === "failed" || r.status === "error"
+      );
+      if (e.length > 0) {
+        this._reviewFiles = e, this._isReviewing = !0;
+        return;
+      }
+      const t = Je.load();
+      !t || t.length === 0 || (this._reviewFiles = t, this._isReviewing = !0);
+    }, this._onExitReview = () => {
+      this._isReviewing = !1, this._reviewFiles = [];
+    }, this._onClearReview = () => {
+      Je.clear(), this._isReviewing = !1, this._reviewFiles = [], this._hasStoredReview = !1;
     }, this._onConnectorFilesSelected = (e) => {
-      var r, i, n;
+      var r, o, n;
       const t = (r = this.config) == null ? void 0 : r.callbacks;
       for (const s of e.detail.files) {
-        const a = this._store.getState(), l = xt(
+        const a = this._store.getState();
+        if ([...a.files.values()].some(
+          (_) => _.name === s.name && _.size === s.size && _.status !== "rejected" && _.status !== "cancelled"
+        )) continue;
+        const p = wt(
           { name: s.name, size: s.size, type: s.mimeType },
           a.restrictions,
           a.files
         );
-        if (l) {
-          const g = {
-            id: xe(),
+        if (p) {
+          const _ = {
+            id: we(),
             status: "rejected",
             file: null,
             remoteUrl: null,
@@ -7447,20 +8486,23 @@ const H = (W = class extends J {
             progress: 0,
             speed: 0,
             bytesUploaded: 0,
-            error: l,
+            error: p,
             retryCount: 0,
             response: null,
             addedAt: Date.now(),
             meta: {},
             tags: [],
             remoteInfo: s,
-            ...me
+            ..._e
           };
-          ge(this._store, g), this._dispatchPublic(B.FILE_REJECTED, { file: g, reason: l }), (i = t == null ? void 0 : t.onFileRejected) == null || i.call(t, g, l);
+          me(this._store, _), this._dispatchPublic(B.FILE_REJECTED, {
+            file: _,
+            reason: p
+          }), (o = t == null ? void 0 : t.onFileRejected) == null || o.call(t, _, p);
           continue;
         }
-        const p = {
-          id: xe(),
+        const h = {
+          id: we(),
           status: "idle",
           file: null,
           remoteUrl: null,
@@ -7479,9 +8521,9 @@ const H = (W = class extends J {
           meta: {},
           tags: [],
           remoteInfo: s,
-          ...me
+          ..._e
         };
-        ge(this._store, p), this._dispatchPublic(B.FILE_ADDED, { file: p }), (n = t == null ? void 0 : t.onFileAdded) == null || n.call(t, p);
+        me(this._store, h), this._dispatchPublic(B.FILE_ADDED, { file: h }), (n = t == null ? void 0 : t.onFileAdded) == null || n.call(t, h);
       }
       this._activeConnector = null, this._store.getState().queueConfig.autoProceed && this.upload();
     }, this._onConnectorClose = () => {
@@ -7489,17 +8531,17 @@ const H = (W = class extends J {
     }, this._onConnectorBackdropClick = (e) => {
       e.target === e.currentTarget && (this._activeConnector = null);
     }, this._onPrimaryAction = () => {
-      var e, t, r, i, n;
-      this._dispatchPublic(B.COMPLETE_ACTION, {}), (r = (t = (e = this.config) == null ? void 0 : e.callbacks) == null ? void 0 : t.onCompleteAction) == null || r.call(t), ((i = this.config) == null ? void 0 : i.mode) === "modal" ? this.close() : ((n = this.config) == null ? void 0 : n.clearOnComplete) !== !1 && this._onClearAll();
+      var e, t, r, o, n;
+      this._dispatchPublic(B.COMPLETE_ACTION, {}), (r = (t = (e = this.config) == null ? void 0 : e.callbacks) == null ? void 0 : t.onCompleteAction) == null || r.call(t), ((o = this.config) == null ? void 0 : o.mode) === "modal" ? this.close() : ((n = this.config) == null ? void 0 : n.clearOnComplete) !== !1 && this._onClearAll();
     }, this._onInlineDismiss = () => {
       var e, t, r;
       (r = (t = (e = this.config) == null ? void 0 : e.callbacks) == null ? void 0 : t.onCancel) == null || r.call(t), this._dispatchPublic(B.CANCEL, {});
     }, this._onSuccessCardClose = () => {
-      var e, t, r, i;
-      ((e = this.config) == null ? void 0 : e.mode) === "inline" ? (this._dispatchPublic(B.COMPLETE_ACTION, {}), (i = (r = (t = this.config) == null ? void 0 : t.callbacks) == null ? void 0 : r.onCompleteAction) == null || i.call(r), this._onClearAll()) : this._onModalDismiss();
+      var e, t, r, o;
+      ((e = this.config) == null ? void 0 : e.mode) === "inline" ? (this._dispatchPublic(B.COMPLETE_ACTION, {}), (o = (r = (t = this.config) == null ? void 0 : t.callbacks) == null ? void 0 : r.onCompleteAction) == null || o.call(r), this._onClearAll()) : this._onModalDismiss();
     }, this._onModalDismiss = () => {
-      var e, t, r, i;
-      this._phase === "uploading" && ((e = this._engine) == null || e.cancelAll()), (i = (r = (t = this.config) == null ? void 0 : t.callbacks) == null ? void 0 : r.onCancel) == null || i.call(r), this._dispatchPublic(B.CANCEL, {}), this.close();
+      var e, t, r, o;
+      this._phase === "uploading" && ((e = this._engine) == null || e.cancelAll()), (o = (r = (t = this.config) == null ? void 0 : t.callbacks) == null ? void 0 : r.onCancel) == null || o.call(r), this._dispatchPublic(B.CANCEL, {}), this.close();
     }, this._onMinimize = () => {
       this._isMinimized = !0, this._isPillExpanded = !0, this.requestUpdate();
     }, this._onPillClick = () => {
@@ -7507,8 +8549,8 @@ const H = (W = class extends J {
     }, this._onPillExpand = () => {
       this._isMinimized = !1, this._isPillExpanded = !1, this._isOpen = !0, this.requestUpdate();
     }, this._onPillDismiss = () => {
-      var e, t, r, i;
-      this._isMinimized = !1, this._isPillExpanded = !1, this._phase === "uploading" && ((e = this._engine) == null || e.cancelAll()), (i = (r = (t = this.config) == null ? void 0 : t.callbacks) == null ? void 0 : r.onCancel) == null || i.call(r), this._dispatchPublic(B.CANCEL, {}), this.close();
+      var e, t, r, o;
+      this._isMinimized = !1, this._isPillExpanded = !1, this._phase === "uploading" && ((e = this._engine) == null || e.cancelAll()), (o = (r = (t = this.config) == null ? void 0 : t.callbacks) == null ? void 0 : r.onCancel) == null || o.call(r), this._dispatchPublic(B.CANCEL, {}), this.close();
     }, this._onModalBackdropClick = (e) => {
       e.target === e.currentTarget && this._onModalDismiss();
     }, this._bodyLeaveTimer = null, this._onBodyDragEnter = (e) => {
@@ -7533,13 +8575,15 @@ const H = (W = class extends J {
           this._onFsClose();
           return;
         }
-        const i = ((t = this.config) == null ? void 0 : t.mode) ?? "modal", n = ((r = this.config) == null ? void 0 : r.header) ?? (i === "modal" ? "close" : !0);
-        (n === "close" || n === "back") && (i === "modal" && this._isOpen ? this._onModalDismiss() : i === "inline" && this._onInlineDismiss());
+        const o = ((t = this.config) == null ? void 0 : t.mode) ?? "modal", n = ((r = this.config) == null ? void 0 : r.header) ?? (o === "modal" ? "close" : !0);
+        (n === "close" || n === "back") && (o === "modal" && this._isOpen ? this._onModalDismiss() : o === "inline" && this._onInlineDismiss());
       }
     }, this._dimCache = /* @__PURE__ */ new Map(), this._onSplitPointerDown = (e) => {
       var r;
       e.preventDefault(), this._isResizing = !0;
-      const t = (r = this.shadowRoot) == null ? void 0 : r.querySelector(".preview-layout");
+      const t = (r = this.shadowRoot) == null ? void 0 : r.querySelector(
+        ".preview-layout"
+      );
       t == null || t.classList.add("resizing"), e.target.setPointerCapture(e.pointerId);
     }, this._onSplitPointerMove = (e) => {
       if (!this._isResizing || this._splitRafId) return;
@@ -7547,15 +8591,19 @@ const H = (W = class extends J {
       this._splitRafId = requestAnimationFrame(() => {
         var s;
         this._splitRafId = 0;
-        const r = (s = this.shadowRoot) == null ? void 0 : s.querySelector(".preview-layout");
+        const r = (s = this.shadowRoot) == null ? void 0 : s.querySelector(
+          ".preview-layout"
+        );
         if (!r) return;
-        const i = r.getBoundingClientRect(), n = (t - i.left) / i.width * 100;
+        const o = r.getBoundingClientRect(), n = (t - o.left) / o.width * 100;
         this._splitPct = Math.max(25, Math.min(75, n));
       });
     }, this._onSplitPointerUp = () => {
       var t;
       this._isResizing = !1, this._splitRafId && (cancelAnimationFrame(this._splitRafId), this._splitRafId = 0);
-      const e = (t = this.shadowRoot) == null ? void 0 : t.querySelector(".preview-layout");
+      const e = (t = this.shadowRoot) == null ? void 0 : t.querySelector(
+        ".preview-layout"
+      );
       e == null || e.classList.remove("resizing");
     }, this._onFsToggleZoom = (e) => {
       e == null || e.stopPropagation(), this._fullscreenZoomed = !this._fullscreenZoomed, this._fullscreenZoomed || (this._fsPanX = 0, this._fsPanY = 0);
@@ -7577,11 +8625,11 @@ const H = (W = class extends J {
       this._fsDragging = !0, this._fsDragDidMove = !1, this._fsDragStartX = t.clientX, this._fsDragStartY = t.clientY, this._fsPanStartX = this._fsPanX, this._fsPanStartY = this._fsPanY;
     }, this._onFsTouchMove = (e) => {
       if (!this._fsDragging || e.touches.length !== 1) return;
-      const t = e.touches[0], r = t.clientX - this._fsDragStartX, i = t.clientY - this._fsDragStartY;
-      (Math.abs(r) > 3 || Math.abs(i) > 3) && (this._fsDragDidMove = !0), this._fsPanX = this._fsPanStartX + r, this._fsPanY = this._fsPanStartY + i, this.requestUpdate(), e.preventDefault();
+      const t = e.touches[0], r = t.clientX - this._fsDragStartX, o = t.clientY - this._fsDragStartY;
+      (Math.abs(r) > 3 || Math.abs(o) > 3) && (this._fsDragDidMove = !0), this._fsPanX = this._fsPanStartX + r, this._fsPanY = this._fsPanStartY + o, this.requestUpdate(), e.preventDefault();
     }, this._onFsClose = (e) => {
       e == null || e.stopPropagation(), this._fullscreenPreviewUrl = null, this._fullscreenVideoFile = null, this._fullscreenZoomed = !1, this._fsPanX = 0, this._fsPanY = 0;
-    }, this._store = Nr(), this._storeCtrl = new Yr(this, this._store);
+    }, this._store = ei(), this._storeCtrl = new ti(this, this._store);
   }
   // --- Public API ---
   /** Open the uploader (modal mode). */
@@ -7591,20 +8639,20 @@ const H = (W = class extends J {
   }
   /** Close the uploader (modal mode). Optionally clears all files (controlled by clearOnClose config). */
   close() {
-    var e, t, r, i;
-    this._isOpen && (this._isOpen = !1, this._closeOnCompleteTimer && (clearTimeout(this._closeOnCompleteTimer), this._closeOnCompleteTimer = null), ((e = this.config) == null ? void 0 : e.clearOnClose) !== !1 && this._onClearAll(), this._previewFileId = null, (i = (r = (t = this.config) == null ? void 0 : t.callbacks) == null ? void 0 : r.onClose) == null || i.call(r), this._dispatchPublic(B.CLOSE, {}), this.requestUpdate());
+    var e, t, r, o;
+    this._isOpen && (this._isOpen = !1, this._closeOnCompleteTimer && (clearTimeout(this._closeOnCompleteTimer), this._closeOnCompleteTimer = null), ((e = this.config) == null ? void 0 : e.clearOnClose) !== !1 && this._onClearAll(), this._previewFileId = null, (o = (r = (t = this.config) == null ? void 0 : t.callbacks) == null ? void 0 : r.onClose) == null || o.call(r), this._dispatchPublic(B.CLOSE, {}), this.requestUpdate());
   }
   /** Start uploading all queued files. */
   upload() {
-    var i, n, s, a, l, p, g;
+    var o, n, s, a, l, p, h;
     if (this._ensureEngine(), !this._engine) {
       console.warn("[sfx-uploader] Cannot upload: auth not resolved yet");
       return;
     }
     const e = [...this._store.getState().files.values()].filter(
-      (k) => k.status === "idle" || k.status === "queued"
+      (_) => _.status === "idle" || _.status === "queued"
     );
-    if ((n = (i = this.config) == null ? void 0 : i.callbacks) != null && n.onBeforeUpload && this.config.callbacks.onBeforeUpload(e) === !1)
+    if ((n = (o = this.config) == null ? void 0 : o.callbacks) != null && n.onBeforeUpload && this.config.callbacks.onBeforeUpload(e) === !1)
       return;
     const t = new CustomEvent(B.BEFORE_UPLOAD, {
       bubbles: !0,
@@ -7612,7 +8660,7 @@ const H = (W = class extends J {
       cancelable: !0,
       detail: { files: e }
     });
-    this.dispatchEvent(t) && (this._dispatchPublic(B.UPLOAD_STARTED, { files: e }), (l = (a = (s = this.config) == null ? void 0 : s.callbacks) == null ? void 0 : a.onUploadStarted) == null || l.call(a, e), this._engine.uploadAll(), (p = this.config) != null && p.minimizeOnUpload && ((g = this.config) == null ? void 0 : g.mode) !== "inline" && (this._isMinimized = !0, this._isPillExpanded = !0, this.requestUpdate()));
+    this.dispatchEvent(t) && (this._dispatchPublic(B.UPLOAD_STARTED, { files: e }), (l = (a = (s = this.config) == null ? void 0 : s.callbacks) == null ? void 0 : a.onUploadStarted) == null || l.call(a, e), this._engine.uploadAll(), (p = this.config) != null && p.minimizeOnUpload && ((h = this.config) == null ? void 0 : h.mode) !== "inline" && (this._isMinimized = !0, this._isPillExpanded = !0, this.requestUpdate()));
   }
   /** Programmatically add files. */
   addFiles(e) {
@@ -7622,13 +8670,13 @@ const H = (W = class extends J {
   resumeUpload(e) {
     var t;
     if (e && e.length > 0) {
-      const r = this._store.getState().files, i = new Map(r);
+      const r = this._store.getState().files, o = new Map(r);
       let n = !1;
       for (const s of e) {
         const a = r.get(s.id);
-        a && (i.set(s.id, { ...a, ...s }), n = !0);
+        a && (o.set(s.id, { ...a, ...s }), n = !0);
       }
-      n && this._store.setState({ files: i });
+      n && this._store.setState({ files: o });
     }
     this._ensureEngine(), (t = this._engine) == null || t.uploadAll();
   }
@@ -7657,9 +8705,10 @@ const H = (W = class extends J {
   }
   /** Update metadata and/or tags for a single file. */
   updateFileMeta(e, t, r) {
-    const i = this._store.getState().files, n = i.get(e);
-    if (!n || !W._MODIFIABLE_STATUSES.has(n.status)) return;
-    const s = new Map(i);
+    const o = this._store.getState().files, n = o.get(e);
+    if (!n || !K._MODIFIABLE_STATUSES.has(n.status))
+      return;
+    const s = new Map(o);
     s.set(e, {
       ...n,
       meta: t != null ? { ...n.meta, ...t } : n.meta,
@@ -7669,26 +8718,41 @@ const H = (W = class extends J {
   /** Batch-update metadata and/or tags for multiple files. */
   updateFilesMeta(e) {
     const t = this._store.getState().files, r = new Map(t);
-    let i = !1;
+    let o = !1;
     for (const { fileId: n, meta: s, tags: a } of e) {
       const l = t.get(n);
-      !l || !W._MODIFIABLE_STATUSES.has(l.status) || (r.set(n, {
+      !l || !K._MODIFIABLE_STATUSES.has(l.status) || (r.set(n, {
         ...l,
         meta: s != null ? { ...l.meta, ...s } : l.meta,
         tags: a ?? l.tags
-      }), i = !0);
+      }), o = !0);
     }
-    i && this._store.setState({ files: r });
+    o && this._store.setState({ files: r });
   }
   // --- Lifecycle ---
   updated(e) {
     if (e.has("config") && this.config && this._applyConfig(this.config), e.has("_previewFileId") && this._previewFileId) {
       const t = this._previewFileId, r = this._store.getState().files.get(t);
-      r ? this._getImageDimensions(r).then((i) => {
-        this._previewFileId === t && (this._previewDims = i ? `${i.w} × ${i.h}` : "—");
+      r ? this._getImageDimensions(r).then((o) => {
+        this._previewFileId === t && (this._previewDims = o ? `${o.w} × ${o.h}` : "—");
       }) : this._previewDims = "—";
     }
-    this._updateFloatingPortal();
+    this._applyDefaultPreviewWidth(), this._updateFloatingPortal();
+  }
+  /**
+   * The preview panel opens at 3/8 (~37.5%) of the modal width by default,
+   * giving the grid 5/8. On first appearance of the preview layout we set
+   * _splitPct once; after that the user's own divider drag wins until the
+   * preview layout is dismissed.
+   */
+  _applyDefaultPreviewWidth() {
+    var r;
+    const e = (r = this.shadowRoot) == null ? void 0 : r.querySelector(".preview-layout");
+    if (!e) {
+      this._previewDefaultApplied = !1;
+      return;
+    }
+    this._previewDefaultApplied || e.getBoundingClientRect().width <= 0 || (this._splitPct = 62.5, this._previewDefaultApplied = !0);
   }
   _injectFloatStyles() {
     if (document.querySelector("style[data-sfx-upload-float-styles]")) return;
@@ -7759,19 +8823,19 @@ const H = (W = class extends J {
   }
   _updateFloatingPortal() {
     const e = [...this._storeCtrl.state.files.values()];
-    this._isMinimized && e.length > 0 ? (this._injectFloatStyles(), this._portalContainer || (this._portalContainer = document.createElement("div"), this._portalContainer.setAttribute("data-sfx-upload-float", ""), document.body.appendChild(this._portalContainer)), le(this._renderFloatingPill(e), this._portalContainer)) : this._portalContainer && (le(C, this._portalContainer), this._portalContainer.remove(), this._portalContainer = null);
+    this._isMinimized && e.length > 0 ? (this._injectFloatStyles(), this._portalContainer || (this._portalContainer = document.createElement("div"), this._portalContainer.setAttribute("data-sfx-upload-float", ""), document.body.appendChild(this._portalContainer)), ue(this._renderFloatingPill(e), this._portalContainer)) : this._portalContainer && (ue(S, this._portalContainer), this._portalContainer.remove(), this._portalContainer = null);
   }
   connectedCallback() {
-    super.connectedCallback(), document.addEventListener("keydown", this._onKeyDown), this._prevStoreState = this._store.getState(), this._unsubStoreEvents = this._store.subscribe(() => this._onStoreChange());
+    super.connectedCallback(), document.addEventListener("keydown", this._onKeyDown), this._prevStoreState = this._store.getState(), this._unsubStoreEvents = this._store.subscribe(() => this._onStoreChange()), this._hasStoredReview = Je.load() != null;
   }
   disconnectedCallback() {
-    var e, t, r, i;
+    var e, t, r, o;
     super.disconnectedCallback(), document.removeEventListener("keydown", this._onKeyDown), (e = this._unsubStoreEvents) == null || e.call(this), this._unsubStoreEvents = null, this._prevStoreState = null, (t = this._portalContainer) == null || t.remove(), this._portalContainer = null, document.querySelector("[data-sfx-upload-float]") || (r = document.querySelector("style[data-sfx-upload-float-styles]")) == null || r.remove(), this._revokeVideoBlobUrls();
     for (const n of this._rejectedTimers.values()) clearTimeout(n);
     this._rejectedTimers.clear(), this._closeOnCompleteTimer && (clearTimeout(this._closeOnCompleteTimer), this._closeOnCompleteTimer = null);
     for (const n of this._store.getState().files.values())
       n.previewUrl && URL.revokeObjectURL(n.previewUrl);
-    (i = this._engine) == null || i.destroy(), this._engine = null;
+    (o = this._engine) == null || o.destroy(), this._engine = null;
   }
   // --- Config ---
   _applyConfig(e) {
@@ -7790,10 +8854,10 @@ const H = (W = class extends J {
     Object.keys(t).length > 0 && this._store.setState(t), this._resolveAuthAndEngine(e), (e.mode === "inline" || !e.mode) && (this._isOpen = !0);
   }
   async _resolveAuthAndEngine(e) {
-    var i, n;
+    var o, n;
     const t = e.auth;
     if (t.mode === "sass-key") {
-      this._apiBase = Ut(t.container), this._authHeaders = vt(t), this._ensureEngine(), (i = this._engine) == null || i.updateConfig({
+      this._apiBase = Ot(t.container), this._authHeaders = mt(t), this._ensureEngine(), (o = this._engine) == null || o.updateConfig({
         apiBase: this._apiBase,
         authHeaders: this._authHeaders,
         tusConfig: this._normalizeTusConfig()
@@ -7802,7 +8866,7 @@ const H = (W = class extends J {
     }
     const r = ++this._authResolveId;
     try {
-      const s = await Gi(t);
+      const s = await on(t);
       if (r !== this._authResolveId) return;
       this._apiBase = s.apiBase, this._authHeaders = s.headers, this._ensureEngine(), (n = this._engine) == null || n.updateConfig({
         apiBase: this._apiBase,
@@ -7815,13 +8879,15 @@ const H = (W = class extends J {
     }
   }
   _formatAuthError(e) {
-    var r, i;
+    var r, o;
     const t = e instanceof Error ? e.message : String(e);
-    return (i = (r = this.config) == null ? void 0 : r.auth) != null && i.container ? t.includes("HTTP 404") ? `Authentication failed: container "${this.config.auth.container}" not found. Check your container name.` : t.includes("HTTP 401") || t.includes("HTTP 403") ? "Authentication failed: invalid security template ID. Check your credentials in the Auth panel." : t.includes("timed out") ? "Authentication failed: request timed out. Check your network connection." : t.includes("Failed to fetch") || t.includes("NetworkError") ? "Authentication failed: network error. Check your internet connection." : `Authentication failed: ${t}` : "Authentication failed: no container specified. Open the Auth panel and enter your credentials.";
+    return (o = (r = this.config) == null ? void 0 : r.auth) != null && o.container ? t.includes("HTTP 404") ? `Authentication failed: container "${this.config.auth.container}" not found. Check your container name.` : t.includes("HTTP 401") || t.includes("HTTP 403") ? "Authentication failed: invalid security template ID. Check your credentials in the Auth panel." : t.includes("timed out") ? "Authentication failed: request timed out. Check your network connection." : t.includes("Failed to fetch") || t.includes("NetworkError") ? "Authentication failed: network error. Check your internet connection." : `Authentication failed: ${t}` : "Authentication failed: no container specified. Open the Auth panel and enter your credentials.";
   }
   _showToast(e, t = "error") {
-    var i;
-    const r = (i = this.shadowRoot) == null ? void 0 : i.querySelector("sfx-toast");
+    var o;
+    const r = (o = this.shadowRoot) == null ? void 0 : o.querySelector(
+      "sfx-toast"
+    );
     r == null || r.show(e, t);
   }
   _normalizeTusConfig() {
@@ -7830,7 +8896,7 @@ const H = (W = class extends J {
     return e === !0 ? {} : e || void 0;
   }
   _ensureEngine() {
-    !this._engine && this._apiBase && this._authHeaders && (this._engine = new Yi(this._store, {
+    !this._engine && this._apiBase && this._authHeaders && (this._engine = new tn(this._store, {
       apiBase: this._apiBase,
       authHeaders: this._authHeaders,
       tusConfig: this._normalizeTusConfig()
@@ -7841,13 +8907,16 @@ const H = (W = class extends J {
     const t = e.metadataConfig;
     if (!(!t || !this._apiBase || !this._authHeaders))
       try {
-        const { fetchMetadataSchema: r, createTagsAutocomplete: i } = await import("./index-BvLTU64u.js");
+        const { fetchMetadataSchema: r, createTagsAutocomplete: o } = await import("./index-DMqa8AUM.js");
         this._metadataSchema = await r(
           this._apiBase,
           this._authHeaders,
           t.projectUuid,
           t
-        ), this._metadataAutocomplete = i(this._apiBase, this._authHeaders);
+        ), this._metadataAutocomplete = o(
+          this._apiBase,
+          this._authHeaders
+        );
       } catch (r) {
         console.error("[sfx-uploader] Failed to load metadata schema:", r), this._showToast("Failed to load metadata schema", "warning");
       }
@@ -7856,10 +8925,10 @@ const H = (W = class extends J {
   _onPreviewRename(e, t) {
     const r = t.trim();
     if (!r) return;
-    const i = this._store.getState().files.get(e);
-    if (!i || i.name === r) return;
+    const o = this._store.getState().files.get(e);
+    if (!o || o.name === r) return;
     const n = new Map(this._store.getState().files);
-    n.set(e, { ...i, name: r }), this._store.setState({ files: n });
+    n.set(e, { ...o, name: r }), this._store.setState({ files: n });
   }
   get _metadataEnforcing() {
     var t;
@@ -7870,16 +8939,16 @@ const H = (W = class extends J {
     if (!this._metadataEnforcing || !this._metadataSchema) return !1;
     const e = this._metadataSchema.fields.filter((r) => {
       var n;
-      const i = (n = this.config) == null ? void 0 : n.metadataConfig;
-      return i != null && i.requiredFields ? i.requiredFields.includes(r.ckey) : r.required === 1;
+      const o = (n = this.config) == null ? void 0 : n.metadataConfig;
+      return o != null && o.requiredFields ? o.requiredFields.includes(r.ckey) : r.required === 1;
     });
     if (e.length === 0) return !1;
     const t = [...this._store.getState().files.values()].filter(
       (r) => r.status === "idle" || r.status === "queued" || r.status === "rejected"
     );
     return e.some(
-      (r) => t.some((i) => {
-        const n = i.meta[r.key];
+      (r) => t.some((o) => {
+        const n = o.meta[r.key];
         return n == null ? !0 : Array.isArray(n) || typeof n == "string" ? n.length === 0 : !n;
       })
     );
@@ -7895,57 +8964,72 @@ const H = (W = class extends J {
    * for file status transitions.
    */
   _onStoreChange() {
-    var i, n, s, a, l, p, g, k, E, S;
+    var o, n, s, a, l, p, h, _, E, O;
     const e = this._store.getState(), t = this._prevStoreState;
     if (this._prevStoreState = e, !t) return;
-    const r = (i = this.config) == null ? void 0 : i.callbacks;
-    for (const [R, _] of e.files) {
-      const P = t.files.get(R);
-      if (P) {
-        if (P.status !== _.status)
-          switch (_.status) {
+    const r = (o = this.config) == null ? void 0 : o.callbacks;
+    for (const [P, v] of e.files) {
+      const U = t.files.get(P);
+      if (U) {
+        if (U.status !== v.status)
+          switch (v.status) {
             case "uploading":
-              P.status === "paused" && (this._dispatchPublic(B.UPLOAD_RESUMED, { file: _ }), (n = r == null ? void 0 : r.onUploadResumed) == null || n.call(r, _));
+              U.status === "paused" && (this._dispatchPublic(B.UPLOAD_RESUMED, { file: v }), (n = r == null ? void 0 : r.onUploadResumed) == null || n.call(r, v));
               break;
             case "complete":
-              _.response && (this._dispatchPublic(B.UPLOAD_COMPLETE, { file: _, response: _.response }), (s = r == null ? void 0 : r.onUploadComplete) == null || s.call(r, _, _.response));
+              v.response && (this._dispatchPublic(B.UPLOAD_COMPLETE, {
+                file: v,
+                response: v.response
+              }), (s = r == null ? void 0 : r.onUploadComplete) == null || s.call(r, v, v.response));
               break;
             case "error":
             case "failed": {
-              const T = new Error(_.error ?? "Upload failed");
-              this._dispatchPublic(B.UPLOAD_ERROR, { file: _, error: T }), (a = r == null ? void 0 : r.onUploadError) == null || a.call(r, _, T), _.status === "failed" && this._showToast(`${_.name}: ${_.error ?? "Upload failed"}`);
+              const R = new Error(v.error ?? "Upload failed");
+              this._dispatchPublic(B.UPLOAD_ERROR, {
+                file: v,
+                error: R
+              }), (a = r == null ? void 0 : r.onUploadError) == null || a.call(r, v, R);
               break;
             }
             case "retrying":
-              this._dispatchPublic(B.UPLOAD_RETRY, { file: _, attempt: _.retryCount }), (l = r == null ? void 0 : r.onUploadRetry) == null || l.call(r, _, _.retryCount);
+              this._dispatchPublic(B.UPLOAD_RETRY, {
+                file: v,
+                attempt: v.retryCount
+              }), (l = r == null ? void 0 : r.onUploadRetry) == null || l.call(r, v, v.retryCount);
               break;
             case "paused":
-              this._dispatchPublic(B.UPLOAD_PAUSED, { file: _ }), (p = r == null ? void 0 : r.onUploadPaused) == null || p.call(r, _);
+              this._dispatchPublic(B.UPLOAD_PAUSED, { file: v }), (p = r == null ? void 0 : r.onUploadPaused) == null || p.call(r, v);
               break;
           }
-        _.status === "uploading" && P.progress !== _.progress && (this._dispatchPublic(B.UPLOAD_PROGRESS, { file: _, progress: _.progress, speed: _.speed }), (g = r == null ? void 0 : r.onUploadProgress) == null || g.call(r, _, _.progress, _.speed));
+        v.status === "uploading" && U.progress !== v.progress && (this._dispatchPublic(B.UPLOAD_PROGRESS, {
+          file: v,
+          progress: v.progress,
+          speed: v.speed
+        }), (h = r == null ? void 0 : r.onUploadProgress) == null || h.call(r, v, v.progress, v.speed));
       }
     }
     if (e.totalProgress !== t.totalProgress || e.totalSpeed !== t.totalSpeed) {
-      const R = e.totalSpeed > 0 ? (e.totalBytes - e.totalBytesUploaded) / e.totalSpeed : 0;
+      const P = e.totalSpeed > 0 ? (e.totalBytes - e.totalBytesUploaded) / e.totalSpeed : 0;
       this._dispatchPublic(B.TOTAL_PROGRESS, {
         percentage: e.totalProgress,
         speed: e.totalSpeed,
-        eta: R
-      }), (k = r == null ? void 0 : r.onTotalProgress) == null || k.call(r, e.totalProgress, e.totalSpeed, R);
+        eta: P
+      }), (_ = r == null ? void 0 : r.onTotalProgress) == null || _.call(r, e.totalProgress, e.totalSpeed, P);
     }
     if (t.isUploading && !e.isUploading) {
-      const R = [...e.files.values()];
-      if (!R.some((P) => P.status === "cancelled")) {
-        const P = R.filter((x) => x.status === "complete"), T = R.filter((x) => x.status === "failed" || x.status === "error");
-        this._dispatchPublic(B.ALL_COMPLETE, { successful: P, failed: T }), (E = r == null ? void 0 : r.onAllComplete) == null || E.call(r, P, T);
-        const v = (S = this.config) == null ? void 0 : S.closeOnComplete;
-        if (v) {
-          const x = typeof v == "number" ? v : 1500;
+      const P = [...e.files.values()];
+      if (!P.some((U) => U.status === "cancelled")) {
+        const U = P.filter((g) => g.status === "complete"), R = P.filter(
+          (g) => g.status === "failed" || g.status === "error"
+        ), x = [...U, ...R];
+        x.length > 0 && (Je.save(x), this._hasStoredReview = !0), this._dispatchPublic(B.ALL_COMPLETE, { successful: U, failed: R }), (E = r == null ? void 0 : r.onAllComplete) == null || E.call(r, U, R);
+        const b = (O = this.config) == null ? void 0 : O.closeOnComplete;
+        if (b) {
+          const g = typeof b == "number" ? b : 1500;
           this._closeOnCompleteTimer = setTimeout(() => {
-            var h, m, O;
-            this._closeOnCompleteTimer = null, this._phase === "complete" && (this._dispatchPublic(B.COMPLETE_ACTION, {}), (O = (m = (h = this.config) == null ? void 0 : h.callbacks) == null ? void 0 : m.onCompleteAction) == null || O.call(m), this.close());
-          }, x);
+            var m, z, C;
+            this._closeOnCompleteTimer = null, this._phase === "complete" && (this._dispatchPublic(B.COMPLETE_ACTION, {}), (C = (z = (m = this.config) == null ? void 0 : m.callbacks) == null ? void 0 : z.onCompleteAction) == null || C.call(z), this.close());
+          }, g);
         }
       }
     }
@@ -7955,12 +9039,23 @@ const H = (W = class extends J {
     const e = (l = this.config) == null ? void 0 : l.connectors;
     if (e === this._cachedSourcesConfig) return this._cachedSources;
     if (this._cachedSourcesConfig = e, !e)
-      return this._cachedSources = Re, this._cachedSources;
-    const t = e.providers.length > 0 ? en(e.providers) : [], r = e.customSources ?? [], i = Re.filter((p) => p.id === "device" || p.id === "url"), n = Re.filter((p) => p.id !== "device" && p.id !== "url"), s = /* @__PURE__ */ new Set(), a = [];
-    for (const p of [...i, ...t, ...n, ...r])
+      return this._cachedSources = je, this._cachedSources;
+    const t = e.providers.length > 0 ? gn(e.providers) : [], r = e.customSources ?? [], o = je.filter(
+      (p) => p.id === "device" || p.id === "url"
+    ), n = je.filter(
+      (p) => p.id !== "device" && p.id !== "url"
+    ), s = /* @__PURE__ */ new Set(), a = [];
+    for (const p of [
+      ...o,
+      ...t,
+      ...n,
+      ...r
+    ])
       if (!s.has(p.id)) {
-        if (W._RESERVED_IDS.has(p.id) && p.onActivate) {
-          console.warn(`[sfx-uploader] Custom source id "${p.id}" conflicts with a built-in source and was skipped.`);
+        if (K._RESERVED_IDS.has(p.id) && p.onActivate) {
+          console.warn(
+            `[sfx-uploader] Custom source id "${p.id}" conflicts with a built-in source and was skipped.`
+          );
           continue;
         }
         s.add(p.id), a.push(p);
@@ -7973,60 +9068,68 @@ const H = (W = class extends J {
     if (t.length === 0) return "empty";
     if (e.isUploading) return "uploading";
     const r = /* @__PURE__ */ new Set(["complete", "rejected", "cancelled", "failed"]);
-    return t.every((i) => r.has(i.status)) && t.some((i) => i.status === "complete" || i.status === "failed") ? "complete" : "ready";
+    return t.every((o) => r.has(o.status)) && t.some((o) => o.status === "complete" || o.status === "failed") ? "complete" : "ready";
   }
   // --- File handling ---
   _processIncomingFiles(e) {
-    var r, i, n, s;
+    var r, o, n, s;
     const t = (r = this.config) == null ? void 0 : r.callbacks;
+    this._isReviewing && (this._isReviewing = !1, this._reviewFiles = []);
     for (const a of e) {
-      const l = this._store.getState(), p = Qi(a, l.restrictions, l.files);
-      if (p) {
-        const E = a.type.startsWith("image/") ? URL.createObjectURL(a) : null, S = {
-          id: xe(),
+      const l = this._store.getState();
+      if ([...l.files.values()].some(
+        (O) => O.name === a.name && O.size === a.size && O.status !== "rejected" && O.status !== "cancelled"
+      )) continue;
+      const h = hn(a, l.restrictions, l.files);
+      if (h) {
+        const O = a.type.startsWith("image/") ? URL.createObjectURL(a) : null, P = {
+          id: we(),
           status: "rejected",
           file: a,
           remoteUrl: null,
           name: a.name,
           size: a.size,
           type: a.type,
-          previewUrl: E,
+          previewUrl: O,
           duration: null,
           progress: 0,
           speed: 0,
           bytesUploaded: 0,
-          error: p,
+          error: h,
           retryCount: 0,
           response: null,
           addedAt: Date.now(),
           meta: {},
           tags: [],
           remoteInfo: null,
-          ...me
+          ..._e
         };
-        ge(this._store, S), this._dispatchPublic(B.FILE_REJECTED, { file: S, reason: p }), (i = t == null ? void 0 : t.onFileRejected) == null || i.call(t, S, p);
-        const R = (n = this.config) == null ? void 0 : n.rejectedFileAutoRemoveDelay, _ = R === !1 || R === 0 || R === void 0 ? 0 : R;
-        if (_ > 0) {
-          const P = S.id, T = setTimeout(() => {
-            this._rejectedTimers.delete(P);
-            const v = this._store.getState().files.get(P);
-            v && v.status === "rejected" && Mt(this._store, P);
-          }, _);
-          this._rejectedTimers.set(P, T);
+        me(this._store, P), this._dispatchPublic(B.FILE_REJECTED, {
+          file: P,
+          reason: h
+        }), (o = t == null ? void 0 : t.onFileRejected) == null || o.call(t, P, h);
+        const v = (n = this.config) == null ? void 0 : n.rejectedFileAutoRemoveDelay, U = v === !1 || v === 0 || v === void 0 ? 0 : v;
+        if (U > 0) {
+          const R = P.id, x = setTimeout(() => {
+            this._rejectedTimers.delete(R);
+            const b = this._store.getState().files.get(R);
+            b && b.status === "rejected" && Wt(this._store, R);
+          }, U);
+          this._rejectedTimers.set(R, x);
         }
         continue;
       }
-      let g = null;
-      a.type.startsWith("image/") && (g = URL.createObjectURL(a));
-      const k = {
-        id: xe(),
+      let _ = null;
+      a.type.startsWith("image/") && (_ = URL.createObjectURL(a));
+      const E = {
+        id: we(),
         status: "idle",
         file: a,
         remoteUrl: null,
         name: a.name,
         size: a.size,
         type: a.type,
-        previewUrl: g,
+        previewUrl: _,
         duration: null,
         progress: 0,
         speed: 0,
@@ -8038,28 +9141,28 @@ const H = (W = class extends J {
         meta: {},
         tags: [],
         remoteInfo: null,
-        ...me
+        ..._e
       };
-      if (ge(this._store, k), this._dispatchPublic(B.FILE_ADDED, { file: k }), (s = t == null ? void 0 : t.onFileAdded) == null || s.call(t, k), a.type.startsWith("video/")) {
-        Ji(a).then((S) => {
-          if (!S) return;
-          const R = this._store.getState(), _ = R.files.get(k.id);
-          if (_) {
-            const P = new Map(R.files);
-            P.set(k.id, { ..._, previewUrl: S }), this._store.setState({ files: P });
+      if (me(this._store, E), this._dispatchPublic(B.FILE_ADDED, { file: E }), (s = t == null ? void 0 : t.onFileAdded) == null || s.call(t, E), a.type.startsWith("video/")) {
+        un(a).then((P) => {
+          if (!P) return;
+          const v = this._store.getState(), U = v.files.get(E.id);
+          if (U) {
+            const R = new Map(v.files);
+            R.set(E.id, { ...U, previewUrl: P }), this._store.setState({ files: R });
           } else
-            URL.revokeObjectURL(S);
+            URL.revokeObjectURL(P);
         });
-        const E = document.createElement("video");
-        E.preload = "metadata", E.src = URL.createObjectURL(a), E.onerror = () => {
-          URL.revokeObjectURL(E.src);
-        }, E.onloadedmetadata = () => {
-          const S = E.duration;
-          if (URL.revokeObjectURL(E.src), !isFinite(S)) return;
-          const R = this._store.getState(), _ = R.files.get(k.id);
-          if (_) {
-            const P = new Map(R.files);
-            P.set(k.id, { ..._, duration: S }), this._store.setState({ files: P });
+        const O = document.createElement("video");
+        O.preload = "metadata", O.src = URL.createObjectURL(a), O.onerror = () => {
+          URL.revokeObjectURL(O.src);
+        }, O.onloadedmetadata = () => {
+          const P = O.duration;
+          if (URL.revokeObjectURL(O.src), !isFinite(P)) return;
+          const v = this._store.getState(), U = v.files.get(E.id);
+          if (U) {
+            const R = new Map(v.files);
+            R.set(E.id, { ...U, duration: P }), this._store.setState({ files: R });
           }
         };
       }
@@ -8075,9 +9178,9 @@ const H = (W = class extends J {
       const p = this._videoBlobUrls.get(t.file);
       p && (URL.revokeObjectURL(p), this._videoBlobUrls.delete(t.file));
     }
-    (t.status === "uploading" || t.status === "queued" || t.status === "retrying" || t.status === "paused") && ((n = this._engine) == null || n.cancelFile(e)), Mt(this._store, e), this._dimCache.delete(e);
-    const i = this._rejectedTimers.get(e);
-    if (i && (clearTimeout(i), this._rejectedTimers.delete(e)), this._previewFileId === e) {
+    (t.status === "uploading" || t.status === "queued" || t.status === "retrying" || t.status === "paused") && ((n = this._engine) == null || n.cancelFile(e)), Wt(this._store, e), this._dimCache.delete(e);
+    const o = this._rejectedTimers.get(e);
+    if (o && (clearTimeout(o), this._rejectedTimers.delete(e)), this._previewFileId === e) {
       const p = [...this._store.getState().files.values()];
       this._previewFileId = p.length > 0 ? p[0].id : null;
     }
@@ -8085,24 +9188,70 @@ const H = (W = class extends J {
   }
   // --- Render ---
   render() {
-    var t;
-    const e = ((t = this.config) == null ? void 0 : t.mode) ?? "modal";
-    return [...this._storeCtrl.state.files.values()], e === "modal" ? f`
+    var r;
+    const e = ((r = this.config) == null ? void 0 : r.mode) ?? "modal", t = [...this._storeCtrl.state.files.values()];
+    return e === "modal" ? f`
         ${this._isOpen && !this._isMinimized ? f`
-          <div class="modal-backdrop" @click=${this._onModalBackdropClick}>
-            <div class="modal-card">
-              ${this._renderHeader()}
-              ${this._renderBody()}
-              <sfx-toast></sfx-toast>
-            </div>
-          </div>
-        ` : C}
+              <div class="modal-backdrop" @click=${this._onModalBackdropClick}>
+                <div class="modal-card">
+                  ${this._renderHeader()} ${this._renderBody()}
+                  <sfx-toast></sfx-toast>
+                </div>
+              </div>
+            ` : S}
+        ${this._renderFsOverlay()}
       ` : f`
-      <div class="inline">
-        ${this._renderHeader()}
-        ${this._renderBody()}
+      <div class="inline ${t.length === 0 ? "no-files" : ""}">
+        ${this._renderHeader()} ${this._renderBody()}
         <sfx-toast></sfx-toast>
       </div>
+      ${this._renderFsOverlay()}
+    `;
+  }
+  /** Fullscreen image/video overlay. Rendered at the top level (sibling
+      of modal-backdrop) so it never inherits a containing block from the
+      modal-card on mobile, where modal-card is position:fixed itself and
+      its overflow:hidden was clipping the overlay. The toolbar + nav
+      buttons are rendered as SIBLINGS of the overlay (not children) so
+      their position:fixed always resolves to the viewport, even if some
+      ancestor of fs-overlay establishes a containing block on first paint. */
+  _renderFsOverlay() {
+    if (!this._fullscreenPreviewUrl && !this._fullscreenVideoFile) return S;
+    const e = [...this._store.getState().files.values()].filter(
+      (r) => r.previewUrl || r.type.startsWith("video/") && r.file
+    ), t = e.findIndex((r) => r.id === this._previewFileId);
+    return f`
+      <div
+        class="fs-overlay ${this._fullscreenZoomed ? "zoomed" : ""} ${this._fsDragging ? "panning" : ""}"
+        @click=${this._onFsOverlayClick}
+        @mousedown=${this._onFsPanStart}
+        @mousemove=${this._onFsPanMove}
+        @mouseup=${this._onFsPanEnd}
+        @mouseleave=${this._onFsPanEnd}
+        @touchstart=${this._onFsTouchStart}
+        @touchmove=${this._onFsTouchMove}
+        @touchend=${this._onFsPanEnd}
+      >
+        ${this._fullscreenVideoFile ? f`<video class="fs-img" src=${this._getVideoBlobUrl(this._fullscreenVideoFile)} controls playsinline draggable="false" @click=${(r) => r.stopPropagation()}></video>` : f`<img class="fs-img" src=${this._fullscreenPreviewUrl} alt="" style=${this._fullscreenZoomed ? `transform: scale(2) translate(${this._fsPanX}px, ${this._fsPanY}px)` : ""} draggable="false" />`}
+      </div>
+      <div class="fs-toolbar" @click=${(r) => r.stopPropagation()}>
+        <button class="fs-btn" @click=${this._onFsToggleZoom} title="${this._fullscreenZoomed ? "Zoom out" : "Zoom in"}">
+          ${this._fullscreenZoomed ? f`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>` : f`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>`}
+        </button>
+        <button class="fs-btn" @click=${this._onFsClose} title="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <button class="fs-nav prev" ?disabled=${t <= 0} @click=${(r) => {
+      r.stopPropagation(), this._navigateFs(-1);
+    }}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <button class="fs-nav next" ?disabled=${t >= e.length - 1} @click=${(r) => {
+      r.stopPropagation(), this._navigateFs(1);
+    }}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 6 15 12 9 18"/></svg>
+      </button>
     `;
   }
   _renderInlineHeader(e) {
@@ -8110,61 +9259,103 @@ const H = (W = class extends J {
       <div class="inline-header">
         <div class="inline-header-top">
           ${e.accent ? f`
-            <div class="inline-header-accent">
-              <div class="accent-line"></div>
-              <span>${e.accent}</span>
-            </div>
-          ` : C}
-          ${e.title ? f`<h2 class="inline-header-title">${e.title}</h2>` : C}
+                <div class="inline-header-accent">
+                  <div class="accent-line"></div>
+                  <span>${e.accent}</span>
+                </div>
+              ` : S}
+          ${e.title ? f`<h2 class="inline-header-title">${e.title}</h2>` : S}
         </div>
-        ${e.description ? f`<div class="inline-header-desc">${e.description}</div>` : C}
+        ${e.description ? f`<div class="inline-header-desc">${e.description}</div>` : S}
       </div>
     `;
   }
   _renderHeader() {
     var s, a, l;
-    if (this._phase === "complete") return C;
+    if (this._phase === "complete") return S;
     const e = ((s = this.config) == null ? void 0 : s.mode) ?? "modal";
     if (this._phase === "uploading") {
-      const p = this._storeCtrl.state, g = [...p.files.values()], k = g.filter((S) => S.status === "complete").length, E = p.totalSpeed > 0 ? (p.totalBytes - p.totalBytesUploaded) / p.totalSpeed : 0;
+      const p = this._storeCtrl.state, h = [...p.files.values()], _ = h.filter((O) => O.status === "complete").length, E = p.totalSpeed > 0 ? (p.totalBytes - p.totalBytesUploaded) / p.totalSpeed : 0;
       return f`
         <div class="header upload-header">
           <div class="float-header-left">
             <div class="float-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+                stroke-linecap="round"
+              >
+                <polyline points="16 16 12 12 8 16" />
+                <line x1="12" y1="12" x2="12" y2="21" />
+                <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
+              </svg>
             </div>
             <div>
-              <div class="float-title">Uploading ${g.length} ${g.length === 1 ? "file" : "files"}</div>
-              <div class="float-subtitle">${k} of ${g.length}${E > 0 ? ` · ~${st(E)} left` : ""}</div>
+              <div class="float-title">
+                Uploading ${h.length}
+                ${h.length === 1 ? "file" : "files"}
+              </div>
+              <div class="float-subtitle">
+                ${_} of
+                ${h.length}${E > 0 ? ` · ~${dt(E)} left` : ""}
+              </div>
             </div>
           </div>
         </div>
       `;
     }
-    if (e === "inline" && ((a = this.config) != null && a.inlineHeader)) return C;
+    if (e === "inline" && ((a = this.config) != null && a.inlineHeader)) return S;
     const t = ((l = this.config) == null ? void 0 : l.header) ?? (e === "modal" ? "close" : !0);
-    if (t === !1) return C;
-    const r = e === "modal" ? this._onModalDismiss : this._onInlineDismiss, i = t === "back" ? f`<button class="header-btn header-btn-back" aria-label="Back to Asset Picker" @click=${r}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="15 18 9 12 15 6"/>
-          </svg>
-        </button>` : C, n = t === "close" ? f`<button class="header-btn header-btn-close" aria-label="Close" @click=${r}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        </button>` : C;
+    if (t === !1) return S;
+    const r = e === "modal" ? this._onModalDismiss : this._onInlineDismiss, o = t === "back" ? f`<button
+            class="header-btn header-btn-back"
+            aria-label="Back to Asset Picker"
+            @click=${r}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>` : S, n = t === "close" ? f`<button
+            class="header-btn header-btn-close"
+            aria-label="Close"
+            @click=${r}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>` : S;
     return f`
       <div class="header">
-        ${i}
-        ${t !== "back" ? f`
-        <div class="header-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-            <polyline points="16 16 12 12 8 16" />
-            <line x1="12" y1="12" x2="12" y2="21" />
-            <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
-          </svg>
-        </div>` : C}
+        ${o}
+        ${t !== "back" ? f` <div class="header-icon">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+                stroke-linecap="round"
+              >
+                <polyline points="16 16 12 12 8 16" />
+                <line x1="12" y1="12" x2="12" y2="21" />
+                <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
+              </svg>
+            </div>` : S}
         <div class="header-title">Upload Files</div>
         ${n}
       </div>
@@ -8174,8 +9365,8 @@ const H = (W = class extends J {
     return e.previewUrl ? this._dimCache.has(e.id) ? Promise.resolve(this._dimCache.get(e.id)) : new Promise((t) => {
       const r = new Image();
       r.onload = () => {
-        const i = { w: r.naturalWidth, h: r.naturalHeight };
-        this._dimCache.set(e.id, i), t(i);
+        const o = { w: r.naturalWidth, h: r.naturalHeight };
+        this._dimCache.set(e.id, o), t(o);
       }, r.onerror = () => {
         this._dimCache.set(e.id, null), t(null);
       }, r.src = e.previewUrl;
@@ -8183,38 +9374,117 @@ const H = (W = class extends J {
   }
   _renderUploadOverlay(e) {
     var s;
-    const t = this._storeCtrl.state, r = Math.round(t.totalProgress ?? 0), i = e.filter((a) => a.status === "complete").length, n = t.totalSpeed > 0 ? (t.totalBytes - t.totalBytesUploaded) / t.totalSpeed : 0;
+    const t = this._storeCtrl.state, r = Math.round(t.totalProgress ?? 0), o = e.filter((a) => a.status === "complete").length, n = t.totalSpeed > 0 ? (t.totalBytes - t.totalBytesUploaded) / t.totalSpeed : 0;
     return f`
       <div class="upload-overlay">
         <div class="upload-overlay-spinner"></div>
         <div class="upload-overlay-percent">${r}%</div>
-        <div class="upload-overlay-title">Uploading ${e.length} ${e.length === 1 ? "file" : "files"}</div>
-        <div class="upload-overlay-subtitle">${i} of ${e.length} complete${n > 0 ? f` · ~${st(n)} left` : C}</div>
+        <div class="upload-overlay-title">
+          Uploading ${e.length} ${e.length === 1 ? "file" : "files"}
+        </div>
+        <div class="upload-overlay-subtitle">
+          ${o} of ${e.length}
+          complete${n > 0 ? f` · ~${dt(n)} left` : S}
+        </div>
         <div class="upload-overlay-bar">
           <div class="upload-overlay-bar-fill" style="width:${r}%"></div>
         </div>
-        ${(s = this.config) != null && s.minimizeOnUpload ? f`<button class="upload-overlay-minimize" @click=${this._onMinimize}>Minimize & continue in background</button>` : C}
+        ${(s = this.config) != null && s.minimizeOnUpload ? f`<button
+              class="upload-overlay-minimize"
+              @click=${this._onMinimize}
+            >
+              Minimize & continue in background
+            </button>` : S}
       </div>
     `;
   }
   _renderFloatingPill(e) {
-    const t = this._storeCtrl.state, r = Math.round(t.totalProgress ?? 0), i = this._phase === "complete", n = e.filter((l) => l.status === "complete").length, s = e.filter((l) => l.status === "failed").length, a = t.totalSpeed > 0 ? (t.totalBytes - t.totalBytesUploaded) / t.totalSpeed : 0;
+    const t = this._storeCtrl.state, r = Math.round(t.totalProgress ?? 0), o = this._phase === "complete", n = e.filter((l) => l.status === "complete").length, s = e.filter((l) => l.status === "failed").length, a = t.totalSpeed > 0 ? (t.totalBytes - t.totalBytesUploaded) / t.totalSpeed : 0;
     return this._isPillExpanded === !1 ? f`
         <div class="upload-float float-collapsed">
           <div class="float-collapsed-left">
-            ${i ? s > 0 ? n > 0 ? f`<div class="float-collapsed-icon warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>` : f`<div class="float-collapsed-icon error"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>` : f`<div class="float-collapsed-icon done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>` : f`<div class="float-collapsed-spinner"></div>`}
-            <span class="float-collapsed-text">${i ? s > 0 ? n > 0 ? "Partially uploaded" : "Upload failed" : "Upload complete" : `Uploading ${e.length} ${e.length === 1 ? "file" : "files"}`}</span>
-            ${i ? C : f`<span class="float-collapsed-pct">${r}%</span>`}
+            ${o ? s > 0 ? n > 0 ? f`<div class="float-collapsed-icon warn">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path
+                          d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+                        />
+                        <line x1="12" y1="9" x2="12" y2="13" />
+                        <line x1="12" y1="17" x2="12.01" y2="17" />
+                      </svg>
+                    </div>` : f`<div class="float-collapsed-icon error">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="8" x2="12" y2="12" />
+                        <line x1="12" y1="16" x2="12.01" y2="16" />
+                      </svg>
+                    </div>` : f`<div class="float-collapsed-icon done">
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                    >
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </div>` : f`<div class="float-collapsed-spinner"></div>`}
+            <span class="float-collapsed-text"
+              >${o ? s > 0 ? n > 0 ? "Partially uploaded" : "Upload failed" : "Upload complete" : `Uploading ${e.length} ${e.length === 1 ? "file" : "files"}`}</span
+            >
+            ${o ? S : f`<span class="float-collapsed-pct">${r}%</span>`}
           </div>
           <div class="float-collapsed-actions">
             <button title="Open uploader" @click=${this._onPillExpand}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="15 3 21 3 21 9" />
+                <polyline points="9 21 3 21 3 15" />
+                <line x1="21" y1="3" x2="14" y2="10" />
+                <line x1="3" y1="21" x2="10" y2="14" />
+              </svg>
             </button>
             <button title="Expand" @click=${this._onPillClick}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="18 15 12 9 6 15"/></svg>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+              >
+                <polyline points="18 15 12 9 6 15" />
+              </svg>
             </button>
             <button title="Close" @click=${this._onPillDismiss}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
             </button>
           </div>
         </div>
@@ -8222,88 +9492,255 @@ const H = (W = class extends J {
       <div class="upload-float">
         <div class="float-header">
           <div class="float-header-left">
-            <div class="float-icon ${i ? s > 0 ? n > 0 ? "warn" : "error" : "done" : ""}">
-              ${i ? s > 0 ? n > 0 ? f`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>` : f`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>` : f`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>` : f`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></svg>`}
+            <div
+              class="float-icon ${o ? s > 0 ? n > 0 ? "warn" : "error" : "done" : ""}"
+            >
+              ${o ? s > 0 ? n > 0 ? f`<svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path
+                          d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
+                        />
+                        <line x1="12" y1="9" x2="12" y2="13" />
+                        <line x1="12" y1="17" x2="12.01" y2="17" />
+                      </svg>` : f`<svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="8" x2="12" y2="12" />
+                        <line x1="12" y1="16" x2="12.01" y2="16" />
+                      </svg>` : f`<svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                    >
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>` : f`<svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.2"
+                    stroke-linecap="round"
+                  >
+                    <polyline points="16 16 12 12 8 16" />
+                    <line x1="12" y1="12" x2="12" y2="21" />
+                    <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
+                  </svg>`}
             </div>
             <div>
-              <div class="float-title">${i ? s > 0 ? n > 0 ? "Partially uploaded" : "Upload failed" : "Upload complete" : `Uploading ${e.length} ${e.length === 1 ? "file" : "files"}`}</div>
-              <div class="float-subtitle">${i ? `${n} ${n === 1 ? "file" : "files"} uploaded${s > 0 ? `, ${s} failed` : ""}` : `${n} of ${e.length}${a > 0 ? ` · ~${st(a)} left` : ""}`}</div>
+              <div class="float-title">
+                ${o ? s > 0 ? n > 0 ? "Partially uploaded" : "Upload failed" : "Upload complete" : `Uploading ${e.length} ${e.length === 1 ? "file" : "files"}`}
+              </div>
+              <div class="float-subtitle">
+                ${o ? `${n} ${n === 1 ? "file" : "files"} uploaded${s > 0 ? `, ${s} failed` : ""}` : `${n} of ${e.length}${a > 0 ? ` · ~${dt(a)} left` : ""}`}
+              </div>
             </div>
           </div>
           <div class="float-actions">
             <button title="Expand" @click=${this._onPillExpand}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="15 3 21 3 21 9" />
+                <polyline points="9 21 3 21 3 15" />
+                <line x1="21" y1="3" x2="14" y2="10" />
+                <line x1="3" y1="21" x2="10" y2="14" />
+              </svg>
             </button>
             <button title="Collapse" @click=${this._onPillClick}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
             </button>
             <button title="Close" @click=${this._onPillDismiss}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
             </button>
           </div>
         </div>
         <div class="float-progress">
           <div class="float-progress-top">
             <span class="float-progress-label">Overall progress</span>
-            <span class="float-progress-pct ${i ? s > 0 ? n > 0 ? "warn" : "error" : "done" : ""}">${i ? "Done" : `${r}%`}</span>
+            <span
+              class="float-progress-pct ${o ? s > 0 ? n > 0 ? "warn" : "error" : "done" : ""}"
+              >${o ? "Done" : `${r}%`}</span
+            >
           </div>
-          <div class="float-bar"><div class="float-bar-fill ${i ? s > 0 ? n > 0 ? "warn" : "error" : "done" : ""}" style="width:${i ? 100 : r}%"></div></div>
+          <div class="float-bar">
+            <div
+              class="float-bar-fill ${o ? s > 0 ? n > 0 ? "warn" : "error" : "done" : ""}"
+              style="width:${o ? 100 : r}%"
+            ></div>
+          </div>
         </div>
         <div class="float-items">
           ${e.map((l) => {
       const p = l.status === "failed" || l.status === "error";
       return f`
-            <div class="float-item">
-              <div class="float-item-thumb" style=${l.previewUrl ? `background-image:url(${l.previewUrl});background-size:cover;background-position:center` : ""}>
-                ${l.previewUrl ? C : f`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>`}
-              </div>
-              <div class="float-item-info">
-                <div class="float-item-name">${l.name}</div>
-                <div class="float-item-size">${we(l.size)}</div>
-              </div>
-              <div class="float-item-status">
-                ${l.status === "complete" ? f`<div class="float-item-done"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>` : p ? f`
-                        <div class="float-item-error-wrap">
-                          <svg class="float-item-error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                          <span class="float-item-tooltip">${l.error || "Upload failed"}</span>
+              <div class="float-item">
+                <div
+                  class="float-item-thumb"
+                  style=${l.previewUrl ? `background-image:url(${l.previewUrl});background-size:cover;background-position:center` : ""}
+                >
+                  ${l.previewUrl ? S : f`<svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                      >
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                        <circle cx="8.5" cy="8.5" r="1.5" />
+                        <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                      </svg>`}
+                </div>
+                <div class="float-item-info">
+                  <div class="float-item-name">${l.name}</div>
+                  <div class="float-item-size">${ce(l.size)}</div>
+                </div>
+                <div class="float-item-status">
+                  ${l.status === "complete" ? f`<div class="float-item-done">
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2.5"
+                          stroke-linecap="round"
+                        >
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                      </div>` : p ? f` <div class="float-item-error-wrap">
+                          <svg
+                            class="float-item-error-icon"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          >
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="8" x2="12" y2="12" />
+                            <line x1="12" y1="16" x2="12.01" y2="16" />
+                          </svg>
+                          <span class="float-item-tooltip"
+                            >${l.error || "Upload failed"}</span
+                          >
                         </div>
-                        <button class="float-item-retry" @click=${() => {
-        var g;
-        this._ensureEngine(), (g = this._engine) == null || g.retryFile(l.id);
-      }}>
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
-                        </button>` : l.status === "paused" ? f`<svg viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" width="16" height="16"><rect x="6" y="4" width="4" height="16" rx="1" fill="#d97706"/><rect x="14" y="4" width="4" height="16" rx="1" fill="#d97706"/></svg>` : f`<div class="float-item-spinner"></div>`}
+                        <button
+                          class="float-item-retry"
+                          @click=${() => {
+        var h;
+        this._ensureEngine(), (h = this._engine) == null || h.retryFile(l.id);
+      }}
+                        >
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          >
+                            <path d="M21 2v6h-6" />
+                            <path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
+                            <path d="M3 22v-6h6" />
+                            <path d="M21 12a9 9 0 0 1-15 6.7L3 16" />
+                          </svg>
+                        </button>` : l.status === "paused" ? f`<svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="#d97706"
+                        stroke-width="2"
+                        width="16"
+                        height="16"
+                      >
+                        <rect
+                          x="6"
+                          y="4"
+                          width="4"
+                          height="16"
+                          rx="1"
+                          fill="#d97706"
+                        />
+                        <rect
+                          x="14"
+                          y="4"
+                          width="4"
+                          height="16"
+                          rx="1"
+                          fill="#d97706"
+                        />
+                      </svg>` : f`<div class="float-item-spinner"></div>`}
+                </div>
               </div>
-            </div>
-          `;
+            `;
     })}
         </div>
       </div>
     `;
   }
   _renderPreviewLayout(e) {
-    var n, s, a, l;
-    if (e.length === 0) return C;
-    const t = e.find((p) => p.id === this._previewFileId) ?? e[0], r = ((n = t.name.split(".").pop()) == null ? void 0 : n.toUpperCase()) || "";
-    new Date(t.addedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }), this._store.getState().targetFolder;
-    const i = e.reduce((p, g) => p + (g.size || 0), 0);
+    var n, s, a, l, p;
+    if (e.length === 0) return S;
+    const t = e.find((h) => h.id === this._previewFileId) ?? e[0], r = ((n = t.name.split(".").pop()) == null ? void 0 : n.toUpperCase()) || "";
+    new Date(t.addedAt).toLocaleDateString(
+      "en-US",
+      { month: "short", day: "numeric", year: "numeric" }
+    ), this._store.getState().targetFolder;
+    const o = e.reduce((h, _) => h + (_.size || 0), 0);
     return f`
       <div class="preview-topbar"></div>
       <div class="preview-layout">
         <div class="file-grid-side" style="flex:${this._splitPct}">
-          ${((s = this.config) == null ? void 0 : s.mode) === "inline" && ((a = this.config) != null && a.inlineHeader) ? this._renderInlineHeader(this.config.inlineHeader) : C}
+          ${((s = this.config) == null ? void 0 : s.mode) === "inline" && ((a = this.config) != null && a.inlineHeader) ? this._renderInlineHeader(this.config.inlineHeader) : S}
           <div class="file-grid-header">
-            <span class="file-grid-header-text">${e.length} ${e.length === 1 ? "asset" : "assets"} · ${we(i)}</span>
+            <span class="file-grid-header-text"
+              >${e.length} ${e.length === 1 ? "asset" : "assets"} ·
+              ${ce(o)}</span
+            >
           </div>
           <sfx-file-list
             .files=${e}
             .showDropTile=${!0}
             .sources=${this._mergedSources}
-            .accept=${fr(this._storeCtrl.state.restrictions)}
+            .accept=${mr(this._storeCtrl.state.restrictions)}
+            ?drag-active=${this._bodyDragOver}
             @source-click=${this._onDropTileSourceClick}
           ></sfx-file-list>
         </div>
-        <div class="preview-divider"
+        <div
+          class="preview-divider"
           @pointerdown=${this._onSplitPointerDown}
           @pointermove=${this._onSplitPointerMove}
           @pointerup=${this._onSplitPointerUp}
@@ -8311,29 +9748,65 @@ const H = (W = class extends J {
         ></div>
         <div class="preview-panel" style="flex:${100 - this._splitPct}">
           <div class="preview-panel-header">
-            <input class="preview-header-name" type="text"
-              .value=${t.name}
-              title=${t.name}
-              aria-label="File name"
-              @change=${(p) => this._onPreviewRename(t.id, p.target.value)}
-            />
+            <button
+              class="preview-back-btn"
+              @click=${() => {
+      this._previewFileId = null;
+    }}
+              aria-label="Back to file list"
+              title="Back"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <line x1="19" y1="12" x2="5" y2="12" />
+                <polyline points="12 19 5 12 12 5" />
+              </svg>
+            </button>
+            <span class="preview-header-name" title=${t.name}
+              >${t.name}</span
+            >
             <div class="preview-header-actions">
               ${t.previewUrl || t.type.startsWith("video/") && t.file ? f`
-                <button @click=${() => {
-      this._fullscreenPreviewUrl = t.previewUrl, this._fullscreenVideoFile = t.type.startsWith("video/") && t.file ? t.file : null, this._fullscreenZoomed = !1;
-    }} title="Fullscreen">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="15 3 21 3 21 9" />
-                    <polyline points="9 21 3 21 3 15" />
-                    <line x1="21" y1="3" x2="14" y2="10" />
-                    <line x1="3" y1="21" x2="10" y2="14" />
-                  </svg>
-                </button>
-              ` : C}
-              <button @click=${() => {
+                    <button
+                      @click=${() => {
+      this._fullscreenPreviewUrl = t.previewUrl, this._fullscreenVideoFile = t.type.startsWith("video/") && t.file ? t.file : null, this._fullscreenZoomed = !1, requestAnimationFrame(() => this.requestUpdate());
+    }}
+                      title="Fullscreen"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <polyline points="15 3 21 3 21 9" />
+                        <polyline points="9 21 3 21 3 15" />
+                        <line x1="21" y1="3" x2="14" y2="10" />
+                        <line x1="3" y1="21" x2="10" y2="14" />
+                      </svg>
+                    </button>
+                  ` : S}
+              <button
+                @click=${() => {
       this._previewFileId = null;
-    }} title="Close">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+    }}
+                title="Close"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                >
                   <line x1="18" y1="6" x2="6" y2="18" />
                   <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
@@ -8341,44 +9814,141 @@ const H = (W = class extends J {
             </div>
           </div>
           ${t.type.startsWith("video/") && t.file ? f`
-                <div class="preview-img-wrap">
-                  <video class="preview-image" src=${this._getVideoBlobUrl(t.file)} controls playsinline></video>
-                  <button class="preview-nav prev" ?disabled=${e.indexOf(t) === 0} @click=${() => this._navigatePreview(e, -1)}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                <div class="preview-media-area">
+                  <div class="preview-img-wrap">
+                    <video
+                      class="preview-image"
+                      src=${this._getVideoBlobUrl(t.file)}
+                      controls
+                      playsinline
+                    ></video>
+                  </div>
+                  <button
+                    class="preview-nav prev"
+                    ?disabled=${e.indexOf(t) === 0}
+                    @click=${() => this._navigatePreview(e, -1)}
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                    >
+                      <polyline points="15 18 9 12 15 6" />
+                    </svg>
                   </button>
-                  <button class="preview-nav next" ?disabled=${e.indexOf(t) === e.length - 1} @click=${() => this._navigatePreview(e, 1)}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 6 15 12 9 18"/></svg>
+                  <button
+                    class="preview-nav next"
+                    ?disabled=${e.indexOf(t) === e.length - 1}
+                    @click=${() => this._navigatePreview(e, 1)}
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                    >
+                      <polyline points="9 6 15 12 9 18" />
+                    </svg>
                   </button>
                 </div>
               ` : t.previewUrl ? f`
-                <div class="preview-img-wrap">
-                  <img class="preview-image" src=${t.previewUrl} alt=${t.name} />
-                  <button class="preview-nav prev" ?disabled=${e.indexOf(t) === 0} @click=${() => this._navigatePreview(e, -1)}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                <div class="preview-media-area">
+                  <div class="preview-img-wrap">
+                    <img
+                      class="preview-image"
+                      src=${t.previewUrl}
+                      alt=${t.name}
+                    />
+                  </div>
+                  <button
+                    class="preview-nav prev"
+                    ?disabled=${e.indexOf(t) === 0}
+                    @click=${() => this._navigatePreview(e, -1)}
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                    >
+                      <polyline points="15 18 9 12 15 6" />
+                    </svg>
                   </button>
-                  <button class="preview-nav next" ?disabled=${e.indexOf(t) === e.length - 1} @click=${() => this._navigatePreview(e, 1)}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 6 15 12 9 18"/></svg>
+                  <button
+                    class="preview-nav next"
+                    ?disabled=${e.indexOf(t) === e.length - 1}
+                    @click=${() => this._navigatePreview(e, 1)}
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                    >
+                      <polyline points="9 6 15 12 9 18" />
+                    </svg>
                   </button>
                 </div>
               ` : f`
-                <div class="preview-doc-wrap ${Oe(t)}">
-                  <div class="preview-doc-icon ${Oe(t)}">
-                    ${this._renderDocTypeIcon(Oe(t))}
-                    <span class="preview-doc-ext ${Oe(t)}">${r}</span>
+                <div class="preview-media-area">
+                  <div class="preview-doc-wrap ${Wr(t)}">
+                    <img
+                      class="preview-doc-type-img"
+                      src=${Xr(r)}
+                      alt="${r ? `${r} file` : "File"}"
+                      @error=${(h) => {
+      const _ = h.target, E = Kr();
+      !_.dataset.fallback && _.src !== E && (_.dataset.fallback = "1", _.src = E);
+    }}
+                    />
                   </div>
-                  <button class="preview-nav prev" ?disabled=${e.indexOf(t) === 0} @click=${() => this._navigatePreview(e, -1)}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                  <button
+                    class="preview-nav prev"
+                    ?disabled=${e.indexOf(t) === 0}
+                    @click=${() => this._navigatePreview(e, -1)}
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                    >
+                      <polyline points="15 18 9 12 15 6" />
+                    </svg>
                   </button>
-                  <button class="preview-nav next" ?disabled=${e.indexOf(t) === e.length - 1} @click=${() => this._navigatePreview(e, 1)}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 6 15 12 9 18"/></svg>
+                  <button
+                    class="preview-nav next"
+                    ?disabled=${e.indexOf(t) === e.length - 1}
+                    @click=${() => this._navigatePreview(e, 1)}
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                    >
+                      <polyline points="9 6 15 12 9 18" />
+                    </svg>
                   </button>
                 </div>
               `}
-          <div class="preview-meta-list">
-            <div class="preview-file-info">${r}${t.size ? ` · ${we(t.size)}` : ""}${this._previewDims !== "—" ? ` · ${this._previewDims}` : ""}</div>
-          </div>
-          ${this._metadataSchema && ((l = this.config) != null && l.metadataConfig) ? f`
-                <div class="preview-metadata" @field-blur=${this._onPreviewMetadataBlur}>
+          ${this._metadataSchema && ((l = this.config) != null && l.metadataConfig) ? f`<div class="preview-meta-list">
+                <div class="preview-file-info">
+                  ${r}${t.size ? ` · ${ce(t.size)}` : ""}${this._previewDims !== "—" ? ` · ${this._previewDims}` : ""}
+                </div>
+              </div>` : S}
+          ${this._metadataSchema && ((p = this.config) != null && p.metadataConfig) ? f`
+                <div
+                  class="preview-metadata"
+                  @field-blur=${this._onPreviewMetadataBlur}
+                >
                   <sfx-metadata-form
                     .schema=${this._metadataSchema}
                     .meta=${t.meta}
@@ -8386,38 +9956,77 @@ const H = (W = class extends J {
                     .autocomplete=${this._metadataAutocomplete}
                   ></sfx-metadata-form>
                 </div>
-              ` : C}
+              ` : f`
+                <div class="preview-file-info-panel">
+                  <div
+                    class="preview-file-info-header ${this._fileInfoOpen ? "open" : ""}"
+                    @click=${() => {
+      this._fileInfoOpen = !this._fileInfoOpen;
+    }}
+                  >
+                    <span>File info</span>
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                    >
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </div>
+                  <div
+                    class="preview-file-info-body ${this._fileInfoOpen ? "open" : ""}"
+                  >
+                    <div class="preview-file-info-row">
+                      <div class="preview-file-info-key">File name</div>
+                      <div class="preview-file-info-val">
+                        ${t.name}
+                      </div>
+                    </div>
+                    <div class="preview-file-info-row">
+                      <div class="preview-file-info-key">Type</div>
+                      <div class="preview-file-info-val">${r}</div>
+                    </div>
+                    ${t.size ? f`
+                          <div class="preview-file-info-row">
+                            <div class="preview-file-info-key">Size</div>
+                            <div class="preview-file-info-val">
+                              ${ce(t.size)}
+                            </div>
+                          </div>
+                        ` : S}
+                    ${this._previewDims !== "—" ? f`
+                          <div class="preview-file-info-row">
+                            <div class="preview-file-info-key">Dimensions</div>
+                            <div class="preview-file-info-val">
+                              ${this._previewDims}
+                            </div>
+                          </div>
+                        ` : S}
+                  </div>
+                </div>
+              `}
         </div>
       </div>
     `;
   }
-  _renderDocTypeIcon(e) {
-    switch (e) {
-      case "pdf":
-        return f`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
-      case "doc":
-        return f`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>`;
-      case "vid":
-        return f`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>`;
-      case "zip":
-        return f`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>`;
-      default:
-        return f`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>`;
-    }
-  }
   _navigatePreview(e, t) {
     var n;
-    const i = e.findIndex((s) => s.id === this._previewFileId) + t;
-    if (i >= 0 && i < e.length) {
-      const s = (n = this.shadowRoot) == null ? void 0 : n.querySelector(".preview-image[controls]");
-      s && (s.pause(), s.removeAttribute("src"), s.load()), this._previewFileId = e[i].id;
+    const o = e.findIndex((s) => s.id === this._previewFileId) + t;
+    if (o >= 0 && o < e.length) {
+      const s = (n = this.shadowRoot) == null ? void 0 : n.querySelector(
+        ".preview-image[controls]"
+      );
+      s && (s.pause(), s.removeAttribute("src"), s.load()), this._previewFileId = e[o].id;
     }
   }
   _renderBody() {
-    var s, a, l, p, g, k, E;
-    const e = this._storeCtrl.state, t = [...e.files.values()], r = this._phase, i = fr(e.restrictions), n = t.length > 0;
+    var s, a, l, p, h, _, E, O, P;
+    const e = this._storeCtrl.state, t = [...e.files.values()], r = this._phase, o = mr(e.restrictions), n = t.length > 0;
     return f`
-      <div class="content"
+      <div
+        class="content"
         @files-selected=${this._onFilesSelected}
         @source-click=${this._onSourceClick}
         @file-remove=${this._onFileRemove}
@@ -8443,66 +10052,100 @@ const H = (W = class extends J {
         @screencast-cancel=${this._onScreenCastCancel}
       >
         <div
-          class="body ${n ? "has-files" : ""} ${this._bodyDragOver ? "body-drag-over" : ""}"
-          @dragenter=${n ? this._onBodyDragEnter : C}
-          @dragover=${n ? this._onBodyDragOver : C}
-          @dragleave=${n ? this._onBodyDragLeave : C}
-          @drop=${n ? this._onBodyDrop : C}
+          class="body ${n ? "has-files" : ""} ${this._bodyDragOver ? "body-drag-over" : ""} ${this._previewFileId ? "has-preview" : ""}"
+          @dragenter=${n ? this._onBodyDragEnter : S}
+          @dragover=${n ? this._onBodyDragOver : S}
+          @dragleave=${n ? this._onBodyDragLeave : S}
+          @drop=${n ? this._onBodyDrop : S}
         >
-          ${((s = this.config) == null ? void 0 : s.mode) === "inline" && ((a = this.config) != null && a.inlineHeader) && !this._previewFileId && r !== "uploading" && r !== "complete" ? this._renderInlineHeader(this.config.inlineHeader) : C}
-          ${r === "complete" ? f`
-                  <sfx-success-card
-                    .fileCount=${t.filter((S) => S.status === "complete").length}
-                    .totalSize=${t.filter((S) => S.status === "complete").reduce((S, R) => S + (R.size || 0), 0)}
-                    .thumbnails=${t.filter((S) => S.status === "complete" && S.previewUrl).map((S) => S.previewUrl)}
-                    .failedFiles=${t.filter((S) => S.status === "failed").map((S) => ({ id: S.id, name: S.name, error: S.error || "Upload failed" }))}
-                    @close-uploader=${this._onSuccessCardClose}
-                    @file-retry=${this._onFileRetry}
-                    @retry-all=${this._onRetryAll}
-                  ></sfx-success-card>
-                ` : r === "uploading" ? this._renderUploadOverlay(t) : f`
-                  ${n ? C : f`<sfx-drop-zone
+          ${((s = this.config) == null ? void 0 : s.mode) === "inline" && ((a = this.config) != null && a.inlineHeader) && !this._previewFileId && r !== "uploading" && r !== "complete" && !this._isReviewing ? this._renderInlineHeader(this.config.inlineHeader) : S}
+          ${this._isReviewing ? f`
+                <sfx-last-upload-review
+                  .files=${this._reviewFiles}
+                  .getLocateUrl=${(l = this.config) == null ? void 0 : l.getLocateUrl}
+                  @back=${this._onExitReview}
+                  @clear-history=${this._onClearReview}
+                ></sfx-last-upload-review>
+              ` : r === "complete" ? f`
+                <sfx-success-card
+                  .fileCount=${t.filter((v) => v.status === "complete").length}
+                  .totalSize=${t.filter((v) => v.status === "complete").reduce((v, U) => v + (U.size || 0), 0)}
+                  .thumbnails=${t.filter((v) => v.status === "complete" && v.previewUrl).map((v) => v.previewUrl)}
+                  .failedFiles=${t.filter((v) => v.status === "failed").map((v) => ({
+      id: v.id,
+      name: v.name,
+      error: v.error || "Upload failed"
+    }))}
+                  @close-uploader=${this._onSuccessCardClose}
+                  @file-retry=${this._onFileRetry}
+                  @retry-all=${this._onRetryAll}
+                  @review-files=${this._onEnterReview}
+                ></sfx-success-card>
+              ` : r === "uploading" ? this._renderUploadOverlay(t) : f`
+                ${n ? S : f`<sfx-drop-zone
                         .compact=${n}
                         .externalDragOver=${this._bodyDragOver}
-                        .accept=${i}
+                        .accept=${o}
                         .sources=${this._mergedSources}
-                        .sourcesLayout=${((l = this.config) == null ? void 0 : l.sourcesLayout) ?? "pills"}
-                      ></sfx-drop-zone>`}
-
-                  ${n ? this._previewFileId ? this._renderPreviewLayout(t) : f`
-                          <div class="asset-count">${t.length} ${t.length === 1 ? "file" : "files"} · ${we(t.reduce((S, R) => S + (R.size || 0), 0))}</div>
-                          <sfx-file-list
-                            .files=${t}
-                            .showDropTile=${!0}
-                            .sources=${this._mergedSources}
-                            .accept=${i}
-                            @source-click=${this._onDropTileSourceClick}
-                          ></sfx-file-list>
-                        ` : C}
-                `}
+                        .sourcesLayout=${((p = this.config) == null ? void 0 : p.sourcesLayout) ?? "pills"}
+                        .mode=${((h = this.config) == null ? void 0 : h.mode) ?? "modal"}
+                      ></sfx-drop-zone>
+                      ${this._hasStoredReview ? f`<button
+                            class="last-upload-pill"
+                            @click=${this._onEnterReview}
+                            title="View last upload batch"
+                          >
+                            <svg viewBox="0 0 24 24">
+                              <path d="M12 8v4l3 3" />
+                              <circle cx="12" cy="12" r="10" />
+                            </svg>
+                            View last upload
+                          </button>` : S}`}
+                ${n ? this._previewFileId ? this._renderPreviewLayout(t) : f`
+                        <div class="asset-count">
+                          ${t.length}
+                          ${t.length === 1 ? "file" : "files"} ·
+                          ${ce(
+      t.reduce((v, U) => v + (U.size || 0), 0)
+    )}
+                        </div>
+                        <sfx-file-list
+                          .files=${t}
+                          .showDropTile=${!0}
+                          .sources=${this._mergedSources}
+                          .accept=${o}
+                          ?drag-active=${this._bodyDragOver}
+                          @source-click=${this._onDropTileSourceClick}
+                        ></sfx-file-list>
+                      ` : S}
+              `}
         </div>
 
         ${n && r !== "complete" && r !== "uploading" ? f`
               <sfx-actions-bar
                 .uploadState=${"idle"}
                 .fileCount=${t.length}
-                .totalSize=${t.reduce((S, R) => S + (R.size || 0), 0)}
-                .failedCount=${t.filter((S) => S.status === "failed" || S.status === "error").length}
-                .completedCount=${t.filter((S) => S.status === "complete").length}
+                .totalSize=${t.reduce((v, U) => v + (U.size || 0), 0)}
+                .failedCount=${t.filter(
+      (v) => v.status === "failed" || v.status === "error"
+    ).length}
+                .completedCount=${t.filter((v) => v.status === "complete").length}
                 .uploadProgress=${e.totalProgress ?? 0}
-                .showFillMetadata=${!!(((p = this.config) == null ? void 0 : p.showFillMetadata) ?? ((g = this.config) == null ? void 0 : g.metadataConfig))}
+                .showFillMetadata=${!!(((_ = this.config) == null ? void 0 : _.showFillMetadata) ?? ((E = this.config) == null ? void 0 : E.metadataConfig))}
                 .uploadDisabled=${this._hasUnfilledRequiredMetadata}
                 .uploadDisabledReason=${this._hasUnfilledRequiredMetadata ? "Fill required metadata first" : ""}
               ></sfx-actions-bar>
-            ` : C}
-
-        ${this._showUrlDialog ? f`<sfx-url-dialog></sfx-url-dialog>` : C}
-        ${this._showCameraDialog ? f`<sfx-camera-dialog></sfx-camera-dialog>` : C}
-        ${this._showScreenCastDialog ? f`<sfx-screen-cast-dialog></sfx-screen-cast-dialog>` : C}
-        ${this._activeConnector && ((k = this.config) != null && k.connectors) ? f`
-              <div class="connector-modal-backdrop" @click=${this._onConnectorBackdropClick}>
+            ` : S}
+        ${this._showUrlDialog ? f`<sfx-url-dialog></sfx-url-dialog>` : S}
+        ${this._showCameraDialog ? f`<sfx-camera-dialog></sfx-camera-dialog>` : S}
+        ${this._showScreenCastDialog ? f`<sfx-screen-cast-dialog></sfx-screen-cast-dialog>` : S}
+        ${this._activeConnector && ((O = this.config) != null && O.connectors) ? f`
+              <div
+                class="connector-modal-backdrop"
+                @click=${this._onConnectorBackdropClick}
+              >
                 <div class="connector-modal">
-                  ${mr.has(this._activeConnector) ? f`
+                  ${Sr.has(this._activeConnector) ? f`
                         <sfx-search-provider-browser
                           .provider=${this._activeConnector}
                           .companionUrl=${this.config.connectors.companionUrl}
@@ -8515,69 +10158,19 @@ const H = (W = class extends J {
                       `}
                 </div>
               </div>
-            ` : C}
-
-
+            ` : S}
         ${this._bulkMetadataOpen && this._metadataSchema ? f`
               <sfx-bulk-metadata-modal
                 .schema=${this._metadataSchema}
                 .files=${[...this._store.getState().files.values()].filter(
-      (S) => W._MODIFIABLE_STATUSES.has(S.status)
+      (v) => K._MODIFIABLE_STATUSES.has(v.status)
     )}
-                .config=${((E = this.config) == null ? void 0 : E.metadataConfig) ?? null}
+                .config=${((P = this.config) == null ? void 0 : P.metadataConfig) ?? null}
                 .autocomplete=${this._metadataAutocomplete}
                 @metadata-save-batch=${this._onBulkMetadataSaveBatch}
                 @metadata-close=${this._onBulkMetadataClose}
               ></sfx-bulk-metadata-modal>
-            ` : C}
-
-        ${this._fullscreenPreviewUrl || this._fullscreenVideoFile ? f`
-              <div
-                class="fs-overlay ${this._fullscreenZoomed ? "zoomed" : ""} ${this._fsDragging ? "panning" : ""}"
-                @click=${this._onFsOverlayClick}
-                @mousedown=${this._onFsPanStart}
-                @mousemove=${this._onFsPanMove}
-                @mouseup=${this._onFsPanEnd}
-                @mouseleave=${this._onFsPanEnd}
-                @touchstart=${this._onFsTouchStart}
-                @touchmove=${this._onFsTouchMove}
-                @touchend=${this._onFsPanEnd}
-              >
-                <div class="fs-toolbar" @click=${(S) => S.stopPropagation()}>
-                  <button class="fs-btn" @click=${this._onFsToggleZoom} title="${this._fullscreenZoomed ? "Zoom out" : "Zoom in"}">
-                    ${this._fullscreenZoomed ? f`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>` : f`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>`}
-                  </button>
-                  <button class="fs-btn" @click=${this._onFsClose} title="Close">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
-                  </button>
-                </div>
-                ${this._fullscreenVideoFile ? f`<video
-                      class="fs-img"
-                      src=${this._getVideoBlobUrl(this._fullscreenVideoFile)}
-                      controls playsinline
-                      draggable="false"
-                      @click=${(S) => S.stopPropagation()}
-                    ></video>` : f`<img
-                      class="fs-img"
-                      src=${this._fullscreenPreviewUrl}
-                      alt=""
-                      style=${this._fullscreenZoomed ? `transform: scale(2) translate(${this._fsPanX}px, ${this._fsPanY}px)` : ""}
-                      draggable="false"
-                    />`}
-                <button class="fs-nav prev" @click=${(S) => {
-      S.stopPropagation(), this._navigateFs(-1);
-    }}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
-                </button>
-                <button class="fs-nav next" @click=${(S) => {
-      S.stopPropagation(), this._navigateFs(1);
-    }}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 6 15 12 9 18"/></svg>
-                </button>
-              </div>
-            ` : C}
+            ` : S}
       </div>
     `;
   }
@@ -8586,9 +10179,9 @@ const H = (W = class extends J {
       (n) => n.previewUrl || n.type.startsWith("video/") && n.file
     ), r = t.findIndex((n) => n.id === this._previewFileId);
     if (r === -1) return;
-    const i = r + e;
-    if (i >= 0 && i < t.length) {
-      const n = t[i];
+    const o = r + e;
+    if (o >= 0 && o < t.length) {
+      const n = t[o];
       this._fullscreenPreviewUrl = n.previewUrl, this._fullscreenVideoFile = n.type.startsWith("video/") && n.file ? n.file : null, this._previewFileId = n.id, this._fullscreenZoomed = !1, this._fsPanX = 0, this._fsPanY = 0;
     }
   }
@@ -8600,11 +10193,17 @@ const H = (W = class extends J {
     for (const e of this._videoBlobUrls.values()) URL.revokeObjectURL(e);
     this._videoBlobUrls.clear();
   }
-}, W.styles = K`
+}, K.styles = G`
     :host {
       display: block;
       height: inherit;
-      font-family: var(--sfx-up-font, 'Inter', system-ui, -apple-system, sans-serif);
+      font-family: var(
+        --sfx-up-font,
+        "Inter",
+        system-ui,
+        -apple-system,
+        sans-serif
+      );
       color: var(--sfx-up-text, #1e293b);
       /* Bridge to Scaleflex design system with standalone fallbacks */
       --sfx-up-primary: var(--primary, #2563eb);
@@ -8621,7 +10220,7 @@ const H = (W = class extends J {
       --sfx-up-border-light: var(--muted, #f1f5f9);
       --sfx-up-bg: var(--background, #ffffff);
       --sfx-up-radius: 16px;
-      --sfx-up-font: 'Inter', system-ui, -apple-system, sans-serif;
+      --sfx-up-font: "Inter", system-ui, -apple-system, sans-serif;
       --sfx-up-shadow: var(--shadow, rgba(0, 0, 0, 0.1));
       --sfx-up-surface: var(--card, #f8fafc);
       --sfx-up-backdrop: rgba(0, 0, 0, 0.45);
@@ -8629,6 +10228,10 @@ const H = (W = class extends J {
       --sfx-up-max-height: 88vh;
       --sfx-up-checker-bg: #fff;
       --sfx-up-checker-tile: #f0f0f0;
+      /* Fullscreen overlay z-index stack — single source of truth so
+         mobile overrides don't drift out of sync with base values. */
+      --sfx-fs-z: 10000;
+      --sfx-fs-controls-z: 10001;
     }
 
     /* --- Modal overlay --- */
@@ -8648,7 +10251,9 @@ const H = (W = class extends J {
     .modal-card {
       background: var(--sfx-up-bg, #fff);
       border-radius: 16px;
-      box-shadow: 0 28px 80px rgba(0, 0, 0, 0.2), 0 4px 16px rgba(0, 0, 0, 0.06);
+      box-shadow:
+        0 28px 80px rgba(0, 0, 0, 0.2),
+        0 4px 16px rgba(0, 0, 0, 0.06);
       width: 100%;
       max-width: 1100px;
       min-height: var(--sfx-up-min-height, 660px);
@@ -8711,7 +10316,9 @@ const H = (W = class extends J {
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background 0.15s, color 0.15s;
+      transition:
+        background 0.15s,
+        color 0.15s;
       flex-shrink: 0;
     }
 
@@ -8746,7 +10353,7 @@ const H = (W = class extends J {
     }
 
     .header-btn-back::after {
-      content: 'Back to Asset Picker';
+      content: "Back to Asset Picker";
       position: absolute;
       left: calc(100% + 8px);
       top: 50%;
@@ -8775,11 +10382,20 @@ const H = (W = class extends J {
 
     /* --- Responsive header buttons --- */
     @media (max-width: 768px) {
-      .header-btn { width: 28px; height: 28px; }
-      .header-btn svg { width: 14px; height: 14px; }
+      .header-btn {
+        width: 28px;
+        height: 28px;
+      }
+      .header-btn svg {
+        width: 14px;
+        height: 14px;
+      }
     }
     @media (max-width: 480px) {
-      .header-btn { width: 26px; height: 26px; }
+      .header-btn {
+        width: 26px;
+        height: 26px;
+      }
     }
 
     /* --- Content wrapper (holds body + actions bar) --- */
@@ -8801,7 +10417,13 @@ const H = (W = class extends J {
       justify-content: stretch;
       gap: 4px;
       min-height: 0;
+      min-width: 0;
       background: var(--sfx-up-bg, #fff);
+      position: relative;
+    }
+
+    .file-grid-side {
+      min-width: 0;
     }
 
     .body.body-drag-over {
@@ -8811,13 +10433,41 @@ const H = (W = class extends J {
     }
 
     .body.body-drag-over::after {
-      content: '';
+      content: "";
       position: absolute;
-      inset: 4px;
+      inset: 0;
       border: 2px dashed var(--sfx-up-primary, #2563eb);
       border-radius: 8px;
       z-index: 100;
       pointer-events: none;
+    }
+
+    /* In preview mode, keep body blue but mask the preview side white */
+    .body.body-drag-over.has-preview::after {
+      display: none;
+    }
+
+    .body.body-drag-over .file-grid-side {
+      position: relative;
+    }
+
+    .body.body-drag-over .file-grid-side::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border: 2px dashed var(--sfx-up-primary, #2563eb);
+      border-radius: 8px;
+      z-index: 100;
+      pointer-events: none;
+    }
+
+    .body.body-drag-over .file-grid-header {
+      background: transparent;
+    }
+
+    .body.body-drag-over .preview-divider,
+    .body.body-drag-over .preview-panel {
+      background: var(--sfx-up-bg, #fff);
     }
 
     .body.has-files {
@@ -8829,13 +10479,17 @@ const H = (W = class extends J {
       animation: bodyReveal 0.35s ease both;
     }
 
-    .body.has-files:has(.preview-layout) {
+    .body.has-files.has-preview {
       padding-right: 0;
     }
 
     @keyframes bodyReveal {
-      from { opacity: 0.5; }
-      to { opacity: 1; }
+      from {
+        opacity: 0.5;
+      }
+      to {
+        opacity: 1;
+      }
     }
 
     .body.has-files::-webkit-scrollbar-thumb:hover {
@@ -8846,6 +10500,47 @@ const H = (W = class extends J {
       position: relative;
       z-index: 1;
       overflow: visible;
+    }
+
+    /* "View last upload" pill — shown on the drop-zone screen when
+       sessionStorage contains a previous batch */
+    .last-upload-pill {
+      position: absolute;
+      bottom: 16px;
+      right: 16px;
+      z-index: 10;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--sfx-up-text-secondary, #475569);
+      background: var(--sfx-up-bg, #fff);
+      border: 1px solid var(--sfx-up-border, #e2e8f0);
+      border-radius: 999px;
+      cursor: pointer;
+      font-family: inherit;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+      transition: all 0.15s ease;
+    }
+    .last-upload-pill:hover {
+      border-color: var(--sfx-up-primary, #2563eb);
+      color: var(--sfx-up-primary, #2563eb);
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);
+    }
+    .last-upload-pill:focus-visible {
+      outline: 2px solid var(--sfx-up-ring, oklch(0.578 0.198 268.129 / 0.7));
+      outline-offset: 2px;
+    }
+    .last-upload-pill svg {
+      width: 14px;
+      height: 14px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
 
     .asset-count {
@@ -8877,12 +10572,37 @@ const H = (W = class extends J {
       animation: inlineIn 0.25s ease;
     }
 
+    /* Only scroll inline when showing drop-zone (no files) */
+    .inline.no-files {
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
     /* --- Inline header --- */
     .inline-header {
       display: flex;
       flex-direction: column;
       gap: 6px;
-      padding: var(--sfx-inline-pad) var(--sfx-inline-pad) 0;
+      padding: var(--sfx-inline-pad) var(--sfx-inline-pad) 16px;
+    }
+
+    /* On the empty landing state the accent label should start flush
+       with the top of the uploader region — no extra whitespace above. */
+    .inline.no-files .inline-header {
+      padding-top: 0;
+    }
+
+    /* Align drop-zone horizontally with inline-header content and
+       ensure consistent 16px top spacing. */
+    .inline sfx-drop-zone {
+      padding: 16px var(--sfx-inline-pad) 0;
+    }
+
+    /* In the empty landing state the negative margin collapses the
+       16px top padding so the dashed card sits right under the
+       inline-header description text. */
+    .inline.no-files sfx-drop-zone {
+      margin-top: -16px;
     }
     .inline-header-top {
       display: flex;
@@ -8924,14 +10644,26 @@ const H = (W = class extends J {
     }
 
     .inline .content {
-      max-width: 1600px;
+      max-width: var(--sfx-up-content-max-width, 1600px);
       align-self: center;
       width: 100%;
+    }
+
+    .inline.no-files .content {
+      flex: 1 0 auto;
+    }
+
+    /* Inline: let body grow beyond container so .inline can scroll */
+    .inline .body {
+      flex: 1 0 auto;
+      overflow: visible;
     }
 
     /* Inline horizontal alignment — driven by --sfx-inline-pad */
     .inline .body.has-files {
       padding-left: 0;
+      flex: 1;
+      overflow: hidden;
     }
     .inline .asset-count {
       padding: 16px var(--sfx-inline-pad);
@@ -8963,7 +10695,7 @@ const H = (W = class extends J {
       display: flex;
       flex-direction: column;
       position: relative;
-      --sfx-up-grid-min: max(30%, 140px);
+      --sfx-up-grid-min: 170px;
     }
 
     .preview-layout .file-grid-side::after {
@@ -9021,7 +10753,7 @@ const H = (W = class extends J {
     }
 
     .preview-divider::before {
-      content: '';
+      content: "";
       position: absolute;
       top: 0;
       bottom: 0;
@@ -9031,7 +10763,7 @@ const H = (W = class extends J {
     }
 
     .preview-divider::after {
-      content: '';
+      content: "";
       width: 3px;
       height: 28px;
       border-radius: 2px;
@@ -9070,18 +10802,45 @@ const H = (W = class extends J {
       padding: 0;
     }
 
-    .preview-panel::-webkit-scrollbar { width: 5px; }
-    .preview-panel::-webkit-scrollbar-track { background: transparent; }
-    .preview-panel::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 3px; }
+    .preview-panel::-webkit-scrollbar {
+      width: 12px;
+    }
+    .preview-panel::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .preview-panel::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.15);
+      background-clip: padding-box;
+      border: 3px solid transparent;
+      border-radius: 6px;
+    }
+    .preview-panel::-webkit-scrollbar-thumb:hover {
+      background: rgba(0, 0, 0, 0.25);
+      background-clip: padding-box;
+    }
 
     .preview-panel-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-      padding: 16px 24px 16px 16px;
+      padding: 24px 16px 12px;
       flex-shrink: 0;
-      border-bottom: 1px solid var(--sfx-up-border, #e8edf5);
+      box-sizing: border-box;
+      border-bottom: 1px solid var(--sfx-up-border, #e2e8f0);
+    }
+
+    /* Mobile back-arrow — hidden by default, shown at <=768px to give
+       a clear "return to file list" affordance on small screens.
+       Use !important because .preview-panel-header button below has
+       higher specificity and would otherwise force display: flex. */
+    .preview-panel-header button.preview-back-btn {
+      display: none;
+    }
+    @media (max-width: 768px) {
+      .preview-panel-header button.preview-back-btn {
+        display: inline-flex;
+      }
     }
 
     .preview-header-actions {
@@ -9095,30 +10854,18 @@ const H = (W = class extends J {
       flex: 1;
       min-width: 0;
       font-size: 16px;
-      font-weight: 400;
+      line-height: 24px;
+      font-weight: 500;
       color: var(--sfx-up-text, #1e293b);
-      border: 1px solid transparent;
-      border-radius: 4px;
-      padding: 2px 6px;
-      background: transparent;
       font-family: inherit;
-      outline: none;
-      transition: border-color 0.15s, background 0.15s;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
-    .preview-header-name:hover {
-      border-color: var(--sfx-up-border, #e2e8f0);
-      background: var(--sfx-up-bg, #fff);
-    }
-    .preview-header-name:focus {
-      border-color: var(--sfx-up-primary, #2563eb);
-      background: var(--sfx-up-bg, #fff);
-      box-shadow: 0 0 0 3px var(--sfx-up-ring, oklch(0.578 0.198 268.129 / 0.15));
-    }
-
 
     .preview-panel-header button {
-      width: 28px;
-      height: 28px;
+      width: 32px;
+      height: 32px;
       border-radius: 6px;
       border: none;
       background: none;
@@ -9126,14 +10873,16 @@ const H = (W = class extends J {
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--sfx-up-text-muted, #9ca3af);
-      transition: background 0.15s, color 0.15s;
+      color: var(--sfx-up-text-muted, #94a3b8);
+      transition:
+        background 0.15s,
+        color 0.15s;
       padding: 0;
       flex-shrink: 0;
     }
 
     .preview-panel-header button:hover {
-      background: var(--sfx-up-surface, #f8fafc);
+      background: var(--sfx-up-surface, #f3f4f6);
       color: var(--sfx-up-text, #374151);
     }
 
@@ -9142,112 +10891,127 @@ const H = (W = class extends J {
       height: 16px;
     }
 
-    .file-info-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px 0 10px;
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--sfx-up-text, #1e293b);
-      border-top: 1px solid var(--sfx-up-border, #e8edf5);
-      margin-top: 4px;
-      flex-shrink: 0;
-    }
-
-    .file-info-header svg {
-      width: 16px;
-      height: 16px;
-      color: var(--sfx-up-text-muted, #9ca3af);
-    }
-
     .preview-doc-wrap {
       position: relative;
-      min-height: 200px;
+      height: 332px;
+      width: 100%;
       flex-shrink: 0;
       display: flex;
       align-items: center;
       justify-content: center;
     }
 
-    .preview-doc-wrap.pdf { background: linear-gradient(135deg, #fef2f2, #fee2e2); }
-    .preview-doc-wrap.doc { background: linear-gradient(135deg, var(--sfx-up-primary-bg, #eff6ff), var(--sfx-up-primary-bg, #dbeafe)); }
-    .preview-doc-wrap.vid { background: linear-gradient(135deg, #f5f3ff, #ede9fe); }
-    .preview-doc-wrap.zip { background: linear-gradient(135deg, var(--warning-10, #fffbeb), var(--warning-10, #fef3c7)); }
-    .preview-doc-wrap.gen { background: linear-gradient(135deg, var(--sfx-up-border-light, #f8fafc), var(--sfx-up-border-light, #f1f5f9)); }
-
-    .preview-doc-icon {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
+    .preview-doc-wrap.pdf {
+      background: linear-gradient(135deg, #fef2f2, #fee2e2);
+    }
+    .preview-doc-wrap.doc {
+      background: linear-gradient(135deg, #eff6ff, #dbeafe);
+    }
+    .preview-doc-wrap.vid {
+      background: linear-gradient(135deg, #f5f3ff, #ede9fe);
+    }
+    .preview-doc-wrap.audio {
+      background: linear-gradient(135deg, #fdf4ff, #fae8ff);
+    }
+    .preview-doc-wrap.sheet {
+      background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+    }
+    .preview-doc-wrap.slide {
+      background: linear-gradient(135deg, #fff7ed, #ffedd5);
+    }
+    .preview-doc-wrap.zip {
+      background: linear-gradient(135deg, #fffbeb, #fef3c7);
+    }
+    .preview-doc-wrap.code {
+      background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+    }
+    .preview-doc-wrap.markup {
+      background: linear-gradient(135deg, #f0fdfa, #ccfbf1);
+    }
+    .preview-doc-wrap.font {
+      background: linear-gradient(135deg, #faf5ff, #f3e8ff);
+    }
+    .preview-doc-wrap.design {
+      background: linear-gradient(135deg, #fdf2f8, #fce7f3);
+    }
+    .preview-doc-wrap.binary {
+      background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+    }
+    .preview-doc-wrap.data {
+      background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+    }
+    .preview-doc-wrap.gen {
+      background: linear-gradient(135deg, #f8fafc, #f1f5f9);
     }
 
-    .preview-doc-icon svg {
-      width: 48px;
-      height: 48px;
-      stroke-width: 1.5;
+    .preview-doc-type-img {
+      max-width: 120px;
+      max-height: 120px;
+      object-fit: contain;
     }
-
-    .preview-doc-icon.pdf svg { color: var(--sfx-up-error, #dc2626); }
-    .preview-doc-icon.doc svg { color: var(--sfx-up-primary, #1d4ed8); }
-    .preview-doc-icon.vid svg { color: #7c3aed; }
-    .preview-doc-icon.zip svg { color: var(--warning-foreground, #b45309); }
-    .preview-doc-icon.gen svg { color: var(--sfx-up-text-muted, #64748b); }
-
-    .preview-doc-ext {
-      font-size: 13px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .preview-doc-ext.pdf { color: var(--sfx-up-error, #dc2626); }
-    .preview-doc-ext.doc { color: var(--sfx-up-primary, #1d4ed8); }
-    .preview-doc-ext.vid { color: #7c3aed; }
-    .preview-doc-ext.zip { color: var(--warning-foreground, #b45309); }
-    .preview-doc-ext.gen { color: var(--sfx-up-text-muted, #64748b); }
 
     .preview-img-wrap {
       position: relative;
-      min-height: 200px;
-      max-height: 380px;
+      width: 420px;
+      height: 332px;
+      max-width: 100%;
       flex-shrink: 0;
+      align-self: center;
       display: flex;
       align-items: center;
       justify-content: center;
       background-color: var(--sfx-up-checker-bg);
-      background-image:
-        linear-gradient(45deg, var(--sfx-up-checker-tile) 25%, transparent 25%),
+      background-image: linear-gradient(
+          45deg,
+          var(--sfx-up-checker-tile) 25%,
+          transparent 25%
+        ),
         linear-gradient(-45deg, var(--sfx-up-checker-tile) 25%, transparent 25%),
         linear-gradient(45deg, transparent 75%, var(--sfx-up-checker-tile) 75%),
         linear-gradient(-45deg, transparent 75%, var(--sfx-up-checker-tile) 75%);
       background-size: 16px 16px;
-      background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+      background-position:
+        0 0,
+        0 8px,
+        8px -8px,
+        -8px 0;
     }
 
     .preview-image {
       display: block;
       max-width: 100%;
-      max-height: 380px;
+      max-height: 100%;
+      width: auto;
+      height: auto;
+      object-fit: contain;
       border: none;
+    }
+
+    .preview-media-area {
+      position: relative;
+      width: 100%;
+      display: flex;
+      justify-content: center;
     }
 
     .preview-nav {
       position: absolute;
       top: 50%;
       transform: translateY(-50%);
-      width: 36px;
-      height: 36px;
+      width: 32px;
+      height: 32px;
+      box-sizing: border-box;
       border-radius: 50%;
-      border: none;
+      border: 1px solid var(--sfx-up-border, #e2e8f0);
       background: #fff;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+      box-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.08),
+        0 2px 8px rgba(0, 0, 0, 0.12);
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--sfx-up-text, #1e293b);
+      color: var(--sfx-up-text-muted, #94a3b8);
       transition: all 0.15s;
       z-index: 2;
       padding: 0;
@@ -9256,6 +11020,7 @@ const H = (W = class extends J {
     .preview-nav:hover {
       box-shadow: 0 3px 12px rgba(0, 0, 0, 0.18);
       transform: translateY(-50%) scale(1.06);
+      color: var(--sfx-up-text, #374151);
     }
 
     .preview-nav:active {
@@ -9263,12 +11028,16 @@ const H = (W = class extends J {
     }
 
     .preview-nav svg {
-      width: 18px;
-      height: 18px;
+      width: 20px;
+      height: 20px;
     }
 
-    .preview-nav.prev { left: 10px; }
-    .preview-nav.next { right: 10px; }
+    .preview-nav.prev {
+      left: 10px;
+    }
+    .preview-nav.next {
+      right: 10px;
+    }
 
     .preview-nav:disabled {
       opacity: 0.35;
@@ -9285,21 +11054,82 @@ const H = (W = class extends J {
       display: flex;
       flex-direction: column;
       flex-shrink: 0;
-      padding: 0 16px 4px;
+      padding: 12px;
+      border-bottom: 1px solid var(--sfx-up-border, #e2e8f0);
     }
 
     .preview-metadata {
-      padding: 0 12px 16px;
-      border-top: 1px solid var(--sfx-up-border-light, #f1f5f9);
+      padding: 0 0 16px;
     }
 
     .preview-file-info {
       font-size: 12px;
       font-weight: 400;
-      color: var(--sfx-up-text-muted, #9ca3af);
-      padding: 2px 0;
+      color: var(--sfx-up-text-muted, #94a3b8);
     }
 
+    /* --- File info table (no-metadata fallback) --- */
+    .preview-file-info-panel {
+      padding: 0 16px;
+    }
+
+    .preview-file-info-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--sfx-up-text, #1e293b);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .preview-file-info-header svg {
+      width: 16px;
+      height: 16px;
+      color: var(--sfx-up-text-muted, #94a3b8);
+      transition: transform 0.2s ease;
+    }
+
+    .preview-file-info-header.open svg {
+      transform: rotate(180deg);
+    }
+
+    .preview-file-info-body {
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height 0.25s ease;
+    }
+
+    .preview-file-info-body.open {
+      max-height: 300px;
+    }
+
+    .preview-file-info-row {
+      display: flex;
+      align-items: baseline;
+      padding: 10px 0;
+    }
+
+    .preview-file-info-key {
+      width: 110px;
+      flex-shrink: 0;
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--sfx-up-text-muted, #94a3b8);
+    }
+
+    .preview-file-info-val {
+      flex: 1;
+      min-width: 0;
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--sfx-up-text, #1e293b);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
 
     /* --- Upload overlay (in-modal) --- */
     .upload-overlay {
@@ -9401,12 +11231,25 @@ const H = (W = class extends J {
       color: var(--sfx-up-text, #374151);
     }
 
-    .upload-header .float-actions button svg { width: 16px; height: 16px; }
+    .upload-header .float-actions button svg {
+      width: 16px;
+      height: 16px;
+    }
 
-    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
     @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(12px); }
-      to { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     /* --- Floating upload card (Variant 3 style) --- */
@@ -9418,7 +11261,9 @@ const H = (W = class extends J {
       width: 470px;
       border-radius: 12px;
       background: var(--sfx-up-bg, #fff);
-      box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+      box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.12),
+        0 2px 8px rgba(0, 0, 0, 0.06);
       overflow: hidden;
       font-family: inherit;
       animation: floatSlideIn 0.3s ease both;
@@ -9450,7 +11295,10 @@ const H = (W = class extends J {
       flex-shrink: 0;
     }
 
-    .float-icon svg { width: 14px; height: 14px; }
+    .float-icon svg {
+      width: 14px;
+      height: 14px;
+    }
 
     .float-icon.done {
       background: #f0fdf4;
@@ -9498,7 +11346,10 @@ const H = (W = class extends J {
       color: var(--sfx-up-text, #374151);
     }
 
-    .float-actions button svg { width: 14px; height: 14px; }
+    .float-actions button svg {
+      width: 14px;
+      height: 14px;
+    }
 
     .float-progress {
       padding: 10px 14px;
@@ -9523,9 +11374,15 @@ const H = (W = class extends J {
       color: var(--sfx-up-primary, #2563eb);
     }
 
-    .float-progress-pct.done { color: #22c55e; }
-    .float-progress-pct.warn { color: #f59e0b; }
-    .float-progress-pct.error { color: #ef4444; }
+    .float-progress-pct.done {
+      color: #22c55e;
+    }
+    .float-progress-pct.warn {
+      color: #f59e0b;
+    }
+    .float-progress-pct.error {
+      color: #ef4444;
+    }
 
     .float-bar {
       height: 4px;
@@ -9541,16 +11398,22 @@ const H = (W = class extends J {
       transition: width 0.3s ease;
     }
 
-    .float-bar-fill.done { background: #22c55e; }
-    .float-bar-fill.warn { background: #f59e0b; }
-    .float-bar-fill.error { background: #ef4444; }
+    .float-bar-fill.done {
+      background: #22c55e;
+    }
+    .float-bar-fill.warn {
+      background: #f59e0b;
+    }
+    .float-bar-fill.error {
+      background: #ef4444;
+    }
 
     .float-items {
       max-height: 200px;
       overflow-y: auto;
       overflow-x: hidden;
       scrollbar-width: thin;
-      scrollbar-color: rgba(0,0,0,0.1) transparent;
+      scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
     }
 
     .float-item {
@@ -9562,7 +11425,9 @@ const H = (W = class extends J {
       overflow: hidden;
     }
 
-    .float-item:last-child { border-bottom: none; }
+    .float-item:last-child {
+      border-bottom: none;
+    }
 
     .float-item-thumb {
       width: 32px;
@@ -9576,9 +11441,16 @@ const H = (W = class extends J {
       flex-shrink: 0;
     }
 
-    .float-item-thumb svg { width: 16px; height: 16px; }
+    .float-item-thumb svg {
+      width: 16px;
+      height: 16px;
+    }
 
-    .float-item-info { flex: 1; min-width: 0; overflow: hidden; }
+    .float-item-info {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+    }
 
     .float-item-name {
       font-size: 12px;
@@ -9606,7 +11478,10 @@ const H = (W = class extends J {
       flex-shrink: 0;
     }
 
-    .float-item-done svg { width: 12px; height: 12px; }
+    .float-item-done svg {
+      width: 12px;
+      height: 12px;
+    }
 
     .float-item-spinner {
       width: 16px;
@@ -9647,7 +11522,9 @@ const H = (W = class extends J {
       white-space: nowrap;
       pointer-events: none;
       z-index: 10;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.12), 0 1px 4px rgba(0,0,0,0.08);
+      box-shadow:
+        0 2px 12px rgba(0, 0, 0, 0.12),
+        0 1px 4px rgba(0, 0, 0, 0.08);
     }
 
     .float-item-error-wrap:hover .float-item-tooltip {
@@ -9677,13 +11554,25 @@ const H = (W = class extends J {
       border-radius: 4px;
     }
 
-    .float-item-retry svg { width: 16px; height: 16px; }
+    .float-item-retry svg {
+      width: 16px;
+      height: 16px;
+    }
 
-    .float-item-retry:hover { background: var(--sfx-up-surface, #f8fafc); color: var(--sfx-up-primary-hover, #1d4ed8); }
+    .float-item-retry:hover {
+      background: var(--sfx-up-surface, #f8fafc);
+      color: var(--sfx-up-primary-hover, #1d4ed8);
+    }
 
     @keyframes floatSlideIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     /* --- Connector modal overlay --- */
@@ -9703,7 +11592,9 @@ const H = (W = class extends J {
     .connector-modal {
       background: var(--sfx-up-bg, #fff);
       border-radius: 12px;
-      box-shadow: 0 28px 80px var(--sfx-up-shadow, rgba(0, 0, 0, 0.18)), 0 4px 16px oklch(0 0 0 / 0.06);
+      box-shadow:
+        0 28px 80px var(--sfx-up-shadow, rgba(0, 0, 0, 0.18)),
+        0 4px 16px oklch(0 0 0 / 0.06);
       width: 100%;
       max-width: 520px;
       height: 75vh;
@@ -9716,8 +11607,12 @@ const H = (W = class extends J {
     }
 
     @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
     }
 
     @keyframes modalIn {
@@ -9732,15 +11627,19 @@ const H = (W = class extends J {
     }
 
     @keyframes inlineIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
     }
 
     /* --- Fullscreen preview overlay --- */
     .fs-overlay {
       position: fixed;
       inset: 0;
-      z-index: 10000;
+      z-index: var(--sfx-fs-z);
       background: rgba(0, 0, 0, 0.92);
       display: flex;
       align-items: center;
@@ -9785,7 +11684,7 @@ const H = (W = class extends J {
       right: 16px;
       display: flex;
       gap: 8px;
-      z-index: 10001;
+      z-index: var(--sfx-fs-controls-z);
     }
 
     .fs-btn {
@@ -9827,17 +11726,31 @@ const H = (W = class extends J {
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 10001;
+      z-index: var(--sfx-fs-controls-z);
       transition: background 0.15s;
       padding: 0;
     }
 
-    .fs-nav:hover { background: rgba(255, 255, 255, 0.3); }
-    .fs-nav:disabled { opacity: 0.3; cursor: default; }
-    .fs-nav:disabled:hover { background: rgba(255, 255, 255, 0.15); }
-    .fs-nav svg { width: 22px; height: 22px; }
-    .fs-nav.prev { left: 20px; }
-    .fs-nav.next { right: 20px; }
+    .fs-nav:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+    .fs-nav:disabled {
+      opacity: 0.3;
+      cursor: default;
+    }
+    .fs-nav:disabled:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+    .fs-nav svg {
+      width: 22px;
+      height: 22px;
+    }
+    .fs-nav.prev {
+      left: 20px;
+    }
+    .fs-nav.next {
+      right: 20px;
+    }
 
     .fs-filename {
       position: fixed;
@@ -9862,165 +11775,341 @@ const H = (W = class extends J {
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .modal-backdrop { animation: none; }
-      .modal-card { animation: none; }
-      .inline { animation: none; }
-      .fs-overlay { animation: none; }
-      .body.has-files { animation: none; }
-    }
-
-    /* --- Responsive: Tablet (≤ 768px) --- */
-    @media (max-width: 768px) {
-      .modal-backdrop { padding: 12px; }
-      .modal-card { border-radius: 12px; max-height: 92vh; min-height: auto; }
-      .header { padding: 12px 16px; }
-      .header-icon { width: 28px; height: 28px; margin-right: 10px; }
-      .header-icon svg { width: 14px; height: 14px; }
-      .header-title { font-size: 14px; }
-      .body { padding: 16px; }
-      .body.has-files { padding: 0 0 12px 8px; }
-
-      .preview-layout { flex-direction: column; }
-      .preview-layout .file-grid-side {
-        width: 100%;
-        max-height: 140px;
-        overflow-x: auto;
-        overflow-y: hidden;
-        flex-shrink: 0;
+      .modal-backdrop {
+        animation: none;
       }
-      .preview-panel { padding: 0 0 16px; }
-
-      .preview-topbar { padding: 8px 0; }
-
-      .inline { --sfx-inline-pad: 16px; min-height: auto; }
-
-      .connector-modal-backdrop { padding: 8px; }
-      .connector-modal {
-        max-width: 100%;
-        height: 85vh;
-        max-height: none;
-        border-radius: 14px;
-      }
-    }
-
-    /* --- Responsive: Mobile (≤ 480px) --- */
-    @media (max-width: 480px) {
-      .modal-backdrop { padding: 0; }
       .modal-card {
-        border-radius: 0;
-        max-height: 100vh;
-        max-width: 100%;
-        height: 100%;
+        animation: none;
       }
-      .header { padding: 10px 14px; }
-      .header-icon { width: 26px; height: 26px; margin-right: 8px; }
-      .header-title { font-size: 14px; }
-      .body { padding: 12px; }
-      .body.has-files { padding: 0 0 8px 8px; }
+      .inline {
+        animation: none;
+      }
+      .fs-overlay {
+        animation: none;
+      }
+      .body.has-files {
+        animation: none;
+      }
+    }
 
-      .preview-layout .file-grid-side { max-height: 100px; }
-      .preview-panel { padding: 0 0 12px; }
-
-      .inline { --sfx-inline-pad: 12px; max-height: 100vh; box-shadow: none; }
-      .inline-header-title { font-size: 18px; }
-
-      .connector-modal-backdrop { padding: 0; }
-      .connector-modal {
-        border-radius: 0;
+    /* --- Responsive: Tablet & Mobile (≤ 768px) ---
+       Take modal-card OUT of backdrop's flex centering and pin it
+       directly to viewport. This bypasses any min-width:auto issues
+       in the flex layout that were leaving content overflowing. */
+    @media (max-width: 768px) {
+      .modal-backdrop {
+        padding: 0;
+        display: block;
+      }
+      .modal-card {
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        max-width: 100vw;
         height: 100vh;
+        max-height: 100vh;
+        min-width: 0;
+        min-height: 0;
+        border-radius: 0;
+        overflow: hidden;
+      }
+      .inline {
+        max-width: 100%;
+        min-width: 0;
+      }
+      .connector-modal-backdrop {
+        padding: 0;
+        display: block;
+      }
+      .connector-modal {
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        max-width: 100vw;
+        height: 100vh;
+        max-height: 100vh;
+        min-height: 0;
+        border-radius: 0;
+      }
+      .header {
+        padding: 12px 16px;
+      }
+      .header-icon {
+        width: 28px;
+        height: 28px;
+        margin-right: 10px;
+      }
+      .header-icon svg {
+        width: 14px;
+        height: 14px;
+      }
+      .header-title {
+        font-size: 14px;
+      }
+      .body {
+        padding: 16px;
+      }
+      .body.has-files {
+        padding: 0 0 12px;
+      }
+      .body > sfx-file-list,
+      .file-grid-side > sfx-file-list {
+        --sfx-grid-pad-l: 12px;
+        --sfx-grid-pad-r: 12px;
+      }
+
+      /* Mobile preview = fullscreen takeover. When a file is selected
+         the file grid + divider get hidden and preview-panel fills the
+         whole modal. Tapping close (X) in preview-header returns to
+         the grid. */
+      .preview-layout {
+        flex-direction: column;
+      }
+      .preview-layout .file-grid-side,
+      .preview-layout .preview-divider {
+        display: none !important;
+      }
+      .preview-layout .preview-panel {
+        flex: 1 1 100% !important;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        padding: 0;
+      }
+
+      .preview-topbar {
+        padding: 8px 0;
+      }
+
+      .inline {
+        --sfx-inline-pad: 16px;
         min-height: auto;
       }
+
+      /* Bump fullscreen z-index stack on mobile: modal-card is now
+         position:fixed which creates a new stacking context, so the
+         overlay + controls must sit above it. */
+      :host {
+        --sfx-fs-z: 100000;
+        --sfx-fs-controls-z: 100001;
+      }
+
+      /* Force fs-overlay to viewport-fill on mobile. Without these the
+         shadow-DOM stacking + sibling modal-card was clipping it. */
+      .fs-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100vw;
+        height: 100vh;
+      }
+      .fs-img {
+        max-width: 92vw;
+        max-height: 80vh;
+      }
+      /* Brighter, larger, tappable nav arrows + close toolbar on mobile.
+         Default styling is too subtle (12% white) and gets lost over the
+         dark overlay. */
+      .fs-toolbar {
+        top: 16px;
+      }
+      .fs-btn {
+        width: 44px;
+        height: 44px;
+        background: rgba(255, 255, 255, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+      }
+      .fs-btn svg {
+        width: 22px;
+        height: 22px;
+      }
+      .fs-nav {
+        width: 48px;
+        height: 48px;
+        background: rgba(255, 255, 255, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+      }
+      .fs-nav:disabled {
+        opacity: 0.18;
+        pointer-events: none;
+      }
+      .fs-nav svg {
+        width: 24px;
+        height: 24px;
+      }
+      .fs-nav.prev {
+        left: 12px;
+      }
+      .fs-nav.next {
+        right: 12px;
+      }
     }
 
-    /* --- Responsive: Landscape / short viewports --- */
-    @media (max-height: 700px) {
-      .modal-card { min-height: auto; }
-      .inline { min-height: auto; }
+    /* --- Responsive: Mobile (≤ 480px) — tighter spacing on top of
+       the fullscreen rules already applied at ≤768. */
+    @media (max-width: 480px) {
+      .header {
+        padding: 10px 14px;
+      }
+      .header-icon {
+        width: 26px;
+        height: 26px;
+        margin-right: 8px;
+      }
+      .header-title {
+        font-size: 14px;
+      }
+      .body {
+        padding: 12px;
+      }
+      .body.has-files {
+        padding: 0 0 8px;
+      }
+
+      .inline {
+        --sfx-inline-pad: 12px;
+        box-shadow: none;
+      }
+      .inline-header-title {
+        font-size: 18px;
+      }
     }
-  `, W._MODIFIABLE_STATUSES = /* @__PURE__ */ new Set([
+
+    /* --- Responsive: Landscape / short viewports (Nest Hub 1024×600,
+       iPad mini landscape, laptops with address bar visible etc) ---
+       Modal min-height 660 exceeds viewport; drop the min and expand the
+       max so content gets every pixel available. Trim header/body padding
+       so the available space is actually usable. */
+    @media (max-height: 700px) {
+      .modal-card {
+        min-height: auto;
+        max-height: 96vh;
+      }
+      .inline {
+        min-height: auto;
+      }
+      .header {
+        padding: 10px 20px;
+      }
+      .body {
+        padding: 16px 20px;
+      }
+      /* Let the preview image scale down instead of forcing a
+         340×240 crop — on a 1920×600 kiosk that hardcoded size
+         looked tiny; relying on max-width/max-height lets the wrap
+         fill whatever vertical space the layout gives it. */
+      .preview-img-wrap {
+        width: auto;
+        height: auto;
+        max-width: min(420px, 60vw);
+        max-height: min(280px, 55vh);
+      }
+    }
+  `, K._MODIFIABLE_STATUSES = /* @__PURE__ */ new Set([
   "idle",
   "queued",
   "rejected"
-]), W._RESERVED_IDS = /* @__PURE__ */ new Set(["device", "camera", "url", "screen-cast"]), W);
-Y([
-  I({ attribute: !1 })
-], H.prototype, "config");
-Y([
-  j()
-], H.prototype, "_isOpen");
-Y([
-  j()
-], H.prototype, "_activeConnector");
-Y([
-  j()
-], H.prototype, "_showUrlDialog");
-Y([
-  j()
-], H.prototype, "_showCameraDialog");
-Y([
-  j()
-], H.prototype, "_showScreenCastDialog");
-Y([
-  j()
-], H.prototype, "_previewFileId");
-Y([
-  j()
-], H.prototype, "_previewDims");
-Y([
-  j()
-], H.prototype, "_splitPct");
-Y([
-  j()
-], H.prototype, "_fullscreenPreviewUrl");
-Y([
-  j()
-], H.prototype, "_fullscreenVideoFile");
-Y([
-  j()
-], H.prototype, "_fullscreenZoomed");
-Y([
-  j()
-], H.prototype, "_bodyDragOver");
-Y([
-  j()
-], H.prototype, "_isMinimized");
-Y([
-  j()
-], H.prototype, "_isPillExpanded");
-Y([
-  j()
-], H.prototype, "_metadataSchema");
-Y([
-  j()
-], H.prototype, "_bulkMetadataOpen");
-let Pn = H;
+]), K._RESERVED_IDS = /* @__PURE__ */ new Set([
+  "device",
+  "camera",
+  "url",
+  "screen-cast"
+]), K);
+H([
+  F({ attribute: !1 })
+], M.prototype, "config");
+H([
+  D()
+], M.prototype, "_isOpen");
+H([
+  D()
+], M.prototype, "_activeConnector");
+H([
+  D()
+], M.prototype, "_showUrlDialog");
+H([
+  D()
+], M.prototype, "_showCameraDialog");
+H([
+  D()
+], M.prototype, "_showScreenCastDialog");
+H([
+  D()
+], M.prototype, "_previewFileId");
+H([
+  D()
+], M.prototype, "_previewDims");
+H([
+  D()
+], M.prototype, "_fileInfoOpen");
+H([
+  D()
+], M.prototype, "_splitPct");
+H([
+  D()
+], M.prototype, "_fullscreenPreviewUrl");
+H([
+  D()
+], M.prototype, "_fullscreenVideoFile");
+H([
+  D()
+], M.prototype, "_fullscreenZoomed");
+H([
+  D()
+], M.prototype, "_bodyDragOver");
+H([
+  D()
+], M.prototype, "_isMinimized");
+H([
+  D()
+], M.prototype, "_isPillExpanded");
+H([
+  D()
+], M.prototype, "_metadataSchema");
+H([
+  D()
+], M.prototype, "_bulkMetadataOpen");
+H([
+  D()
+], M.prototype, "_isReviewing");
+H([
+  D()
+], M.prototype, "_reviewFiles");
+H([
+  D()
+], M.prototype, "_hasStoredReview");
+let Yn = M;
 export {
-  wt as A,
-  Re as C,
+  Ct as A,
+  je as C,
   B as P,
   ee as S,
-  Yi as U,
-  Z as a,
-  et as b,
-  pe as c,
-  vr as d,
-  mt as e,
-  ue as f,
-  Pn as g,
-  qr as h,
-  vt as i,
-  Nr as j,
-  Vi as k,
-  Ut as l,
-  en as m,
-  Be as n,
-  Se as o,
-  fe as p,
-  kn as q,
-  Gi as r,
-  $n as s,
-  Un as t,
-  Sn as u,
-  Cn as v,
-  we as w
+  tn as U,
+  Nn as a,
+  ve as b,
+  re as c,
+  _r as d,
+  _t as e,
+  ae as f,
+  Yn as g,
+  Qr as h,
+  mt as i,
+  ei as j,
+  rn as k,
+  Ot as l,
+  gn as m,
+  qe as n,
+  Ee as o,
+  xe as p,
+  In as q,
+  on as r,
+  Hn as s,
+  qn as t,
+  Bn as u,
+  Mn as v,
+  Xr as w,
+  Kr as x,
+  ce as y
 };

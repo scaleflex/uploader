@@ -16,20 +16,16 @@ export declare class SfxBulkMetaRow extends LitElement {
     field: MetadataField;
     value: unknown;
     selected: boolean;
+    pendingOp: PendingOp | null;
     config: MetadataConfig | null;
     autocomplete: unknown;
-    /** Pending bulk operation from op-bar (null when nothing pending or row unselected). */
-    pendingOp: PendingOp | null;
     private _error;
     willUpdate(changed: Map<string, unknown>): void;
     private _onCheckboxChange;
     private _onFieldBlur;
+    /** Compute what the value would become if the pending op were applied. */
+    private _computePreviewValue;
     private _getExtension;
-    /**
-     * Compute what the value would become if the pending bulk operation were applied.
-     * Returns null if there's no pending op or the preview equals the current value.
-     */
-    private _computePreview;
     render(): import('lit-html').TemplateResult<1>;
 }
 //# sourceMappingURL=bulk-meta-row.d.ts.map

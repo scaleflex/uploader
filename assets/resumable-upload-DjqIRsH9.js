@@ -1,4 +1,4 @@
-import{b as i}from"./index-DvqKfEVw.js";import{r as u}from"./code-block-Bk3NnwHF.js";import{i as p}from"./custom-select-CZ_fVHDR.js";let t=10,o=5,e=!0;function n(){const d=document.getElementById("code-container");d&&(d.innerHTML="",u("#code-container",[{label:"JavaScript",lang:"javascript",code:e?`uploader.config = {
+import{b as c}from"./index-BbE_0G_V.js";import{r as u}from"./code-block-Bk3NnwHF.js";import{i as p}from"./custom-select-CZ_fVHDR.js";let t=10,o=5,e=!0;function n(){const d=document.getElementById("code-container");d&&(d.innerHTML="",u("#code-container",[{label:"JavaScript",lang:"javascript",code:e?`uploader.config = {
   auth: { /* ... */ },
   tusConfig: {
     sizeThreshold: ${t} * 1024 * 1024, // ${t} MB
@@ -30,31 +30,33 @@ import{b as i}from"./index-DvqKfEVw.js";import{r as u}from"./code-block-Bk3NnwHF
       </div>
 
       <section class="page-section">
-        <div class="config-controls">
-          <div class="form-group">
-            <label>
-              <input type="checkbox" id="tus-enabled" checked />
-              Enable resumable upload
-            </label>
+        <div class="config-controls" style="flex-direction: column; align-items: stretch; gap: 16px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <input type="checkbox" id="tus-enabled" checked
+              style="width: 18px; height: 18px; margin: 0; cursor: pointer; accent-color: var(--sf-primary); flex-shrink: 0;" />
+            <label for="tus-enabled"
+              style="font-size: 14px; font-weight: 500; color: var(--sf-text-primary); cursor: pointer; margin: 0;">Enable resumable upload</label>
           </div>
-          <div class="form-group" id="threshold-group">
-            <label for="threshold-select">Size threshold</label>
-            <select id="threshold-select">
-              <option value="0">0 MB (always use tus)</option>
-              <option value="5">5 MB</option>
-              <option value="10" selected>10 MB (default)</option>
-              <option value="50">50 MB</option>
-              <option value="100">100 MB</option>
-            </select>
-          </div>
-          <div class="form-group" id="chunk-group">
-            <label for="chunk-select">Chunk size</label>
-            <select id="chunk-select">
-              <option value="1">1 MB</option>
-              <option value="2">2 MB</option>
-              <option value="5" selected>5 MB (default)</option>
-              <option value="10">10 MB</option>
-            </select>
+          <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+            <div class="form-group" id="threshold-group" style="margin-bottom: 0; min-width: 200px;">
+              <label for="threshold-select">Size threshold</label>
+              <select id="threshold-select">
+                <option value="0">0 MB (always use tus)</option>
+                <option value="5">5 MB</option>
+                <option value="10" selected>10 MB (default)</option>
+                <option value="50">50 MB</option>
+                <option value="100">100 MB</option>
+              </select>
+            </div>
+            <div class="form-group" id="chunk-group" style="margin-bottom: 0; min-width: 200px;">
+              <label for="chunk-select">Chunk size</label>
+              <select id="chunk-select">
+                <option value="1">1 MB</option>
+                <option value="2">2 MB</option>
+                <option value="5" selected>5 MB (default)</option>
+                <option value="10">10 MB</option>
+              </select>
+            </div>
           </div>
         </div>
         <button class="btn-primary open-btn-spacing" id="open-btn">Open uploader</button>
@@ -101,4 +103,4 @@ import{b as i}from"./index-DvqKfEVw.js";import{r as u}from"./code-block-Bk3NnwHF
         <h2>Code</h2>
         <div id="code-container"></div>
       </section>
-    `},init(d){e=!0,t=10,o=5,n();const l=p(),a=document.getElementById("tus-enabled"),r=document.getElementById("threshold-group"),c=document.getElementById("chunk-group");a.addEventListener("change",()=>{e=a.checked,r.style.opacity=e?"1":"0.4",c.style.opacity=e?"1":"0.4",n()}),document.getElementById("threshold-select").addEventListener("change",s=>{t=Number(s.target.value),n()}),document.getElementById("chunk-select").addEventListener("change",s=>{o=Number(s.target.value),n()}),document.getElementById("open-btn").addEventListener("click",()=>{const s=i(e?{tusConfig:{sizeThreshold:t*1024*1024,chunkSize:o*1024*1024}}:{});d.config=s,d.open()}),h.destroy=()=>l()}};export{h as default};
+    `},init(d){e=!0,t=10,o=5,n();const l=p(),a=document.getElementById("tus-enabled"),r=document.getElementById("threshold-group"),i=document.getElementById("chunk-group");a.addEventListener("change",()=>{e=a.checked,r.style.opacity=e?"1":"0.4",i.style.opacity=e?"1":"0.4",n()}),document.getElementById("threshold-select").addEventListener("change",s=>{t=Number(s.target.value),n()}),document.getElementById("chunk-select").addEventListener("change",s=>{o=Number(s.target.value),n()}),document.getElementById("open-btn").addEventListener("click",()=>{const s=c(e?{tusConfig:{sizeThreshold:t*1024*1024,chunkSize:o*1024*1024}}:{});d.config=s,d.open()}),h.destroy=()=>l()}};export{h as default};
