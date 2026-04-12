@@ -8324,14 +8324,14 @@ const M = (K = class extends Z {
       if ((((n = (o = this.config) == null ? void 0 : o.connectors) == null ? void 0 : n.providers) ?? []).includes(e)) {
         if (Cr.has(e)) {
           if (!customElements.get("sfx-search-provider-browser")) {
-            const { SfxSearchProviderBrowser: a } = await import("./search-provider-browser-DBJ1J1f2.js");
+            const { SfxSearchProviderBrowser: a } = await import("./search-provider-browser-CCgVfvJZ.js");
             customElements.define(
               "sfx-search-provider-browser",
               a
             );
           }
         } else if (!customElements.get("sfx-provider-browser")) {
-          const { SfxProviderBrowser: a } = await import("./provider-browser-sWM_v8sn.js");
+          const { SfxProviderBrowser: a } = await import("./provider-browser-DP0dkm4h.js");
           customElements.define("sfx-provider-browser", a);
         }
         this._activeConnector = e;
@@ -8972,7 +8972,7 @@ const M = (K = class extends Z {
     const t = e.metadataConfig;
     if (!(!t || !this._apiBase || !this._authHeaders))
       try {
-        const { fetchMetadataSchema: r, createTagsAutocomplete: o } = await import("./index-C2CxldO3.js");
+        const { fetchMetadataSchema: r, createTagsAutocomplete: o } = await import("./index-BKzvd_io.js");
         this._metadataSchema = await r(
           this._apiBase,
           this._authHeaders,
@@ -10728,7 +10728,7 @@ const M = (K = class extends Z {
        children use --sfx-inline-pad for horizontal spacing. */
     .inline .body {
       flex: 1;
-      overflow: auto;
+      overflow: hidden;
       padding: 0;
       min-height: 0;
     }
