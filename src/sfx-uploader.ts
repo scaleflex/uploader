@@ -599,12 +599,6 @@ export class SfxUploader extends LitElement {
       animation: inlineIn 0.25s ease;
     }
 
-    /* Only scroll inline when showing drop-zone (no files) */
-    .inline.no-files {
-      overflow-y: auto;
-      overflow-x: hidden;
-    }
-
     /* --- Inline header --- */
     .inline-header {
       display: flex;
@@ -670,16 +664,18 @@ export class SfxUploader extends LitElement {
     }
 
     .inline.no-files .content {
-      flex: 1 0 auto;
+      flex: 1;
+      min-height: 0;
     }
 
-    /* Inline: body grows so .inline itself can scroll.
+    /* Inline: body fits within the remaining space after the header;
        padding: 0 in both states so the header never jumps;
        children use --sfx-inline-pad for horizontal spacing. */
     .inline .body {
-      flex: 1 0 auto;
-      overflow: visible;
+      flex: 1;
+      overflow: auto;
       padding: 0;
+      min-height: 0;
     }
     .inline .body.has-files {
       flex: 1;
