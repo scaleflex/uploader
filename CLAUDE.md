@@ -49,20 +49,22 @@ Path alias: `@` → `src/` (configured in Vite and vitest).
 
 - CSS custom properties use `--sfx-up-*` prefix for theming
 - Custom element tag: `<sfx-uploader>`
-- Components are Lit elements using decorators (`@property`, `@state`, `@customElement`)
-- Imports use `@/` alias (e.g., `import { foo } from '@/utils/file-utils'`)
+- Components are Lit elements using `@property` and `@state` decorators
+- Custom element registration is centralized in `src/define.ts` via `customElements.define()` (not `@customElement` decorator)
+- Imports use relative paths (the `@` → `src/` alias is configured but not used in practice)
 
 ## Testing
 
 - **Vitest** with jsdom environment, globals enabled
-- **Playwright** for e2e browser tests
 - Tests live alongside source: `src/**/*.test.ts`
+- Test helpers in `src/test-utils.ts`: `makeUploadFile()`, `makeRestrictions()`, `makeDefaultState()`
 - Coverage excludes: test files, type files, define.ts, react.ts, index.ts
+- Playwright is a devDependency but no e2e tests are written yet
 
 ## Git Remotes & Push Rules
 
-- `origin` (code.scaleflex.cloud) — primary remote. Push `main` here.
-- `github` (github.com/scaleflex/uploader) — public repo. **ONLY push the `release` branch here. NEVER push `main` to GitHub.**
+- `gitlab` (code.scaleflex.cloud) — primary remote. Push `main` here (`yarn push:source`).
+- `origin` / `github` (github.com/scaleflex/uploader) — public repo. **ONLY push the `release` branch here. NEVER push `main` to GitHub.**
 
 ## Release Branch
 
