@@ -8323,14 +8323,14 @@ const M = (K = class extends Z {
       if ((((n = (o = this.config) == null ? void 0 : o.connectors) == null ? void 0 : n.providers) ?? []).includes(e)) {
         if (Cr.has(e)) {
           if (!customElements.get("sfx-search-provider-browser")) {
-            const { SfxSearchProviderBrowser: a } = await import("./search-provider-browser-RprDI6Es.js");
+            const { SfxSearchProviderBrowser: a } = await import("./search-provider-browser-DgY-8rWX.js");
             customElements.define(
               "sfx-search-provider-browser",
               a
             );
           }
         } else if (!customElements.get("sfx-provider-browser")) {
-          const { SfxProviderBrowser: a } = await import("./provider-browser-mkOxlWAE.js");
+          const { SfxProviderBrowser: a } = await import("./provider-browser-DVivbvAH.js");
           customElements.define("sfx-provider-browser", a);
         }
         this._activeConnector = e;
@@ -8971,7 +8971,7 @@ const M = (K = class extends Z {
     const t = e.metadataConfig;
     if (!(!t || !this._apiBase || !this._authHeaders))
       try {
-        const { fetchMetadataSchema: r, createTagsAutocomplete: o } = await import("./index-DUH4nU89.js");
+        const { fetchMetadataSchema: r, createTagsAutocomplete: o } = await import("./index-CaKEtBJR.js");
         this._metadataSchema = await r(
           this._apiBase,
           this._authHeaders,
@@ -10326,6 +10326,7 @@ const M = (K = class extends Z {
       justify-content: center;
       z-index: 9999;
       padding: 24px;
+      overflow: hidden;
       animation: fadeIn 0.2s ease;
     }
 

@@ -1,4 +1,4 @@
-import{b as a}from"./index-BEffqKla.js";const n={render(){return`
+import{b as a}from"./index-Do7Se9LN.js";const n={render(){return`
       <div class="page-header">
         <h1>Last upload review</h1>
         <p>
