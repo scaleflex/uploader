@@ -283,8 +283,7 @@ export class SfxUploader extends LitElement {
         0 4px 16px rgba(0, 0, 0, 0.06);
       width: 100%;
       max-width: 1100px;
-      height: var(--sfx-up-min-height, 660px);
-      max-height: var(--sfx-up-max-height, 88vh);
+      height: var(--sfx-up-max-height, 88vh);
       display: flex;
       flex-direction: column;
       overflow: hidden;
