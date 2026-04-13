@@ -533,7 +533,7 @@ export class SfxUploader extends LitElement {
        sessionStorage contains a previous batch */
     .last-upload-pill {
       position: absolute;
-      bottom: 16px;
+      top: 16px;
       right: 16px;
       z-index: 10;
       display: inline-flex;
