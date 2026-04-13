@@ -2513,6 +2513,11 @@ export class SfxUploader extends LitElement {
       this._store.setState(updates);
     }
 
+    // Re-evaluate stored review availability (connectedCallback may have
+    // run before config was set, so _lastUploadId was null at that point).
+    const reviewId = this._lastUploadId;
+    this._hasStoredReview = reviewId != null && lastUploadStore.exists(reviewId);
+
     // Resolve auth and create/update engine
     this._resolveAuthAndEngine(cfg);
 
