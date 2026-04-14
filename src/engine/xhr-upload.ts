@@ -114,6 +114,11 @@ export function xhrUploadUrl(
   uploadFile: UploadFile,
   opts: Omit<XhrUploadOptions, 'onProgress'> & { onProgress?: never },
 ): XhrUploadHandle {
+  if (!uploadFile.remoteUrl) {
+    opts.onError(new Error('Remote URL is required for URL upload'));
+    return { abort() {} };
+  }
+
   const xhr = new XMLHttpRequest();
   let aborted = false;
 
@@ -155,11 +160,6 @@ export function xhrUploadUrl(
       opts.onError(new Error('Upload timed out'));
     }
   });
-
-  if (!uploadFile.remoteUrl) {
-    opts.onError(new Error('Remote URL is required for URL upload'));
-    return { abort() {} };
-  }
 
   const payload = {
     files_urls: [{ url: uploadFile.remoteUrl, name: uploadFile.name }],
