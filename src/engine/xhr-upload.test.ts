@@ -204,12 +204,12 @@ function freshUrlOpts() {
 }
 
 describe('xhrUploadUrl', () => {
-  it('opens POST to /v4/files/upload_url', () => {
+  it('opens POST to /v4/files with folder query string', () => {
     xhrUploadUrl(makeUploadFile({ remoteUrl: 'https://example.com/img.jpg' }), freshUrlOpts());
 
     expect(mockXhr.open).toHaveBeenCalledWith(
       'POST',
-      'https://api.filerobot.com/test/v4/files/upload_url',
+      'https://api.filerobot.com/test/v4/files?folder=%2Fuploads',
     );
   });
 
@@ -218,14 +218,13 @@ describe('xhrUploadUrl', () => {
     expect(mockXhr.setRequestHeader).toHaveBeenCalledWith('Content-Type', 'application/json');
   });
 
-  it('sends JSON payload with files_urls and dir', () => {
+  it('sends JSON payload with files_urls', () => {
     const file = makeUploadFile({ remoteUrl: 'https://example.com/img.jpg', name: 'img.jpg' });
     xhrUploadUrl(file, freshUrlOpts());
 
     const sent = JSON.parse(mockXhr.send.mock.calls[0][0]);
     expect(sent).toEqual({
       files_urls: [{ url: 'https://example.com/img.jpg', name: 'img.jpg' }],
-      dir: '/uploads',
     });
   });
 
@@ -233,6 +232,7 @@ describe('xhrUploadUrl', () => {
     const opts = freshUrlOpts();
     xhrUploadUrl(makeUploadFile({ remoteUrl: null }), opts);
     expect(opts.onError).toHaveBeenCalledWith(expect.objectContaining({ message: expect.stringContaining('Remote URL') }));
+    expect(mockXhr.open).not.toHaveBeenCalled();
   });
 
   it('calls onComplete on success', () => {
@@ -242,5 +242,52 @@ describe('xhrUploadUrl', () => {
     const response = { status: 'success', file: { uuid: '456' } };
     mockXhr._triggerLoad(200, response);
     expect(opts.onComplete).toHaveBeenCalledWith(response);
+  });
+
+  it('calls onError on HTTP error status', () => {
+    const opts = freshUrlOpts();
+    xhrUploadUrl(makeUploadFile({ remoteUrl: 'https://example.com/img.jpg' }), opts);
+
+    mockXhr._triggerLoad(500, { status: 'error', msg: 'Server error' });
+    expect(opts.onError).toHaveBeenCalledWith(expect.objectContaining({ message: 'Server error' }));
+  });
+
+  it('calls onError on invalid JSON', () => {
+    const opts = freshUrlOpts();
+    xhrUploadUrl(makeUploadFile({ remoteUrl: 'https://example.com/img.jpg' }), opts);
+
+    mockXhr.status = 200;
+    mockXhr.responseText = 'not json';
+    mockXhr._listeners['load']?.();
+
+    expect(opts.onError).toHaveBeenCalledWith(expect.objectContaining({ message: expect.stringContaining('Invalid JSON') }));
+  });
+
+  it('calls onError on network error', () => {
+    const opts = freshUrlOpts();
+    xhrUploadUrl(makeUploadFile({ remoteUrl: 'https://example.com/img.jpg' }), opts);
+
+    mockXhr._triggerError();
+    expect(opts.onError).toHaveBeenCalledWith(expect.objectContaining({ message: expect.stringContaining('Network error') }));
+  });
+
+  it('calls onError on timeout', () => {
+    const opts = freshUrlOpts();
+    xhrUploadUrl(makeUploadFile({ remoteUrl: 'https://example.com/img.jpg' }), opts);
+
+    mockXhr._triggerTimeout();
+    expect(opts.onError).toHaveBeenCalledWith(expect.objectContaining({ message: expect.stringContaining('timed out') }));
+  });
+
+  it('abort stops triggering callbacks', () => {
+    const opts = freshUrlOpts();
+    const handle = xhrUploadUrl(makeUploadFile({ remoteUrl: 'https://example.com/img.jpg' }), opts);
+
+    handle.abort();
+    mockXhr._triggerLoad(200, { status: 'success', file: {} });
+    mockXhr._triggerError();
+
+    expect(opts.onComplete).not.toHaveBeenCalled();
+    expect(mockXhr.abort).toHaveBeenCalled();
   });
 });

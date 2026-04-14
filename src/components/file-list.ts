@@ -56,7 +56,7 @@ export class SfxFileList extends LitElement {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(var(--sfx-up-grid-min, 200px), 1fr));
       gap: 12px;
-      padding: 0 var(--sfx-grid-pad-r, 8px) 16px var(--sfx-grid-pad-l, 16px);
+      padding: 4px var(--sfx-grid-pad-r, 8px) 16px var(--sfx-grid-pad-l, 16px);
     }
 
     /* Mobile: 2 cols at <=768, 1 col at <=440. Use viewport @media not
@@ -70,7 +70,7 @@ export class SfxFileList extends LitElement {
       .grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 10px;
-        padding: 0 12px 16px;
+        padding: 4px 12px 16px;
       }
     }
 
