@@ -204,12 +204,12 @@ function freshUrlOpts() {
 }
 
 describe('xhrUploadUrl', () => {
-  it('opens POST to /v4/files/upload_url', () => {
+  it('opens POST to /v4/files with folder query string', () => {
     xhrUploadUrl(makeUploadFile({ remoteUrl: 'https://example.com/img.jpg' }), freshUrlOpts());
 
     expect(mockXhr.open).toHaveBeenCalledWith(
       'POST',
-      'https://api.filerobot.com/test/v4/files/upload_url',
+      'https://api.filerobot.com/test/v4/files?folder=%2Fuploads',
     );
   });
 
@@ -218,14 +218,13 @@ describe('xhrUploadUrl', () => {
     expect(mockXhr.setRequestHeader).toHaveBeenCalledWith('Content-Type', 'application/json');
   });
 
-  it('sends JSON payload with files_urls and dir', () => {
+  it('sends JSON payload with files_urls', () => {
     const file = makeUploadFile({ remoteUrl: 'https://example.com/img.jpg', name: 'img.jpg' });
     xhrUploadUrl(file, freshUrlOpts());
 
     const sent = JSON.parse(mockXhr.send.mock.calls[0][0]);
     expect(sent).toEqual({
       files_urls: [{ url: 'https://example.com/img.jpg', name: 'img.jpg' }],
-      dir: '/uploads',
     });
   });
 

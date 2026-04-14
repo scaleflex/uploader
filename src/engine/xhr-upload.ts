@@ -106,7 +106,9 @@ export function xhrUploadFile(
 }
 
 /**
- * Upload a remote URL to Scaleflex /v4/files/upload_url.
+ * Upload a remote URL to Scaleflex /v4/files (with `?folder=` query string,
+ * same endpoint as direct file upload — server distinguishes by Content-Type
+ * and `files_urls` body shape).
  */
 export function xhrUploadUrl(
   uploadFile: UploadFile,
@@ -116,7 +118,7 @@ export function xhrUploadUrl(
   let aborted = false;
 
   const base = opts.apiBase.replace(/\/+$/, '');
-  const url = `${base}/v4/files/upload_url`;
+  const url = `${base}/v4/files?folder=${encodeURIComponent(opts.folder)}`;
 
   xhr.open('POST', url);
   for (const [key, value] of Object.entries(opts.authHeaders)) {
@@ -161,7 +163,6 @@ export function xhrUploadUrl(
 
   const payload = {
     files_urls: [{ url: uploadFile.remoteUrl, name: uploadFile.name }],
-    dir: opts.folder,
   };
 
   xhr.timeout = 60_000;
