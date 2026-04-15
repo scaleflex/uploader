@@ -1,6 +1,6 @@
 {
   "name": "@scaleflex/uploader",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Framework-agnostic file upload widget for Scaleflex VXP",
   "type": "module",
   "main": "dist/index.cjs",
