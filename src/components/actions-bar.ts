@@ -1,5 +1,6 @@
 import { LitElement, html, css, nothing } from "lit";
 import { property } from "lit/decorators.js";
+import { cspStyle } from "../utils/csp-style";
 import { buttonStyles, focusStyles } from "./shared-styles";
 
 export type UploadButtonState = "idle" | "uploading" | "done";
@@ -295,7 +296,7 @@ export class SfxActionsBar extends LitElement {
               >
                 <div
                   class="progress-fill"
-                  style="width:${this.uploadProgress}%"
+                  ${cspStyle({ width: `${this.uploadProgress}%` })}
                 ></div>
               </div>
               <span class="progress-label"

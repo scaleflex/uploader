@@ -1,6 +1,8 @@
 import { LitElement, html, css, nothing } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
+import { cspStyle } from '../utils/csp-style';
+import { brandIcon } from '../utils/brand-icon';
 import type { ProviderId, CompanionItem, RemoteFileInfo } from '../connectors/connector.types';
 import {
   getAuthUrl,
@@ -945,7 +947,7 @@ export class SfxProviderBrowser extends LitElement {
         </button>
         <div class="header-brand">
           ${def?.brandHtml
-            ? html`<div class="header-logo">${unsafeHTML(def.brandHtml)}</div>`
+            ? html`<div class="header-logo">${brandIcon(def)}</div>`
             : nothing}
 
           <div class="header-title-group">
@@ -971,7 +973,7 @@ export class SfxProviderBrowser extends LitElement {
           <div class="auth-ring">
             <div class="auth-logo">
               ${def?.brandHtml
-                ? html`<span style="display:flex;align-items:center;justify-content:center;transform:scale(2.2)">${unsafeHTML(def.brandHtml)}</span>`
+                ? html`<span ${cspStyle({ display: 'flex', 'align-items': 'center', 'justify-content': 'center', transform: 'scale(2.2)' })}>${brandIcon(def)}</span>`
                 : html`<svg viewBox="0 0 24 24" fill="none" stroke="var(--sfx-up-primary, #2563eb)" stroke-width="1.5"><path d="M12 2a5 5 0 015 5v3h1a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2v-8a2 2 0 012-2h1V7a5 5 0 015-5zm3 8H9v-3a3 3 0 016 0v3z" fill="var(--sfx-up-primary, #2563eb)"/></svg>`}
             </div>
           </div>

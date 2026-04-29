@@ -3,6 +3,7 @@ import { property, state, query } from "lit/decorators.js";
 import { unsafeSVG } from "lit/directives/unsafe-svg.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import { cspStyle } from "../utils/csp-style";
+import { brandIcon } from "../utils/brand-icon";
 import { svg as svgTag } from "lit";
 import type { SourceDef } from "./source-pills";
 import { getPortalTarget } from "../utils/portal-target";
@@ -460,13 +461,13 @@ export class SfxDropZone extends LitElement {
     }
 
     /* Google Drive has transparent background — show SVG at full card-ico size */
-    .src-card .brand-ico[style*="transparent"] {
+    .src-card .brand-ico--transparent {
       background: none !important;
       width: auto;
       height: auto;
     }
 
-    .src-card .brand-ico[style*="transparent"] svg {
+    .src-card .brand-ico--transparent svg {
       width: 28px;
       height: 28px;
     }
@@ -1100,11 +1101,11 @@ export class SfxDropZone extends LitElement {
               >
                 <div class="sfx-more-item-ico">
                   ${s.brandHtml
-                    ? unsafeHTML(s.brandHtml)
+                    ? brandIcon(s)
                     : s.iconColor
                     ? html`<svg
                         viewBox="0 0 24 24"
-                        style="color:${s.iconColor}"
+                        ${cspStyle({ color: s.iconColor })}
                       >
                         ${unsafeSVG(s.icon)}
                       </svg>`
@@ -1284,7 +1285,7 @@ export class SfxDropZone extends LitElement {
         }}
       >
         ${s.brandHtml
-          ? unsafeHTML(s.brandHtml)
+          ? brandIcon(s)
           : html`<span
               class="pill-ico"
               ${cspStyle(s.iconColor ? { color: s.iconColor } : null)}
@@ -1309,7 +1310,7 @@ export class SfxDropZone extends LitElement {
         }}
       >
         ${s.brandHtml
-          ? html`<span class="card-ico">${unsafeHTML(s.brandHtml)}</span>`
+          ? html`<span class="card-ico">${brandIcon(s)}</span>`
           : html`<span
               class="card-ico"
               ${cspStyle(s.iconColor ? { color: s.iconColor } : null)}
@@ -1448,7 +1449,7 @@ export class SfxDropZone extends LitElement {
                       }}
                     >
                       ${s.brandHtml
-                        ? unsafeHTML(s.brandHtml)
+                        ? brandIcon(s)
                         : svgTag`<svg viewBox="0 0 24 24" class=${
                             s.fillIcon ? "fill-icon" : ""
                           }>${unsafeSVG(s.icon)}</svg>`}

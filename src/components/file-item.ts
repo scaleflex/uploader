@@ -1,5 +1,6 @@
 import { LitElement, html, css, nothing } from 'lit';
 import { property, state } from 'lit/decorators.js';
+import { cspStyle } from '../utils/csp-style';
 import type { UploadFile } from '../store/store.types';
 import { formatFileSize, getFileCategory, getFileExtension, getFileTypeIconUrl, getDefaultFileTypeIconUrl } from '../utils/file-utils';
 
@@ -761,7 +762,7 @@ export class SfxFileItem extends LitElement {
           ${!isReview && (f.status === 'uploading' || f.status === 'paused')
             ? html`
                 <div class="progress">
-                  <div class="progress-fill" style="transform:scaleX(${Math.min(f.progress, 100) / 100})"></div>
+                  <div class="progress-fill" ${cspStyle({ transform: `scaleX(${Math.min(f.progress, 100) / 100})` })}></div>
                 </div>
               `
             : nothing}

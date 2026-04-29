@@ -9,7 +9,9 @@ export interface SourceDef {
   icon: string;        // inner SVG content (without outer <svg> tag)
   fillIcon?: boolean;  // true for brand icons that use fill instead of stroke
   iconColor?: string;  // CSS color for the icon (e.g. '#2563eb')
-  /** Complete HTML for brand icons that need custom rendering (multi-color SVGs, colored containers). When set, used instead of wrapping `icon` in an SVG tag. */
+  /** Inner HTML content for brand icons (SVG or text). Rendered inside a `.brand-ico` span. When set, used instead of wrapping `icon` in an SVG tag. */
   brandHtml?: string;
+  /** CSSOM styles applied to the `.brand-ico` wrapper span via cspStyle (CSP-safe). Built-in providers always set this. */
+  brandStyle?: Record<string, string>;
   onActivate?: (uploader: UploaderHandle) => void;  // custom click handler for external integrations
 }
