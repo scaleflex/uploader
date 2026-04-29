@@ -13,6 +13,7 @@ const toKebab = (prop: string) =>
  */
 class CspStyleDirective extends Directive {
   private _appliedProps = new Set<string>();
+  private _lastStyles: Record<string, string | null | undefined> | null | undefined;
 
   constructor(partInfo: PartInfo) {
     super(partInfo);
@@ -27,6 +28,8 @@ class CspStyleDirective extends Directive {
   }
 
   override update(part: ElementPart, [styles]: [Record<string, string | null | undefined> | null | undefined]) {
+    if (styles === this._lastStyles) return noChange;
+    this._lastStyles = styles;
     const { style } = part.element as HTMLElement;
     const map = styles ?? {};
 

@@ -4001,7 +4001,7 @@ export class SfxUploader extends LitElement {
           complete${this._lastEta > 0 ? html` · ~${formatEta(this._lastEta)} left` : nothing}
         </div>
         <div class="upload-overlay-bar">
-          <div class="upload-overlay-bar-fill" style="width:${pct}%"></div>
+          <div class="upload-overlay-bar-fill" ${cspStyle({ width: `${pct}%` })}></div>
         </div>
         <div class="upload-overlay-actions">
           <button
@@ -4290,7 +4290,7 @@ export class SfxUploader extends LitElement {
                     : "error"
                   : "done"
                 : ""}"
-              style="width:${isDone ? 100 : pct}%"
+              ${cspStyle({ width: `${isDone ? 100 : pct}%` })}
             ></div>
           </div>
         </div>
@@ -4462,7 +4462,7 @@ export class SfxUploader extends LitElement {
     return html`
       <div class="preview-topbar"></div>
       <div class="preview-layout">
-        <div class="file-grid-side" style="flex:${this._splitPct}">
+        <div class="file-grid-side" ${cspStyle({ flex: String(this._splitPct) })}>
           ${this.config?.mode === "inline" && this.config?.inlineHeader
             ? this._renderInlineHeader(this.config.inlineHeader)
             : nothing}
@@ -4488,7 +4488,7 @@ export class SfxUploader extends LitElement {
           @pointerup=${this._onSplitPointerUp}
           @lostpointercapture=${this._onSplitPointerUp}
         ></div>
-        <div class="preview-panel" style="flex:${100 - this._splitPct}">
+        <div class="preview-panel" ${cspStyle({ flex: String(100 - this._splitPct) })}>
           <div class="preview-panel-header">
             <button
               class="preview-back-btn"

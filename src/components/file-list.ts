@@ -3,6 +3,7 @@ import { property, state } from 'lit/decorators.js';
 import { unsafeSVG } from 'lit/directives/unsafe-svg.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { cspStyle } from '../utils/csp-style';
+import { brandIcon } from '../utils/brand-icon';
 import type { UploadFile } from '../store/store.types';
 import type { SourceDef } from '../types/source.types';
 import { getPortalTarget } from '../utils/portal-target';
@@ -523,7 +524,7 @@ export class SfxFileList extends LitElement {
           >
             <span class="sfx-tile-dropdown-ico" ${cspStyle(s.iconColor && !s.brandHtml ? { color: s.iconColor } : null)}>
               ${s.brandHtml
-                ? unsafeHTML(s.brandHtml)
+                ? brandIcon(s)
                 : svgTag`<svg viewBox="0 0 24 24" class=${s.fillIcon ? 'fill-icon' : ''}>${unsafeSVG(s.icon)}</svg>`}
             </span>
             ${s.label}
@@ -630,12 +631,12 @@ export class SfxFileList extends LitElement {
               ${visibleSources.map((s) => html`
                 <button
                   class="drop-tile-src"
-                  ${cspStyle(s.iconColor && !s.brandHtml ? { color: s.iconColor } : {})}
+                  ${cspStyle(s.iconColor && !s.brandHtml ? { color: s.iconColor } : null)}
                   title=${s.label}
                   @click=${(e: Event) => this._onSourceClick(e, s)}
                 >
                   ${s.brandHtml
-                    ? unsafeHTML(s.brandHtml)
+                    ? brandIcon(s)
                     : svgTag`<svg viewBox="0 0 24 24" class=${s.fillIcon ? 'fill-icon' : ''}>${unsafeSVG(s.icon)}</svg>`}
                 </button>
               `)}
@@ -657,7 +658,7 @@ export class SfxFileList extends LitElement {
       <div class="grid">
         ${this.showDropTile && this.mode !== 'review' ? this._renderDropTile() : nothing}
         ${this.files.map(
-          (f, i) => html`<sfx-file-item .file=${f} .mode=${this.mode} .getLocateUrl=${this.getLocateUrl} .showLocateButton=${this.showLocateButton} .showCopyCdnButton=${this.showCopyCdnButton} style="--tile-index:${i}"></sfx-file-item>`,
+          (f, i) => html`<sfx-file-item .file=${f} .mode=${this.mode} .getLocateUrl=${this.getLocateUrl} .showLocateButton=${this.showLocateButton} .showCopyCdnButton=${this.showCopyCdnButton} ${cspStyle({ '--tile-index': String(i) })}></sfx-file-item>`,
         )}
       </div>
     `;

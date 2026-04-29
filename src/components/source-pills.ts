@@ -2,6 +2,7 @@ import { LitElement, html, css } from 'lit';
 import { property } from 'lit/decorators.js';
 import { unsafeSVG } from 'lit/directives/unsafe-svg.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
+import { brandIcon } from '../utils/brand-icon';
 import { svg as svgTag } from 'lit';
 
 export type { SourceDef, UploaderHandle } from '../types/source.types';
@@ -112,7 +113,7 @@ export class SfxSourcePills extends LitElement {
         (s) => html`
           <button @click=${() => this._handleClick(s)}>
             ${s.brandHtml
-              ? unsafeHTML(s.brandHtml)
+              ? brandIcon(s)
               : svgTag`<svg viewBox="0 0 24 24" class=${s.fillIcon ? 'fill-icon' : ''}>${unsafeSVG(s.icon)}</svg>`}
             ${s.label}
           </button>

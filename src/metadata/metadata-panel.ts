@@ -1,5 +1,6 @@
 import { LitElement, html, css, nothing } from 'lit';
 import { property, state } from 'lit/decorators.js';
+import { cspStyle } from '../utils/csp-style';
 import type { MetadataSchema, MetadataConfig, MetadataField } from './schema/schema.types';
 import type { UploadFile } from '../store/store.types';
 import { isAssetHasMetadataValue } from './schema/required-fields';
@@ -205,7 +206,7 @@ export class SfxMetadataPanel extends LitElement {
       <div class="progress-bar">
         <div class="progress-label">${filled}/${total} required fields filled</div>
         <div class="progress-track">
-          <div class="progress-fill" style="width: ${pct}%"></div>
+          <div class="progress-fill" ${cspStyle({ width: `${pct}%` })}></div>
         </div>
       </div>
     `;
