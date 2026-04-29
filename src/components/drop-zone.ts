@@ -2,6 +2,7 @@ import { LitElement, html, css, nothing, render as litRender } from "lit";
 import { property, state, query } from "lit/decorators.js";
 import { unsafeSVG } from "lit/directives/unsafe-svg.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
+import { cspStyle } from "../utils/csp-style";
 import { svg as svgTag } from "lit";
 import type { SourceDef } from "./source-pills";
 import { getPortalTarget } from "../utils/portal-target";
@@ -1286,7 +1287,7 @@ export class SfxDropZone extends LitElement {
           ? unsafeHTML(s.brandHtml)
           : html`<span
               class="pill-ico"
-              style=${s.iconColor ? `color:${s.iconColor}` : ""}
+              ${cspStyle(s.iconColor ? { color: s.iconColor } : null)}
             >
               ${svgTag`<svg viewBox="0 0 24 24" class=${
                 s.fillIcon ? "fill-icon" : ""
@@ -1311,7 +1312,7 @@ export class SfxDropZone extends LitElement {
           ? html`<span class="card-ico">${unsafeHTML(s.brandHtml)}</span>`
           : html`<span
               class="card-ico"
-              style=${s.iconColor ? `color:${s.iconColor}` : ""}
+              ${cspStyle(s.iconColor ? { color: s.iconColor } : null)}
             >
               ${svgTag`<svg viewBox="0 0 24 24" class=${
                 s.fillIcon ? "fill-icon" : ""
@@ -1438,9 +1439,7 @@ export class SfxDropZone extends LitElement {
                   (s) => html`
                     <button
                       class="src-ico"
-                      style=${s.iconColor && !s.brandHtml
-                        ? `color:${s.iconColor}`
-                        : ""}
+                      ${cspStyle(s.iconColor && !s.brandHtml ? { color: s.iconColor } : null)}
                       data-tip=${s.label}
                       aria-label=${s.label}
                       @click=${(e: MouseEvent) => {

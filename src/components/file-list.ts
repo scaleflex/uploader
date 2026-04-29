@@ -2,6 +2,7 @@ import { LitElement, html, css, nothing, svg as svgTag, render as litRender } fr
 import { property, state } from 'lit/decorators.js';
 import { unsafeSVG } from 'lit/directives/unsafe-svg.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
+import { cspStyle } from '../utils/csp-style';
 import type { UploadFile } from '../store/store.types';
 import type { SourceDef } from '../types/source.types';
 import { getPortalTarget } from '../utils/portal-target';
@@ -520,7 +521,7 @@ export class SfxFileList extends LitElement {
             class="sfx-tile-dropdown-item"
             @click=${(e: Event) => this._onMoreSourceClick(e, s)}
           >
-            <span class="sfx-tile-dropdown-ico" style=${s.iconColor && !s.brandHtml ? `color:${s.iconColor}` : ''}>
+            <span class="sfx-tile-dropdown-ico" ${cspStyle(s.iconColor && !s.brandHtml ? { color: s.iconColor } : null)}>
               ${s.brandHtml
                 ? unsafeHTML(s.brandHtml)
                 : svgTag`<svg viewBox="0 0 24 24" class=${s.fillIcon ? 'fill-icon' : ''}>${unsafeSVG(s.icon)}</svg>`}
@@ -629,7 +630,7 @@ export class SfxFileList extends LitElement {
               ${visibleSources.map((s) => html`
                 <button
                   class="drop-tile-src"
-                  style=${s.iconColor && !s.brandHtml ? `color:${s.iconColor}` : ''}
+                  ${cspStyle(s.iconColor && !s.brandHtml ? { color: s.iconColor } : {})}
                   title=${s.label}
                   @click=${(e: Event) => this._onSourceClick(e, s)}
                 >

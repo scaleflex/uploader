@@ -1,5 +1,6 @@
 import { LitElement, html, css, nothing, render as litRender } from "lit";
 import { property, state } from "lit/decorators.js";
+import { cspStyle } from "./utils/csp-style";
 import { createStore, Store } from "./store";
 import { addFile, removeFile } from "./store/helpers";
 import { StoreController } from "./controllers/store.controller";
@@ -3808,7 +3809,7 @@ export class SfxUploader extends LitElement {
       >
         ${this._fullscreenVideoFile
           ? html`<video class="fs-img" src=${this._getVideoBlobUrl(this._fullscreenVideoFile)} controls playsinline draggable="false" @click=${(e: Event) => e.stopPropagation()}></video>`
-          : html`<img class="fs-img" src=${this._fullscreenPreviewUrl} alt="" style=${this._fullscreenZoomed ? `transform: scale(2) translate(${this._fsPanX}px, ${this._fsPanY}px)` : ""} draggable="false" />`}
+          : html`<img class="fs-img" src=${this._fullscreenPreviewUrl} alt="" ${cspStyle(this._fullscreenZoomed ? { transform: `scale(2) translate(${this._fsPanX}px, ${this._fsPanY}px)` } : null)} draggable="false" />`}
       </div>
       <div class="fs-toolbar" @click=${(e: Event) => e.stopPropagation()}>
         <button class="fs-btn" @click=${this._onFsToggleZoom} title="${this._fullscreenZoomed ? "Zoom out" : "Zoom in"}">
@@ -4300,9 +4301,7 @@ export class SfxUploader extends LitElement {
               <div class="float-item">
                 <div
                   class="float-item-thumb"
-                  style=${f.previewUrl
-                    ? `background-image:url(${f.previewUrl});background-size:cover;background-position:center`
-                    : ""}
+                  ${cspStyle(f.previewUrl ? { 'background-image': `url(${f.previewUrl})`, 'background-size': 'cover', 'background-position': 'center' } : null)}
                 >
                   ${!f.previewUrl
                     ? html`<svg
