@@ -22,7 +22,7 @@
   <a href="https://scaleflex.github.io/uploader/">Live Demo</a> |
   <a href="https://scaleflex.github.io/uploader/#/docs/getting-started">Documentation</a> |
   <a href="https://scaleflex.github.io/uploader/#/examples/basic">Examples</a> |
-  <a href="https://cdn.scaleflex.com/uploader/1.0.8/sfx-uploader.min.js">CDN</a> |
+  <a href="https://cdn.scaleflex.com/uploader/1.0.9/sfx-uploader.min.js">CDN</a> |
   <a href="https://www.npmjs.com/package/@scaleflex/uploader">npm</a> |
   <a href="https://www.scaleflex.com">Scaleflex</a>
 </p>
@@ -51,11 +51,11 @@ npm install @scaleflex/uploader
 Or use the CDN for a no-bundler setup:
 
 ```
-https://cdn.scaleflex.com/uploader/1.0.8/sfx-uploader.min.js
+https://cdn.scaleflex.com/uploader/1.0.9/sfx-uploader.min.js
 ```
 
 ```html
-<script src="https://cdn.scaleflex.com/uploader/1.0.8/sfx-uploader.min.js"></script>
+<script src="https://cdn.scaleflex.com/uploader/1.0.9/sfx-uploader.min.js"></script>
 ```
 
 ## Quick start
@@ -64,17 +64,17 @@ https://cdn.scaleflex.com/uploader/1.0.8/sfx-uploader.min.js
 
 ```html
 <script type="module">
-  import '@scaleflex/uploader/define';
+    import '@scaleflex/uploader/define';
 
-  const uploader = document.querySelector('sfx-uploader');
-  uploader.config = {
-    auth: {
-      mode: 'security-template',
-      container: 'YOUR_CONTAINER',
-      securityTemplateId: 'SECU_...',
-    },
-  };
-  uploader.open();
+    const uploader = document.querySelector('sfx-uploader');
+    uploader.config = {
+        auth: {
+            mode: 'security-template',
+            container: 'YOUR_CONTAINER',
+            securityTemplateId: 'SECU_...',
+        },
+    };
+    uploader.open();
 </script>
 
 <sfx-uploader></sfx-uploader>
