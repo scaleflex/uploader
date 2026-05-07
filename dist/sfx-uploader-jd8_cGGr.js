@@ -1,8 +1,32 @@
-import { LitElement as Z, css as G, svg as ue, html as f, render as ge, nothing as C } from "lit";
-import { property as j, state as T, query as Sr } from "lit/decorators.js";
-import { unsafeSVG as ae } from "lit/directives/unsafe-svg.js";
-import { unsafeHTML as he } from "lit/directives/unsafe-html.js";
-class Qr {
+import { noChange as dt, html as p, LitElement as Q, css as X, svg as he, render as ve, nothing as S } from "lit";
+import { property as D, state as j, query as Pr } from "lit/decorators.js";
+import { directive as oi, Directive as ni, PartType as si } from "lit/directive.js";
+import { unsafeSVG as le } from "lit/directives/unsafe-svg.js";
+import { unsafeHTML as Kt } from "lit/directives/unsafe-html.js";
+import { classMap as ai } from "lit/directives/class-map.js";
+const ct = (i) => i.includes("-") ? i : i.replace(/[A-Z]/g, (e) => `-${e.toLowerCase()}`);
+class li extends ni {
+  constructor(e) {
+    if (super(e), this._appliedProps = /* @__PURE__ */ new Set(), e.type !== si.ELEMENT)
+      throw new Error("cspStyle must be used as an element directive: <el ${cspStyle({...})}>");
+  }
+  // Element directives must implement render(); all real work is in update().
+  render(e) {
+    return dt;
+  }
+  update(e, [t]) {
+    if (t === this._lastStyles) return dt;
+    this._lastStyles = t;
+    const { style: r } = e.element, o = t ?? {};
+    for (const n of this._appliedProps)
+      (!(n in o) || o[n] == null || o[n] === "") && (r.removeProperty(ct(n)), this._appliedProps.delete(n));
+    for (const [n, s] of Object.entries(o))
+      s != null && s !== "" ? (r.setProperty(ct(n), s), this._appliedProps.add(n)) : this._appliedProps.has(n) && (r.removeProperty(ct(n)), this._appliedProps.delete(n));
+    return dt;
+  }
+}
+const V = oi(li);
+class di {
   constructor(e) {
     this.listeners = /* @__PURE__ */ new Set(), this._notifying = !1, this._pendingState = null, this.state = e;
   }
@@ -39,18 +63,18 @@ function q(i, e, t) {
   const n = new Map(r);
   n.set(e, { ...o, ...t }), i.setState({ files: n });
 }
-function we(i, e) {
+function _e(i, e) {
   const t = new Map(i.getState().files);
   t.set(e.id, e), i.setState({ files: t });
 }
-function Wt(i, e) {
+function Zt(i, e) {
   const t = i.getState().files;
   if (!t.has(e)) return;
   const r = new Map(t);
   r.delete(e), i.setState({ files: r });
 }
-function ei() {
-  return new Qr({
+function ci() {
+  return new di({
     files: /* @__PURE__ */ new Map(),
     queueConfig: {
       concurrency: 3,
@@ -79,7 +103,7 @@ function ei() {
     isUploading: !1
   });
 }
-class ti {
+class pi {
   constructor(e, t) {
     this.host = e, this.store = t, e.addController(this);
   }
@@ -99,79 +123,86 @@ class ti {
     (e = this.unsubscribe) == null || e.call(this);
   }
 }
-function ri(i, e) {
+function Or(i, e, t) {
+  let o = `${i.replace(/\/+$/, "")}/v4/files?folder=${encodeURIComponent(e)}`;
+  if (t)
+    for (const [n, s] of Object.entries(t))
+      s != null && (o += `&${encodeURIComponent(n)}=${encodeURIComponent(s)}`);
+  return o;
+}
+function ui(i, e) {
   const t = new XMLHttpRequest();
   let r = !1;
-  const n = `${e.apiBase.replace(/\/+$/, "")}/v4/files?folder=${encodeURIComponent(e.folder)}`;
-  t.open("POST", n);
-  for (const [a, l] of Object.entries(e.authHeaders))
-    t.setRequestHeader(a, l);
-  t.upload.addEventListener("progress", (a) => {
-    a.lengthComputable && !r && e.onProgress(a.loaded, a.total);
+  const o = Or(e.apiBase, e.folder, e.extraParams);
+  t.open("POST", o);
+  for (const [s, a] of Object.entries(e.authHeaders))
+    t.setRequestHeader(s, a);
+  t.upload.addEventListener("progress", (s) => {
+    s.lengthComputable && !r && e.onProgress(s.loaded, s.total);
   }), t.addEventListener("load", () => {
     if (r) return;
-    let a;
+    let s;
     try {
-      a = JSON.parse(t.responseText);
+      s = JSON.parse(t.responseText);
     } catch {
       e.onError(new Error(`Invalid JSON response (HTTP ${t.status})`));
       return;
     }
-    t.status >= 200 && t.status < 300 && a.status === "success" ? e.onComplete(a) : e.onError(new Error(a.hint || a.msg || `Upload failed (HTTP ${t.status})`));
+    t.status >= 200 && t.status < 300 && s.status === "success" ? e.onComplete(s) : e.onError(new Error(s.hint || s.msg || `Upload failed (HTTP ${t.status})`));
   }), t.addEventListener("error", () => {
     r || e.onError(new Error("Network error — check your connection"));
   }), t.addEventListener("timeout", () => {
     r || e.onError(new Error("Upload timed out"));
   });
-  const s = new FormData();
+  const n = new FormData();
   if (i.file) {
-    const a = {
+    const s = {
       name: i.name,
       type: i.type
     };
-    s.append("info[files[]]", JSON.stringify(a)), Object.keys(i.meta).length > 0 && s.append("meta[files[]]", JSON.stringify(i.meta)), i.tags.length > 0 && s.append("tags[files[]]", JSON.stringify(i.tags)), s.append("files[]", i.file, i.name);
+    n.append("info[files[]]", JSON.stringify(s)), Object.keys(i.meta).length > 0 && n.append("meta[files[]]", JSON.stringify(i.meta)), i.tags.length > 0 && n.append("tags[files[]]", JSON.stringify(i.tags)), n.append("files[]", i.file, i.name);
   }
-  return t.timeout = 6e4, t.send(s), {
+  return t.timeout = 6e4, t.send(n), {
     abort() {
       r = !0, t.abort();
     }
   };
 }
-function ii(i, e) {
+function fi(i, e) {
+  if (!i.remoteUrl)
+    return e.onError(new Error("Remote URL is required for URL upload")), { abort() {
+    } };
   const t = new XMLHttpRequest();
   let r = !1;
-  const n = `${e.apiBase.replace(/\/+$/, "")}/v4/files/upload_url`;
-  t.open("POST", n);
-  for (const [a, l] of Object.entries(e.authHeaders))
-    t.setRequestHeader(a, l);
-  if (t.setRequestHeader("Content-Type", "application/json"), t.addEventListener("load", () => {
+  const o = Or(e.apiBase, e.folder, e.extraParams);
+  t.open("POST", o);
+  for (const [s, a] of Object.entries(e.authHeaders))
+    t.setRequestHeader(s, a);
+  t.setRequestHeader("Content-Type", "application/json"), t.addEventListener("load", () => {
     if (r) return;
-    let a;
+    let s;
     try {
-      a = JSON.parse(t.responseText);
+      s = JSON.parse(t.responseText);
     } catch {
       e.onError(new Error(`Invalid JSON response (HTTP ${t.status})`));
       return;
     }
-    t.status >= 200 && t.status < 300 && a.status === "success" ? e.onComplete(a) : e.onError(new Error(a.hint || a.msg || `Upload failed (HTTP ${t.status})`));
+    t.status >= 200 && t.status < 300 && s.status === "success" ? e.onComplete(s) : e.onError(new Error(s.hint || s.msg || `Upload failed (HTTP ${t.status})`));
   }), t.addEventListener("error", () => {
     r || e.onError(new Error("Network error — check your connection"));
   }), t.addEventListener("timeout", () => {
     r || e.onError(new Error("Upload timed out"));
-  }), !i.remoteUrl)
-    return e.onError(new Error("Remote URL is required for URL upload")), { abort() {
-    } };
-  const s = {
-    files_urls: [{ url: i.remoteUrl, name: i.name }],
-    dir: e.folder
+  });
+  const n = {
+    files_urls: [{ url: i.remoteUrl, name: i.name }]
   };
-  return t.timeout = 6e4, t.send(JSON.stringify(s)), {
+  return t.timeout = 6e4, t.send(JSON.stringify(n)), {
     abort() {
       r = !0, t.abort();
     }
   };
 }
-function st(i) {
+function at(i) {
   return {
     Accept: "application/json",
     "Content-Type": "application/json",
@@ -181,7 +212,7 @@ function st(i) {
 function ze(i) {
   return i.replace(/\/+$/, "");
 }
-const oi = {
+const hi = {
   "google-drive": "drive",
   dropbox: "dropbox",
   onedrive: "onedrive",
@@ -190,43 +221,43 @@ const oi = {
   facebook: "facebook",
   unsplash: "unsplash"
 };
-function We(i) {
-  return oi[i] ?? i;
+function Ge(i) {
+  return hi[i] ?? i;
 }
-function Bn(i, e) {
-  const t = ze(i), r = btoa(JSON.stringify({ origin: window.location.origin })), o = We(e);
+function Zn(i, e) {
+  const t = ze(i), r = btoa(JSON.stringify({ origin: window.location.origin })), o = Ge(e);
   return `${t}/${o}/connect?state=${encodeURIComponent(r)}`;
 }
-async function In(i, e, t, r = "") {
-  const o = ze(i), n = r ? `/${r}` : "", s = We(e), a = await fetch(`${o}/${s}/list${n}`, {
+async function Jn(i, e, t, r = "") {
+  const o = ze(i), n = r ? `/${r}` : "", s = Ge(e), a = await fetch(`${o}/${s}/list${n}`, {
     method: "GET",
-    headers: st(t),
+    headers: at(t),
     credentials: "same-origin"
   });
   if (a.status === 401)
-    throw new Ut();
+    throw new Ot();
   if (!a.ok) {
     const l = await a.json().catch(() => null);
     throw new Error((l == null ? void 0 : l.message) || `Companion list failed (HTTP ${a.status})`);
   }
   return a.json();
 }
-async function Mn(i, e, t) {
+async function Qn(i, e, t) {
   const r = ze(i), o = await fetch(`${r}/${t}`, {
     method: "GET",
-    headers: st(e),
+    headers: at(e),
     credentials: "same-origin"
   });
   if (o.status === 401)
-    throw new Ut();
+    throw new Ot();
   if (!o.ok) {
     const n = await o.json().catch(() => null);
     throw new Error((n == null ? void 0 : n.message) || `Companion list failed (HTTP ${o.status})`);
   }
   return o.json();
 }
-async function Hn(i, e, t, r) {
-  const o = ze(i), n = We(e), s = r ? `q=${encodeURIComponent(t)}&${r}` : `q=${encodeURIComponent(t)}`, a = await fetch(`${o}/search/${n}/list?${s}`, {
+async function es(i, e, t, r) {
+  const o = ze(i), n = Ge(e), s = r ? `q=${encodeURIComponent(t)}&${r}` : `q=${encodeURIComponent(t)}`, a = await fetch(`${o}/search/${n}/list?${s}`, {
     method: "GET",
     headers: {
       Accept: "application/json",
@@ -240,10 +271,10 @@ async function Hn(i, e, t, r) {
   }
   return a.json();
 }
-async function ni(i, e, t, r, o, n = !1) {
-  const s = ze(i), a = We(e), l = n ? `${s}/search/${a}/get/${r}` : `${s}/${a}/get/${r}`, p = n ? { Accept: "application/json", "Content-Type": "application/json" } : st(t), g = await fetch(l, {
+async function gi(i, e, t, r, o, n = !1) {
+  const s = ze(i), a = Ge(e), l = n ? `${s}/search/${a}/get/${r}` : `${s}/${a}/get/${r}`, u = n ? { Accept: "application/json", "Content-Type": "application/json" } : at(t), h = await fetch(l, {
     method: "POST",
-    headers: p,
+    headers: u,
     credentials: "same-origin",
     body: JSON.stringify({
       ...o,
@@ -252,72 +283,75 @@ async function ni(i, e, t, r, o, n = !1) {
       fieldname: o.fieldname ?? "files[]"
     })
   });
-  if (g.status === 401)
-    throw new Ut();
-  if (!g.ok) {
-    const w = await g.json().catch(() => null);
-    throw new Error((w == null ? void 0 : w.message) || `Companion upload failed (HTTP ${g.status})`);
+  if (h.status === 401)
+    throw new Ot();
+  if (!h.ok) {
+    const k = await h.json().catch(() => null);
+    throw new Error((k == null ? void 0 : k.message) || `Companion upload failed (HTTP ${h.status})`);
   }
-  return g.json();
+  return h.json();
 }
-async function qn(i, e, t) {
-  const r = ze(i), o = We(e), n = await fetch(`${r}/${o}/logout`, {
+async function ts(i, e, t) {
+  const r = ze(i), o = Ge(e), n = await fetch(`${r}/${o}/logout`, {
     method: "GET",
-    headers: st(t),
+    headers: at(t),
     credentials: "same-origin"
   });
   return n.ok ? n.json() : { ok: !1, revoked: !1 };
 }
-function si(i) {
+function vi(i) {
   var o;
   const t = ((o = /^(?:https?:\/\/|\/\/)?(?:[^@\n]+@)?(?:www\.)?([^\n]+)/i.exec(i)) == null ? void 0 : o[1]) ?? i;
   return `${/^https:\/\//i.test(i) ? "wss" : "ws"}://${t}`;
 }
-class Ut extends Error {
+class Ot extends Error {
   constructor() {
     super("Authentication expired"), this.name = "AuthExpiredError";
   }
 }
-function ai(i, e) {
+function xi(i, e) {
   const t = i.remoteInfo;
   if (!t)
     return e.onError(new Error("remoteInfo is required for companion upload")), { abort() {
     } };
-  let r = !1, o = null;
-  const s = `${e.apiBase.replace(/\/+$/, "")}/v4/files?folder=${encodeURIComponent(e.folder)}`, a = {};
+  let r = !1, o = null, s = `${e.apiBase.replace(/\/+$/, "")}/v4/files?folder=${encodeURIComponent(e.folder)}`;
+  if (e.extraParams)
+    for (const [u, h] of Object.entries(e.extraParams))
+      h != null && (s += `&${encodeURIComponent(u)}=${encodeURIComponent(h)}`);
+  const a = {};
   i.meta && Object.keys(i.meta).length > 0 && Object.assign(a, i.meta), i.tags && i.tags.length > 0 && (a.tags = i.tags);
   const l = !t.token;
-  return ni(t.companionUrl, t.provider, t.token, t.requestPath, {
+  return gi(t.companionUrl, t.provider, t.token, t.requestPath, {
     fileId: t.fileId,
     endpoint: s,
     headers: e.authHeaders,
     size: t.size,
     metadata: Object.keys(a).length > 0 ? a : void 0
-  }, l).then((p) => {
+  }, l).then((u) => {
     if (r) return;
-    const w = `${si(t.companionUrl)}/api/${p.token}`;
+    const k = `${vi(t.companionUrl)}/api/${u.token}`;
     try {
-      o = new WebSocket(w);
+      o = new WebSocket(k);
     } catch {
       e.onError(new Error("Failed to connect to upload progress channel"));
       return;
     }
-    o.onmessage = (P) => {
-      var R, z, k;
+    o.onmessage = ($) => {
+      var z, O, w;
       if (!r)
         try {
-          const E = JSON.parse(P.data);
-          switch (E.action) {
+          const P = JSON.parse($.data);
+          switch (P.action) {
             case "progress": {
-              const S = E.payload, v = S.bytesUploaded ?? 0, x = S.bytesTotal ?? (t.size || 1);
+              const C = P.payload, v = C.bytesUploaded ?? 0, x = C.bytesTotal ?? (t.size || 1);
               e.onProgress(v, x);
               break;
             }
             case "success": {
-              const S = E.payload;
-              if (o == null || o.close(), (R = S.response) != null && R.responseText)
+              const C = P.payload;
+              if (o == null || o.close(), (z = C.response) != null && z.responseText)
                 try {
-                  const v = JSON.parse(S.response.responseText);
+                  const v = JSON.parse(C.response.responseText);
                   if (v.status === "success") {
                     e.onComplete(v);
                     return;
@@ -331,11 +365,11 @@ function ai(i, e) {
             }
             case "error": {
               o == null || o.close();
-              const S = E.payload;
-              let v = ((z = S.error) == null ? void 0 : z.message) || "Upload failed";
-              if ((k = S.response) != null && k.responseText)
+              const C = P.payload;
+              let v = ((O = C.error) == null ? void 0 : O.message) || "Upload failed";
+              if ((w = C.response) != null && w.responseText)
                 try {
-                  const x = JSON.parse(S.response.responseText);
+                  const x = JSON.parse(C.response.responseText);
                   v = x.hint || x.msg || x.message || v;
                 } catch {
                 }
@@ -350,8 +384,8 @@ function ai(i, e) {
     }, o.onclose = () => {
       o = null;
     };
-  }).catch((p) => {
-    r || e.onError(p instanceof Error ? p : new Error(String(p)));
+  }).catch((u) => {
+    r || e.onError(u instanceof Error ? u : new Error(String(u)));
   }), {
     abort() {
       if (r = !0, o) {
@@ -364,45 +398,45 @@ function ai(i, e) {
     }
   };
 }
-function ft(i) {
+function gt(i) {
   "@babel/helpers - typeof";
-  return ft = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(e) {
+  return gt = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(e) {
     return typeof e;
   } : function(e) {
     return e && typeof Symbol == "function" && e.constructor === Symbol && e !== Symbol.prototype ? "symbol" : typeof e;
-  }, ft(i);
+  }, gt(i);
 }
-function li(i, e, t) {
+function mi(i, e, t) {
   return Object.defineProperty(i, "prototype", { writable: !1 }), i;
 }
-function di(i, e) {
+function bi(i, e) {
   if (!(i instanceof e))
     throw new TypeError("Cannot call a class as a function");
 }
-function ci(i, e, t) {
-  return e = Be(e), pi(i, Et() ? Reflect.construct(e, t || [], Be(i).constructor) : e.apply(i, t));
+function yi(i, e, t) {
+  return e = Ie(e), wi(i, zt() ? Reflect.construct(e, t || [], Ie(i).constructor) : e.apply(i, t));
 }
-function pi(i, e) {
-  if (e && (ft(e) === "object" || typeof e == "function"))
+function wi(i, e) {
+  if (e && (gt(e) === "object" || typeof e == "function"))
     return e;
   if (e !== void 0)
     throw new TypeError("Derived constructors may only return object or undefined");
-  return fi(i);
+  return _i(i);
 }
-function fi(i) {
+function _i(i) {
   if (i === void 0)
     throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
   return i;
 }
-function ui(i, e) {
+function ki(i, e) {
   if (typeof e != "function" && e !== null)
     throw new TypeError("Super expression must either be null or a function");
-  i.prototype = Object.create(e && e.prototype, { constructor: { value: i, writable: !0, configurable: !0 } }), Object.defineProperty(i, "prototype", { writable: !1 }), e && Ae(i, e);
+  i.prototype = Object.create(e && e.prototype, { constructor: { value: i, writable: !0, configurable: !0 } }), Object.defineProperty(i, "prototype", { writable: !1 }), e && Be(i, e);
 }
-function ut(i) {
+function vt(i) {
   var e = typeof Map == "function" ? /* @__PURE__ */ new Map() : void 0;
-  return ut = function(r) {
-    if (r === null || !gi(r)) return r;
+  return vt = function(r) {
+    if (r === null || !Si(r)) return r;
     if (typeof r != "function")
       throw new TypeError("Super expression must either be null or a function");
     if (typeof e < "u") {
@@ -410,96 +444,96 @@ function ut(i) {
       e.set(r, o);
     }
     function o() {
-      return hi(r, arguments, Be(this).constructor);
+      return Ci(r, arguments, Ie(this).constructor);
     }
-    return o.prototype = Object.create(r.prototype, { constructor: { value: o, enumerable: !1, writable: !0, configurable: !0 } }), Ae(o, r);
-  }, ut(i);
+    return o.prototype = Object.create(r.prototype, { constructor: { value: o, enumerable: !1, writable: !0, configurable: !0 } }), Be(o, r);
+  }, vt(i);
 }
-function hi(i, e, t) {
-  if (Et()) return Reflect.construct.apply(null, arguments);
+function Ci(i, e, t) {
+  if (zt()) return Reflect.construct.apply(null, arguments);
   var r = [null];
   r.push.apply(r, e);
   var o = new (i.bind.apply(i, r))();
-  return t && Ae(o, t.prototype), o;
+  return t && Be(o, t.prototype), o;
 }
-function Et() {
+function zt() {
   try {
     var i = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function() {
     }));
   } catch {
   }
-  return (Et = function() {
+  return (zt = function() {
     return !!i;
   })();
 }
-function gi(i) {
+function Si(i) {
   try {
     return Function.toString.call(i).indexOf("[native code]") !== -1;
   } catch {
     return typeof i == "function";
   }
 }
-function Ae(i, e) {
-  return Ae = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function(r, o) {
+function Be(i, e) {
+  return Be = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function(r, o) {
     return r.__proto__ = o, r;
-  }, Ae(i, e);
+  }, Be(i, e);
 }
-function Be(i) {
-  return Be = Object.setPrototypeOf ? Object.getPrototypeOf.bind() : function(t) {
+function Ie(i) {
+  return Ie = Object.setPrototypeOf ? Object.getPrototypeOf.bind() : function(t) {
     return t.__proto__ || Object.getPrototypeOf(t);
-  }, Be(i);
+  }, Ie(i);
 }
-var Te = /* @__PURE__ */ (function(i) {
+var je = /* @__PURE__ */ (function(i) {
   function e(t) {
     var r, o = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : null, n = arguments.length > 2 && arguments[2] !== void 0 ? arguments[2] : null, s = arguments.length > 3 && arguments[3] !== void 0 ? arguments[3] : null;
-    if (di(this, e), r = ci(this, e, [t]), r.originalRequest = n, r.originalResponse = s, r.causingError = o, o != null && (t += ", caused by ".concat(o.toString())), n != null) {
-      var a = n.getHeader("X-Request-ID") || "n/a", l = n.getMethod(), p = n.getURL(), g = s ? s.getStatus() : "n/a", w = s ? s.getBody() || "" : "n/a";
-      t += ", originated from request (method: ".concat(l, ", url: ").concat(p, ", response code: ").concat(g, ", response text: ").concat(w, ", request id: ").concat(a, ")");
+    if (bi(this, e), r = yi(this, e, [t]), r.originalRequest = n, r.originalResponse = s, r.causingError = o, o != null && (t += ", caused by ".concat(o.toString())), n != null) {
+      var a = n.getHeader("X-Request-ID") || "n/a", l = n.getMethod(), u = n.getURL(), h = s ? s.getStatus() : "n/a", k = s ? s.getBody() || "" : "n/a";
+      t += ", originated from request (method: ".concat(l, ", url: ").concat(u, ", response code: ").concat(h, ", response text: ").concat(k, ", request id: ").concat(a, ")");
     }
     return r.message = t, r;
   }
-  return ui(e, i), li(e);
-})(/* @__PURE__ */ ut(Error));
-function Ie(i) {
+  return ki(e, i), mi(e);
+})(/* @__PURE__ */ vt(Error));
+function Me(i) {
   "@babel/helpers - typeof";
-  return Ie = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(e) {
+  return Me = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(e) {
     return typeof e;
   } : function(e) {
     return e && typeof Symbol == "function" && e.constructor === Symbol && e !== Symbol.prototype ? "symbol" : typeof e;
-  }, Ie(i);
+  }, Me(i);
 }
-function vi(i, e) {
+function $i(i, e) {
   if (!(i instanceof e))
     throw new TypeError("Cannot call a class as a function");
 }
-function xi(i, e) {
+function Ui(i, e) {
   for (var t = 0; t < e.length; t++) {
     var r = e[t];
-    r.enumerable = r.enumerable || !1, r.configurable = !0, "value" in r && (r.writable = !0), Object.defineProperty(i, mi(r.key), r);
+    r.enumerable = r.enumerable || !1, r.configurable = !0, "value" in r && (r.writable = !0), Object.defineProperty(i, Pi(r.key), r);
   }
 }
-function bi(i, e, t) {
-  return e && xi(i.prototype, e), Object.defineProperty(i, "prototype", { writable: !1 }), i;
+function Ei(i, e, t) {
+  return e && Ui(i.prototype, e), Object.defineProperty(i, "prototype", { writable: !1 }), i;
 }
-function mi(i) {
-  var e = yi(i, "string");
-  return Ie(e) == "symbol" ? e : e + "";
+function Pi(i) {
+  var e = Oi(i, "string");
+  return Me(e) == "symbol" ? e : e + "";
 }
-function yi(i, e) {
-  if (Ie(i) != "object" || !i) return i;
+function Oi(i, e) {
+  if (Me(i) != "object" || !i) return i;
   var t = i[Symbol.toPrimitive];
   if (t !== void 0) {
     var r = t.call(i, e);
-    if (Ie(r) != "object") return r;
+    if (Me(r) != "object") return r;
     throw new TypeError("@@toPrimitive must return a primitive value.");
   }
   return String(i);
 }
-var wi = /* @__PURE__ */ (function() {
+var zi = /* @__PURE__ */ (function() {
   function i() {
-    vi(this, i);
+    $i(this, i);
   }
-  return bi(i, [{
+  return Ei(i, [{
     key: "listAllUploads",
     value: function() {
       return Promise.resolve([]);
@@ -521,24 +555,24 @@ var wi = /* @__PURE__ */ (function() {
     }
   }]);
 })();
-const $r = "3.7.8", _i = $r, Oe = typeof Buffer == "function", Gt = typeof TextDecoder == "function" ? new TextDecoder() : void 0, Xt = typeof TextEncoder == "function" ? new TextEncoder() : void 0, ki = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=", je = Array.prototype.slice.call(ki), Je = ((i) => {
+const zr = "3.7.8", Ri = zr, Re = typeof Buffer == "function", Jt = typeof TextDecoder == "function" ? new TextDecoder() : void 0, Qt = typeof TextEncoder == "function" ? new TextEncoder() : void 0, Ti = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=", Le = Array.prototype.slice.call(Ti), Qe = ((i) => {
   let e = {};
   return i.forEach((t, r) => e[t] = r), e;
-})(je), Ci = /^(?:[A-Za-z\d+\/]{4})*?(?:[A-Za-z\d+\/]{2}(?:==)?|[A-Za-z\d+\/]{3}=?)?$/, Y = String.fromCharCode.bind(String), Kt = typeof Uint8Array.from == "function" ? Uint8Array.from.bind(Uint8Array) : (i) => new Uint8Array(Array.prototype.slice.call(i, 0)), Ur = (i) => i.replace(/=/g, "").replace(/[+\/]/g, (e) => e == "+" ? "-" : "_"), Er = (i) => i.replace(/[^A-Za-z0-9\+\/]/g, ""), Pr = (i) => {
+})(Le), Di = /^(?:[A-Za-z\d+\/]{4})*?(?:[A-Za-z\d+\/]{2}(?:==)?|[A-Za-z\d+\/]{3}=?)?$/, Y = String.fromCharCode.bind(String), er = typeof Uint8Array.from == "function" ? Uint8Array.from.bind(Uint8Array) : (i) => new Uint8Array(Array.prototype.slice.call(i, 0)), Rr = (i) => i.replace(/=/g, "").replace(/[+\/]/g, (e) => e == "+" ? "-" : "_"), Tr = (i) => i.replace(/[^A-Za-z0-9\+\/]/g, ""), Dr = (i) => {
   let e, t, r, o, n = "";
   const s = i.length % 3;
   for (let a = 0; a < i.length; ) {
     if ((t = i.charCodeAt(a++)) > 255 || (r = i.charCodeAt(a++)) > 255 || (o = i.charCodeAt(a++)) > 255)
       throw new TypeError("invalid character found");
-    e = t << 16 | r << 8 | o, n += je[e >> 18 & 63] + je[e >> 12 & 63] + je[e >> 6 & 63] + je[e & 63];
+    e = t << 16 | r << 8 | o, n += Le[e >> 18 & 63] + Le[e >> 12 & 63] + Le[e >> 6 & 63] + Le[e & 63];
   }
   return s ? n.slice(0, s - 3) + "===".substring(s) : n;
-}, Pt = typeof btoa == "function" ? (i) => btoa(i) : Oe ? (i) => Buffer.from(i, "binary").toString("base64") : Pr, ht = Oe ? (i) => Buffer.from(i).toString("base64") : (i) => {
+}, Rt = typeof btoa == "function" ? (i) => btoa(i) : Re ? (i) => Buffer.from(i, "binary").toString("base64") : Dr, xt = Re ? (i) => Buffer.from(i).toString("base64") : (i) => {
   let t = [];
   for (let r = 0, o = i.length; r < o; r += 4096)
     t.push(Y.apply(null, i.subarray(r, r + 4096)));
-  return Pt(t.join(""));
-}, et = (i, e = !1) => e ? Ur(ht(i)) : ht(i), Si = (i) => {
+  return Rt(t.join(""));
+}, tt = (i, e = !1) => e ? Rr(xt(i)) : xt(i), ji = (i) => {
   if (i.length < 2) {
     var e = i.charCodeAt(0);
     return e < 128 ? i : e < 2048 ? Y(192 | e >>> 6) + Y(128 | e & 63) : Y(224 | e >>> 12 & 15) + Y(128 | e >>> 6 & 63) + Y(128 | e & 63);
@@ -546,7 +580,7 @@ const $r = "3.7.8", _i = $r, Oe = typeof Buffer == "function", Gt = typeof TextD
     var e = 65536 + (i.charCodeAt(0) - 55296) * 1024 + (i.charCodeAt(1) - 56320);
     return Y(240 | e >>> 18 & 7) + Y(128 | e >>> 12 & 63) + Y(128 | e >>> 6 & 63) + Y(128 | e & 63);
   }
-}, $i = /[\uD800-\uDBFF][\uDC00-\uDFFFF]|[^\x00-\x7F]/g, zr = (i) => i.replace($i, Si), Zt = Oe ? (i) => Buffer.from(i, "utf8").toString("base64") : Xt ? (i) => ht(Xt.encode(i)) : (i) => Pt(zr(i)), Ue = (i, e = !1) => e ? Ur(Zt(i)) : Zt(i), Jt = (i) => Ue(i, !0), Ui = /[\xC0-\xDF][\x80-\xBF]|[\xE0-\xEF][\x80-\xBF]{2}|[\xF0-\xF7][\x80-\xBF]{3}/g, Ei = (i) => {
+}, Li = /[\uD800-\uDBFF][\uDC00-\uDFFFF]|[^\x00-\x7F]/g, jr = (i) => i.replace(Li, ji), tr = Re ? (i) => Buffer.from(i, "utf8").toString("base64") : Qt ? (i) => xt(Qt.encode(i)) : (i) => Rt(jr(i)), Ee = (i, e = !1) => e ? Rr(tr(i)) : tr(i), rr = (i) => Ee(i, !0), Fi = /[\xC0-\xDF][\x80-\xBF]|[\xE0-\xEF][\x80-\xBF]{2}|[\xF0-\xF7][\x80-\xBF]{3}/g, Ai = (i) => {
   switch (i.length) {
     case 4:
       var e = (7 & i.charCodeAt(0)) << 18 | (63 & i.charCodeAt(1)) << 12 | (63 & i.charCodeAt(2)) << 6 | 63 & i.charCodeAt(3), t = e - 65536;
@@ -556,77 +590,77 @@ const $r = "3.7.8", _i = $r, Oe = typeof Buffer == "function", Gt = typeof TextD
     default:
       return Y((31 & i.charCodeAt(0)) << 6 | 63 & i.charCodeAt(1));
   }
-}, Or = (i) => i.replace(Ui, Ei), Rr = (i) => {
-  if (i = i.replace(/\s+/g, ""), !Ci.test(i))
+}, Lr = (i) => i.replace(Fi, Ai), Fr = (i) => {
+  if (i = i.replace(/\s+/g, ""), !Di.test(i))
     throw new TypeError("malformed base64.");
   i += "==".slice(2 - (i.length & 3));
   let e, t, r, o = [];
   for (let n = 0; n < i.length; )
-    e = Je[i.charAt(n++)] << 18 | Je[i.charAt(n++)] << 12 | (t = Je[i.charAt(n++)]) << 6 | (r = Je[i.charAt(n++)]), t === 64 ? o.push(Y(e >> 16 & 255)) : r === 64 ? o.push(Y(e >> 16 & 255, e >> 8 & 255)) : o.push(Y(e >> 16 & 255, e >> 8 & 255, e & 255));
+    e = Qe[i.charAt(n++)] << 18 | Qe[i.charAt(n++)] << 12 | (t = Qe[i.charAt(n++)]) << 6 | (r = Qe[i.charAt(n++)]), t === 64 ? o.push(Y(e >> 16 & 255)) : r === 64 ? o.push(Y(e >> 16 & 255, e >> 8 & 255)) : o.push(Y(e >> 16 & 255, e >> 8 & 255, e & 255));
   return o.join("");
-}, zt = typeof atob == "function" ? (i) => atob(Er(i)) : Oe ? (i) => Buffer.from(i, "base64").toString("binary") : Rr, Dr = Oe ? (i) => Kt(Buffer.from(i, "base64")) : (i) => Kt(zt(i).split("").map((e) => e.charCodeAt(0))), Tr = (i) => Dr(jr(i)), Pi = Oe ? (i) => Buffer.from(i, "base64").toString("utf8") : Gt ? (i) => Gt.decode(Dr(i)) : (i) => Or(zt(i)), jr = (i) => Er(i.replace(/[-_]/g, (e) => e == "-" ? "+" : "/")), gt = (i) => Pi(jr(i)), zi = (i) => {
+}, Tt = typeof atob == "function" ? (i) => atob(Tr(i)) : Re ? (i) => Buffer.from(i, "base64").toString("binary") : Fr, Ar = Re ? (i) => er(Buffer.from(i, "base64")) : (i) => er(Tt(i).split("").map((e) => e.charCodeAt(0))), Br = (i) => Ar(Ir(i)), Bi = Re ? (i) => Buffer.from(i, "base64").toString("utf8") : Jt ? (i) => Jt.decode(Ar(i)) : (i) => Lr(Tt(i)), Ir = (i) => Tr(i.replace(/[-_]/g, (e) => e == "-" ? "+" : "/")), mt = (i) => Bi(Ir(i)), Ii = (i) => {
   if (typeof i != "string")
     return !1;
   const e = i.replace(/\s+/g, "").replace(/={0,2}$/, "");
   return !/[^\s0-9a-zA-Z\+/]/.test(e) || !/[^\s0-9a-zA-Z\-_]/.test(e);
-}, Lr = (i) => ({
+}, Mr = (i) => ({
   value: i,
   enumerable: !1,
   writable: !0,
   configurable: !0
-}), Fr = function() {
-  const i = (e, t) => Object.defineProperty(String.prototype, e, Lr(t));
+}), Hr = function() {
+  const i = (e, t) => Object.defineProperty(String.prototype, e, Mr(t));
   i("fromBase64", function() {
-    return gt(this);
+    return mt(this);
   }), i("toBase64", function(e) {
-    return Ue(this, e);
+    return Ee(this, e);
   }), i("toBase64URI", function() {
-    return Ue(this, !0);
+    return Ee(this, !0);
   }), i("toBase64URL", function() {
-    return Ue(this, !0);
+    return Ee(this, !0);
   }), i("toUint8Array", function() {
-    return Tr(this);
+    return Br(this);
   });
-}, Ar = function() {
-  const i = (e, t) => Object.defineProperty(Uint8Array.prototype, e, Lr(t));
+}, qr = function() {
+  const i = (e, t) => Object.defineProperty(Uint8Array.prototype, e, Mr(t));
   i("toBase64", function(e) {
-    return et(this, e);
+    return tt(this, e);
   }), i("toBase64URI", function() {
-    return et(this, !0);
+    return tt(this, !0);
   }), i("toBase64URL", function() {
-    return et(this, !0);
+    return tt(this, !0);
   });
-}, Oi = () => {
-  Fr(), Ar();
-}, Ri = {
-  version: $r,
-  VERSION: _i,
-  atob: zt,
-  atobPolyfill: Rr,
-  btoa: Pt,
-  btoaPolyfill: Pr,
-  fromBase64: gt,
-  toBase64: Ue,
-  encode: Ue,
-  encodeURI: Jt,
-  encodeURL: Jt,
-  utob: zr,
-  btou: Or,
-  decode: gt,
-  isValid: zi,
-  fromUint8Array: et,
-  toUint8Array: Tr,
-  extendString: Fr,
-  extendUint8Array: Ar,
-  extendBuiltins: Oi
+}, Mi = () => {
+  Hr(), qr();
+}, Hi = {
+  version: zr,
+  VERSION: Ri,
+  atob: Tt,
+  atobPolyfill: Fr,
+  btoa: Rt,
+  btoaPolyfill: Dr,
+  fromBase64: mt,
+  toBase64: Ee,
+  encode: Ee,
+  encodeURI: rr,
+  encodeURL: rr,
+  utob: jr,
+  btou: Lr,
+  decode: mt,
+  isValid: Ii,
+  fromUint8Array: tt,
+  toUint8Array: Br,
+  extendString: Hr,
+  extendUint8Array: qr,
+  extendBuiltins: Mi
 };
-var Qt = typeof globalThis < "u" ? globalThis : typeof window < "u" ? window : typeof global < "u" ? global : typeof self < "u" ? self : {};
-function Di(i) {
+var ir = typeof globalThis < "u" ? globalThis : typeof window < "u" ? window : typeof global < "u" ? global : typeof self < "u" ? self : {};
+function qi(i) {
   return i && i.__esModule && Object.prototype.hasOwnProperty.call(i, "default") ? i.default : i;
 }
-var lt, er;
-function Ti() {
-  return er || (er = 1, lt = function(e, t) {
+var pt, or;
+function Ni() {
+  return or || (or = 1, pt = function(e, t) {
     if (t = t.split(":")[0], e = +e, !e) return !1;
     switch (t) {
       case "http":
@@ -643,12 +677,12 @@ function Ti() {
         return !1;
     }
     return e !== 0;
-  }), lt;
+  }), pt;
 }
-var Qe = {}, tr;
-function ji() {
-  if (tr) return Qe;
-  tr = 1;
+var et = {}, nr;
+function Yi() {
+  if (nr) return et;
+  nr = 1;
   var i = Object.prototype.hasOwnProperty, e;
   function t(s) {
     try {
@@ -665,40 +699,40 @@ function ji() {
     }
   }
   function o(s) {
-    for (var a = /([^=?#&]+)=?([^&]*)/g, l = {}, p; p = a.exec(s); ) {
-      var g = t(p[1]), w = t(p[2]);
-      g === null || w === null || g in l || (l[g] = w);
+    for (var a = /([^=?#&]+)=?([^&]*)/g, l = {}, u; u = a.exec(s); ) {
+      var h = t(u[1]), k = t(u[2]);
+      h === null || k === null || h in l || (l[h] = k);
     }
     return l;
   }
   function n(s, a) {
     a = a || "";
-    var l = [], p, g;
+    var l = [], u, h;
     typeof a != "string" && (a = "?");
-    for (g in s)
-      if (i.call(s, g)) {
-        if (p = s[g], !p && (p === null || p === e || isNaN(p)) && (p = ""), g = r(g), p = r(p), g === null || p === null) continue;
-        l.push(g + "=" + p);
+    for (h in s)
+      if (i.call(s, h)) {
+        if (u = s[h], !u && (u === null || u === e || isNaN(u)) && (u = ""), h = r(h), u = r(u), h === null || u === null) continue;
+        l.push(h + "=" + u);
       }
     return l.length ? a + l.join("&") : "";
   }
-  return Qe.stringify = n, Qe.parse = o, Qe;
+  return et.stringify = n, et.parse = o, et;
 }
-var dt, rr;
-function Li() {
-  if (rr) return dt;
-  rr = 1;
-  var i = Ti(), e = ji(), t = /^[\x00-\x20\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]+/, r = /[\n\r\t]/g, o = /^[A-Za-z][A-Za-z0-9+-.]*:\/\//, n = /:\d+$/, s = /^([a-z][a-z0-9.+-]*:)?(\/\/)?([\\/]+)?([\S\s]*)/i, a = /^[a-zA-Z]:/;
+var ut, sr;
+function Vi() {
+  if (sr) return ut;
+  sr = 1;
+  var i = Ni(), e = Yi(), t = /^[\x00-\x20\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]+/, r = /[\n\r\t]/g, o = /^[A-Za-z][A-Za-z0-9+-.]*:\/\//, n = /:\d+$/, s = /^([a-z][a-z0-9.+-]*:)?(\/\/)?([\\/]+)?([\S\s]*)/i, a = /^[a-zA-Z]:/;
   function l(v) {
     return (v || "").toString().replace(t, "");
   }
-  var p = [
+  var u = [
     ["#", "hash"],
     // Extract from the back.
     ["?", "query"],
     // Extract from the back.
-    function(x, h) {
-      return P(h.protocol) ? x.replace(/\\/g, "/") : x;
+    function(x, g) {
+      return $(g.protocol) ? x.replace(/\\/g, "/") : x;
     },
     ["/", "pathname"],
     // Extract from the back.
@@ -710,280 +744,280 @@ function Li() {
     // RegExp the back.
     [NaN, "hostname", void 0, 1, 1]
     // Set left over.
-  ], g = { hash: 1, query: 1 };
-  function w(v) {
+  ], h = { hash: 1, query: 1 };
+  function k(v) {
     var x;
-    typeof window < "u" ? x = window : typeof Qt < "u" ? x = Qt : typeof self < "u" ? x = self : x = {};
-    var h = x.location || {};
-    v = v || h;
-    var b = {}, O = typeof v, $;
+    typeof window < "u" ? x = window : typeof ir < "u" ? x = ir : typeof self < "u" ? x = self : x = {};
+    var g = x.location || {};
+    v = v || g;
+    var m = {}, R = typeof v, U;
     if (v.protocol === "blob:")
-      b = new k(unescape(v.pathname), {});
-    else if (O === "string") {
-      b = new k(v, {});
-      for ($ in g) delete b[$];
-    } else if (O === "object") {
-      for ($ in v)
-        $ in g || (b[$] = v[$]);
-      b.slashes === void 0 && (b.slashes = o.test(v.href));
+      m = new w(unescape(v.pathname), {});
+    else if (R === "string") {
+      m = new w(v, {});
+      for (U in h) delete m[U];
+    } else if (R === "object") {
+      for (U in v)
+        U in h || (m[U] = v[U]);
+      m.slashes === void 0 && (m.slashes = o.test(v.href));
     }
-    return b;
+    return m;
   }
-  function P(v) {
+  function $(v) {
     return v === "file:" || v === "ftp:" || v === "http:" || v === "https:" || v === "ws:" || v === "wss:";
   }
-  function R(v, x) {
+  function z(v, x) {
     v = l(v), v = v.replace(r, ""), x = x || {};
-    var h = s.exec(v), b = h[1] ? h[1].toLowerCase() : "", O = !!h[2], $ = !!h[3], F = 0, L;
-    return O ? $ ? (L = h[2] + h[3] + h[4], F = h[2].length + h[3].length) : (L = h[2] + h[4], F = h[2].length) : $ ? (L = h[3] + h[4], F = h[3].length) : L = h[4], b === "file:" ? F >= 2 && (L = L.slice(2)) : P(b) ? L = h[4] : b ? O && (L = L.slice(2)) : F >= 2 && P(x.protocol) && (L = h[4]), {
-      protocol: b,
-      slashes: O || P(b),
+    var g = s.exec(v), m = g[1] ? g[1].toLowerCase() : "", R = !!g[2], U = !!g[3], F = 0, L;
+    return R ? U ? (L = g[2] + g[3] + g[4], F = g[2].length + g[3].length) : (L = g[2] + g[4], F = g[2].length) : U ? (L = g[3] + g[4], F = g[3].length) : L = g[4], m === "file:" ? F >= 2 && (L = L.slice(2)) : $(m) ? L = g[4] : m ? R && (L = L.slice(2)) : F >= 2 && $(x.protocol) && (L = g[4]), {
+      protocol: m,
+      slashes: R || $(m),
       slashesCount: F,
       rest: L
     };
   }
-  function z(v, x) {
+  function O(v, x) {
     if (v === "") return x;
-    for (var h = (x || "/").split("/").slice(0, -1).concat(v.split("/")), b = h.length, O = h[b - 1], $ = !1, F = 0; b--; )
-      h[b] === "." ? h.splice(b, 1) : h[b] === ".." ? (h.splice(b, 1), F++) : F && (b === 0 && ($ = !0), h.splice(b, 1), F--);
-    return $ && h.unshift(""), (O === "." || O === "..") && h.push(""), h.join("/");
+    for (var g = (x || "/").split("/").slice(0, -1).concat(v.split("/")), m = g.length, R = g[m - 1], U = !1, F = 0; m--; )
+      g[m] === "." ? g.splice(m, 1) : g[m] === ".." ? (g.splice(m, 1), F++) : F && (m === 0 && (U = !0), g.splice(m, 1), F--);
+    return U && g.unshift(""), (R === "." || R === "..") && g.push(""), g.join("/");
   }
-  function k(v, x, h) {
-    if (v = l(v), v = v.replace(r, ""), !(this instanceof k))
-      return new k(v, x, h);
-    var b, O, $, F, L, X, oe = p.slice(), ye = typeof x, U = this, ee = 0;
-    for (ye !== "object" && ye !== "string" && (h = x, x = null), h && typeof h != "function" && (h = e.parse), x = w(x), O = R(v || "", x), b = !O.protocol && !O.slashes, U.slashes = O.slashes || b && x.slashes, U.protocol = O.protocol || x.protocol || "", v = O.rest, (O.protocol === "file:" && (O.slashesCount !== 2 || a.test(v)) || !O.slashes && (O.protocol || O.slashesCount < 2 || !P(U.protocol))) && (oe[3] = [/(.*)/, "pathname"]); ee < oe.length; ee++) {
-      if (F = oe[ee], typeof F == "function") {
-        v = F(v, U);
+  function w(v, x, g) {
+    if (v = l(v), v = v.replace(r, ""), !(this instanceof w))
+      return new w(v, x, g);
+    var m, R, U, F, L, K, ne = u.slice(), we = typeof x, E = this, re = 0;
+    for (we !== "object" && we !== "string" && (g = x, x = null), g && typeof g != "function" && (g = e.parse), x = k(x), R = z(v || "", x), m = !R.protocol && !R.slashes, E.slashes = R.slashes || m && x.slashes, E.protocol = R.protocol || x.protocol || "", v = R.rest, (R.protocol === "file:" && (R.slashesCount !== 2 || a.test(v)) || !R.slashes && (R.protocol || R.slashesCount < 2 || !$(E.protocol))) && (ne[3] = [/(.*)/, "pathname"]); re < ne.length; re++) {
+      if (F = ne[re], typeof F == "function") {
+        v = F(v, E);
         continue;
       }
-      $ = F[0], X = F[1], $ !== $ ? U[X] = v : typeof $ == "string" ? (L = $ === "@" ? v.lastIndexOf($) : v.indexOf($), ~L && (typeof F[2] == "number" ? (U[X] = v.slice(0, L), v = v.slice(L + F[2])) : (U[X] = v.slice(L), v = v.slice(0, L)))) : (L = $.exec(v)) && (U[X] = L[1], v = v.slice(0, L.index)), U[X] = U[X] || b && F[3] && x[X] || "", F[4] && (U[X] = U[X].toLowerCase());
+      U = F[0], K = F[1], U !== U ? E[K] = v : typeof U == "string" ? (L = U === "@" ? v.lastIndexOf(U) : v.indexOf(U), ~L && (typeof F[2] == "number" ? (E[K] = v.slice(0, L), v = v.slice(L + F[2])) : (E[K] = v.slice(L), v = v.slice(0, L)))) : (L = U.exec(v)) && (E[K] = L[1], v = v.slice(0, L.index)), E[K] = E[K] || m && F[3] && x[K] || "", F[4] && (E[K] = E[K].toLowerCase());
     }
-    h && (U.query = h(U.query)), b && x.slashes && U.pathname.charAt(0) !== "/" && (U.pathname !== "" || x.pathname !== "") && (U.pathname = z(U.pathname, x.pathname)), U.pathname.charAt(0) !== "/" && P(U.protocol) && (U.pathname = "/" + U.pathname), i(U.port, U.protocol) || (U.host = U.hostname, U.port = ""), U.username = U.password = "", U.auth && (L = U.auth.indexOf(":"), ~L ? (U.username = U.auth.slice(0, L), U.username = encodeURIComponent(decodeURIComponent(U.username)), U.password = U.auth.slice(L + 1), U.password = encodeURIComponent(decodeURIComponent(U.password))) : U.username = encodeURIComponent(decodeURIComponent(U.auth)), U.auth = U.password ? U.username + ":" + U.password : U.username), U.origin = U.protocol !== "file:" && P(U.protocol) && U.host ? U.protocol + "//" + U.host : "null", U.href = U.toString();
+    g && (E.query = g(E.query)), m && x.slashes && E.pathname.charAt(0) !== "/" && (E.pathname !== "" || x.pathname !== "") && (E.pathname = O(E.pathname, x.pathname)), E.pathname.charAt(0) !== "/" && $(E.protocol) && (E.pathname = "/" + E.pathname), i(E.port, E.protocol) || (E.host = E.hostname, E.port = ""), E.username = E.password = "", E.auth && (L = E.auth.indexOf(":"), ~L ? (E.username = E.auth.slice(0, L), E.username = encodeURIComponent(decodeURIComponent(E.username)), E.password = E.auth.slice(L + 1), E.password = encodeURIComponent(decodeURIComponent(E.password))) : E.username = encodeURIComponent(decodeURIComponent(E.auth)), E.auth = E.password ? E.username + ":" + E.password : E.username), E.origin = E.protocol !== "file:" && $(E.protocol) && E.host ? E.protocol + "//" + E.host : "null", E.href = E.toString();
   }
-  function E(v, x, h) {
-    var b = this;
+  function P(v, x, g) {
+    var m = this;
     switch (v) {
       case "query":
-        typeof x == "string" && x.length && (x = (h || e.parse)(x)), b[v] = x;
+        typeof x == "string" && x.length && (x = (g || e.parse)(x)), m[v] = x;
         break;
       case "port":
-        b[v] = x, i(x, b.protocol) ? x && (b.host = b.hostname + ":" + x) : (b.host = b.hostname, b[v] = "");
+        m[v] = x, i(x, m.protocol) ? x && (m.host = m.hostname + ":" + x) : (m.host = m.hostname, m[v] = "");
         break;
       case "hostname":
-        b[v] = x, b.port && (x += ":" + b.port), b.host = x;
+        m[v] = x, m.port && (x += ":" + m.port), m.host = x;
         break;
       case "host":
-        b[v] = x, n.test(x) ? (x = x.split(":"), b.port = x.pop(), b.hostname = x.join(":")) : (b.hostname = x, b.port = "");
+        m[v] = x, n.test(x) ? (x = x.split(":"), m.port = x.pop(), m.hostname = x.join(":")) : (m.hostname = x, m.port = "");
         break;
       case "protocol":
-        b.protocol = x.toLowerCase(), b.slashes = !h;
+        m.protocol = x.toLowerCase(), m.slashes = !g;
         break;
       case "pathname":
       case "hash":
         if (x) {
-          var O = v === "pathname" ? "/" : "#";
-          b[v] = x.charAt(0) !== O ? O + x : x;
+          var R = v === "pathname" ? "/" : "#";
+          m[v] = x.charAt(0) !== R ? R + x : x;
         } else
-          b[v] = x;
+          m[v] = x;
         break;
       case "username":
       case "password":
-        b[v] = encodeURIComponent(x);
+        m[v] = encodeURIComponent(x);
         break;
       case "auth":
-        var $ = x.indexOf(":");
-        ~$ ? (b.username = x.slice(0, $), b.username = encodeURIComponent(decodeURIComponent(b.username)), b.password = x.slice($ + 1), b.password = encodeURIComponent(decodeURIComponent(b.password))) : b.username = encodeURIComponent(decodeURIComponent(x));
+        var U = x.indexOf(":");
+        ~U ? (m.username = x.slice(0, U), m.username = encodeURIComponent(decodeURIComponent(m.username)), m.password = x.slice(U + 1), m.password = encodeURIComponent(decodeURIComponent(m.password))) : m.username = encodeURIComponent(decodeURIComponent(x));
     }
-    for (var F = 0; F < p.length; F++) {
-      var L = p[F];
-      L[4] && (b[L[1]] = b[L[1]].toLowerCase());
+    for (var F = 0; F < u.length; F++) {
+      var L = u[F];
+      L[4] && (m[L[1]] = m[L[1]].toLowerCase());
     }
-    return b.auth = b.password ? b.username + ":" + b.password : b.username, b.origin = b.protocol !== "file:" && P(b.protocol) && b.host ? b.protocol + "//" + b.host : "null", b.href = b.toString(), b;
+    return m.auth = m.password ? m.username + ":" + m.password : m.username, m.origin = m.protocol !== "file:" && $(m.protocol) && m.host ? m.protocol + "//" + m.host : "null", m.href = m.toString(), m;
   }
-  function S(v) {
+  function C(v) {
     (!v || typeof v != "function") && (v = e.stringify);
-    var x, h = this, b = h.host, O = h.protocol;
-    O && O.charAt(O.length - 1) !== ":" && (O += ":");
-    var $ = O + (h.protocol && h.slashes || P(h.protocol) ? "//" : "");
-    return h.username ? ($ += h.username, h.password && ($ += ":" + h.password), $ += "@") : h.password ? ($ += ":" + h.password, $ += "@") : h.protocol !== "file:" && P(h.protocol) && !b && h.pathname !== "/" && ($ += "@"), (b[b.length - 1] === ":" || n.test(h.hostname) && !h.port) && (b += ":"), $ += b + h.pathname, x = typeof h.query == "object" ? v(h.query) : h.query, x && ($ += x.charAt(0) !== "?" ? "?" + x : x), h.hash && ($ += h.hash), $;
+    var x, g = this, m = g.host, R = g.protocol;
+    R && R.charAt(R.length - 1) !== ":" && (R += ":");
+    var U = R + (g.protocol && g.slashes || $(g.protocol) ? "//" : "");
+    return g.username ? (U += g.username, g.password && (U += ":" + g.password), U += "@") : g.password ? (U += ":" + g.password, U += "@") : g.protocol !== "file:" && $(g.protocol) && !m && g.pathname !== "/" && (U += "@"), (m[m.length - 1] === ":" || n.test(g.hostname) && !g.port) && (m += ":"), U += m + g.pathname, x = typeof g.query == "object" ? v(g.query) : g.query, x && (U += x.charAt(0) !== "?" ? "?" + x : x), g.hash && (U += g.hash), U;
   }
-  return k.prototype = { set: E, toString: S }, k.extractProtocol = R, k.location = w, k.trimLeft = l, k.qs = e, dt = k, dt;
+  return w.prototype = { set: P, toString: C }, w.extractProtocol = z, w.location = k, w.trimLeft = l, w.qs = e, ut = w, ut;
 }
-var Fi = Li();
-const Ai = /* @__PURE__ */ Di(Fi);
-function Bi() {
+var Wi = Vi();
+const Gi = /* @__PURE__ */ qi(Wi);
+function Xi() {
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(i) {
     var e = Math.random() * 16 | 0, t = i === "x" ? e : e & 3 | 8;
     return t.toString(16);
   });
 }
-function vt() {
+function bt() {
   /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */
-  vt = function() {
+  bt = function() {
     return e;
   };
-  var i, e = {}, t = Object.prototype, r = t.hasOwnProperty, o = Object.defineProperty || function(u, d, c) {
-    u[d] = c.value;
+  var i, e = {}, t = Object.prototype, r = t.hasOwnProperty, o = Object.defineProperty || function(f, d, c) {
+    f[d] = c.value;
   }, n = typeof Symbol == "function" ? Symbol : {}, s = n.iterator || "@@iterator", a = n.asyncIterator || "@@asyncIterator", l = n.toStringTag || "@@toStringTag";
-  function p(u, d, c) {
-    return Object.defineProperty(u, d, { value: c, enumerable: !0, configurable: !0, writable: !0 }), u[d];
+  function u(f, d, c) {
+    return Object.defineProperty(f, d, { value: c, enumerable: !0, configurable: !0, writable: !0 }), f[d];
   }
   try {
-    p({}, "");
+    u({}, "");
   } catch {
-    p = function(c, m, _) {
-      return c[m] = _;
+    u = function(c, b, _) {
+      return c[b] = _;
     };
   }
-  function g(u, d, c, m) {
-    var _ = d && d.prototype instanceof S ? d : S, y = Object.create(_.prototype), D = new ee(m || []);
-    return o(y, "_invoke", { value: X(u, c, D) }), y;
+  function h(f, d, c, b) {
+    var _ = d && d.prototype instanceof C ? d : C, y = Object.create(_.prototype), T = new re(b || []);
+    return o(y, "_invoke", { value: K(f, c, T) }), y;
   }
-  function w(u, d, c) {
+  function k(f, d, c) {
     try {
-      return { type: "normal", arg: u.call(d, c) };
-    } catch (m) {
-      return { type: "throw", arg: m };
+      return { type: "normal", arg: f.call(d, c) };
+    } catch (b) {
+      return { type: "throw", arg: b };
     }
   }
-  e.wrap = g;
-  var P = "suspendedStart", R = "suspendedYield", z = "executing", k = "completed", E = {};
-  function S() {
+  e.wrap = h;
+  var $ = "suspendedStart", z = "suspendedYield", O = "executing", w = "completed", P = {};
+  function C() {
   }
   function v() {
   }
   function x() {
   }
-  var h = {};
-  p(h, s, function() {
+  var g = {};
+  u(g, s, function() {
     return this;
   });
-  var b = Object.getPrototypeOf, O = b && b(b(pe([])));
-  O && O !== t && r.call(O, s) && (h = O);
-  var $ = x.prototype = S.prototype = Object.create(h);
-  function F(u) {
+  var m = Object.getPrototypeOf, R = m && m(m(ue([])));
+  R && R !== t && r.call(R, s) && (g = R);
+  var U = x.prototype = C.prototype = Object.create(g);
+  function F(f) {
     ["next", "throw", "return"].forEach(function(d) {
-      p(u, d, function(c) {
+      u(f, d, function(c) {
         return this._invoke(d, c);
       });
     });
   }
-  function L(u, d) {
-    function c(_, y, D, A) {
-      var I = w(u[_], u, y);
+  function L(f, d) {
+    function c(_, y, T, A) {
+      var I = k(f[_], f, y);
       if (I.type !== "throw") {
-        var V = I.arg, N = V.value;
-        return N && ve(N) == "object" && r.call(N, "__await") ? d.resolve(N.__await).then(function(W) {
-          c("next", W, D, A);
-        }, function(W) {
-          c("throw", W, D, A);
-        }) : d.resolve(N).then(function(W) {
-          V.value = W, D(V);
-        }, function(W) {
-          return c("throw", W, D, A);
+        var W = I.arg, N = W.value;
+        return N && xe(N) == "object" && r.call(N, "__await") ? d.resolve(N.__await).then(function(G) {
+          c("next", G, T, A);
+        }, function(G) {
+          c("throw", G, T, A);
+        }) : d.resolve(N).then(function(G) {
+          W.value = G, T(W);
+        }, function(G) {
+          return c("throw", G, T, A);
         });
       }
       A(I.arg);
     }
-    var m;
-    o(this, "_invoke", { value: function(y, D) {
+    var b;
+    o(this, "_invoke", { value: function(y, T) {
       function A() {
-        return new d(function(I, V) {
-          c(y, D, I, V);
+        return new d(function(I, W) {
+          c(y, T, I, W);
         });
       }
-      return m = m ? m.then(A, A) : A();
+      return b = b ? b.then(A, A) : A();
     } });
   }
-  function X(u, d, c) {
-    var m = P;
+  function K(f, d, c) {
+    var b = $;
     return function(_, y) {
-      if (m === z) throw Error("Generator is already running");
-      if (m === k) {
+      if (b === O) throw Error("Generator is already running");
+      if (b === w) {
         if (_ === "throw") throw y;
         return { value: i, done: !0 };
       }
       for (c.method = _, c.arg = y; ; ) {
-        var D = c.delegate;
-        if (D) {
-          var A = oe(D, c);
+        var T = c.delegate;
+        if (T) {
+          var A = ne(T, c);
           if (A) {
-            if (A === E) continue;
+            if (A === P) continue;
             return A;
           }
         }
         if (c.method === "next") c.sent = c._sent = c.arg;
         else if (c.method === "throw") {
-          if (m === P) throw m = k, c.arg;
+          if (b === $) throw b = w, c.arg;
           c.dispatchException(c.arg);
         } else c.method === "return" && c.abrupt("return", c.arg);
-        m = z;
-        var I = w(u, d, c);
+        b = O;
+        var I = k(f, d, c);
         if (I.type === "normal") {
-          if (m = c.done ? k : R, I.arg === E) continue;
+          if (b = c.done ? w : z, I.arg === P) continue;
           return { value: I.arg, done: c.done };
         }
-        I.type === "throw" && (m = k, c.method = "throw", c.arg = I.arg);
+        I.type === "throw" && (b = w, c.method = "throw", c.arg = I.arg);
       }
     };
   }
-  function oe(u, d) {
-    var c = d.method, m = u.iterator[c];
-    if (m === i) return d.delegate = null, c === "throw" && u.iterator.return && (d.method = "return", d.arg = i, oe(u, d), d.method === "throw") || c !== "return" && (d.method = "throw", d.arg = new TypeError("The iterator does not provide a '" + c + "' method")), E;
-    var _ = w(m, u.iterator, d.arg);
-    if (_.type === "throw") return d.method = "throw", d.arg = _.arg, d.delegate = null, E;
+  function ne(f, d) {
+    var c = d.method, b = f.iterator[c];
+    if (b === i) return d.delegate = null, c === "throw" && f.iterator.return && (d.method = "return", d.arg = i, ne(f, d), d.method === "throw") || c !== "return" && (d.method = "throw", d.arg = new TypeError("The iterator does not provide a '" + c + "' method")), P;
+    var _ = k(b, f.iterator, d.arg);
+    if (_.type === "throw") return d.method = "throw", d.arg = _.arg, d.delegate = null, P;
     var y = _.arg;
-    return y ? y.done ? (d[u.resultName] = y.value, d.next = u.nextLoc, d.method !== "return" && (d.method = "next", d.arg = i), d.delegate = null, E) : y : (d.method = "throw", d.arg = new TypeError("iterator result is not an object"), d.delegate = null, E);
+    return y ? y.done ? (d[f.resultName] = y.value, d.next = f.nextLoc, d.method !== "return" && (d.method = "next", d.arg = i), d.delegate = null, P) : y : (d.method = "throw", d.arg = new TypeError("iterator result is not an object"), d.delegate = null, P);
   }
-  function ye(u) {
-    var d = { tryLoc: u[0] };
-    1 in u && (d.catchLoc = u[1]), 2 in u && (d.finallyLoc = u[2], d.afterLoc = u[3]), this.tryEntries.push(d);
+  function we(f) {
+    var d = { tryLoc: f[0] };
+    1 in f && (d.catchLoc = f[1]), 2 in f && (d.finallyLoc = f[2], d.afterLoc = f[3]), this.tryEntries.push(d);
   }
-  function U(u) {
-    var d = u.completion || {};
-    d.type = "normal", delete d.arg, u.completion = d;
+  function E(f) {
+    var d = f.completion || {};
+    d.type = "normal", delete d.arg, f.completion = d;
   }
-  function ee(u) {
-    this.tryEntries = [{ tryLoc: "root" }], u.forEach(ye, this), this.reset(!0);
+  function re(f) {
+    this.tryEntries = [{ tryLoc: "root" }], f.forEach(we, this), this.reset(!0);
   }
-  function pe(u) {
-    if (u || u === "") {
-      var d = u[s];
-      if (d) return d.call(u);
-      if (typeof u.next == "function") return u;
-      if (!isNaN(u.length)) {
-        var c = -1, m = function _() {
-          for (; ++c < u.length; ) if (r.call(u, c)) return _.value = u[c], _.done = !1, _;
+  function ue(f) {
+    if (f || f === "") {
+      var d = f[s];
+      if (d) return d.call(f);
+      if (typeof f.next == "function") return f;
+      if (!isNaN(f.length)) {
+        var c = -1, b = function _() {
+          for (; ++c < f.length; ) if (r.call(f, c)) return _.value = f[c], _.done = !1, _;
           return _.value = i, _.done = !0, _;
         };
-        return m.next = m;
+        return b.next = b;
       }
     }
-    throw new TypeError(ve(u) + " is not iterable");
+    throw new TypeError(xe(f) + " is not iterable");
   }
-  return v.prototype = x, o($, "constructor", { value: x, configurable: !0 }), o(x, "constructor", { value: v, configurable: !0 }), v.displayName = p(x, l, "GeneratorFunction"), e.isGeneratorFunction = function(u) {
-    var d = typeof u == "function" && u.constructor;
+  return v.prototype = x, o(U, "constructor", { value: x, configurable: !0 }), o(x, "constructor", { value: v, configurable: !0 }), v.displayName = u(x, l, "GeneratorFunction"), e.isGeneratorFunction = function(f) {
+    var d = typeof f == "function" && f.constructor;
     return !!d && (d === v || (d.displayName || d.name) === "GeneratorFunction");
-  }, e.mark = function(u) {
-    return Object.setPrototypeOf ? Object.setPrototypeOf(u, x) : (u.__proto__ = x, p(u, l, "GeneratorFunction")), u.prototype = Object.create($), u;
-  }, e.awrap = function(u) {
-    return { __await: u };
-  }, F(L.prototype), p(L.prototype, a, function() {
+  }, e.mark = function(f) {
+    return Object.setPrototypeOf ? Object.setPrototypeOf(f, x) : (f.__proto__ = x, u(f, l, "GeneratorFunction")), f.prototype = Object.create(U), f;
+  }, e.awrap = function(f) {
+    return { __await: f };
+  }, F(L.prototype), u(L.prototype, a, function() {
     return this;
-  }), e.AsyncIterator = L, e.async = function(u, d, c, m, _) {
+  }), e.AsyncIterator = L, e.async = function(f, d, c, b, _) {
     _ === void 0 && (_ = Promise);
-    var y = new L(g(u, d, c, m), _);
-    return e.isGeneratorFunction(d) ? y : y.next().then(function(D) {
-      return D.done ? D.value : y.next();
+    var y = new L(h(f, d, c, b), _);
+    return e.isGeneratorFunction(d) ? y : y.next().then(function(T) {
+      return T.done ? T.value : y.next();
     });
-  }, F($), p($, l, "Generator"), p($, s, function() {
+  }, F(U), u(U, l, "Generator"), u(U, s, function() {
     return this;
-  }), p($, "toString", function() {
+  }), u(U, "toString", function() {
     return "[object Generator]";
-  }), e.keys = function(u) {
-    var d = Object(u), c = [];
-    for (var m in d) c.push(m);
+  }), e.keys = function(f) {
+    var d = Object(f), c = [];
+    for (var b in d) c.push(b);
     return c.reverse(), function _() {
       for (; c.length; ) {
         var y = c.pop();
@@ -991,8 +1025,8 @@ function vt() {
       }
       return _.done = !0, _;
     };
-  }, e.values = pe, ee.prototype = { constructor: ee, reset: function(d) {
-    if (this.prev = 0, this.next = 0, this.sent = this._sent = i, this.done = !1, this.delegate = null, this.method = "next", this.arg = i, this.tryEntries.forEach(U), !d) for (var c in this) c.charAt(0) === "t" && r.call(this, c) && !isNaN(+c.slice(1)) && (this[c] = i);
+  }, e.values = ue, re.prototype = { constructor: re, reset: function(d) {
+    if (this.prev = 0, this.next = 0, this.sent = this._sent = i, this.done = !1, this.delegate = null, this.method = "next", this.arg = i, this.tryEntries.forEach(E), !d) for (var c in this) c.charAt(0) === "t" && r.call(this, c) && !isNaN(+c.slice(1)) && (this[c] = i);
   }, stop: function() {
     this.done = !0;
     var d = this.tryEntries[0].completion;
@@ -1001,132 +1035,132 @@ function vt() {
   }, dispatchException: function(d) {
     if (this.done) throw d;
     var c = this;
-    function m(V, N) {
-      return D.type = "throw", D.arg = d, c.next = V, N && (c.method = "next", c.arg = i), !!N;
+    function b(W, N) {
+      return T.type = "throw", T.arg = d, c.next = W, N && (c.method = "next", c.arg = i), !!N;
     }
     for (var _ = this.tryEntries.length - 1; _ >= 0; --_) {
-      var y = this.tryEntries[_], D = y.completion;
-      if (y.tryLoc === "root") return m("end");
+      var y = this.tryEntries[_], T = y.completion;
+      if (y.tryLoc === "root") return b("end");
       if (y.tryLoc <= this.prev) {
         var A = r.call(y, "catchLoc"), I = r.call(y, "finallyLoc");
         if (A && I) {
-          if (this.prev < y.catchLoc) return m(y.catchLoc, !0);
-          if (this.prev < y.finallyLoc) return m(y.finallyLoc);
+          if (this.prev < y.catchLoc) return b(y.catchLoc, !0);
+          if (this.prev < y.finallyLoc) return b(y.finallyLoc);
         } else if (A) {
-          if (this.prev < y.catchLoc) return m(y.catchLoc, !0);
+          if (this.prev < y.catchLoc) return b(y.catchLoc, !0);
         } else {
           if (!I) throw Error("try statement without catch or finally");
-          if (this.prev < y.finallyLoc) return m(y.finallyLoc);
+          if (this.prev < y.finallyLoc) return b(y.finallyLoc);
         }
       }
     }
   }, abrupt: function(d, c) {
-    for (var m = this.tryEntries.length - 1; m >= 0; --m) {
-      var _ = this.tryEntries[m];
+    for (var b = this.tryEntries.length - 1; b >= 0; --b) {
+      var _ = this.tryEntries[b];
       if (_.tryLoc <= this.prev && r.call(_, "finallyLoc") && this.prev < _.finallyLoc) {
         var y = _;
         break;
       }
     }
     y && (d === "break" || d === "continue") && y.tryLoc <= c && c <= y.finallyLoc && (y = null);
-    var D = y ? y.completion : {};
-    return D.type = d, D.arg = c, y ? (this.method = "next", this.next = y.finallyLoc, E) : this.complete(D);
+    var T = y ? y.completion : {};
+    return T.type = d, T.arg = c, y ? (this.method = "next", this.next = y.finallyLoc, P) : this.complete(T);
   }, complete: function(d, c) {
     if (d.type === "throw") throw d.arg;
-    return d.type === "break" || d.type === "continue" ? this.next = d.arg : d.type === "return" ? (this.rval = this.arg = d.arg, this.method = "return", this.next = "end") : d.type === "normal" && c && (this.next = c), E;
+    return d.type === "break" || d.type === "continue" ? this.next = d.arg : d.type === "return" ? (this.rval = this.arg = d.arg, this.method = "return", this.next = "end") : d.type === "normal" && c && (this.next = c), P;
   }, finish: function(d) {
     for (var c = this.tryEntries.length - 1; c >= 0; --c) {
-      var m = this.tryEntries[c];
-      if (m.finallyLoc === d) return this.complete(m.completion, m.afterLoc), U(m), E;
+      var b = this.tryEntries[c];
+      if (b.finallyLoc === d) return this.complete(b.completion, b.afterLoc), E(b), P;
     }
   }, catch: function(d) {
     for (var c = this.tryEntries.length - 1; c >= 0; --c) {
-      var m = this.tryEntries[c];
-      if (m.tryLoc === d) {
-        var _ = m.completion;
+      var b = this.tryEntries[c];
+      if (b.tryLoc === d) {
+        var _ = b.completion;
         if (_.type === "throw") {
           var y = _.arg;
-          U(m);
+          E(b);
         }
         return y;
       }
     }
     throw Error("illegal catch attempt");
-  }, delegateYield: function(d, c, m) {
-    return this.delegate = { iterator: pe(d), resultName: c, nextLoc: m }, this.method === "next" && (this.arg = i), E;
+  }, delegateYield: function(d, c, b) {
+    return this.delegate = { iterator: ue(d), resultName: c, nextLoc: b }, this.method === "next" && (this.arg = i), P;
   } }, e;
 }
-function ir(i, e, t, r, o, n, s) {
+function ar(i, e, t, r, o, n, s) {
   try {
     var a = i[n](s), l = a.value;
-  } catch (p) {
-    t(p);
+  } catch (u) {
+    t(u);
     return;
   }
   a.done ? e(l) : Promise.resolve(l).then(r, o);
 }
-function Ii(i) {
+function Ki(i) {
   return function() {
     var e = this, t = arguments;
     return new Promise(function(r, o) {
       var n = i.apply(e, t);
       function s(l) {
-        ir(n, r, o, s, a, "next", l);
+        ar(n, r, o, s, a, "next", l);
       }
       function a(l) {
-        ir(n, r, o, s, a, "throw", l);
+        ar(n, r, o, s, a, "throw", l);
       }
       s(void 0);
     });
   };
 }
-function Br(i, e) {
-  return qi(i) || Hi(i, e) || Ir(i, e) || Mi();
+function Nr(i, e) {
+  return Qi(i) || Ji(i, e) || Yr(i, e) || Zi();
 }
-function Mi() {
+function Zi() {
   throw new TypeError(`Invalid attempt to destructure non-iterable instance.
 In order to be iterable, non-array objects must have a [Symbol.iterator]() method.`);
 }
-function Hi(i, e) {
+function Ji(i, e) {
   var t = i == null ? null : typeof Symbol < "u" && i[Symbol.iterator] || i["@@iterator"];
   if (t != null) {
-    var r, o, n, s, a = [], l = !0, p = !1;
+    var r, o, n, s, a = [], l = !0, u = !1;
     try {
       if (n = (t = t.call(i)).next, e !== 0) for (; !(l = (r = n.call(t)).done) && (a.push(r.value), a.length !== e); l = !0) ;
-    } catch (g) {
-      p = !0, o = g;
+    } catch (h) {
+      u = !0, o = h;
     } finally {
       try {
         if (!l && t.return != null && (s = t.return(), Object(s) !== s)) return;
       } finally {
-        if (p) throw o;
+        if (u) throw o;
       }
     }
     return a;
   }
 }
-function qi(i) {
+function Qi(i) {
   if (Array.isArray(i)) return i;
 }
-function ve(i) {
+function xe(i) {
   "@babel/helpers - typeof";
-  return ve = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(e) {
+  return xe = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(e) {
     return typeof e;
   } : function(e) {
     return e && typeof Symbol == "function" && e.constructor === Symbol && e !== Symbol.prototype ? "symbol" : typeof e;
-  }, ve(i);
+  }, xe(i);
 }
-function Ni(i, e) {
+function eo(i, e) {
   var t = typeof Symbol < "u" && i[Symbol.iterator] || i["@@iterator"];
   if (!t) {
-    if (Array.isArray(i) || (t = Ir(i)) || e) {
+    if (Array.isArray(i) || (t = Yr(i)) || e) {
       t && (i = t);
       var r = 0, o = function() {
       };
       return { s: o, n: function() {
         return r >= i.length ? { done: !0 } : { done: !1, value: i[r++] };
-      }, e: function(p) {
-        throw p;
+      }, e: function(u) {
+        throw u;
       }, f: o };
     }
     throw new TypeError(`Invalid attempt to iterate non-iterable instance.
@@ -1136,10 +1170,10 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
   return { s: function() {
     t = t.call(i);
   }, n: function() {
-    var p = t.next();
-    return n = p.done, p;
-  }, e: function(p) {
-    s = !0, a = p;
+    var u = t.next();
+    return n = u.done, u;
+  }, e: function(u) {
+    s = !0, a = u;
   }, f: function() {
     try {
       !n && t.return != null && t.return();
@@ -1148,20 +1182,20 @@ In order to be iterable, non-array objects must have a [Symbol.iterator]() metho
     }
   } };
 }
-function Ir(i, e) {
+function Yr(i, e) {
   if (i) {
-    if (typeof i == "string") return or(i, e);
+    if (typeof i == "string") return lr(i, e);
     var t = Object.prototype.toString.call(i).slice(8, -1);
     if (t === "Object" && i.constructor && (t = i.constructor.name), t === "Map" || t === "Set") return Array.from(i);
-    if (t === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t)) return or(i, e);
+    if (t === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t)) return lr(i, e);
   }
 }
-function or(i, e) {
+function lr(i, e) {
   (e == null || e > i.length) && (e = i.length);
   for (var t = 0, r = new Array(e); t < e; t++) r[t] = i[t];
   return r;
 }
-function nr(i, e) {
+function dr(i, e) {
   var t = Object.keys(i);
   if (Object.getOwnPropertySymbols) {
     var r = Object.getOwnPropertySymbols(i);
@@ -1171,48 +1205,48 @@ function nr(i, e) {
   }
   return t;
 }
-function _e(i) {
+function ke(i) {
   for (var e = 1; e < arguments.length; e++) {
     var t = arguments[e] != null ? arguments[e] : {};
-    e % 2 ? nr(Object(t), !0).forEach(function(r) {
-      Yi(i, r, t[r]);
-    }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(i, Object.getOwnPropertyDescriptors(t)) : nr(Object(t)).forEach(function(r) {
+    e % 2 ? dr(Object(t), !0).forEach(function(r) {
+      to(i, r, t[r]);
+    }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(i, Object.getOwnPropertyDescriptors(t)) : dr(Object(t)).forEach(function(r) {
       Object.defineProperty(i, r, Object.getOwnPropertyDescriptor(t, r));
     });
   }
   return i;
 }
-function Yi(i, e, t) {
-  return e = Mr(e), e in i ? Object.defineProperty(i, e, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : i[e] = t, i;
+function to(i, e, t) {
+  return e = Vr(e), e in i ? Object.defineProperty(i, e, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : i[e] = t, i;
 }
-function Vi(i, e) {
+function ro(i, e) {
   if (!(i instanceof e))
     throw new TypeError("Cannot call a class as a function");
 }
-function sr(i, e) {
+function cr(i, e) {
   for (var t = 0; t < e.length; t++) {
     var r = e[t];
-    r.enumerable = r.enumerable || !1, r.configurable = !0, "value" in r && (r.writable = !0), Object.defineProperty(i, Mr(r.key), r);
+    r.enumerable = r.enumerable || !1, r.configurable = !0, "value" in r && (r.writable = !0), Object.defineProperty(i, Vr(r.key), r);
   }
 }
-function Wi(i, e, t) {
-  return e && sr(i.prototype, e), t && sr(i, t), Object.defineProperty(i, "prototype", { writable: !1 }), i;
+function io(i, e, t) {
+  return e && cr(i.prototype, e), t && cr(i, t), Object.defineProperty(i, "prototype", { writable: !1 }), i;
 }
-function Mr(i) {
-  var e = Gi(i, "string");
-  return ve(e) == "symbol" ? e : e + "";
+function Vr(i) {
+  var e = oo(i, "string");
+  return xe(e) == "symbol" ? e : e + "";
 }
-function Gi(i, e) {
-  if (ve(i) != "object" || !i) return i;
+function oo(i, e) {
+  if (xe(i) != "object" || !i) return i;
   var t = i[Symbol.toPrimitive];
   if (t !== void 0) {
     var r = t.call(i, e);
-    if (ve(r) != "object") return r;
+    if (xe(r) != "object") return r;
     throw new TypeError("@@toPrimitive must return a primitive value.");
   }
   return String(i);
 }
-var tt = "tus-v1", rt = "ietf-draft-03", Le = "ietf-draft-05", Xi = {
+var rt = "tus-v1", it = "ietf-draft-03", Fe = "ietf-draft-05", no = {
   endpoint: null,
   uploadUrl: null,
   metadata: {},
@@ -1229,7 +1263,7 @@ var tt = "tus-v1", rt = "ietf-draft-03", Le = "ietf-draft-05", Xi = {
   addRequestId: !1,
   onBeforeRequest: null,
   onAfterResponse: null,
-  onShouldRetry: Hr,
+  onShouldRetry: Wr,
   chunkSize: Number.POSITIVE_INFINITY,
   retryDelays: [0, 1e3, 3e3, 5e3],
   parallelUploads: 1,
@@ -1241,12 +1275,12 @@ var tt = "tus-v1", rt = "ietf-draft-03", Le = "ietf-draft-05", Xi = {
   urlStorage: null,
   fileReader: null,
   httpStack: null,
-  protocol: tt
-}, it = /* @__PURE__ */ (function() {
+  protocol: rt
+}, ot = /* @__PURE__ */ (function() {
   function i(e, t) {
-    Vi(this, i), "resume" in t && console.log("tus: The `resume` option has been removed in tus-js-client v2. Please use the URL storage API instead."), this.options = t, this.options.chunkSize = Number(this.options.chunkSize), this._urlStorage = this.options.urlStorage, this.file = e, this.url = null, this._req = null, this._fingerprint = null, this._urlStorageKey = null, this._offset = null, this._aborted = !1, this._size = null, this._source = null, this._retryAttempt = 0, this._retryTimeout = null, this._offsetBeforeRetry = 0, this._parallelUploads = null, this._parallelUploadUrls = null;
+    ro(this, i), "resume" in t && console.log("tus: The `resume` option has been removed in tus-js-client v2. Please use the URL storage API instead."), this.options = t, this.options.chunkSize = Number(this.options.chunkSize), this._urlStorage = this.options.urlStorage, this.file = e, this.url = null, this._req = null, this._fingerprint = null, this._urlStorageKey = null, this._offset = null, this._aborted = !1, this._size = null, this._source = null, this._retryAttempt = 0, this._retryTimeout = null, this._offsetBeforeRetry = 0, this._parallelUploads = null, this._parallelUploadUrls = null;
   }
-  return Wi(i, [{
+  return io(i, [{
     key: "findPreviousUploads",
     value: function() {
       var t = this;
@@ -1267,7 +1301,7 @@ var tt = "tus-v1", rt = "ietf-draft-03", Le = "ietf-draft-05", Xi = {
         this._emitError(new Error("tus: no file or stream to upload provided"));
         return;
       }
-      if (![tt, rt, Le].includes(this.options.protocol)) {
+      if (![rt, it, Fe].includes(this.options.protocol)) {
         this._emitError(new Error("tus: unsupported protocol ".concat(this.options.protocol)));
         return;
       }
@@ -1328,18 +1362,18 @@ var tt = "tus-v1", rt = "ietf-draft-03", Le = "ietf-draft-05", Xi = {
     value: function() {
       var t, r = this, o = this._size, n = 0;
       this._parallelUploads = [];
-      var s = this._parallelUploadUrls != null ? this._parallelUploadUrls.length : this.options.parallelUploads, a = (t = this.options.parallelUploadBoundaries) !== null && t !== void 0 ? t : Zi(this._source.size, s);
-      this._parallelUploadUrls && a.forEach(function(g, w) {
-        g.uploadUrl = r._parallelUploadUrls[w] || null;
+      var s = this._parallelUploadUrls != null ? this._parallelUploadUrls.length : this.options.parallelUploads, a = (t = this.options.parallelUploadBoundaries) !== null && t !== void 0 ? t : ao(this._source.size, s);
+      this._parallelUploadUrls && a.forEach(function(h, k) {
+        h.uploadUrl = r._parallelUploadUrls[k] || null;
       }), this._parallelUploadUrls = new Array(a.length);
-      var l = a.map(function(g, w) {
-        var P = 0;
-        return r._source.slice(g.start, g.end).then(function(R) {
-          var z = R.value;
-          return new Promise(function(k, E) {
-            var S = _e(_e({}, r.options), {}, {
+      var l = a.map(function(h, k) {
+        var $ = 0;
+        return r._source.slice(h.start, h.end).then(function(z) {
+          var O = z.value;
+          return new Promise(function(w, P) {
+            var C = ke(ke({}, r.options), {}, {
               // If available, the partial upload should be resumed from a previous URL.
-              uploadUrl: g.uploadUrl || null,
+              uploadUrl: h.uploadUrl || null,
               // We take manually care of resuming for partial uploads, so they should
               // not be stored in the URL storage.
               storeFingerprintForResuming: !1,
@@ -1350,46 +1384,46 @@ var tt = "tus-v1", rt = "ietf-draft-03", Le = "ietf-draft-05", Xi = {
               parallelUploadBoundaries: null,
               metadata: r.options.metadataForPartialUploads,
               // Add the header to indicate the this is a partial upload.
-              headers: _e(_e({}, r.options.headers), {}, {
+              headers: ke(ke({}, r.options.headers), {}, {
                 "Upload-Concat": "partial"
               }),
               // Reject or resolve the promise if the upload errors or completes.
-              onSuccess: k,
-              onError: E,
+              onSuccess: w,
+              onError: P,
               // Based in the progress for this partial upload, calculate the progress
               // for the entire final upload.
-              onProgress: function(h) {
-                n = n - P + h, P = h, r._emitProgress(n, o);
+              onProgress: function(g) {
+                n = n - $ + g, $ = g, r._emitProgress(n, o);
               },
               // Wait until every partial upload has an upload URL, so we can add
               // them to the URL storage.
               onUploadUrlAvailable: function() {
-                r._parallelUploadUrls[w] = v.url, r._parallelUploadUrls.filter(function(h) {
-                  return !!h;
+                r._parallelUploadUrls[k] = v.url, r._parallelUploadUrls.filter(function(g) {
+                  return !!g;
                 }).length === a.length && r._saveUploadInUrlStorage();
               }
-            }), v = new i(z, S);
+            }), v = new i(O, C);
             v.start(), r._parallelUploads.push(v);
           });
         });
-      }), p;
+      }), u;
       Promise.all(l).then(function() {
-        p = r._openRequest("POST", r.options.endpoint), p.setHeader("Upload-Concat", "final;".concat(r._parallelUploadUrls.join(" ")));
-        var g = ar(r.options.metadata);
-        return g !== "" && p.setHeader("Upload-Metadata", g), r._sendRequest(p, null);
-      }).then(function(g) {
-        if (!Se(g.getStatus(), 200)) {
-          r._emitHttpError(p, g, "tus: unexpected response while creating upload");
+        u = r._openRequest("POST", r.options.endpoint), u.setHeader("Upload-Concat", "final;".concat(r._parallelUploadUrls.join(" ")));
+        var h = pr(r.options.metadata);
+        return h !== "" && u.setHeader("Upload-Metadata", h), r._sendRequest(u, null);
+      }).then(function(h) {
+        if (!$e(h.getStatus(), 200)) {
+          r._emitHttpError(u, h, "tus: unexpected response while creating upload");
           return;
         }
-        var w = g.getHeader("Location");
-        if (w == null) {
-          r._emitHttpError(p, g, "tus: invalid or missing Location header");
+        var k = h.getHeader("Location");
+        if (k == null) {
+          r._emitHttpError(u, h, "tus: invalid or missing Location header");
           return;
         }
-        r.url = pr(r.options.endpoint, w), "Created upload at ".concat(r.url), r._emitSuccess(g);
-      }).catch(function(g) {
-        r._emitError(g);
+        r.url = gr(r.options.endpoint, k), "Created upload at ".concat(r.url), r._emitSuccess(h);
+      }).catch(function(h) {
+        r._emitError(h);
       });
     }
     /**
@@ -1426,7 +1460,7 @@ var tt = "tus-v1", rt = "ietf-draft-03", Le = "ietf-draft-05", Xi = {
     value: function(t) {
       var r = this;
       if (this._parallelUploads != null) {
-        var o = Ni(this._parallelUploads), n;
+        var o = eo(this._parallelUploads), n;
         try {
           for (o.s(); !(n = o.n()).done; ) {
             var s = n.value;
@@ -1445,7 +1479,7 @@ var tt = "tus-v1", rt = "ietf-draft-03", Le = "ietf-draft-05", Xi = {
   }, {
     key: "_emitHttpError",
     value: function(t, r, o, n) {
-      this._emitError(new Te(o, n, t, r));
+      this._emitError(new je(o, n, t, r));
     }
   }, {
     key: "_emitError",
@@ -1454,7 +1488,7 @@ var tt = "tus-v1", rt = "ietf-draft-03", Le = "ietf-draft-05", Xi = {
       if (!this._aborted) {
         if (this.options.retryDelays != null) {
           var o = this._offset != null && this._offset > this._offsetBeforeRetry;
-          if (o && (this._retryAttempt = 0), cr(t, this._retryAttempt, this.options)) {
+          if (o && (this._retryAttempt = 0), hr(t, this._retryAttempt, this.options)) {
             var n = this.options.retryDelays[this._retryAttempt++];
             this._offsetBeforeRetry = this._offset, this._retryTimeout = setTimeout(function() {
               r.start();
@@ -1525,11 +1559,11 @@ var tt = "tus-v1", rt = "ietf-draft-03", Le = "ietf-draft-05", Xi = {
       }
       var r = this._openRequest("POST", this.options.endpoint);
       this.options.uploadLengthDeferred ? r.setHeader("Upload-Defer-Length", "1") : r.setHeader("Upload-Length", "".concat(this._size));
-      var o = ar(this.options.metadata);
+      var o = pr(this.options.metadata);
       o !== "" && r.setHeader("Upload-Metadata", o);
       var n;
-      this.options.uploadDataDuringCreation && !this.options.uploadLengthDeferred ? (this._offset = 0, n = this._addChunkToRequest(r)) : ((this.options.protocol === rt || this.options.protocol === Le) && r.setHeader("Upload-Complete", "?0"), n = this._sendRequest(r, null)), n.then(function(s) {
-        if (!Se(s.getStatus(), 200)) {
+      this.options.uploadDataDuringCreation && !this.options.uploadLengthDeferred ? (this._offset = 0, n = this._addChunkToRequest(r)) : ((this.options.protocol === it || this.options.protocol === Fe) && r.setHeader("Upload-Complete", "?0"), n = this._sendRequest(r, null)), n.then(function(s) {
+        if (!$e(s.getStatus(), 200)) {
           t._emitHttpError(r, s, "tus: unexpected response while creating upload");
           return;
         }
@@ -1538,7 +1572,7 @@ var tt = "tus-v1", rt = "ietf-draft-03", Le = "ietf-draft-05", Xi = {
           t._emitHttpError(r, s, "tus: invalid or missing Location header");
           return;
         }
-        if (t.url = pr(t.options.endpoint, a), "Created upload at ".concat(t.url), typeof t.options.onUploadUrlAvailable == "function" && t.options.onUploadUrlAvailable(), t._size === 0) {
+        if (t.url = gr(t.options.endpoint, a), "Created upload at ".concat(t.url), typeof t.options.onUploadUrlAvailable == "function" && t.options.onUploadUrlAvailable(), t._size === 0) {
           t._emitSuccess(s), t._source.close();
           return;
         }
@@ -1562,12 +1596,12 @@ var tt = "tus-v1", rt = "ietf-draft-03", Le = "ietf-draft-05", Xi = {
       var t = this, r = this._openRequest("HEAD", this.url), o = this._sendRequest(r, null);
       o.then(function(n) {
         var s = n.getStatus();
-        if (!Se(s, 200)) {
+        if (!$e(s, 200)) {
           if (s === 423) {
             t._emitHttpError(r, n, "tus: upload is currently locked; retry later");
             return;
           }
-          if (Se(s, 400) && t._removeFromUrlStorage(), !t.options.endpoint) {
+          if ($e(s, 400) && t._removeFromUrlStorage(), !t.options.endpoint) {
             t._emitHttpError(r, n, "tus: unable to resume upload (new upload cannot be created without an endpoint)");
             return;
           }
@@ -1580,7 +1614,7 @@ var tt = "tus-v1", rt = "ietf-draft-03", Le = "ietf-draft-05", Xi = {
           return;
         }
         var l = Number.parseInt(n.getHeader("Upload-Length"), 10);
-        if (Number.isNaN(l) && !t.options.uploadLengthDeferred && t.options.protocol === tt) {
+        if (Number.isNaN(l) && !t.options.uploadLengthDeferred && t.options.protocol === rt) {
           t._emitHttpError(r, n, "tus: invalid or missing length value");
           return;
         }
@@ -1611,7 +1645,7 @@ var tt = "tus-v1", rt = "ietf-draft-03", Le = "ietf-draft-05", Xi = {
         this.options.overridePatchMethod ? (r = this._openRequest("POST", this.url), r.setHeader("X-HTTP-Method-Override", "PATCH")) : r = this._openRequest("PATCH", this.url), r.setHeader("Upload-Offset", "".concat(this._offset));
         var o = this._addChunkToRequest(r);
         o.then(function(n) {
-          if (!Se(n.getStatus(), 200)) {
+          if (!$e(n.getStatus(), 200)) {
             t._emitHttpError(r, n, "tus: unexpected response while uploading chunk");
             return;
           }
@@ -1633,11 +1667,11 @@ var tt = "tus-v1", rt = "ietf-draft-03", Le = "ietf-draft-05", Xi = {
       var r = this, o = this._offset, n = this._offset + this.options.chunkSize;
       return t.setProgressHandler(function(s) {
         r._emitProgress(o + s, r._size);
-      }), this.options.protocol === tt ? t.setHeader("Content-Type", "application/offset+octet-stream") : this.options.protocol === Le && t.setHeader("Content-Type", "application/partial-upload"), (n === Number.POSITIVE_INFINITY || n > this._size) && !this.options.uploadLengthDeferred && (n = this._size), this._source.slice(o, n).then(function(s) {
-        var a = s.value, l = s.done, p = a != null && a.size ? a.size : 0;
-        r.options.uploadLengthDeferred && l && (r._size = r._offset + p, t.setHeader("Upload-Length", "".concat(r._size)));
-        var g = r._offset + p;
-        return !r.options.uploadLengthDeferred && l && g !== r._size ? Promise.reject(new Error("upload was configured with a size of ".concat(r._size, " bytes, but the source is done after ").concat(g, " bytes"))) : a === null ? r._sendRequest(t) : ((r.options.protocol === rt || r.options.protocol === Le) && t.setHeader("Upload-Complete", l ? "?1" : "?0"), r._emitProgress(r._offset, r._size), r._sendRequest(t, a));
+      }), this.options.protocol === rt ? t.setHeader("Content-Type", "application/offset+octet-stream") : this.options.protocol === Fe && t.setHeader("Content-Type", "application/partial-upload"), (n === Number.POSITIVE_INFINITY || n > this._size) && !this.options.uploadLengthDeferred && (n = this._size), this._source.slice(o, n).then(function(s) {
+        var a = s.value, l = s.done, u = a != null && a.size ? a.size : 0;
+        r.options.uploadLengthDeferred && l && (r._size = r._offset + u, t.setHeader("Upload-Length", "".concat(r._size)));
+        var h = r._offset + u;
+        return !r.options.uploadLengthDeferred && l && h !== r._size ? Promise.reject(new Error("upload was configured with a size of ".concat(r._size, " bytes, but the source is done after ").concat(h, " bytes"))) : a === null ? r._sendRequest(t) : ((r.options.protocol === it || r.options.protocol === Fe) && t.setHeader("Upload-Complete", l ? "?1" : "?0"), r._emitProgress(r._offset, r._size), r._sendRequest(t, a));
       });
     }
     /**
@@ -1668,7 +1702,7 @@ var tt = "tus-v1", rt = "ietf-draft-03", Le = "ietf-draft-05", Xi = {
   }, {
     key: "_openRequest",
     value: function(t, r) {
-      var o = lr(t, r, this.options);
+      var o = ur(t, r, this.options);
       return this._req = o, o;
     }
     /**
@@ -1713,23 +1747,23 @@ var tt = "tus-v1", rt = "ietf-draft-03", Le = "ietf-draft-05", Xi = {
     key: "_sendRequest",
     value: function(t) {
       var r = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : null;
-      return dr(t, r, this.options);
+      return fr(t, r, this.options);
     }
   }], [{
     key: "terminate",
     value: function(t) {
-      var r = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : {}, o = lr("DELETE", t, r);
-      return dr(o, null, r).then(function(n) {
+      var r = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : {}, o = ur("DELETE", t, r);
+      return fr(o, null, r).then(function(n) {
         if (n.getStatus() !== 204)
-          throw new Te("tus: unexpected response while terminating upload", null, o, n);
+          throw new je("tus: unexpected response while terminating upload", null, o, n);
       }).catch(function(n) {
-        if (n instanceof Te || (n = new Te("tus: failed to terminate upload", n, o, null)), !cr(n, 0, r))
+        if (n instanceof je || (n = new je("tus: failed to terminate upload", n, o, null)), !hr(n, 0, r))
           throw n;
-        var s = r.retryDelays[0], a = r.retryDelays.slice(1), l = _e(_e({}, r), {}, {
+        var s = r.retryDelays[0], a = r.retryDelays.slice(1), l = ke(ke({}, r), {}, {
           retryDelays: a
         });
-        return new Promise(function(p) {
-          return setTimeout(p, s);
+        return new Promise(function(u) {
+          return setTimeout(u, s);
         }).then(function() {
           return i.terminate(t, l);
         });
@@ -1737,35 +1771,35 @@ var tt = "tus-v1", rt = "ietf-draft-03", Le = "ietf-draft-05", Xi = {
     }
   }]);
 })();
-function ar(i) {
+function pr(i) {
   return Object.entries(i).map(function(e) {
-    var t = Br(e, 2), r = t[0], o = t[1];
-    return "".concat(r, " ").concat(Ri.encode(String(o)));
+    var t = Nr(e, 2), r = t[0], o = t[1];
+    return "".concat(r, " ").concat(Hi.encode(String(o)));
   }).join(",");
 }
-function Se(i, e) {
+function $e(i, e) {
   return i >= e && i < e + 100;
 }
-function lr(i, e, t) {
+function ur(i, e, t) {
   var r = t.httpStack.createRequest(i, e);
-  t.protocol === rt ? r.setHeader("Upload-Draft-Interop-Version", "5") : t.protocol === Le ? r.setHeader("Upload-Draft-Interop-Version", "6") : r.setHeader("Tus-Resumable", "1.0.0");
+  t.protocol === it ? r.setHeader("Upload-Draft-Interop-Version", "5") : t.protocol === Fe ? r.setHeader("Upload-Draft-Interop-Version", "6") : r.setHeader("Tus-Resumable", "1.0.0");
   for (var o = t.headers || {}, n = 0, s = Object.entries(o); n < s.length; n++) {
-    var a = Br(s[n], 2), l = a[0], p = a[1];
-    r.setHeader(l, p);
+    var a = Nr(s[n], 2), l = a[0], u = a[1];
+    r.setHeader(l, u);
   }
   if (t.addRequestId) {
-    var g = Bi();
-    r.setHeader("X-Request-ID", g);
+    var h = Xi();
+    r.setHeader("X-Request-ID", h);
   }
   return r;
 }
-function dr(i, e, t) {
-  return xt.apply(this, arguments);
+function fr(i, e, t) {
+  return yt.apply(this, arguments);
 }
-function xt() {
-  return xt = Ii(/* @__PURE__ */ vt().mark(function i(e, t, r) {
+function yt() {
+  return yt = Ki(/* @__PURE__ */ bt().mark(function i(e, t, r) {
     var o;
-    return vt().wrap(function(s) {
+    return bt().wrap(function(s) {
       for (; ; ) switch (s.prev = s.next) {
         case 0:
           if (typeof r.onBeforeRequest != "function") {
@@ -1788,23 +1822,23 @@ function xt() {
           return s.stop();
       }
     }, i);
-  })), xt.apply(this, arguments);
+  })), yt.apply(this, arguments);
 }
-function Ki() {
+function so() {
   var i = !0;
   return typeof navigator < "u" && navigator.onLine === !1 && (i = !1), i;
 }
-function cr(i, e, t) {
-  return t.retryDelays == null || e >= t.retryDelays.length || i.originalRequest == null ? !1 : t && typeof t.onShouldRetry == "function" ? t.onShouldRetry(i, e, t) : Hr(i);
+function hr(i, e, t) {
+  return t.retryDelays == null || e >= t.retryDelays.length || i.originalRequest == null ? !1 : t && typeof t.onShouldRetry == "function" ? t.onShouldRetry(i, e, t) : Wr(i);
 }
-function Hr(i) {
+function Wr(i) {
   var e = i.originalResponse ? i.originalResponse.getStatus() : 0;
-  return (!Se(e, 400) || e === 409 || e === 423) && Ki();
+  return (!$e(e, 400) || e === 409 || e === 423) && so();
 }
-function pr(i, e) {
-  return new Ai(e, i).toString();
+function gr(i, e) {
+  return new Gi(e, i).toString();
 }
-function Zi(i, e) {
+function ao(i, e) {
   for (var t = Math.floor(i / e), r = [], o = 0; o < e; o++)
     r.push({
       start: t * o,
@@ -1812,11 +1846,11 @@ function Zi(i, e) {
     });
   return r[e - 1].end = i, r;
 }
-it.defaultOptions = Xi;
-var qr = function() {
+ot.defaultOptions = no;
+var Gr = function() {
   return typeof navigator < "u" && typeof navigator.product == "string" && navigator.product.toLowerCase() === "reactnative";
 };
-function Ji(i) {
+function lo(i) {
   return new Promise(function(e, t) {
     var r = new XMLHttpRequest();
     r.responseType = "blob", r.onload = function() {
@@ -1827,10 +1861,10 @@ function Ji(i) {
     }, r.open("GET", i), r.send();
   });
 }
-var Qi = function() {
+var co = function() {
   return typeof window < "u" && (typeof window.PhoneGap < "u" || typeof window.Cordova < "u" || typeof window.cordova < "u");
 };
-function eo(i) {
+function po(i) {
   return new Promise(function(e, t) {
     var r = new FileReader();
     r.onload = function() {
@@ -1843,50 +1877,50 @@ function eo(i) {
     }, r.readAsArrayBuffer(i);
   });
 }
-function Me(i) {
+function He(i) {
   "@babel/helpers - typeof";
-  return Me = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(e) {
+  return He = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(e) {
     return typeof e;
   } : function(e) {
     return e && typeof Symbol == "function" && e.constructor === Symbol && e !== Symbol.prototype ? "symbol" : typeof e;
-  }, Me(i);
+  }, He(i);
 }
-function to(i, e) {
+function uo(i, e) {
   if (!(i instanceof e))
     throw new TypeError("Cannot call a class as a function");
 }
-function ro(i, e) {
+function fo(i, e) {
   for (var t = 0; t < e.length; t++) {
     var r = e[t];
-    r.enumerable = r.enumerable || !1, r.configurable = !0, "value" in r && (r.writable = !0), Object.defineProperty(i, oo(r.key), r);
+    r.enumerable = r.enumerable || !1, r.configurable = !0, "value" in r && (r.writable = !0), Object.defineProperty(i, go(r.key), r);
   }
 }
-function io(i, e, t) {
-  return e && ro(i.prototype, e), Object.defineProperty(i, "prototype", { writable: !1 }), i;
+function ho(i, e, t) {
+  return e && fo(i.prototype, e), Object.defineProperty(i, "prototype", { writable: !1 }), i;
 }
-function oo(i) {
-  var e = no(i, "string");
-  return Me(e) == "symbol" ? e : e + "";
+function go(i) {
+  var e = vo(i, "string");
+  return He(e) == "symbol" ? e : e + "";
 }
-function no(i, e) {
-  if (Me(i) != "object" || !i) return i;
+function vo(i, e) {
+  if (He(i) != "object" || !i) return i;
   var t = i[Symbol.toPrimitive];
   if (t !== void 0) {
     var r = t.call(i, e);
-    if (Me(r) != "object") return r;
+    if (He(r) != "object") return r;
     throw new TypeError("@@toPrimitive must return a primitive value.");
   }
   return String(i);
 }
-var fr = /* @__PURE__ */ (function() {
+var vr = /* @__PURE__ */ (function() {
   function i(e) {
-    to(this, i), this._file = e, this.size = e.size;
+    uo(this, i), this._file = e, this.size = e.size;
   }
-  return io(i, [{
+  return ho(i, [{
     key: "slice",
     value: function(t, r) {
-      if (Qi())
-        return eo(this._file.slice(t, r));
+      if (co())
+        return po(this._file.slice(t, r));
       var o = this._file.slice(t, r), n = r >= this.size;
       return Promise.resolve({
         value: o,
@@ -1899,45 +1933,45 @@ var fr = /* @__PURE__ */ (function() {
     }
   }]);
 })();
-function He(i) {
+function qe(i) {
   "@babel/helpers - typeof";
-  return He = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(e) {
+  return qe = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(e) {
     return typeof e;
   } : function(e) {
     return e && typeof Symbol == "function" && e.constructor === Symbol && e !== Symbol.prototype ? "symbol" : typeof e;
-  }, He(i);
+  }, qe(i);
 }
-function so(i, e) {
+function xo(i, e) {
   if (!(i instanceof e))
     throw new TypeError("Cannot call a class as a function");
 }
-function ao(i, e) {
+function mo(i, e) {
   for (var t = 0; t < e.length; t++) {
     var r = e[t];
-    r.enumerable = r.enumerable || !1, r.configurable = !0, "value" in r && (r.writable = !0), Object.defineProperty(i, co(r.key), r);
+    r.enumerable = r.enumerable || !1, r.configurable = !0, "value" in r && (r.writable = !0), Object.defineProperty(i, yo(r.key), r);
   }
 }
-function lo(i, e, t) {
-  return e && ao(i.prototype, e), Object.defineProperty(i, "prototype", { writable: !1 }), i;
+function bo(i, e, t) {
+  return e && mo(i.prototype, e), Object.defineProperty(i, "prototype", { writable: !1 }), i;
 }
-function co(i) {
-  var e = po(i, "string");
-  return He(e) == "symbol" ? e : e + "";
+function yo(i) {
+  var e = wo(i, "string");
+  return qe(e) == "symbol" ? e : e + "";
 }
-function po(i, e) {
-  if (He(i) != "object" || !i) return i;
+function wo(i, e) {
+  if (qe(i) != "object" || !i) return i;
   var t = i[Symbol.toPrimitive];
   if (t !== void 0) {
     var r = t.call(i, e);
-    if (He(r) != "object") return r;
+    if (qe(r) != "object") return r;
     throw new TypeError("@@toPrimitive must return a primitive value.");
   }
   return String(i);
 }
-function ur(i) {
+function xr(i) {
   return i === void 0 ? 0 : i.size !== void 0 ? i.size : i.length;
 }
-function fo(i, e) {
+function _o(i, e) {
   if (i.concat)
     return i.concat(e);
   if (i instanceof Blob)
@@ -1950,11 +1984,11 @@ function fo(i, e) {
   }
   throw new Error("Unknown data type");
 }
-var uo = /* @__PURE__ */ (function() {
+var ko = /* @__PURE__ */ (function() {
   function i(e) {
-    so(this, i), this._buffer = void 0, this._bufferOffset = 0, this._reader = e, this._done = !1;
+    xo(this, i), this._buffer = void 0, this._bufferOffset = 0, this._reader = e, this._done = !1;
   }
-  return lo(i, [{
+  return bo(i, [{
     key: "slice",
     value: function(t, r) {
       return t < this._bufferOffset ? Promise.reject(new Error("Requested data is before the reader's current offset")) : this._readUntilEnoughDataOrDone(t, r);
@@ -1962,7 +1996,7 @@ var uo = /* @__PURE__ */ (function() {
   }, {
     key: "_readUntilEnoughDataOrDone",
     value: function(t, r) {
-      var o = this, n = r <= this._bufferOffset + ur(this._buffer);
+      var o = this, n = r <= this._bufferOffset + xr(this._buffer);
       if (this._done || n) {
         var s = this._getDataFromBuffer(t, r), a = s == null ? this._done : !1;
         return Promise.resolve({
@@ -1971,15 +2005,15 @@ var uo = /* @__PURE__ */ (function() {
         });
       }
       return this._reader.read().then(function(l) {
-        var p = l.value, g = l.done;
-        return g ? o._done = !0 : o._buffer === void 0 ? o._buffer = p : o._buffer = fo(o._buffer, p), o._readUntilEnoughDataOrDone(t, r);
+        var u = l.value, h = l.done;
+        return h ? o._done = !0 : o._buffer === void 0 ? o._buffer = u : o._buffer = _o(o._buffer, u), o._readUntilEnoughDataOrDone(t, r);
       });
     }
   }, {
     key: "_getDataFromBuffer",
     value: function(t, r) {
       t > this._bufferOffset && (this._buffer = this._buffer.slice(t - this._bufferOffset), this._bufferOffset = t);
-      var o = ur(this._buffer) === 0;
+      var o = xr(this._buffer) === 0;
       return this._done && o ? null : this._buffer.slice(0, r - t);
     }
   }, {
@@ -1989,180 +2023,180 @@ var uo = /* @__PURE__ */ (function() {
     }
   }]);
 })();
-function xe(i) {
+function me(i) {
   "@babel/helpers - typeof";
-  return xe = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(e) {
+  return me = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(e) {
     return typeof e;
   } : function(e) {
     return e && typeof Symbol == "function" && e.constructor === Symbol && e !== Symbol.prototype ? "symbol" : typeof e;
-  }, xe(i);
+  }, me(i);
 }
-function bt() {
+function wt() {
   /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */
-  bt = function() {
+  wt = function() {
     return e;
   };
-  var i, e = {}, t = Object.prototype, r = t.hasOwnProperty, o = Object.defineProperty || function(u, d, c) {
-    u[d] = c.value;
+  var i, e = {}, t = Object.prototype, r = t.hasOwnProperty, o = Object.defineProperty || function(f, d, c) {
+    f[d] = c.value;
   }, n = typeof Symbol == "function" ? Symbol : {}, s = n.iterator || "@@iterator", a = n.asyncIterator || "@@asyncIterator", l = n.toStringTag || "@@toStringTag";
-  function p(u, d, c) {
-    return Object.defineProperty(u, d, { value: c, enumerable: !0, configurable: !0, writable: !0 }), u[d];
+  function u(f, d, c) {
+    return Object.defineProperty(f, d, { value: c, enumerable: !0, configurable: !0, writable: !0 }), f[d];
   }
   try {
-    p({}, "");
+    u({}, "");
   } catch {
-    p = function(c, m, _) {
-      return c[m] = _;
+    u = function(c, b, _) {
+      return c[b] = _;
     };
   }
-  function g(u, d, c, m) {
-    var _ = d && d.prototype instanceof S ? d : S, y = Object.create(_.prototype), D = new ee(m || []);
-    return o(y, "_invoke", { value: X(u, c, D) }), y;
+  function h(f, d, c, b) {
+    var _ = d && d.prototype instanceof C ? d : C, y = Object.create(_.prototype), T = new re(b || []);
+    return o(y, "_invoke", { value: K(f, c, T) }), y;
   }
-  function w(u, d, c) {
+  function k(f, d, c) {
     try {
-      return { type: "normal", arg: u.call(d, c) };
-    } catch (m) {
-      return { type: "throw", arg: m };
+      return { type: "normal", arg: f.call(d, c) };
+    } catch (b) {
+      return { type: "throw", arg: b };
     }
   }
-  e.wrap = g;
-  var P = "suspendedStart", R = "suspendedYield", z = "executing", k = "completed", E = {};
-  function S() {
+  e.wrap = h;
+  var $ = "suspendedStart", z = "suspendedYield", O = "executing", w = "completed", P = {};
+  function C() {
   }
   function v() {
   }
   function x() {
   }
-  var h = {};
-  p(h, s, function() {
+  var g = {};
+  u(g, s, function() {
     return this;
   });
-  var b = Object.getPrototypeOf, O = b && b(b(pe([])));
-  O && O !== t && r.call(O, s) && (h = O);
-  var $ = x.prototype = S.prototype = Object.create(h);
-  function F(u) {
+  var m = Object.getPrototypeOf, R = m && m(m(ue([])));
+  R && R !== t && r.call(R, s) && (g = R);
+  var U = x.prototype = C.prototype = Object.create(g);
+  function F(f) {
     ["next", "throw", "return"].forEach(function(d) {
-      p(u, d, function(c) {
+      u(f, d, function(c) {
         return this._invoke(d, c);
       });
     });
   }
-  function L(u, d) {
-    function c(_, y, D, A) {
-      var I = w(u[_], u, y);
+  function L(f, d) {
+    function c(_, y, T, A) {
+      var I = k(f[_], f, y);
       if (I.type !== "throw") {
-        var V = I.arg, N = V.value;
-        return N && xe(N) == "object" && r.call(N, "__await") ? d.resolve(N.__await).then(function(W) {
-          c("next", W, D, A);
-        }, function(W) {
-          c("throw", W, D, A);
-        }) : d.resolve(N).then(function(W) {
-          V.value = W, D(V);
-        }, function(W) {
-          return c("throw", W, D, A);
+        var W = I.arg, N = W.value;
+        return N && me(N) == "object" && r.call(N, "__await") ? d.resolve(N.__await).then(function(G) {
+          c("next", G, T, A);
+        }, function(G) {
+          c("throw", G, T, A);
+        }) : d.resolve(N).then(function(G) {
+          W.value = G, T(W);
+        }, function(G) {
+          return c("throw", G, T, A);
         });
       }
       A(I.arg);
     }
-    var m;
-    o(this, "_invoke", { value: function(y, D) {
+    var b;
+    o(this, "_invoke", { value: function(y, T) {
       function A() {
-        return new d(function(I, V) {
-          c(y, D, I, V);
+        return new d(function(I, W) {
+          c(y, T, I, W);
         });
       }
-      return m = m ? m.then(A, A) : A();
+      return b = b ? b.then(A, A) : A();
     } });
   }
-  function X(u, d, c) {
-    var m = P;
+  function K(f, d, c) {
+    var b = $;
     return function(_, y) {
-      if (m === z) throw Error("Generator is already running");
-      if (m === k) {
+      if (b === O) throw Error("Generator is already running");
+      if (b === w) {
         if (_ === "throw") throw y;
         return { value: i, done: !0 };
       }
       for (c.method = _, c.arg = y; ; ) {
-        var D = c.delegate;
-        if (D) {
-          var A = oe(D, c);
+        var T = c.delegate;
+        if (T) {
+          var A = ne(T, c);
           if (A) {
-            if (A === E) continue;
+            if (A === P) continue;
             return A;
           }
         }
         if (c.method === "next") c.sent = c._sent = c.arg;
         else if (c.method === "throw") {
-          if (m === P) throw m = k, c.arg;
+          if (b === $) throw b = w, c.arg;
           c.dispatchException(c.arg);
         } else c.method === "return" && c.abrupt("return", c.arg);
-        m = z;
-        var I = w(u, d, c);
+        b = O;
+        var I = k(f, d, c);
         if (I.type === "normal") {
-          if (m = c.done ? k : R, I.arg === E) continue;
+          if (b = c.done ? w : z, I.arg === P) continue;
           return { value: I.arg, done: c.done };
         }
-        I.type === "throw" && (m = k, c.method = "throw", c.arg = I.arg);
+        I.type === "throw" && (b = w, c.method = "throw", c.arg = I.arg);
       }
     };
   }
-  function oe(u, d) {
-    var c = d.method, m = u.iterator[c];
-    if (m === i) return d.delegate = null, c === "throw" && u.iterator.return && (d.method = "return", d.arg = i, oe(u, d), d.method === "throw") || c !== "return" && (d.method = "throw", d.arg = new TypeError("The iterator does not provide a '" + c + "' method")), E;
-    var _ = w(m, u.iterator, d.arg);
-    if (_.type === "throw") return d.method = "throw", d.arg = _.arg, d.delegate = null, E;
+  function ne(f, d) {
+    var c = d.method, b = f.iterator[c];
+    if (b === i) return d.delegate = null, c === "throw" && f.iterator.return && (d.method = "return", d.arg = i, ne(f, d), d.method === "throw") || c !== "return" && (d.method = "throw", d.arg = new TypeError("The iterator does not provide a '" + c + "' method")), P;
+    var _ = k(b, f.iterator, d.arg);
+    if (_.type === "throw") return d.method = "throw", d.arg = _.arg, d.delegate = null, P;
     var y = _.arg;
-    return y ? y.done ? (d[u.resultName] = y.value, d.next = u.nextLoc, d.method !== "return" && (d.method = "next", d.arg = i), d.delegate = null, E) : y : (d.method = "throw", d.arg = new TypeError("iterator result is not an object"), d.delegate = null, E);
+    return y ? y.done ? (d[f.resultName] = y.value, d.next = f.nextLoc, d.method !== "return" && (d.method = "next", d.arg = i), d.delegate = null, P) : y : (d.method = "throw", d.arg = new TypeError("iterator result is not an object"), d.delegate = null, P);
   }
-  function ye(u) {
-    var d = { tryLoc: u[0] };
-    1 in u && (d.catchLoc = u[1]), 2 in u && (d.finallyLoc = u[2], d.afterLoc = u[3]), this.tryEntries.push(d);
+  function we(f) {
+    var d = { tryLoc: f[0] };
+    1 in f && (d.catchLoc = f[1]), 2 in f && (d.finallyLoc = f[2], d.afterLoc = f[3]), this.tryEntries.push(d);
   }
-  function U(u) {
-    var d = u.completion || {};
-    d.type = "normal", delete d.arg, u.completion = d;
+  function E(f) {
+    var d = f.completion || {};
+    d.type = "normal", delete d.arg, f.completion = d;
   }
-  function ee(u) {
-    this.tryEntries = [{ tryLoc: "root" }], u.forEach(ye, this), this.reset(!0);
+  function re(f) {
+    this.tryEntries = [{ tryLoc: "root" }], f.forEach(we, this), this.reset(!0);
   }
-  function pe(u) {
-    if (u || u === "") {
-      var d = u[s];
-      if (d) return d.call(u);
-      if (typeof u.next == "function") return u;
-      if (!isNaN(u.length)) {
-        var c = -1, m = function _() {
-          for (; ++c < u.length; ) if (r.call(u, c)) return _.value = u[c], _.done = !1, _;
+  function ue(f) {
+    if (f || f === "") {
+      var d = f[s];
+      if (d) return d.call(f);
+      if (typeof f.next == "function") return f;
+      if (!isNaN(f.length)) {
+        var c = -1, b = function _() {
+          for (; ++c < f.length; ) if (r.call(f, c)) return _.value = f[c], _.done = !1, _;
           return _.value = i, _.done = !0, _;
         };
-        return m.next = m;
+        return b.next = b;
       }
     }
-    throw new TypeError(xe(u) + " is not iterable");
+    throw new TypeError(me(f) + " is not iterable");
   }
-  return v.prototype = x, o($, "constructor", { value: x, configurable: !0 }), o(x, "constructor", { value: v, configurable: !0 }), v.displayName = p(x, l, "GeneratorFunction"), e.isGeneratorFunction = function(u) {
-    var d = typeof u == "function" && u.constructor;
+  return v.prototype = x, o(U, "constructor", { value: x, configurable: !0 }), o(x, "constructor", { value: v, configurable: !0 }), v.displayName = u(x, l, "GeneratorFunction"), e.isGeneratorFunction = function(f) {
+    var d = typeof f == "function" && f.constructor;
     return !!d && (d === v || (d.displayName || d.name) === "GeneratorFunction");
-  }, e.mark = function(u) {
-    return Object.setPrototypeOf ? Object.setPrototypeOf(u, x) : (u.__proto__ = x, p(u, l, "GeneratorFunction")), u.prototype = Object.create($), u;
-  }, e.awrap = function(u) {
-    return { __await: u };
-  }, F(L.prototype), p(L.prototype, a, function() {
+  }, e.mark = function(f) {
+    return Object.setPrototypeOf ? Object.setPrototypeOf(f, x) : (f.__proto__ = x, u(f, l, "GeneratorFunction")), f.prototype = Object.create(U), f;
+  }, e.awrap = function(f) {
+    return { __await: f };
+  }, F(L.prototype), u(L.prototype, a, function() {
     return this;
-  }), e.AsyncIterator = L, e.async = function(u, d, c, m, _) {
+  }), e.AsyncIterator = L, e.async = function(f, d, c, b, _) {
     _ === void 0 && (_ = Promise);
-    var y = new L(g(u, d, c, m), _);
-    return e.isGeneratorFunction(d) ? y : y.next().then(function(D) {
-      return D.done ? D.value : y.next();
+    var y = new L(h(f, d, c, b), _);
+    return e.isGeneratorFunction(d) ? y : y.next().then(function(T) {
+      return T.done ? T.value : y.next();
     });
-  }, F($), p($, l, "Generator"), p($, s, function() {
+  }, F(U), u(U, l, "Generator"), u(U, s, function() {
     return this;
-  }), p($, "toString", function() {
+  }), u(U, "toString", function() {
     return "[object Generator]";
-  }), e.keys = function(u) {
-    var d = Object(u), c = [];
-    for (var m in d) c.push(m);
+  }), e.keys = function(f) {
+    var d = Object(f), c = [];
+    for (var b in d) c.push(b);
     return c.reverse(), function _() {
       for (; c.length; ) {
         var y = c.pop();
@@ -2170,8 +2204,8 @@ function bt() {
       }
       return _.done = !0, _;
     };
-  }, e.values = pe, ee.prototype = { constructor: ee, reset: function(d) {
-    if (this.prev = 0, this.next = 0, this.sent = this._sent = i, this.done = !1, this.delegate = null, this.method = "next", this.arg = i, this.tryEntries.forEach(U), !d) for (var c in this) c.charAt(0) === "t" && r.call(this, c) && !isNaN(+c.slice(1)) && (this[c] = i);
+  }, e.values = ue, re.prototype = { constructor: re, reset: function(d) {
+    if (this.prev = 0, this.next = 0, this.sent = this._sent = i, this.done = !1, this.delegate = null, this.method = "next", this.arg = i, this.tryEntries.forEach(E), !d) for (var c in this) c.charAt(0) === "t" && r.call(this, c) && !isNaN(+c.slice(1)) && (this[c] = i);
   }, stop: function() {
     this.done = !0;
     var d = this.tryEntries[0].completion;
@@ -2180,131 +2214,131 @@ function bt() {
   }, dispatchException: function(d) {
     if (this.done) throw d;
     var c = this;
-    function m(V, N) {
-      return D.type = "throw", D.arg = d, c.next = V, N && (c.method = "next", c.arg = i), !!N;
+    function b(W, N) {
+      return T.type = "throw", T.arg = d, c.next = W, N && (c.method = "next", c.arg = i), !!N;
     }
     for (var _ = this.tryEntries.length - 1; _ >= 0; --_) {
-      var y = this.tryEntries[_], D = y.completion;
-      if (y.tryLoc === "root") return m("end");
+      var y = this.tryEntries[_], T = y.completion;
+      if (y.tryLoc === "root") return b("end");
       if (y.tryLoc <= this.prev) {
         var A = r.call(y, "catchLoc"), I = r.call(y, "finallyLoc");
         if (A && I) {
-          if (this.prev < y.catchLoc) return m(y.catchLoc, !0);
-          if (this.prev < y.finallyLoc) return m(y.finallyLoc);
+          if (this.prev < y.catchLoc) return b(y.catchLoc, !0);
+          if (this.prev < y.finallyLoc) return b(y.finallyLoc);
         } else if (A) {
-          if (this.prev < y.catchLoc) return m(y.catchLoc, !0);
+          if (this.prev < y.catchLoc) return b(y.catchLoc, !0);
         } else {
           if (!I) throw Error("try statement without catch or finally");
-          if (this.prev < y.finallyLoc) return m(y.finallyLoc);
+          if (this.prev < y.finallyLoc) return b(y.finallyLoc);
         }
       }
     }
   }, abrupt: function(d, c) {
-    for (var m = this.tryEntries.length - 1; m >= 0; --m) {
-      var _ = this.tryEntries[m];
+    for (var b = this.tryEntries.length - 1; b >= 0; --b) {
+      var _ = this.tryEntries[b];
       if (_.tryLoc <= this.prev && r.call(_, "finallyLoc") && this.prev < _.finallyLoc) {
         var y = _;
         break;
       }
     }
     y && (d === "break" || d === "continue") && y.tryLoc <= c && c <= y.finallyLoc && (y = null);
-    var D = y ? y.completion : {};
-    return D.type = d, D.arg = c, y ? (this.method = "next", this.next = y.finallyLoc, E) : this.complete(D);
+    var T = y ? y.completion : {};
+    return T.type = d, T.arg = c, y ? (this.method = "next", this.next = y.finallyLoc, P) : this.complete(T);
   }, complete: function(d, c) {
     if (d.type === "throw") throw d.arg;
-    return d.type === "break" || d.type === "continue" ? this.next = d.arg : d.type === "return" ? (this.rval = this.arg = d.arg, this.method = "return", this.next = "end") : d.type === "normal" && c && (this.next = c), E;
+    return d.type === "break" || d.type === "continue" ? this.next = d.arg : d.type === "return" ? (this.rval = this.arg = d.arg, this.method = "return", this.next = "end") : d.type === "normal" && c && (this.next = c), P;
   }, finish: function(d) {
     for (var c = this.tryEntries.length - 1; c >= 0; --c) {
-      var m = this.tryEntries[c];
-      if (m.finallyLoc === d) return this.complete(m.completion, m.afterLoc), U(m), E;
+      var b = this.tryEntries[c];
+      if (b.finallyLoc === d) return this.complete(b.completion, b.afterLoc), E(b), P;
     }
   }, catch: function(d) {
     for (var c = this.tryEntries.length - 1; c >= 0; --c) {
-      var m = this.tryEntries[c];
-      if (m.tryLoc === d) {
-        var _ = m.completion;
+      var b = this.tryEntries[c];
+      if (b.tryLoc === d) {
+        var _ = b.completion;
         if (_.type === "throw") {
           var y = _.arg;
-          U(m);
+          E(b);
         }
         return y;
       }
     }
     throw Error("illegal catch attempt");
-  }, delegateYield: function(d, c, m) {
-    return this.delegate = { iterator: pe(d), resultName: c, nextLoc: m }, this.method === "next" && (this.arg = i), E;
+  }, delegateYield: function(d, c, b) {
+    return this.delegate = { iterator: ue(d), resultName: c, nextLoc: b }, this.method === "next" && (this.arg = i), P;
   } }, e;
 }
-function hr(i, e, t, r, o, n, s) {
+function mr(i, e, t, r, o, n, s) {
   try {
     var a = i[n](s), l = a.value;
-  } catch (p) {
-    t(p);
+  } catch (u) {
+    t(u);
     return;
   }
   a.done ? e(l) : Promise.resolve(l).then(r, o);
 }
-function ho(i) {
+function Co(i) {
   return function() {
     var e = this, t = arguments;
     return new Promise(function(r, o) {
       var n = i.apply(e, t);
       function s(l) {
-        hr(n, r, o, s, a, "next", l);
+        mr(n, r, o, s, a, "next", l);
       }
       function a(l) {
-        hr(n, r, o, s, a, "throw", l);
+        mr(n, r, o, s, a, "throw", l);
       }
       s(void 0);
     });
   };
 }
-function go(i, e) {
+function So(i, e) {
   if (!(i instanceof e))
     throw new TypeError("Cannot call a class as a function");
 }
-function vo(i, e) {
+function $o(i, e) {
   for (var t = 0; t < e.length; t++) {
     var r = e[t];
-    r.enumerable = r.enumerable || !1, r.configurable = !0, "value" in r && (r.writable = !0), Object.defineProperty(i, bo(r.key), r);
+    r.enumerable = r.enumerable || !1, r.configurable = !0, "value" in r && (r.writable = !0), Object.defineProperty(i, Eo(r.key), r);
   }
 }
-function xo(i, e, t) {
-  return e && vo(i.prototype, e), Object.defineProperty(i, "prototype", { writable: !1 }), i;
+function Uo(i, e, t) {
+  return e && $o(i.prototype, e), Object.defineProperty(i, "prototype", { writable: !1 }), i;
 }
-function bo(i) {
-  var e = mo(i, "string");
-  return xe(e) == "symbol" ? e : e + "";
+function Eo(i) {
+  var e = Po(i, "string");
+  return me(e) == "symbol" ? e : e + "";
 }
-function mo(i, e) {
-  if (xe(i) != "object" || !i) return i;
+function Po(i, e) {
+  if (me(i) != "object" || !i) return i;
   var t = i[Symbol.toPrimitive];
   if (t !== void 0) {
     var r = t.call(i, e);
-    if (xe(r) != "object") return r;
+    if (me(r) != "object") return r;
     throw new TypeError("@@toPrimitive must return a primitive value.");
   }
   return String(i);
 }
-var yo = /* @__PURE__ */ (function() {
+var Oo = /* @__PURE__ */ (function() {
   function i() {
-    go(this, i);
+    So(this, i);
   }
-  return xo(i, [{
+  return Uo(i, [{
     key: "openFile",
     value: (function() {
-      var e = ho(/* @__PURE__ */ bt().mark(function r(o, n) {
+      var e = Co(/* @__PURE__ */ wt().mark(function r(o, n) {
         var s;
-        return bt().wrap(function(l) {
+        return wt().wrap(function(l) {
           for (; ; ) switch (l.prev = l.next) {
             case 0:
-              if (!(qr() && o && typeof o.uri < "u")) {
+              if (!(Gr() && o && typeof o.uri < "u")) {
                 l.next = 11;
                 break;
               }
-              return l.prev = 1, l.next = 4, Ji(o.uri);
+              return l.prev = 1, l.next = 4, lo(o.uri);
             case 4:
-              return s = l.sent, l.abrupt("return", new fr(s));
+              return s = l.sent, l.abrupt("return", new vr(s));
             case 8:
               throw l.prev = 8, l.t0 = l.catch(1), new Error("tus: cannot fetch `file.uri` as Blob, make sure the uri is correct and accessible. ".concat(l.t0));
             case 11:
@@ -2312,7 +2346,7 @@ var yo = /* @__PURE__ */ (function() {
                 l.next = 13;
                 break;
               }
-              return l.abrupt("return", Promise.resolve(new fr(o)));
+              return l.abrupt("return", Promise.resolve(new vr(o)));
             case 13:
               if (typeof o.read != "function") {
                 l.next = 18;
@@ -2324,7 +2358,7 @@ var yo = /* @__PURE__ */ (function() {
               }
               return l.abrupt("return", Promise.reject(new Error("cannot create source for stream without a finite value for the `chunkSize` option")));
             case 17:
-              return l.abrupt("return", Promise.resolve(new uo(o, n)));
+              return l.abrupt("return", Promise.resolve(new ko(o, n)));
             case 18:
               return l.abrupt("return", Promise.reject(new Error("source object may only be an instance of File, Blob, or Reader in this environment")));
             case 19:
@@ -2340,14 +2374,14 @@ var yo = /* @__PURE__ */ (function() {
     })()
   }]);
 })();
-function wo(i, e) {
-  return qr() ? Promise.resolve(_o(i, e)) : Promise.resolve(["tus-br", i.name, i.type, i.size, i.lastModified, e.endpoint].join("-"));
+function zo(i, e) {
+  return Gr() ? Promise.resolve(Ro(i, e)) : Promise.resolve(["tus-br", i.name, i.type, i.size, i.lastModified, e.endpoint].join("-"));
 }
-function _o(i, e) {
-  var t = i.exif ? ko(JSON.stringify(i.exif)) : "noexif";
+function Ro(i, e) {
+  var t = i.exif ? To(JSON.stringify(i.exif)) : "noexif";
   return ["tus-rn", i.name || "noname", i.size || "nosize", t, e.endpoint].join("/");
 }
-function ko(i) {
+function To(i) {
   var e = 0;
   if (i.length === 0)
     return e;
@@ -2357,49 +2391,49 @@ function ko(i) {
   }
   return e;
 }
-function qe(i) {
+function Ne(i) {
   "@babel/helpers - typeof";
-  return qe = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(e) {
+  return Ne = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(e) {
     return typeof e;
   } : function(e) {
     return e && typeof Symbol == "function" && e.constructor === Symbol && e !== Symbol.prototype ? "symbol" : typeof e;
-  }, qe(i);
+  }, Ne(i);
 }
-function Ot(i, e) {
+function Dt(i, e) {
   if (!(i instanceof e))
     throw new TypeError("Cannot call a class as a function");
 }
-function Co(i, e) {
+function Do(i, e) {
   for (var t = 0; t < e.length; t++) {
     var r = e[t];
-    r.enumerable = r.enumerable || !1, r.configurable = !0, "value" in r && (r.writable = !0), Object.defineProperty(i, So(r.key), r);
+    r.enumerable = r.enumerable || !1, r.configurable = !0, "value" in r && (r.writable = !0), Object.defineProperty(i, jo(r.key), r);
   }
 }
-function Rt(i, e, t) {
-  return e && Co(i.prototype, e), Object.defineProperty(i, "prototype", { writable: !1 }), i;
+function jt(i, e, t) {
+  return e && Do(i.prototype, e), Object.defineProperty(i, "prototype", { writable: !1 }), i;
 }
-function So(i) {
-  var e = $o(i, "string");
-  return qe(e) == "symbol" ? e : e + "";
+function jo(i) {
+  var e = Lo(i, "string");
+  return Ne(e) == "symbol" ? e : e + "";
 }
-function $o(i, e) {
-  if (qe(i) != "object" || !i) return i;
+function Lo(i, e) {
+  if (Ne(i) != "object" || !i) return i;
   var t = i[Symbol.toPrimitive];
   if (t !== void 0) {
     var r = t.call(i, e);
-    if (qe(r) != "object") return r;
+    if (Ne(r) != "object") return r;
     throw new TypeError("@@toPrimitive must return a primitive value.");
   }
   return String(i);
 }
-var Uo = /* @__PURE__ */ (function() {
+var Fo = /* @__PURE__ */ (function() {
   function i() {
-    Ot(this, i);
+    Dt(this, i);
   }
-  return Rt(i, [{
+  return jt(i, [{
     key: "createRequest",
     value: function(t, r) {
-      return new Eo(t, r);
+      return new Ao(t, r);
     }
   }, {
     key: "getName",
@@ -2407,11 +2441,11 @@ var Uo = /* @__PURE__ */ (function() {
       return "XHRHttpStack";
     }
   }]);
-})(), Eo = /* @__PURE__ */ (function() {
+})(), Ao = /* @__PURE__ */ (function() {
   function i(e, t) {
-    Ot(this, i), this._xhr = new XMLHttpRequest(), this._xhr.open(e, t, !0), this._method = e, this._url = t, this._headers = {};
+    Dt(this, i), this._xhr = new XMLHttpRequest(), this._xhr.open(e, t, !0), this._method = e, this._url = t, this._headers = {};
   }
-  return Rt(i, [{
+  return jt(i, [{
     key: "getMethod",
     value: function() {
       return this._method;
@@ -2444,7 +2478,7 @@ var Uo = /* @__PURE__ */ (function() {
       var t = this, r = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : null;
       return new Promise(function(o, n) {
         t._xhr.onload = function() {
-          o(new Po(t._xhr));
+          o(new Bo(t._xhr));
         }, t._xhr.onerror = function(s) {
           n(s);
         }, t._xhr.send(r);
@@ -2461,11 +2495,11 @@ var Uo = /* @__PURE__ */ (function() {
       return this._xhr;
     }
   }]);
-})(), Po = /* @__PURE__ */ (function() {
+})(), Bo = /* @__PURE__ */ (function() {
   function i(e) {
-    Ot(this, i), this._xhr = e;
+    Dt(this, i), this._xhr = e;
   }
-  return Rt(i, [{
+  return jt(i, [{
     key: "getStatus",
     value: function() {
       return this._xhr.status;
@@ -2487,57 +2521,57 @@ var Uo = /* @__PURE__ */ (function() {
     }
   }]);
 })();
-function Ne(i) {
+function Ye(i) {
   "@babel/helpers - typeof";
-  return Ne = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(e) {
+  return Ye = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(e) {
     return typeof e;
   } : function(e) {
     return e && typeof Symbol == "function" && e.constructor === Symbol && e !== Symbol.prototype ? "symbol" : typeof e;
-  }, Ne(i);
+  }, Ye(i);
 }
-function zo(i, e) {
+function Io(i, e) {
   if (!(i instanceof e))
     throw new TypeError("Cannot call a class as a function");
 }
-function Oo(i, e) {
+function Mo(i, e) {
   for (var t = 0; t < e.length; t++) {
     var r = e[t];
-    r.enumerable = r.enumerable || !1, r.configurable = !0, "value" in r && (r.writable = !0), Object.defineProperty(i, Do(r.key), r);
+    r.enumerable = r.enumerable || !1, r.configurable = !0, "value" in r && (r.writable = !0), Object.defineProperty(i, qo(r.key), r);
   }
 }
-function Ro(i, e, t) {
-  return e && Oo(i.prototype, e), Object.defineProperty(i, "prototype", { writable: !1 }), i;
+function Ho(i, e, t) {
+  return e && Mo(i.prototype, e), Object.defineProperty(i, "prototype", { writable: !1 }), i;
 }
-function Do(i) {
-  var e = To(i, "string");
-  return Ne(e) == "symbol" ? e : e + "";
+function qo(i) {
+  var e = No(i, "string");
+  return Ye(e) == "symbol" ? e : e + "";
 }
-function To(i, e) {
-  if (Ne(i) != "object" || !i) return i;
+function No(i, e) {
+  if (Ye(i) != "object" || !i) return i;
   var t = i[Symbol.toPrimitive];
   if (t !== void 0) {
     var r = t.call(i, e);
-    if (Ne(r) != "object") return r;
+    if (Ye(r) != "object") return r;
     throw new TypeError("@@toPrimitive must return a primitive value.");
   }
   return String(i);
 }
-var mt = !1;
+var _t = !1;
 try {
-  mt = "localStorage" in window;
-  var ct = "tusSupport", gr = localStorage.getItem(ct);
-  localStorage.setItem(ct, gr), gr === null && localStorage.removeItem(ct);
+  _t = "localStorage" in window;
+  var ft = "tusSupport", br = localStorage.getItem(ft);
+  localStorage.setItem(ft, br), br === null && localStorage.removeItem(ft);
 } catch (i) {
   if (i.code === i.SECURITY_ERR || i.code === i.QUOTA_EXCEEDED_ERR)
-    mt = !1;
+    _t = !1;
   else
     throw i;
 }
-var jo = mt, Lo = /* @__PURE__ */ (function() {
+var Yo = _t, Vo = /* @__PURE__ */ (function() {
   function i() {
-    zo(this, i);
+    Io(this, i);
   }
-  return Ro(i, [{
+  return Ho(i, [{
     key: "findAllUploads",
     value: function() {
       var t = this._findEntries("tus::");
@@ -2576,68 +2610,68 @@ var jo = mt, Lo = /* @__PURE__ */ (function() {
     }
   }]);
 })();
-function Ee(i) {
+function Pe(i) {
   "@babel/helpers - typeof";
-  return Ee = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(e) {
+  return Pe = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(e) {
     return typeof e;
   } : function(e) {
     return e && typeof Symbol == "function" && e.constructor === Symbol && e !== Symbol.prototype ? "symbol" : typeof e;
-  }, Ee(i);
+  }, Pe(i);
 }
-function Fo(i, e) {
+function Wo(i, e) {
   if (!(i instanceof e))
     throw new TypeError("Cannot call a class as a function");
 }
-function Ao(i, e) {
+function Go(i, e) {
   for (var t = 0; t < e.length; t++) {
     var r = e[t];
-    r.enumerable = r.enumerable || !1, r.configurable = !0, "value" in r && (r.writable = !0), Object.defineProperty(i, Yr(r.key), r);
+    r.enumerable = r.enumerable || !1, r.configurable = !0, "value" in r && (r.writable = !0), Object.defineProperty(i, Kr(r.key), r);
   }
 }
-function Bo(i, e, t) {
-  return t && Ao(i, t), Object.defineProperty(i, "prototype", { writable: !1 }), i;
+function Xo(i, e, t) {
+  return t && Go(i, t), Object.defineProperty(i, "prototype", { writable: !1 }), i;
 }
-function Io(i, e, t) {
-  return e = ot(e), Mo(i, Nr() ? Reflect.construct(e, t || [], ot(i).constructor) : e.apply(i, t));
+function Ko(i, e, t) {
+  return e = nt(e), Zo(i, Xr() ? Reflect.construct(e, t || [], nt(i).constructor) : e.apply(i, t));
 }
-function Mo(i, e) {
-  if (e && (Ee(e) === "object" || typeof e == "function"))
+function Zo(i, e) {
+  if (e && (Pe(e) === "object" || typeof e == "function"))
     return e;
   if (e !== void 0)
     throw new TypeError("Derived constructors may only return object or undefined");
-  return Ho(i);
+  return Jo(i);
 }
-function Ho(i) {
+function Jo(i) {
   if (i === void 0)
     throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
   return i;
 }
-function Nr() {
+function Xr() {
   try {
     var i = !Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function() {
     }));
   } catch {
   }
-  return (Nr = function() {
+  return (Xr = function() {
     return !!i;
   })();
 }
-function ot(i) {
-  return ot = Object.setPrototypeOf ? Object.getPrototypeOf.bind() : function(t) {
+function nt(i) {
+  return nt = Object.setPrototypeOf ? Object.getPrototypeOf.bind() : function(t) {
     return t.__proto__ || Object.getPrototypeOf(t);
-  }, ot(i);
+  }, nt(i);
 }
-function qo(i, e) {
+function Qo(i, e) {
   if (typeof e != "function" && e !== null)
     throw new TypeError("Super expression must either be null or a function");
-  i.prototype = Object.create(e && e.prototype, { constructor: { value: i, writable: !0, configurable: !0 } }), Object.defineProperty(i, "prototype", { writable: !1 }), e && yt(i, e);
+  i.prototype = Object.create(e && e.prototype, { constructor: { value: i, writable: !0, configurable: !0 } }), Object.defineProperty(i, "prototype", { writable: !1 }), e && kt(i, e);
 }
-function yt(i, e) {
-  return yt = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function(r, o) {
+function kt(i, e) {
+  return kt = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function(r, o) {
     return r.__proto__ = o, r;
-  }, yt(i, e);
+  }, kt(i, e);
 }
-function vr(i, e) {
+function yr(i, e) {
   var t = Object.keys(i);
   if (Object.getOwnPropertySymbols) {
     var r = Object.getOwnPropertySymbols(i);
@@ -2647,66 +2681,66 @@ function vr(i, e) {
   }
   return t;
 }
-function $e(i) {
+function Ue(i) {
   for (var e = 1; e < arguments.length; e++) {
     var t = arguments[e] != null ? arguments[e] : {};
-    e % 2 ? vr(Object(t), !0).forEach(function(r) {
-      No(i, r, t[r]);
-    }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(i, Object.getOwnPropertyDescriptors(t)) : vr(Object(t)).forEach(function(r) {
+    e % 2 ? yr(Object(t), !0).forEach(function(r) {
+      en(i, r, t[r]);
+    }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(i, Object.getOwnPropertyDescriptors(t)) : yr(Object(t)).forEach(function(r) {
       Object.defineProperty(i, r, Object.getOwnPropertyDescriptor(t, r));
     });
   }
   return i;
 }
-function No(i, e, t) {
-  return e = Yr(e), e in i ? Object.defineProperty(i, e, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : i[e] = t, i;
+function en(i, e, t) {
+  return e = Kr(e), e in i ? Object.defineProperty(i, e, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : i[e] = t, i;
 }
-function Yr(i) {
-  var e = Yo(i, "string");
-  return Ee(e) == "symbol" ? e : e + "";
+function Kr(i) {
+  var e = tn(i, "string");
+  return Pe(e) == "symbol" ? e : e + "";
 }
-function Yo(i, e) {
-  if (Ee(i) != "object" || !i) return i;
+function tn(i, e) {
+  if (Pe(i) != "object" || !i) return i;
   var t = i[Symbol.toPrimitive];
   if (t !== void 0) {
     var r = t.call(i, e);
-    if (Ee(r) != "object") return r;
+    if (Pe(r) != "object") return r;
     throw new TypeError("@@toPrimitive must return a primitive value.");
   }
   return (e === "string" ? String : Number)(i);
 }
-var xr = $e($e({}, it.defaultOptions), {}, {
-  httpStack: new Uo(),
-  fileReader: new yo(),
-  urlStorage: jo ? new Lo() : new wi(),
-  fingerprint: wo
-}), Vo = /* @__PURE__ */ (function(i) {
+var wr = Ue(Ue({}, ot.defaultOptions), {}, {
+  httpStack: new Fo(),
+  fileReader: new Oo(),
+  urlStorage: Yo ? new Vo() : new zi(),
+  fingerprint: zo
+}), rn = /* @__PURE__ */ (function(i) {
   function e() {
     var t = arguments.length > 0 && arguments[0] !== void 0 ? arguments[0] : null, r = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : {};
-    return Fo(this, e), r = $e($e({}, xr), r), Io(this, e, [t, r]);
+    return Wo(this, e), r = Ue(Ue({}, wr), r), Ko(this, e, [t, r]);
   }
-  return qo(e, i), Bo(e, null, [{
+  return Qo(e, i), Xo(e, null, [{
     key: "terminate",
     value: function(r) {
       var o = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : {};
-      return o = $e($e({}, xr), o), it.terminate(r, o);
+      return o = Ue(Ue({}, wr), o), ot.terminate(r, o);
     }
   }]);
-})(it);
-const Wo = 10 * 1024 * 1024, Go = 5 * 1024 * 1024, Xo = "https://eu-on-24001.connector.filerobot.com/files", Ko = "https://eu-on-24001.connector.filerobot.com/json";
-function Zo(i, e) {
+})(ot);
+const on = 10 * 1024 * 1024, nn = 5 * 1024 * 1024, sn = "https://eu-on-24001.connector.filerobot.com/files", an = "https://eu-on-24001.connector.filerobot.com/json";
+function ln(i, e) {
   if (!e || !i.file) return !1;
-  const t = e.sizeThreshold ?? Wo;
+  const t = e.sizeThreshold ?? on;
   return i.size >= t;
 }
-function Jo(i, e) {
-  const { tusConfig: t } = e, r = e.apiBase.replace(/\/+$/, ""), o = t.endpoint || Xo, n = t.chunkSize ?? Go, s = t.resumable !== !1, a = t.parallelChunks ?? 1, l = t.retryDelays ?? [0, 1e3, 3e3, 5e3], p = r.split("/").pop() || "";
-  let g = !1, w = !1, P = !1;
-  const R = {
+function dn(i, e) {
+  const { tusConfig: t } = e, r = e.apiBase.replace(/\/+$/, ""), o = t.endpoint || sn, n = t.chunkSize ?? nn, s = t.resumable !== !1, a = t.parallelChunks ?? 1, l = t.retryDelays ?? [0, 1e3, 3e3, 5e3], u = r.split("/").pop() || "";
+  let h = !1, k = !1, $ = !1;
+  const z = {
     name: i.name,
     type: i.type,
     "filerobot-folder": e.folder
-  }, z = async () => `tus-${i.id}-${o}`, k = new Vo(i.file, {
+  }, O = async () => `tus-${i.id}-${o}`, w = new rn(i.file, {
     endpoint: o,
     chunkSize: n,
     retryDelays: l,
@@ -2714,34 +2748,34 @@ function Jo(i, e) {
     storeFingerprintForResuming: s,
     removeFingerprintOnSuccess: !0,
     headers: {},
-    metadata: R,
-    fingerprint: z,
+    metadata: z,
+    fingerprint: O,
     // --- Dynamic auth headers (v5 pattern: onBeforeRequest) ---
     // Single source of auth headers for every tus request.
     // Uses getAuthHeaders() for latest SASS key, falls back to initial headers.
-    onBeforeRequest(h) {
-      const b = e.getAuthHeaders ? e.getAuthHeaders() : e.authHeaders;
-      for (const [O, $] of Object.entries(b))
-        h.setHeader(O, $);
-      h.setHeader("X-Filerobot-Token", p);
+    onBeforeRequest(g) {
+      const m = e.getAuthHeaders ? e.getAuthHeaders() : e.authHeaders;
+      for (const [R, U] of Object.entries(m))
+        g.setHeader(R, U);
+      g.setHeader("X-Filerobot-Token", u);
     },
     // --- Store upload URL for cross-session resume (v5's onReceiveUploadUrl) ---
     // Only notify once to avoid redundant store updates (v5 checks uploadUrl !== existing).
     onUploadUrlAvailable() {
-      k.url && e.onUploadUrlAvailable && !P && (P = !0, e.onUploadUrlAvailable(k.url));
+      w.url && e.onUploadUrlAvailable && !$ && ($ = !0, e.onUploadUrlAvailable(w.url));
     },
-    onProgress(h, b) {
-      !w && !g && e.onProgress(h, b);
+    onProgress(g, m) {
+      !k && !h && e.onProgress(g, m);
     },
     onSuccess() {
-      var O;
-      if (w) return;
+      var R;
+      if (k) return;
       v();
-      const h = k.url || "", b = (O = h.match(/files\/([^/?]+)/)) == null ? void 0 : O[1];
-      b ? en(b, i.size).then(($) => {
-        w || e.onComplete($);
-      }).catch(($) => {
-        w || e.onError($);
+      const g = w.url || "", m = (R = g.match(/files\/([^/?]+)/)) == null ? void 0 : R[1];
+      m ? pn(m, i.size).then((U) => {
+        k || e.onComplete(U);
+      }).catch((U) => {
+        k || e.onError(U);
       }) : e.onComplete({
         status: "success",
         file: {
@@ -2750,7 +2784,7 @@ function Jo(i, e) {
           extension: i.name.split(".").pop() || "",
           type: i.type,
           size: i.size,
-          url: { public: h, cdn: h },
+          url: { public: g, cdn: g },
           meta: i.meta,
           tags: i.tags,
           info: {},
@@ -2759,62 +2793,62 @@ function Jo(i, e) {
         }
       });
     },
-    onError(h) {
-      w || (v(), Qo(h) ? e.onError(new Error(
+    onError(g) {
+      k || (v(), cn(g) ? e.onError(new Error(
         "Network error during upload — check your connection or firewall settings"
-      )) : e.onError(h instanceof Error ? h : new Error(String(h))));
+      )) : e.onError(g instanceof Error ? g : new Error(String(g))));
     },
     // --- 429 rate-limit and retry handling (matches v5's defaultOnShouldRetry) ---
-    onShouldRetry(h, b, O) {
+    onShouldRetry(g, m, R) {
       var F;
-      const $ = (F = h.originalResponse) == null ? void 0 : F.getStatus();
-      return $ === 429 ? !0 : !($ && $ > 400 && $ < 500 && $ !== 409);
+      const U = (F = g.originalResponse) == null ? void 0 : F.getStatus();
+      return U === 429 ? !0 : !(U && U > 400 && U < 500 && U !== 409);
     }
   });
-  let E = null, S = null;
-  typeof window < "u" && (E = () => {
-    var h;
-    !g && !w && (g = !0, k.abort(!1), (h = e.onPause) == null || h.call(e));
-  }, S = () => {
-    var h;
-    g && !w && (g = !1, k.start(), (h = e.onResume) == null || h.call(e));
-  }, window.addEventListener("offline", E), window.addEventListener("online", S));
+  let P = null, C = null;
+  typeof window < "u" && (P = () => {
+    var g;
+    !h && !k && (h = !0, w.abort(!1), (g = e.onPause) == null || g.call(e));
+  }, C = () => {
+    var g;
+    h && !k && (h = !1, w.start(), (g = e.onResume) == null || g.call(e));
+  }, window.addEventListener("offline", P), window.addEventListener("online", C));
   const v = () => {
-    E && window.removeEventListener("offline", E), S && window.removeEventListener("online", S);
+    P && window.removeEventListener("offline", P), C && window.removeEventListener("online", C);
   }, x = () => {
     try {
-      k.start();
-    } catch (h) {
-      v(), e.onError(h instanceof Error ? h : new Error(String(h)));
+      w.start();
+    } catch (g) {
+      v(), e.onError(g instanceof Error ? g : new Error(String(g)));
     }
   };
-  return s ? k.findPreviousUploads().then((h) => {
-    h.length > 0 && !w && k.resumeFromPreviousUpload(h[0]), w || x();
+  return s ? w.findPreviousUploads().then((g) => {
+    g.length > 0 && !k && w.resumeFromPreviousUpload(g[0]), k || x();
   }) : x(), {
     abort() {
-      w = !0, g = !1, v(), k.abort(!0);
+      k = !0, h = !1, v(), w.abort(!0);
     },
     pause() {
-      !g && !w && (g = !0, k.abort(!1));
+      !h && !k && (h = !0, w.abort(!1));
     },
     resume() {
-      g && !w && (g = !1, k.start());
+      h && !k && (h = !1, w.start());
     },
     isPaused() {
-      return g;
+      return h;
     }
   };
 }
-function Qo(i) {
+function cn(i) {
   var e;
-  if (i instanceof Te) {
+  if (i instanceof je) {
     const t = (e = i.originalRequest) == null ? void 0 : e.getUnderlyingObject();
     return t && typeof t.readyState == "number" && typeof t.status == "number" ? t.readyState !== 0 && t.readyState !== 4 || t.status === 0 : i.originalResponse == null && i.causingError != null;
   }
   return !1;
 }
-async function en(i, e) {
-  const t = `${Ko}/${i}`, r = e > 1e8 ? 13e3 : 6e3, o = 3;
+async function pn(i, e) {
+  const t = `${an}/${i}`, r = e > 1e8 ? 13e3 : 6e3, o = 3;
   for (let n = 0; n <= o; n++) {
     n > 0 && await new Promise((l) => setTimeout(l, r));
     const s = await fetch(t);
@@ -2830,7 +2864,7 @@ async function en(i, e) {
   }
   throw new Error("File record not available after upload");
 }
-class tn {
+class un {
   constructor(e, t) {
     this.activeUploads = /* @__PURE__ */ new Map(), this.pausedUploads = /* @__PURE__ */ new Map(), this.retryTimers = /* @__PURE__ */ new Map(), this.unsubscribe = null, this.store = e, this.config = t;
   }
@@ -2902,7 +2936,7 @@ class tn {
    */
   cancelFile(e) {
     const t = this.store.getState().files.get(e);
-    !t || !br(t.status) || (this.abortPausedUpload(e), this.abortUpload(e), q(this.store, e, { status: "cancelled" }));
+    !t || !_r(t.status) || (this.abortPausedUpload(e), this.abortUpload(e), q(this.store, e, { status: "cancelled" }));
   }
   /**
    * Cancel all active/queued uploads.
@@ -2910,7 +2944,7 @@ class tn {
   cancelAll() {
     const { files: e } = this.store.getState();
     for (const t of e.values())
-      br(t.status) && (this.abortPausedUpload(t.id), this.abortUpload(t.id), q(this.store, t.id, { status: "cancelled" }));
+      _r(t.status) && (this.abortPausedUpload(t.id), this.abortUpload(t.id), q(this.store, t.id, { status: "cancelled" }));
     this.store.setState({ isUploading: !1 });
   }
   /**
@@ -2945,60 +2979,65 @@ class tn {
     }
   }
   startUpload(e) {
-    const t = !e.remoteInfo && !e.remoteUrl && Zo(e, this.config.tusConfig);
-    q(this.store, e.id, { status: "uploading", error: null, isTus: t });
-    let r = 0, o = Date.now(), n = 0;
-    const s = {
+    var k, $;
+    const t = ($ = (k = this.config).resolveUploadParams) == null ? void 0 : $.call(k, e), r = !!t && Object.keys(t).length > 0, o = !r && !e.remoteInfo && !e.remoteUrl && ln(e, this.config.tusConfig);
+    q(this.store, e.id, { status: "uploading", error: null, isTus: o });
+    let n = 0, s = Date.now(), a = 0;
+    const l = {
       apiBase: this.config.apiBase,
       authHeaders: this.config.authHeaders,
       folder: this.store.getState().targetFolder,
-      onComplete: (p) => this.handleComplete(e.id, p),
-      onError: (p) => this.handleError(e.id, p)
-    }, a = (p, g) => {
-      const w = Date.now(), P = (w - o) / 1e3;
+      extraParams: r ? t : void 0,
+      onComplete: (z) => this.handleComplete(e.id, z),
+      onError: (z) => this.handleError(e.id, z)
+    }, u = (z, O) => {
+      const w = Date.now(), P = (w - s) / 1e3;
       if (P > 0) {
-        const z = (p - r) / P;
-        n = n === 0 ? z : 0.3 * z + 0.7 * n;
+        const v = (z - n) / P;
+        a = a === 0 ? v : 0.3 * v + 0.7 * a;
       }
-      r = p, o = w;
-      const R = g > 0 ? Math.min(p / g * 100, 100) : 0;
-      q(this.store, e.id, { progress: R, bytesUploaded: p, speed: n }), this.updateTotalProgress();
+      n = z, s = w;
+      const C = O > 0 ? Math.min(z / O * 100, 100) : 0;
+      q(this.store, e.id, { progress: C, bytesUploaded: z, speed: a }), this.updateTotalProgress();
     };
-    let l;
+    let h;
     if (e.remoteInfo)
-      l = ai(e, { ...s, onProgress: a });
+      h = xi(e, { ...l, onProgress: u });
     else if (e.remoteUrl)
-      l = ii(e, s);
-    else if (t) {
-      const p = Jo(e, {
-        ...s,
-        onProgress: a,
+      h = fi(e, l);
+    else if (o) {
+      const z = dn(e, {
+        ...l,
+        onProgress: u,
         tusConfig: this.config.tusConfig,
         // Supply a getter so tus picks up renewed SASS keys mid-upload
         getAuthHeaders: () => this.config.authHeaders,
         // Store the tus upload URL on file state for cross-session resume
-        onUploadUrlAvailable: (g) => {
-          q(this.store, e.id, { tusUploadUrl: g });
+        onUploadUrlAvailable: (O) => {
+          q(this.store, e.id, { tusUploadUrl: O });
         },
         // Sync UI state when tus pauses/resumes internally (e.g. network offline/online)
         onPause: () => {
-          this.activeUploads.delete(e.id), this.pausedUploads.set(e.id, p), q(this.store, e.id, { status: "paused" }), this.processQueue();
+          this.activeUploads.delete(e.id), this.pausedUploads.set(e.id, z), q(this.store, e.id, { status: "paused" }), this.processQueue();
         },
         onResume: () => {
-          this.pausedUploads.delete(e.id), this.activeUploads.set(e.id, p), q(this.store, e.id, { status: "uploading" });
+          this.pausedUploads.delete(e.id), this.activeUploads.set(e.id, z), q(this.store, e.id, { status: "uploading" });
         }
       });
-      l = p;
+      h = z;
     } else
-      l = ri(e, { ...s, onProgress: a });
-    this.activeUploads.set(e.id, l);
+      h = ui(e, { ...l, onProgress: u });
+    this.activeUploads.set(e.id, h);
   }
   handleComplete(e, t) {
-    this.activeUploads.delete(e), q(this.store, e, {
+    var s, a, l;
+    this.activeUploads.delete(e);
+    const r = this.store.getState().files.get(e), o = ((a = (s = t.file) == null ? void 0 : s.url) == null ? void 0 : a.cdn) ?? null, n = {
       status: "complete",
       progress: 100,
       response: t
-    }), this.updateTotalProgress(), this.checkAllComplete(), this.processQueue();
+    };
+    r && o && r.type.startsWith("image/") && ((l = r.previewUrl) != null && l.startsWith("blob:") && URL.revokeObjectURL(r.previewUrl), n.previewUrl = o), q(this.store, e, n), this.updateTotalProgress(), this.checkAllComplete(), this.processQueue();
   }
   handleError(e, t) {
     this.activeUploads.delete(e);
@@ -3054,14 +3093,14 @@ class tn {
     ) && this.store.getState().isUploading && this.store.setState({ isUploading: !1 });
   }
 }
-function br(i) {
+function _r(i) {
   return i === "queued" || i === "uploading" || i === "retrying" || i === "paused";
 }
-function Dt(i) {
+function Lt(i) {
   return `https://api.filerobot.com/${i}`;
 }
-async function rn(i, e) {
-  const t = `${Dt(i)}/key/${encodeURIComponent(e)}`, r = new AbortController(), o = setTimeout(() => r.abort(), 3e4);
+async function fn(i, e) {
+  const t = `${Lt(i)}/key/${encodeURIComponent(e)}`, r = new AbortController(), o = setTimeout(() => r.abort(), 3e4);
   try {
     const n = await fetch(t, { signal: r.signal });
     if (clearTimeout(o), !n.ok)
@@ -3074,7 +3113,7 @@ async function rn(i, e) {
     throw clearTimeout(o), n instanceof DOMException && n.name === "AbortError" ? new Error("SASS key exchange timed out") : n;
   }
 }
-function wt(i, e) {
+function Ct(i, e) {
   const t = {};
   switch (i.mode) {
     case "security-template":
@@ -3090,33 +3129,33 @@ function wt(i, e) {
   }
   return i.airboxPuid && (t["X-Filerobot-Airbox-Puid"] = i.airboxPuid), t;
 }
-async function on(i) {
-  const e = Dt(i.container);
+async function hn(i) {
+  const e = Lt(i.container);
   if (i.mode === "security-template") {
-    const t = await rn(i.container, i.securityTemplateId);
-    return { apiBase: e, headers: wt(i, t), sassKey: t };
+    const t = await fn(i.container, i.securityTemplateId);
+    return { apiBase: e, headers: Ct(i, t), sassKey: t };
   }
-  return { apiBase: e, headers: wt(i) };
+  return { apiBase: e, headers: Ct(i) };
 }
-const nt = "sfx-uploader:last-upload:", Vr = 1;
-function nn(i) {
+const st = "sfx-uploader:last-upload:", Zr = 1;
+function gn(i) {
   var n, s, a;
   const { file: e, previewUrl: t, ...r } = i, o = i.status === "complete" && ((a = (s = (n = i.response) == null ? void 0 : n.file) == null ? void 0 : s.url) != null && a.cdn) ? i.response.file.url.cdn : null;
   return { ...r, previewUrl: o };
 }
-function sn(i) {
+function vn(i) {
   try {
-    const e = sessionStorage.getItem(nt + i);
+    const e = sessionStorage.getItem(st + i);
     if (!e) return null;
     const t = JSON.parse(e);
-    return (t == null ? void 0 : t.__schemaVersion) !== Vr ? null : t;
+    return (t == null ? void 0 : t.__schemaVersion) !== Zr ? null : t;
   } catch {
     return null;
   }
 }
-function an(i, e) {
+function xn(i, e) {
   try {
-    sessionStorage.setItem(nt + i, JSON.stringify(e));
+    sessionStorage.setItem(st + i, JSON.stringify(e));
   } catch {
   }
 }
@@ -3128,17 +3167,17 @@ const De = {
       return;
     }
     const t = {
-      __schemaVersion: Vr,
+      __schemaVersion: Zr,
       savedAt: Date.now(),
-      files: e.map(nn)
+      files: e.map(gn)
     };
-    an(i, t);
+    xn(i, t);
   },
   /** Returns the stored files (rehydrated back to UploadFile shape) or null.
    *  The `file` blob and `remoteUrl` are not serializable — they are set to
    *  null on restore. Downstream code must null-check `file.file` before use. */
   load(i) {
-    const e = sn(i);
+    const e = vn(i);
     return e ? e.files.map((t) => ({
       ...t,
       file: null,
@@ -3148,7 +3187,7 @@ const De = {
   /** Check whether a stored batch exists without deserializing it. */
   exists(i) {
     try {
-      return sessionStorage.getItem(nt + i) != null;
+      return sessionStorage.getItem(st + i) != null;
     } catch {
       return !1;
     }
@@ -3156,7 +3195,7 @@ const De = {
   /** Drop the stored batch entirely. */
   clear(i) {
     try {
-      sessionStorage.removeItem(nt + i);
+      sessionStorage.removeItem(st + i);
     } catch {
     }
   }
@@ -3183,32 +3222,32 @@ const De = {
   FILE_LOCATE: "sfx-file-locate",
   FILE_COPY_CDN: "sfx-file-copy-cdn"
 };
-let ln = 0;
-function ke() {
-  return `file-${Date.now()}-${++ln}`;
+let mn = 0;
+function Ce() {
+  return `file-${Date.now()}-${++mn}`;
 }
 function fe(i) {
   if (i <= 0) return "0 B";
   const e = ["B", "KB", "MB", "GB"], t = Math.min(Math.floor(Math.log(i) / Math.log(1024)), e.length - 1), r = i / Math.pow(1024, t);
   return `${t === 0 ? r : r.toFixed(1)} ${e[t]}`;
 }
-function pt(i) {
+function ht(i) {
   if (!isFinite(i) || i <= 0) return "0s";
   const e = Math.round(i);
   if (e < 60) return `${e}s`;
   const t = Math.floor(e / 60), r = e % 60;
   return r > 0 ? `${t}m ${r}s` : `${t}m`;
 }
-function Wr(i) {
+function Jr(i) {
   var t;
   const e = ((t = i.name.split(".").pop()) == null ? void 0 : t.toLowerCase()) ?? "";
   return i.type.startsWith("image/") ? "image" : i.type.startsWith("video/") || ["mp4", "mov", "avi", "webm", "mkv", "flv", "wmv"].includes(e) ? "vid" : i.type.startsWith("audio/") || ["mp3", "wav", "ogg", "flac", "aac", "m4a", "wma"].includes(e) ? "audio" : i.type === "application/pdf" || e === "pdf" ? "pdf" : ["xls", "xlsx", "csv", "tsv", "ods"].includes(e) ? "sheet" : ["doc", "docx", "txt", "rtf", "odt", "pages"].includes(e) ? "doc" : ["ppt", "pptx", "key", "odp"].includes(e) ? "slide" : ["zip", "rar", "7z", "tar", "gz", "bz2", "xz", "zst"].includes(e) ? "zip" : ["js", "ts", "jsx", "tsx", "py", "rb", "go", "rs", "java", "c", "cpp", "h", "cs", "php", "swift", "kt", "sh", "bash"].includes(e) ? "code" : ["html", "css", "scss", "xml", "svg", "json", "yaml", "yml", "toml", "md", "mdx", "ini", "env", "log"].includes(e) ? "markup" : ["ttf", "otf", "woff", "woff2", "eot"].includes(e) ? "font" : ["ai", "psd", "sketch", "fig", "xd", "indd", "eps"].includes(e) ? "design" : ["exe", "dmg", "app", "msi", "deb", "rpm", "apk", "ipa"].includes(e) ? "binary" : ["sql", "db", "sqlite", "mdb"].includes(e) ? "data" : "gen";
 }
-function dn(i) {
+function bn(i) {
   const e = i.lastIndexOf(".");
   return e >= 0 ? i.slice(e + 1).toUpperCase() : "";
 }
-const cn = "https://scaleflex.cloudimg.io/v7/assets/file-types/v3/", Gr = {
+const yn = "https://scaleflex.cloudimg.io/v7/assets/file-types/v3/", Qr = {
   _default: "9a518a",
   // Images
   png: "96cd9a",
@@ -3307,18 +3346,18 @@ const cn = "https://scaleflex.cloudimg.io/v7/assets/file-types/v3/", Gr = {
   iso: "064b8f",
   bin: "1e9618"
 };
-function _t(i) {
+function St(i) {
   const e = i === "_default" ? "GENERIC" : i.toUpperCase();
-  return `${cn}${e}.svg?vh=${Gr[i]}`;
+  return `${yn}${e}.svg?vh=${Qr[i]}`;
 }
-function Xr(i) {
+function ei(i) {
   const e = (i == null ? void 0 : i.toLowerCase().replaceAll(".", "")) || "";
-  return e in Gr ? _t(e) : _t("_default");
+  return e in Qr ? St(e) : St("_default");
 }
-function Kr() {
-  return _t("_default");
+function ti() {
+  return St("_default");
 }
-const pn = {
+const wn = {
   jpg: "image/jpeg",
   jpeg: "image/jpeg",
   png: "image/png",
@@ -3336,12 +3375,12 @@ const pn = {
   doc: "application/msword",
   docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
 };
-function fn(i) {
+function _n(i) {
   var t;
   const e = ((t = i.split(".").pop()) == null ? void 0 : t.toLowerCase()) ?? "";
-  return pn[e] || "";
+  return wn[e] || "";
 }
-function un(i) {
+function kn(i) {
   return new Promise((e) => {
     const t = document.createElement("video");
     t.preload = "metadata", t.muted = !0, t.playsInline = !0;
@@ -3369,7 +3408,7 @@ function un(i) {
     }, { once: !0 });
   });
 }
-function kt(i, e, t) {
+function $t(i, e, t) {
   var r, o;
   if (e.maxFileSize != null && i.size > 0 && i.size > e.maxFileSize)
     return `File exceeds ${(e.maxFileSize / 1048576).toFixed(1)} MB limit`;
@@ -3397,79 +3436,92 @@ function kt(i, e, t) {
   }
   return null;
 }
-function hn(i, e, t) {
-  return kt(i, e, t);
+function Cn(i, e, t) {
+  return $t(i, e, t);
 }
-function mr(i) {
+function kr(i) {
   return i.allowedFileTypes ? i.allowedFileTypes.join(",") : "";
 }
-const yr = {
+const Cr = {
   "google-drive": {
     id: "google-drive",
     label: "Google Drive",
     fillIcon: !0,
     icon: "",
-    brandHtml: '<span class="brand-ico" style="background:transparent"><svg width="16" height="16" viewBox="0 0 87.3 78"><path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3L27.5 53H0c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/><path d="M43.65 25L29.9 1.2C28.55 2 27.4 3.1 26.6 4.5L1.2 48.5C.4 49.9 0 51.45 0 53h27.5z" fill="#00ac47"/><path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5H59.8l5.65 10.85z" fill="#ea4335"/><path d="M43.65 25L57.4 1.2C56.05.4 54.5 0 52.9 0H34.4c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d"/><path d="M59.8 53H27.5L13.75 76.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc"/><path d="M73.4 26.5l-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25 59.8 53h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00"/></svg></span>'
+    brandStyle: { background: "transparent" },
+    brandHtml: '<svg width="16" height="16" viewBox="0 0 87.3 78"><path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3L27.5 53H0c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/><path d="M43.65 25L29.9 1.2C28.55 2 27.4 3.1 26.6 4.5L1.2 48.5C.4 49.9 0 51.45 0 53h27.5z" fill="#00ac47"/><path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5H59.8l5.65 10.85z" fill="#ea4335"/><path d="M43.65 25L57.4 1.2C56.05.4 54.5 0 52.9 0H34.4c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d"/><path d="M59.8 53H27.5L13.75 76.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc"/><path d="M73.4 26.5l-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25 59.8 53h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00"/></svg>'
   },
   dropbox: {
     id: "dropbox",
     label: "Dropbox",
     fillIcon: !0,
     icon: "",
-    brandHtml: '<span class="brand-ico" style="background:#0061ff"><svg width="11" height="11" viewBox="0 0 528 512" fill="white"><path d="M264.4 116.3l-132 84.3 132 84.3-132 84.3L0 284.1l132.3-84.3L0 116.3 132.3 32l132.1 84.3zm-132 284.5l132-84.3 132 84.3-132 84.4-132-84.4zm132-116.6l132.3-84.3-132.3-83.9 131.6-84.3L528 116.3l-132.3 84.1L528 284.7l-132.4 83.9-131.2-84.4z"/></svg></span>'
+    brandStyle: { background: "#0061ff" },
+    brandHtml: '<svg width="11" height="11" viewBox="0 0 528 512" fill="white"><path d="M264.4 116.3l-132 84.3 132 84.3-132 84.3L0 284.1l132.3-84.3L0 116.3 132.3 32l132.1 84.3zm-132 284.5l132-84.3 132 84.3-132 84.4-132-84.4zm132-116.6l132.3-84.3-132.3-83.9 131.6-84.3L528 116.3l-132.3 84.1L528 284.7l-132.4 83.9-131.2-84.4z"/></svg>'
   },
   onedrive: {
     id: "onedrive",
     label: "OneDrive",
     fillIcon: !0,
     icon: "",
-    brandHtml: '<span class="brand-ico" style="background:#0078d4"><svg width="11" height="11" viewBox="0 0 24 24" fill="white"><path d="M10.5 13.5C10.5 11.57 12.07 10 14 10h6.5c.17 0 .34.01.5.02A6 6 0 009.01 11.6 4 4 0 0010.5 13.5zM12 14.5a5 5 0 00-5-5 5 5 0 00-5 5 3 3 0 003 3h9.5A3.5 3.5 0 0018 14c0-.18-.01-.35-.03-.52A5.48 5.48 0 0112 14.5z"/></svg></span>'
+    brandStyle: { background: "#0078d4" },
+    brandHtml: '<svg width="11" height="11" viewBox="0 0 24 24" fill="white"><path d="M10.5 13.5C10.5 11.57 12.07 10 14 10h6.5c.17 0 .34.01.5.02A6 6 0 009.01 11.6 4 4 0 0010.5 13.5zM12 14.5a5 5 0 00-5-5 5 5 0 00-5 5 3 3 0 003 3h9.5A3.5 3.5 0 0018 14c0-.18-.01-.35-.03-.52A5.48 5.48 0 0112 14.5z"/></svg>'
   },
   box: {
     id: "box",
     label: "Box",
     fillIcon: !0,
     icon: "",
-    brandHtml: '<span class="brand-ico" style="background:#0e50a0;font-size:9px;font-weight:800;color:#fff">box</span>'
+    brandStyle: { background: "#0e50a0", "font-size": "9px", "font-weight": "800", color: "#fff" },
+    brandHtml: "box"
   },
   instagram: {
     id: "instagram",
     label: "Instagram",
     fillIcon: !0,
     icon: "",
-    brandHtml: '<span class="brand-ico" style="background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)"><svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M12 2.16c2.94 0 3.29.01 4.45.06 1.07.05 1.8.22 2.43.46.66.25 1.21.6 1.77 1.16.55.55.9 1.1 1.16 1.77.25.64.41 1.37.46 2.43.05 1.16.06 1.51.06 4.45s-.01 3.29-.06 4.45c-.05 1.07-.22 1.8-.46 2.43a4.9 4.9 0 01-1.16 1.77c-.55.55-1.1.9-1.77 1.16-.64.25-1.37.41-2.43.46-1.16.05-1.51.06-4.45.06s-3.29-.01-4.45-.06c-1.07-.05-1.8-.22-2.43-.46a4.9 4.9 0 01-1.77-1.16 4.9 4.9 0 01-1.16-1.77c-.25-.64-.41-1.37-.46-2.43C2.17 15.29 2.16 14.94 2.16 12s.01-3.29.06-4.45c.05-1.07.22-1.8.46-2.43a4.9 4.9 0 011.16-1.77A4.9 4.9 0 015.61 2.2c.64-.25 1.37-.41 2.43-.46C9.21 2.17 9.56 2.16 12 2.16zM12 16a4 4 0 110-8 4 4 0 010 8zm6.4-9.85a1.44 1.44 0 100 2.88 1.44 1.44 0 000-2.88z"/></svg></span>'
+    brandStyle: { background: "linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)" },
+    brandHtml: '<svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M12 2.16c2.94 0 3.29.01 4.45.06 1.07.05 1.8.22 2.43.46.66.25 1.21.6 1.77 1.16.55.55.9 1.1 1.16 1.77.25.64.41 1.37.46 2.43.05 1.16.06 1.51.06 4.45s-.01 3.29-.06 4.45c-.05 1.07-.22 1.8-.46 2.43a4.9 4.9 0 01-1.16 1.77c-.55.55-1.1.9-1.77 1.16-.64.25-1.37.41-2.43.46-1.16.05-1.51.06-4.45.06s-3.29-.01-4.45-.06c-1.07-.05-1.8-.22-2.43-.46a4.9 4.9 0 01-1.77-1.16 4.9 4.9 0 01-1.16-1.77c-.25-.64-.41-1.37-.46-2.43C2.17 15.29 2.16 14.94 2.16 12s.01-3.29.06-4.45c.05-1.07.22-1.8.46-2.43a4.9 4.9 0 011.16-1.77A4.9 4.9 0 015.61 2.2c.64-.25 1.37-.41 2.43-.46C9.21 2.17 9.56 2.16 12 2.16zM12 16a4 4 0 110-8 4 4 0 010 8zm6.4-9.85a1.44 1.44 0 100 2.88 1.44 1.44 0 000-2.88z"/></svg>'
   },
   facebook: {
     id: "facebook",
     label: "Facebook",
     fillIcon: !0,
     icon: "",
-    brandHtml: '<span class="brand-ico" style="background:#1877f2"><svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M24 12.07C24 5.41 18.63 0 12 0S0 5.41 0 12.07c0 6.02 4.39 11.02 10.12 11.93v-8.44H7.08v-3.49h3.04V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.95.93-1.95 1.89v2.26h3.33l-.53 3.49h-2.8v8.44C19.61 23.09 24 18.09 24 12.07z"/></svg></span>'
+    brandStyle: { background: "#1877f2" },
+    brandHtml: '<svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M24 12.07C24 5.41 18.63 0 12 0S0 5.41 0 12.07c0 6.02 4.39 11.02 10.12 11.93v-8.44H7.08v-3.49h3.04V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.95.93-1.95 1.89v2.26h3.33l-.53 3.49h-2.8v8.44C19.61 23.09 24 18.09 24 12.07z"/></svg>'
   },
   unsplash: {
     id: "unsplash",
     label: "Unsplash",
     fillIcon: !0,
     icon: "",
-    brandHtml: '<span class="brand-ico" style="background:#111"><svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M8.5 11.5v5h7v-5h5.5V21h-18v-9.5h5.5zm7-8v5h-7v-5h7z"/></svg></span>'
+    brandStyle: { background: "#111" },
+    brandHtml: '<svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M8.5 11.5v5h7v-5h5.5V21h-18v-9.5h5.5zm7-8v5h-7v-5h7z"/></svg>'
   }
 };
-function gn(i) {
-  return i.filter((e) => e in yr).map((e) => yr[e]);
+function Sn(i) {
+  return i.filter((e) => e in Cr).map((e) => Cr[e]);
 }
-var vn = Object.defineProperty, xn = (i, e, t, r) => {
+function ge(i) {
+  return i.brandStyle ? p`<span
+    class=${ai({ "brand-ico": !0, "brand-ico--transparent": i.brandStyle.background === "transparent" })}
+    ${V(i.brandStyle)}
+  >${Kt(i.brandHtml)}</span>` : Kt(i.brandHtml);
+}
+var $n = Object.defineProperty, Un = (i, e, t, r) => {
   for (var o = void 0, n = i.length - 1, s; n >= 0; n--)
     (s = i[n]) && (o = s(e, t, o) || o);
-  return o && vn(e, t, o), o;
+  return o && $n(e, t, o), o;
 };
-const bn = '<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>', mn = '<path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>', yn = '<path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/>', wn = '<rect x="2" y="3" width="20" height="14" rx="2"/><circle cx="12" cy="10" r="1"/><path d="M7 21l5-5 5 5"/>', Fe = [
-  { id: "device", label: "My Device", icon: bn, iconColor: "#2563eb" },
-  { id: "url", label: "URL link", icon: mn, iconColor: "#16a34a" },
-  { id: "camera", label: "Camera", icon: yn, iconColor: "#7c3aed" },
-  { id: "screen-cast", label: "Screen capture", icon: wn, iconColor: "#ea580c" }
-], Lt = class Lt extends Z {
+const En = '<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>', Pn = '<path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>', On = '<path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/>', zn = '<rect x="2" y="3" width="20" height="14" rx="2"/><circle cx="12" cy="10" r="1"/><path d="M7 21l5-5 5 5"/>', Ae = [
+  { id: "device", label: "My Device", icon: En, iconColor: "#2563eb" },
+  { id: "url", label: "URL link", icon: Pn, iconColor: "#16a34a" },
+  { id: "camera", label: "Camera", icon: On, iconColor: "#7c3aed" },
+  { id: "screen-cast", label: "Screen capture", icon: zn, iconColor: "#ea580c" }
+], Bt = class Bt extends Q {
   constructor() {
-    super(...arguments), this.sources = Fe;
+    super(...arguments), this.sources = Ae;
   }
   _handleClick(e) {
     this.dispatchEvent(
@@ -3481,11 +3533,11 @@ const bn = '<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21
     );
   }
   render() {
-    return f`
+    return p`
       ${this.sources.map(
-      (e) => f`
+      (e) => p`
           <button @click=${() => this._handleClick(e)}>
-            ${e.brandHtml ? he(e.brandHtml) : ue`<svg viewBox="0 0 24 24" class=${e.fillIcon ? "fill-icon" : ""}>${ae(e.icon)}</svg>`}
+            ${e.brandHtml ? ge(e) : he`<svg viewBox="0 0 24 24" class=${e.fillIcon ? "fill-icon" : ""}>${le(e.icon)}</svg>`}
             ${e.label}
           </button>
         `
@@ -3493,7 +3545,7 @@ const bn = '<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21
     `;
   }
 };
-Lt.styles = G`
+Bt.styles = X`
     :host {
       display: flex;
       flex-wrap: wrap;
@@ -3566,11 +3618,11 @@ Lt.styles = G`
       stroke-width: 0;
     }
   `;
-let Ct = Lt;
-xn([
-  j({ type: Array })
-], Ct.prototype, "sources");
-function Zr(i) {
+let Ut = Bt;
+Un([
+  D({ type: Array })
+], Ut.prototype, "sources");
+function ri(i) {
   let e = i;
   for (; e; ) {
     if (e instanceof ShadowRoot) {
@@ -3588,13 +3640,13 @@ function Zr(i) {
   }
   return document.body;
 }
-var _n = Object.defineProperty, re = (i, e, t, r) => {
+var Rn = Object.defineProperty, te = (i, e, t, r) => {
   for (var o = void 0, n = i.length - 1, s; n >= 0; n--)
     (s = i[n]) && (o = s(e, t, o) || o);
-  return o && _n(e, t, o), o;
+  return o && Rn(e, t, o), o;
 };
-const wr = 3, St = new CSSStyleSheet();
-St.replaceSync(`
+const Sr = 3, Et = new CSSStyleSheet();
+Et.replaceSync(`
   [data-sfx-more-dropdown] { position:absolute; top:0; left:0; width:0; height:0; overflow:visible; pointer-events:none; }
   [data-sfx-more-dropdown] .sfx-more-dropdown { position:fixed; background:#fff; border-radius:12px; box-shadow:0 12px 40px rgba(0,0,0,0.14),0 2px 8px rgba(0,0,0,0.06); border:1px solid #e8edf5; padding:6px; min-width:210px; max-height:340px; overflow-y:auto; z-index:99999; opacity:0; visibility:hidden; pointer-events:none; transition:opacity .18s ease,visibility .18s ease,transform .18s ease; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; }
   [data-sfx-more-dropdown] .sfx-more-dropdown.open { opacity:1; visibility:visible; pointer-events:all; }
@@ -3607,10 +3659,10 @@ St.replaceSync(`
   [data-sfx-more-dropdown] .sfx-more-item .canva-ico { width:22px; height:22px; }
   [data-sfx-more-dropdown] .sfx-more-item .canva-ico svg { width:22px; height:22px; }
 `);
-var le;
-const Q = (le = class extends Z {
+var de;
+const ee = (de = class extends Q {
   constructor() {
-    super(...arguments), this.compact = !1, this.externalDragOver = !1, this.accept = "", this.sources = [], this.sourcesLayout = "pills", this.mode = "modal", this._resizeObserver = null, this._dragOver = !1, this._moreOpen = !1, this._visiblePills = wr, this._dragCounter = 0, this._onDragEnter = (e) => {
+    super(...arguments), this.compact = !1, this.externalDragOver = !1, this.accept = "", this.multi = !0, this.sources = [], this.sourcesLayout = "pills", this.mode = "modal", this._resizeObserver = null, this._dragOver = !1, this._moreOpen = !1, this._visiblePills = Sr, this._dragCounter = 0, this._onDragEnter = (e) => {
       e.preventDefault(), this._dragCounter++, this._dragCounter === 1 && (this._dragOver = !0);
     }, this._onDragOver = (e) => {
       e.preventDefault();
@@ -3683,21 +3735,21 @@ const Q = (le = class extends Z {
   _updateDropdownPortal() {
     if (this._moreOpen) {
       const e = this.sources.slice(this._visiblePills);
-      this._portalContainer || (this._portalContainer = document.createElement("div"), this._portalContainer.setAttribute("data-sfx-more-dropdown", ""), Zr(this).appendChild(this._portalContainer), this._injectDropdownStyles()), ge(
-        f`<div class="sfx-more-dropdown open">
+      this._portalContainer || (this._portalContainer = document.createElement("div"), this._portalContainer.setAttribute("data-sfx-more-dropdown", ""), ri(this).appendChild(this._portalContainer), this._injectDropdownStyles()), ve(
+        p`<div class="sfx-more-dropdown open">
           ${e.map(
-          (t) => f`
+          (t) => p`
               <button
                 class="sfx-more-item"
                 @click=${(r) => this._onMoreItemClick(t, r)}
               >
                 <div class="sfx-more-item-ico">
-                  ${t.brandHtml ? he(t.brandHtml) : t.iconColor ? f`<svg
+                  ${t.brandHtml ? ge(t) : t.iconColor ? p`<svg
                         viewBox="0 0 24 24"
-                        style="color:${t.iconColor}"
+                        ${V({ color: t.iconColor })}
                       >
-                        ${ae(t.icon)}
-                      </svg>` : ue`<svg viewBox="0 0 24 24">${ae(
+                        ${le(t.icon)}
+                      </svg>` : he`<svg viewBox="0 0 24 24">${le(
             t.icon
           )}</svg>`}
                 </div>
@@ -3708,38 +3760,38 @@ const Q = (le = class extends Z {
         </div>`,
         this._portalContainer
       ), requestAnimationFrame(() => this._positionDropdown());
-    } else this._portalContainer && (ge(C, this._portalContainer), this._portalContainer.remove(), this._portalContainer = null);
+    } else this._portalContainer && (ve(S, this._portalContainer), this._portalContainer.remove(), this._portalContainer = null);
   }
   _injectDropdownStyles() {
     var t;
     const e = (t = this._portalContainer) == null ? void 0 : t.getRootNode();
-    e && (e.adoptedStyleSheets.includes(St) || (e.adoptedStyleSheets = [...e.adoptedStyleSheets, St]));
+    e && (e.adoptedStyleSheets.includes(Et) || (e.adoptedStyleSheets = [...e.adoptedStyleSheets, Et]));
   }
   /** Position the fixed dropdown, choosing above or below based on available space. */
   _positionDropdown() {
-    var w, P;
-    const e = (w = this.shadowRoot) == null ? void 0 : w.querySelector(
+    var k, $;
+    const e = (k = this.shadowRoot) == null ? void 0 : k.querySelector(
       ".more-wrap > button"
-    ), t = (P = this._portalContainer) == null ? void 0 : P.querySelector(
+    ), t = ($ = this._portalContainer) == null ? void 0 : $.querySelector(
       ".sfx-more-dropdown"
     );
     if (!e || !t) return;
     const r = e.getBoundingClientRect(), o = 8, n = t.scrollHeight, s = t.offsetWidth, a = r.top, l = window.innerHeight - r.bottom;
     a >= n + o || a > l ? t.style.top = `${r.top - n - o}px` : t.style.top = `${r.bottom + o}px`;
-    let g = r.right - s;
-    g = Math.max(8, Math.min(g, window.innerWidth - s - 8)), t.style.left = `${g}px`;
+    let h = r.right - s;
+    h = Math.max(8, Math.min(h, window.innerWidth - s - 8)), t.style.left = `${h}px`;
   }
   _onMoreItemClick(e, t) {
     t.stopPropagation(), this._moreOpen = !1, this._updateDropdownPortal(), this._onSourceIconClick(e);
   }
   _updateVisiblePills() {
     const e = window.innerWidth;
-    this.sourcesLayout === "cards" ? e <= 480 ? this._visiblePills = 2 : e <= 768 ? this._visiblePills = 3 : this._visiblePills = 5 : e <= 768 ? this._visiblePills = 1 : this._visiblePills = wr;
+    this.sourcesLayout === "cards" ? e <= 480 ? this._visiblePills = 2 : e <= 768 ? this._visiblePills = 3 : this._visiblePills = 5 : e <= 768 ? this._visiblePills = 1 : this._visiblePills = Sr;
   }
   connectedCallback() {
     super.connectedCallback(), document.addEventListener("paste", this._onPaste), document.addEventListener("click", this._onDocClick), document.addEventListener("keydown", this._onDocKeyDown), window.addEventListener("scroll", this._onScrollOrResize, !0), window.addEventListener("resize", this._onScrollOrResize), this._updateVisiblePills(), typeof ResizeObserver < "u" && (this._resizeObserver = new ResizeObserver((e) => {
       var o;
-      const r = (((o = e[0]) == null ? void 0 : o.contentRect.width) ?? this.getBoundingClientRect().width) >= le._WIDE_THRESHOLD_PX;
+      const r = (((o = e[0]) == null ? void 0 : o.contentRect.width) ?? this.getBoundingClientRect().width) >= de._WIDE_THRESHOLD_PX;
       r && !this.hasAttribute("data-wide") ? this.setAttribute("data-wide", "") : !r && this.hasAttribute("data-wide") && this.removeAttribute("data-wide");
     }), this._resizeObserver.observe(this));
   }
@@ -3747,28 +3799,28 @@ const Q = (le = class extends Z {
     e.has("sourcesLayout") && this._updateVisiblePills();
   }
   disconnectedCallback() {
-    super.disconnectedCallback(), document.removeEventListener("paste", this._onPaste), document.removeEventListener("click", this._onDocClick), document.removeEventListener("keydown", this._onDocKeyDown), window.removeEventListener("scroll", this._onScrollOrResize, !0), window.removeEventListener("resize", this._onScrollOrResize), this._resizeTimer && clearTimeout(this._resizeTimer), this._resizeObserver && (this._resizeObserver.disconnect(), this._resizeObserver = null), this._portalContainer && (ge(C, this._portalContainer), this._portalContainer.remove(), this._portalContainer = null);
+    super.disconnectedCallback(), document.removeEventListener("paste", this._onPaste), document.removeEventListener("click", this._onDocClick), document.removeEventListener("keydown", this._onDocKeyDown), window.removeEventListener("scroll", this._onScrollOrResize, !0), window.removeEventListener("resize", this._onScrollOrResize), this._resizeTimer && clearTimeout(this._resizeTimer), this._resizeObserver && (this._resizeObserver.disconnect(), this._resizeObserver = null), this._portalContainer && (ve(S, this._portalContainer), this._portalContainer.remove(), this._portalContainer = null);
   }
   _renderPill(e) {
-    return f`
+    return p`
       <button
         class="src-pill"
         @click=${(t) => {
       t.stopPropagation(), this._onSourceIconClick(e);
     }}
       >
-        ${e.brandHtml ? he(e.brandHtml) : f`<span
+        ${e.brandHtml ? ge(e) : p`<span
               class="pill-ico"
-              style=${e.iconColor ? `color:${e.iconColor}` : ""}
+              ${V(e.iconColor ? { color: e.iconColor } : null)}
             >
-              ${ue`<svg viewBox="0 0 24 24" class=${e.fillIcon ? "fill-icon" : ""}>${ae(e.icon)}</svg>`}
+              ${he`<svg viewBox="0 0 24 24" class=${e.fillIcon ? "fill-icon" : ""}>${le(e.icon)}</svg>`}
             </span>`}
         ${e.label}
       </button>
     `;
   }
   _renderCard(e) {
-    return f`
+    return p`
       <button
         class="src-card"
         aria-label=${e.label}
@@ -3776,18 +3828,18 @@ const Q = (le = class extends Z {
       t.stopPropagation(), this._onSourceIconClick(e);
     }}
       >
-        ${e.brandHtml ? f`<span class="card-ico">${he(e.brandHtml)}</span>` : f`<span
+        ${e.brandHtml ? p`<span class="card-ico">${ge(e)}</span>` : p`<span
               class="card-ico"
-              style=${e.iconColor ? `color:${e.iconColor}` : ""}
+              ${V(e.iconColor ? { color: e.iconColor } : null)}
             >
-              ${ue`<svg viewBox="0 0 24 24" class=${e.fillIcon ? "fill-icon" : ""}>${ae(e.icon)}</svg>`}
+              ${he`<svg viewBox="0 0 24 24" class=${e.fillIcon ? "fill-icon" : ""}>${le(e.icon)}</svg>`}
             </span>`}
         <span class="card-label">${e.label}</span>
       </button>
     `;
   }
   _renderMoreCard() {
-    return f`
+    return p`
       <div class="more-wrap ${this._moreOpen ? "open" : ""}">
         <button
           class="src-card"
@@ -3809,7 +3861,7 @@ const Q = (le = class extends Z {
     `;
   }
   _renderMoreDropdown() {
-    return f`
+    return p`
       <div class="more-wrap ${this._moreOpen ? "open" : ""}">
         <button
           class="more-pill"
@@ -3829,7 +3881,7 @@ const Q = (le = class extends Z {
       this._dragOver || this.externalDragOver ? "drag-over" : "",
       this.compact ? "compact" : ""
     ].filter(Boolean).join(" "), t = this.sources.slice(0, this._visiblePills), r = this.sources.slice(this._visiblePills);
-    return f`
+    return p`
       <div
         class=${e}
         role="button"
@@ -3862,52 +3914,52 @@ const Q = (le = class extends Z {
         </div>
 
         <div class="title">Drag & Drop or click to <span>browse</span></div>
-        ${this.compact ? C : f`<div class="subtitle">Drop files anywhere on this page</div>`}
-        ${!this.compact && this.sources.length > 0 ? f`
+        ${this.compact ? S : p`<div class="subtitle">Drop files anywhere on this page</div>`}
+        ${!this.compact && this.sources.length > 0 ? p`
               <div class="import-divider"><span>or import from</span></div>
-              ${this.sourcesLayout === "cards" ? f`
+              ${this.sourcesLayout === "cards" ? p`
                     <div class="sources-cards">
                       ${t.map((o) => this._renderCard(o))}
-                      ${r.length > 0 ? this._renderMoreCard() : C}
+                      ${r.length > 0 ? this._renderMoreCard() : S}
                     </div>
-                  ` : f`
+                  ` : p`
                     <div class="sources-grid">
                       ${t.map((o) => this._renderPill(o))}
-                      ${r.length > 0 ? this._renderMoreDropdown() : C}
+                      ${r.length > 0 ? this._renderMoreDropdown() : S}
                     </div>
                   `}
-            ` : C}
-        ${this.compact && this.sources.length > 0 ? f`
+            ` : S}
+        ${this.compact && this.sources.length > 0 ? p`
               <div class="sources-row">
                 ${this.sources.map(
-      (o) => f`
+      (o) => p`
                     <button
                       class="src-ico"
-                      style=${o.iconColor && !o.brandHtml ? `color:${o.iconColor}` : ""}
+                      ${V(o.iconColor && !o.brandHtml ? { color: o.iconColor } : null)}
                       data-tip=${o.label}
                       aria-label=${o.label}
                       @click=${(n) => {
         n.stopPropagation(), this._onSourceIconClick(o);
       }}
                     >
-                      ${o.brandHtml ? he(o.brandHtml) : ue`<svg viewBox="0 0 24 24" class=${o.fillIcon ? "fill-icon" : ""}>${ae(o.icon)}</svg>`}
+                      ${o.brandHtml ? ge(o) : he`<svg viewBox="0 0 24 24" class=${o.fillIcon ? "fill-icon" : ""}>${le(o.icon)}</svg>`}
                     </button>
                   `
     )}
               </div>
-            ` : C}
+            ` : S}
 
         <div class="ripple"></div>
         <input
           type="file"
-          multiple
-          accept=${this.accept || C}
+          ?multiple=${this.multi}
+          accept=${this.accept || S}
           @change=${this._onFileChange}
         />
       </div>
     `;
   }
-}, le.styles = G`
+}, de.styles = X`
     :host {
       display: flex;
       flex-shrink: 1;
@@ -4341,13 +4393,13 @@ const Q = (le = class extends Z {
     }
 
     /* Google Drive has transparent background — show SVG at full card-ico size */
-    .src-card .brand-ico[style*="transparent"] {
+    .src-card .brand-ico--transparent {
       background: none !important;
       width: auto;
       height: auto;
     }
 
-    .src-card .brand-ico[style*="transparent"] svg {
+    .src-card .brand-ico--transparent svg {
       width: 28px;
       height: 28px;
     }
@@ -4808,51 +4860,54 @@ const Q = (le = class extends Z {
         font-size: 13px;
       }
     }
-  `, le._WIDE_THRESHOLD_PX = 1200, le);
-re([
-  j({ type: Boolean, reflect: !0 })
-], Q.prototype, "compact");
-re([
-  j({ type: Boolean, attribute: "external-drag-over" })
-], Q.prototype, "externalDragOver");
-re([
-  j({ type: String })
-], Q.prototype, "accept");
-re([
-  j({ type: Array })
-], Q.prototype, "sources");
-re([
-  j({ type: String, attribute: "sources-layout" })
-], Q.prototype, "sourcesLayout");
-re([
-  j({ type: String, reflect: !0 })
-], Q.prototype, "mode");
-re([
-  T()
-], Q.prototype, "_dragOver");
-re([
-  T()
-], Q.prototype, "_moreOpen");
-re([
-  T()
-], Q.prototype, "_visiblePills");
-re([
-  Sr(".ripple")
-], Q.prototype, "_rippleEl");
-re([
-  Sr('input[type="file"]')
-], Q.prototype, "fileInput");
-let Nn = Q;
-const Ft = class Ft extends Z {
+  `, de._WIDE_THRESHOLD_PX = 1200, de);
+te([
+  D({ type: Boolean, reflect: !0 })
+], ee.prototype, "compact");
+te([
+  D({ type: Boolean, attribute: "external-drag-over" })
+], ee.prototype, "externalDragOver");
+te([
+  D({ type: String })
+], ee.prototype, "accept");
+te([
+  D({ type: Boolean })
+], ee.prototype, "multi");
+te([
+  D({ type: Array })
+], ee.prototype, "sources");
+te([
+  D({ type: String, attribute: "sources-layout" })
+], ee.prototype, "sourcesLayout");
+te([
+  D({ type: String, reflect: !0 })
+], ee.prototype, "mode");
+te([
+  j()
+], ee.prototype, "_dragOver");
+te([
+  j()
+], ee.prototype, "_moreOpen");
+te([
+  j()
+], ee.prototype, "_visiblePills");
+te([
+  Pr(".ripple")
+], ee.prototype, "_rippleEl");
+te([
+  Pr('input[type="file"]')
+], ee.prototype, "fileInput");
+let rs = ee;
+const It = class It extends Q {
   render() {
-    return f`
+    return p`
       <div class="line"></div>
       <div class="label">or import from</div>
       <div class="line"></div>
     `;
   }
 };
-Ft.styles = G`
+It.styles = X`
     :host {
       display: flex;
       align-items: center;
@@ -4875,14 +4930,14 @@ Ft.styles = G`
       white-space: nowrap;
     }
   `;
-let _r = Ft;
-var kn = Object.defineProperty, ie = (i, e, t, r) => {
+let $r = It;
+var Tn = Object.defineProperty, oe = (i, e, t, r) => {
   for (var o = void 0, n = i.length - 1, s; n >= 0; n--)
     (s = i[n]) && (o = s(e, t, o) || o);
-  return o && kn(e, t, o), o;
+  return o && Tn(e, t, o), o;
 };
-const $t = new CSSStyleSheet();
-$t.replaceSync(`
+const Pt = new CSSStyleSheet();
+Pt.replaceSync(`
   [data-sfx-tile-dropdown] { position:absolute; top:0; left:0; width:0; height:0; overflow:visible; pointer-events:none; }
   [data-sfx-tile-dropdown] .sfx-tile-dropdown { position:fixed; background:#fff; border:1px solid #e2e8f0; border-radius:10px; box-shadow:0 4px 20px rgba(0,0,0,0.12); padding:6px; z-index:99999; min-width:180px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; animation:sfxTileDropIn .15s ease; pointer-events:all; }
   [data-sfx-tile-dropdown] .sfx-tile-dropdown-item { display:flex; align-items:center; gap:10px; width:100%; padding:8px 12px; border:none; background:none; border-radius:6px; cursor:pointer; font-size:13px; font-weight:500; color:#1e293b; white-space:nowrap; transition:background .15s; font-family:inherit; }
@@ -4896,9 +4951,9 @@ $t.replaceSync(`
   [data-sfx-tile-dropdown] .sfx-tile-dropdown-ico .canva-ico svg { width:22px; height:22px; }
   @keyframes sfxTileDropIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
 `);
-const At = class At extends Z {
+const Mt = class Mt extends Q {
   constructor() {
-    super(...arguments), this.files = [], this.showDropTile = !1, this.sources = [], this.accept = "", this.mode = "upload", this.showLocateButton = !1, this.showCopyCdnButton = !1, this._moreOpen = !1, this._dropTileMaxVisible = 3, this._portalContainer = null, this._outsideClickHandler = (e) => {
+    super(...arguments), this.files = [], this.showDropTile = !1, this.sources = [], this.accept = "", this.multi = !0, this.mode = "upload", this.showLocateButton = !1, this.showCopyCdnButton = !1, this._moreOpen = !1, this._dropTileMaxVisible = 3, this._portalContainer = null, this._outsideClickHandler = (e) => {
       var o;
       if ((o = this._portalContainer) != null && o.contains(e.target)) return;
       const t = this.renderRoot.querySelector(".drop-tile-more-wrap"), r = e.composedPath();
@@ -4939,15 +4994,15 @@ const At = class At extends Z {
   }
   _openPortal() {
     const e = this.sources.slice(this._dropTileMaxVisible);
-    this._portalContainer || (this._portalContainer = document.createElement("div"), this._portalContainer.setAttribute("data-sfx-tile-dropdown", ""), Zr(this).appendChild(this._portalContainer), this._injectTileDropdownStyles()), ge(
-      f`<div class="sfx-tile-dropdown">
-        ${e.map((t) => f`
+    this._portalContainer || (this._portalContainer = document.createElement("div"), this._portalContainer.setAttribute("data-sfx-tile-dropdown", ""), ri(this).appendChild(this._portalContainer), this._injectTileDropdownStyles()), ve(
+      p`<div class="sfx-tile-dropdown">
+        ${e.map((t) => p`
           <button
             class="sfx-tile-dropdown-item"
             @click=${(r) => this._onMoreSourceClick(r, t)}
           >
-            <span class="sfx-tile-dropdown-ico" style=${t.iconColor && !t.brandHtml ? `color:${t.iconColor}` : ""}>
-              ${t.brandHtml ? he(t.brandHtml) : ue`<svg viewBox="0 0 24 24" class=${t.fillIcon ? "fill-icon" : ""}>${ae(t.icon)}</svg>`}
+            <span class="sfx-tile-dropdown-ico" ${V(t.iconColor && !t.brandHtml ? { color: t.iconColor } : null)}>
+              ${t.brandHtml ? ge(t) : he`<svg viewBox="0 0 24 24" class=${t.fillIcon ? "fill-icon" : ""}>${le(t.icon)}</svg>`}
             </span>
             ${t.label}
           </button>
@@ -4957,21 +5012,21 @@ const At = class At extends Z {
     ), requestAnimationFrame(() => this._positionPortal());
   }
   _positionPortal() {
-    var w;
-    const e = this.renderRoot.querySelector(".drop-tile-more"), t = (w = this._portalContainer) == null ? void 0 : w.querySelector(".sfx-tile-dropdown");
+    var k;
+    const e = this.renderRoot.querySelector(".drop-tile-more"), t = (k = this._portalContainer) == null ? void 0 : k.querySelector(".sfx-tile-dropdown");
     if (!e || !t) return;
     const r = e.getBoundingClientRect(), o = 6, n = t.scrollHeight, s = t.offsetWidth, a = r.top, l = window.innerHeight - r.bottom;
     a >= n + o || a > l ? t.style.top = `${r.top - n - o}px` : t.style.top = `${r.bottom + o}px`;
-    let g = r.right - s;
-    g = Math.max(8, Math.min(g, window.innerWidth - s - 8)), t.style.left = `${g}px`;
+    let h = r.right - s;
+    h = Math.max(8, Math.min(h, window.innerWidth - s - 8)), t.style.left = `${h}px`;
   }
   _closePortal() {
-    this._portalContainer && (ge(C, this._portalContainer), this._portalContainer.remove(), this._portalContainer = null);
+    this._portalContainer && (ve(S, this._portalContainer), this._portalContainer.remove(), this._portalContainer = null);
   }
   _injectTileDropdownStyles() {
     var t;
     const e = (t = this._portalContainer) == null ? void 0 : t.getRootNode();
-    e && (e.adoptedStyleSheets.includes($t) || (e.adoptedStyleSheets = [...e.adoptedStyleSheets, $t]));
+    e && (e.adoptedStyleSheets.includes(Pt) || (e.adoptedStyleSheets = [...e.adoptedStyleSheets, Pt]));
   }
   connectedCallback() {
     super.connectedCallback(), this._updateDropTileMaxVisible(), window.addEventListener("resize", this._updateDropTileMaxVisible);
@@ -4984,7 +5039,7 @@ const At = class At extends Z {
   }
   _renderDropTile() {
     const e = this._dropTileMaxVisible, t = this.sources.slice(0, e), r = this.sources.slice(e);
-    return f`
+    return p`
       <div class="drop-tile" @click=${this._onDropTileClick}>
         <div class="drop-tile-preview">
           <div class="drop-tile-rings">
@@ -5001,42 +5056,42 @@ const At = class At extends Z {
         </div>
         <div class="drop-tile-info">
           <div class="drop-tile-text">Drop or click to <span>browse</span></div>
-          ${t.length > 0 ? f`
+          ${t.length > 0 ? p`
             <div class="drop-tile-sources">
-              ${t.map((o) => f`
+              ${t.map((o) => p`
                 <button
                   class="drop-tile-src"
-                  style=${o.iconColor && !o.brandHtml ? `color:${o.iconColor}` : ""}
+                  ${V(o.iconColor && !o.brandHtml ? { color: o.iconColor } : null)}
                   title=${o.label}
                   @click=${(n) => this._onSourceClick(n, o)}
                 >
-                  ${o.brandHtml ? he(o.brandHtml) : ue`<svg viewBox="0 0 24 24" class=${o.fillIcon ? "fill-icon" : ""}>${ae(o.icon)}</svg>`}
+                  ${o.brandHtml ? ge(o) : he`<svg viewBox="0 0 24 24" class=${o.fillIcon ? "fill-icon" : ""}>${le(o.icon)}</svg>`}
                 </button>
               `)}
-              ${r.length > 0 ? f`
+              ${r.length > 0 ? p`
                 <div class="drop-tile-more-wrap">
                   <button class="drop-tile-more" title="More sources" @click=${(o) => this._toggleMore(o)}>···</button>
                 </div>
-              ` : C}
+              ` : S}
             </div>
-          ` : C}
+          ` : S}
         </div>
-        <input type="file" multiple accept=${this.accept || C} @change=${this._onFileInput} />
+        <input type="file" ?multiple=${this.multi} accept=${this.accept || S} @change=${this._onFileInput} />
       </div>
     `;
   }
   render() {
-    return f`
+    return p`
       <div class="grid">
-        ${this.showDropTile && this.mode !== "review" ? this._renderDropTile() : C}
+        ${this.showDropTile && this.mode !== "review" ? this._renderDropTile() : S}
         ${this.files.map(
-      (e, t) => f`<sfx-file-item .file=${e} .mode=${this.mode} .getLocateUrl=${this.getLocateUrl} .showLocateButton=${this.showLocateButton} .showCopyCdnButton=${this.showCopyCdnButton} style="--tile-index:${t}"></sfx-file-item>`
+      (e, t) => p`<sfx-file-item .file=${e} .mode=${this.mode} .getLocateUrl=${this.getLocateUrl} .showLocateButton=${this.showLocateButton} .showCopyCdnButton=${this.showCopyCdnButton} ${V({ "--tile-index": String(t) })}></sfx-file-item>`
     )}
       </div>
     `;
   }
 };
-At.styles = G`
+Mt.styles = X`
     :host {
       display: block;
       flex: 1;
@@ -5069,7 +5124,7 @@ At.styles = G`
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(var(--sfx-up-grid-min, 200px), 1fr));
       gap: 12px;
-      padding: 0 var(--sfx-grid-pad-r, 8px) 16px var(--sfx-grid-pad-l, 16px);
+      padding: 4px var(--sfx-grid-pad-r, 8px) 16px var(--sfx-grid-pad-l, 16px);
     }
 
     /* Mobile: 2 cols at <=768, 1 col at <=440. Use viewport @media not
@@ -5083,7 +5138,7 @@ At.styles = G`
       .grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 10px;
-        padding: 0 12px 16px;
+        padding: 4px 12px 16px;
       }
     }
 
@@ -5426,43 +5481,46 @@ At.styles = G`
       }
     }
   `;
-let J = At;
-ie([
-  j({ attribute: !1 })
+let J = Mt;
+oe([
+  D({ attribute: !1 })
 ], J.prototype, "files");
-ie([
-  j({ type: Boolean })
+oe([
+  D({ type: Boolean })
 ], J.prototype, "showDropTile");
-ie([
-  j({ attribute: !1 })
+oe([
+  D({ attribute: !1 })
 ], J.prototype, "sources");
-ie([
-  j({ type: String })
+oe([
+  D({ type: String })
 ], J.prototype, "accept");
-ie([
-  j({ type: String })
+oe([
+  D({ type: Boolean })
+], J.prototype, "multi");
+oe([
+  D({ type: String })
 ], J.prototype, "mode");
-ie([
-  j({ attribute: !1 })
+oe([
+  D({ attribute: !1 })
 ], J.prototype, "getLocateUrl");
-ie([
-  j({ type: Boolean })
+oe([
+  D({ type: Boolean })
 ], J.prototype, "showLocateButton");
-ie([
-  j({ type: Boolean })
+oe([
+  D({ type: Boolean })
 ], J.prototype, "showCopyCdnButton");
-ie([
-  T()
+oe([
+  j()
 ], J.prototype, "_moreOpen");
-ie([
-  T()
+oe([
+  j()
 ], J.prototype, "_dropTileMaxVisible");
-var Cn = Object.defineProperty, me = (i, e, t, r) => {
+var Dn = Object.defineProperty, ye = (i, e, t, r) => {
   for (var o = void 0, n = i.length - 1, s; n >= 0; n--)
     (s = i[n]) && (o = s(e, t, o) || o);
-  return o && Cn(e, t, o), o;
+  return o && Dn(e, t, o), o;
 };
-const Bt = class Bt extends Z {
+const Ht = class Ht extends Q {
   constructor() {
     super(...arguments), this.mode = "upload", this.showLocateButton = !1, this.showCopyCdnButton = !1, this._dims = "", this._copied = !1, this._copiedTimer = null;
   }
@@ -5472,8 +5530,8 @@ const Bt = class Bt extends Z {
       if (this._dims = "", (r = (t = this.file) == null ? void 0 : t.previewUrl) != null && r.startsWith("blob:")) {
         const a = this.file.previewUrl, l = new Image();
         l.onload = () => {
-          var p;
-          ((p = this.file) == null ? void 0 : p.previewUrl) === a && (this._dims = `${l.naturalWidth}×${l.naturalHeight}`);
+          var u;
+          ((u = this.file) == null ? void 0 : u.previewUrl) === a && (this._dims = `${l.naturalWidth}×${l.naturalHeight}`);
         }, l.src = a;
       } else if ((s = (n = (o = this.file) == null ? void 0 : o.response) == null ? void 0 : n.file) != null && s.info) {
         const a = this.file.response.file.info;
@@ -5531,10 +5589,10 @@ const Bt = class Bt extends Z {
     }
   }
   render() {
-    var w, P;
+    var k, $;
     const e = this.file;
-    if (!e) return C;
-    const t = Wr(e), r = e.status === "complete", o = e.status === "uploading", n = e.status === "paused", s = e.status === "error" || e.status === "failed", a = e.status === "rejected", l = this.mode === "review", p = dn(e.name), g = [
+    if (!e) return S;
+    const t = Jr(e), r = e.status === "complete", o = e.status === "uploading", n = e.status === "paused", s = e.status === "error" || e.status === "failed", a = e.status === "rejected", l = this.mode === "review", u = bn(e.name), h = [
       "tile",
       r ? "done" : "",
       o ? "uploading" : "",
@@ -5542,20 +5600,20 @@ const Bt = class Bt extends Z {
       a ? "rejected" : "",
       l ? "review" : ""
     ].filter(Boolean).join(" ");
-    return f`
-      <div class=${g} tabindex="0">
+    return p`
+      <div class=${h} tabindex="0">
         <!-- Preview area -->
         <div class="preview">
-          ${e.previewUrl ? f`<img class="preview-img" src=${e.previewUrl} alt="" />` : f`
+          ${e.previewUrl ? p`<img class="preview-img" src=${e.previewUrl} alt="" />` : p`
                 <div class="preview-bg ${t}"></div>
                 <div class="type-icon">
                   <img
                     class="type-icon-img"
-                    src=${Xr(p)}
-                    alt="${p ? `${p} file` : "File"}"
-                    @error=${(R) => {
-      const z = R.target, k = Kr();
-      !z.dataset.fallback && z.src !== k && (z.dataset.fallback = "1", z.src = k);
+                    src=${ei(u)}
+                    alt="${u ? `${u} file` : "File"}"
+                    @error=${(z) => {
+      const O = z.target, w = ti();
+      !O.dataset.fallback && O.src !== w && (O.dataset.fallback = "1", O.src = w);
     }}
                   />
                 </div>
@@ -5563,7 +5621,7 @@ const Bt = class Bt extends Z {
 
           <!-- Preview button (not in review mode — review uses its own
                stacked Locate / Copy CDN actions instead) -->
-          ${!l && !r && !o && !n && !s && e.status !== "rejected" ? f`
+          ${!l && !r && !o && !n && !s && e.status !== "rejected" ? p`
                 <button class="preview-btn" @click=${this._preview} aria-label="Details">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
@@ -5571,24 +5629,24 @@ const Bt = class Bt extends Z {
                   </svg>
                   Details
                 </button>
-              ` : C}
+              ` : S}
 
           <!-- Review-mode hover actions: Locate (open in storage) +
                Copy CDN (copy CDN URL to clipboard). Both buttons fade
                in on tile hover, only for completed files (failed files
                have no response.file.url). -->
-          ${l && r && ((P = (w = e.response) == null ? void 0 : w.file) != null && P.url) && (this.showLocateButton || this.showCopyCdnButton) ? f`
+          ${l && r && (($ = (k = e.response) == null ? void 0 : k.file) != null && $.url) && (this.showLocateButton || this.showCopyCdnButton) ? p`
                 <div class="review-actions">
-                  ${this.showLocateButton ? f`<button class="review-action secondary" @click=${this._locate} aria-label="Locate file in storage">
+                  ${this.showLocateButton ? p`<button class="review-action secondary" @click=${this._locate} aria-label="Locate file in storage">
                         <svg viewBox="0 0 24 24"><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><circle cx="12" cy="12" r="7"/></svg>
                         Locate
-                      </button>` : C}
-                  ${this.showCopyCdnButton && e.response.file.url.cdn ? f`<button class="review-action primary ${this._copied ? "copied" : ""}" @click=${this._copyCdn} title="Copy CDN link" aria-label="Copy CDN link to clipboard">
-                        ${this._copied ? f`<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>` : f`<svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`}
+                      </button>` : S}
+                  ${this.showCopyCdnButton && e.response.file.url.cdn ? p`<button class="review-action primary ${this._copied ? "copied" : ""}" @click=${this._copyCdn} title="Copy CDN link" aria-label="Copy CDN link to clipboard">
+                        ${this._copied ? p`<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>` : p`<svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`}
                         ${this._copied ? "Copied" : "Copy CDN"}
-                      </button>` : C}
+                      </button>` : S}
                 </div>
-              ` : C}
+              ` : S}
 
           <!-- Spinner overlay (uploading = spinner, paused = pause icon) -->
           <div class="spinner-overlay">
@@ -5602,60 +5660,60 @@ const Bt = class Bt extends Z {
           </div>
 
           <!-- Done badge -->
-          ${r ? f`<div class="done-badge">
+          ${r ? p`<div class="done-badge">
                 <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round">
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
-              </div>` : C}
+              </div>` : S}
 
           <!-- Failed badge (review mode only — failed files get a visible status) -->
-          ${l && s ? f`<div class="failed-badge" title=${e.error || "Upload failed"}>
+          ${l && s ? p`<div class="failed-badge" title=${e.error || "Upload failed"}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
                   <line x1="6" y1="6" x2="18" y2="18"/>
                   <line x1="18" y1="6" x2="6" y2="18"/>
                 </svg>
-              </div>` : C}
+              </div>` : S}
 
           <!-- Progress bar (visible during upload and when paused; not in review mode) -->
-          ${!l && (e.status === "uploading" || e.status === "paused") ? f`
+          ${!l && (e.status === "uploading" || e.status === "paused") ? p`
                 <div class="progress">
-                  <div class="progress-fill" style="transform:scaleX(${Math.min(e.progress, 100) / 100})"></div>
+                  <div class="progress-fill" ${V({ transform: `scaleX(${Math.min(e.progress, 100) / 100})` })}></div>
                 </div>
-              ` : C}
+              ` : S}
 
           <!-- Error / rejected text overlay (suppressed in review mode — failed-badge takes over) -->
-          ${(s || a) && e.error && !l ? f`<div class="error-badge" title=${e.error}>${e.error}</div>` : C}
+          ${(s || a) && e.error && !l ? p`<div class="error-badge" title=${e.error}>${e.error}</div>` : S}
 
           <!-- Video duration badge (hidden when error badge is shown to avoid overlap) -->
-          ${!(s || a) && e.duration != null && e.duration > 0 ? f`<div class="duration-badge">${this._formatDuration(e.duration)}</div>` : C}
+          ${!(s || a) && e.duration != null && e.duration > 0 ? p`<div class="duration-badge">${this._formatDuration(e.duration)}</div>` : S}
         </div>
 
         <!-- Action buttons (hidden in review mode — files are read-only) -->
-        ${l ? C : f`
+        ${l ? S : p`
         <div class="actions">
-          ${o && e.isTus ? f`
+          ${o && e.isTus ? p`
                 <button class="act-btn pause" @click=${this._pause} title="Pause" aria-label="Pause upload">
                   <svg viewBox="0 0 24 24" fill="currentColor">
                     <rect x="6" y="4" width="4" height="16" rx="1" />
                     <rect x="14" y="4" width="4" height="16" rx="1" />
                   </svg>
                 </button>
-              ` : C}
-          ${n ? f`
+              ` : S}
+          ${n ? p`
                 <button class="act-btn resume" @click=${this._resume} title="Resume" aria-label="Resume upload">
                   <svg viewBox="0 0 24 24" fill="currentColor">
                     <polygon points="5,3 19,12 5,21" />
                   </svg>
                 </button>
-              ` : C}
-          ${s ? f`
+              ` : S}
+          ${s ? p`
                 <button class="act-btn retry" @click=${this._retry} title="Retry" aria-label="Retry upload">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
                     <polyline points="23 4 23 10 17 10" />
                     <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10" />
                   </svg>
                 </button>
-              ` : C}
+              ` : S}
           <button class="act-btn del" @click=${this._remove} title="Remove" aria-label="Remove file">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="3 6 5 6 21 6" />
@@ -5673,8 +5731,8 @@ const Bt = class Bt extends Z {
           <input class="name-input" type="text" .value=${e.name} title=${e.name}
             aria-label="File name"
             ?readonly=${l}
-            @change=${l ? C : this._rename} @click=${(R) => R.stopPropagation()} />
-          <div class="meta">${p || ""}${e.size ? ` · ${fe(e.size)}` : ""}${this._dims ? ` · ${this._dims}` : ""}</div>
+            @change=${l ? S : this._rename} @click=${(z) => z.stopPropagation()} />
+          <div class="meta">${u || ""}${e.size ? ` · ${fe(e.size)}` : ""}${this._dims ? ` · ${this._dims}` : ""}</div>
         </div>
       </div>
     `;
@@ -5684,7 +5742,7 @@ const Bt = class Bt extends Z {
     return `${t}:${r.toString().padStart(2, "0")}`;
   }
 };
-Bt.styles = G`
+Ht.styles = X`
     :host {
       display: block;
     }
@@ -6219,29 +6277,29 @@ Bt.styles = G`
       .spin-ring { animation: none; }
     }
   `;
-let ne = Bt;
-me([
-  j({ attribute: !1 })
-], ne.prototype, "file");
-me([
-  j({ type: String })
-], ne.prototype, "mode");
-me([
-  j({ attribute: !1 })
-], ne.prototype, "getLocateUrl");
-me([
-  j({ type: Boolean })
-], ne.prototype, "showLocateButton");
-me([
-  j({ type: Boolean })
-], ne.prototype, "showCopyCdnButton");
-me([
-  T()
-], ne.prototype, "_dims");
-me([
-  T()
-], ne.prototype, "_copied");
-const Ge = G`
+let se = Ht;
+ye([
+  D({ attribute: !1 })
+], se.prototype, "file");
+ye([
+  D({ type: String })
+], se.prototype, "mode");
+ye([
+  D({ attribute: !1 })
+], se.prototype, "getLocateUrl");
+ye([
+  D({ type: Boolean })
+], se.prototype, "showLocateButton");
+ye([
+  D({ type: Boolean })
+], se.prototype, "showCopyCdnButton");
+ye([
+  j()
+], se.prototype, "_dims");
+ye([
+  j()
+], se.prototype, "_copied");
+const Xe = X`
   .btn,
   .btn-ghost,
   .btn-primary,
@@ -6310,21 +6368,21 @@ const Ge = G`
     opacity: 0.55;
     cursor: not-allowed;
   }
-`, Xe = G`
+`, Ke = X`
   button:focus-visible {
     outline: 2px solid var(--sfx-up-ring, oklch(0.578 0.198 268.129 / 0.7));
     outline-offset: 2px;
   }
 `;
-var Sn = Object.defineProperty, Re = (i, e, t, r) => {
+var jn = Object.defineProperty, Te = (i, e, t, r) => {
   for (var o = void 0, n = i.length - 1, s; n >= 0; n--)
     (s = i[n]) && (o = s(e, t, o) || o);
-  return o && Sn(e, t, o), o;
+  return o && jn(e, t, o), o;
 };
-const kr = 7, $n = 4, It = class It extends Z {
+const Ur = 7, Ln = 4, qt = class qt extends Q {
   constructor() {
-    super(...arguments), this.fileCount = 0, this.totalSize = 0, this.thumbnails = [], this.primaryLabel = "Done", this.failedFiles = [], this._maxThumbs = kr, this._updateMaxThumbs = () => {
-      const e = window.innerWidth <= 768 ? $n : kr;
+    super(...arguments), this.fileCount = 0, this.totalSize = 0, this.thumbnails = [], this.primaryLabel = "Done", this.failedFiles = [], this._maxThumbs = Ur, this._updateMaxThumbs = () => {
+      const e = window.innerWidth <= 768 ? Ln : Ur;
       e !== this._maxThumbs && (this._maxThumbs = e);
     };
   }
@@ -6366,37 +6424,37 @@ const kr = 7, $n = 4, It = class It extends Z {
   }
   render() {
     const e = this.thumbnails.slice(0, this._maxThumbs), t = this.thumbnails.length - this._maxThumbs, r = this.fileCount > 0, o = this.failedFiles.length > 0, n = o && !r;
-    return f`
+    return p`
       <button class="close-btn" title="Close" @click=${this._close}>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
       <div class="card" role="status" aria-live="polite">
         <div class="icon ${n ? "error" : o ? "warning" : ""}">
-          ${n ? f`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          ${n ? p`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-              </svg>` : o ? f`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              </svg>` : o ? p`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-                </svg>` : f`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                </svg>` : p`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
                   <polyline points="20 6 9 17 4 12" />
                 </svg>`}
         </div>
         <div class="title">${n ? "Upload failed" : o ? "Partially uploaded" : "Uploaded successfully!"}</div>
         <div class="subtitle">${n ? `${this.failedFiles.length === 1 ? "File" : "Files"} could not be uploaded` : o ? `${this.fileCount} ${this.fileCount === 1 ? "file" : "files"} uploaded, ${this.failedFiles.length} failed` : "All files are ready for use"}</div>
 
-        ${e.length > 0 ? f`
+        ${e.length > 0 ? p`
               <div class="thumbs">
                 ${e.map(
-      (s) => f`<img class="thumb" src=${s} alt="" />`
+      (s) => p`<img class="thumb" src=${s} alt="" />`
     )}
-                ${t > 0 ? f`<div class="thumb-more">+${t}</div>` : C}
+                ${t > 0 ? p`<div class="thumb-more">+${t}</div>` : S}
               </div>
-            ` : C}
+            ` : S}
 
-        ${r ? f`<div class="summary">${this.fileCount} ${this.fileCount === 1 ? "file" : "files"} · ${fe(this.totalSize)} uploaded</div>` : C}
+        ${r ? p`<div class="summary">${this.fileCount} ${this.fileCount === 1 ? "file" : "files"} · ${fe(this.totalSize)} uploaded</div>` : S}
 
-        ${o ? f`
+        ${o ? p`
             <div class="failed-list">
-              ${this.failedFiles.map((s) => f`
+              ${this.failedFiles.map((s) => p`
                 <div class="failed-item">
                   <svg class="failed-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img" aria-label="Error"><title>Error</title><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                   <div class="failed-info">
@@ -6409,19 +6467,19 @@ const kr = 7, $n = 4, It = class It extends Z {
                 </div>
               `)}
             </div>
-          ` : C}
+          ` : S}
 
         <div class="actions">
           <button class="btn-ghost" @click=${this._uploadMore}>Upload more</button>
-          ${r || o ? f`<button class="btn-ghost" @click=${this._reviewFiles}>Review files (${this.fileCount + this.failedFiles.length})</button>` : C}
-          ${o ? f`<button class="btn-retry-all" @click=${this._retryAll}>Retry all (${this.failedFiles.length})</button>` : C}
+          ${r || o ? p`<button class="btn-ghost" @click=${this._reviewFiles}>Review files (${this.fileCount + this.failedFiles.length})</button>` : S}
+          ${o ? p`<button class="btn-retry-all" @click=${this._retryAll}>Retry all (${this.failedFiles.length})</button>` : S}
           <button class="btn-primary" @click=${this._primaryAction}>${this.primaryLabel}</button>
         </div>
       </div>
     `;
   }
 };
-It.styles = [Ge, Xe, G`
+qt.styles = [Xe, Ke, X`
     :host {
       display: flex;
       flex: 1;
@@ -6743,31 +6801,31 @@ It.styles = [Ge, Xe, G`
       .icon { animation: none; }
     }
   `];
-let de = It;
-Re([
-  j({ type: Number })
-], de.prototype, "fileCount");
-Re([
-  j({ type: Number })
-], de.prototype, "totalSize");
-Re([
-  j({ type: Array })
-], de.prototype, "thumbnails");
-Re([
-  j({ type: String })
-], de.prototype, "primaryLabel");
-Re([
-  j({ type: Array })
-], de.prototype, "failedFiles");
-Re([
-  T()
-], de.prototype, "_maxThumbs");
-var Un = Object.defineProperty, Ke = (i, e, t, r) => {
+let ce = qt;
+Te([
+  D({ type: Number })
+], ce.prototype, "fileCount");
+Te([
+  D({ type: Number })
+], ce.prototype, "totalSize");
+Te([
+  D({ type: Array })
+], ce.prototype, "thumbnails");
+Te([
+  D({ type: String })
+], ce.prototype, "primaryLabel");
+Te([
+  D({ type: Array })
+], ce.prototype, "failedFiles");
+Te([
+  j()
+], ce.prototype, "_maxThumbs");
+var Fn = Object.defineProperty, Ze = (i, e, t, r) => {
   for (var o = void 0, n = i.length - 1, s; n >= 0; n--)
     (s = i[n]) && (o = s(e, t, o) || o);
-  return o && Un(e, t, o), o;
+  return o && Fn(e, t, o), o;
 };
-const Mt = class Mt extends Z {
+const Nt = class Nt extends Q {
   constructor() {
     super(...arguments), this.files = [], this.showLocateButton = !1, this.showCopyCdnButton = !1, this._filter = "all", this._setFilter = (e) => () => {
       this._filter = e;
@@ -6788,7 +6846,7 @@ const Mt = class Mt extends Z {
   }
   render() {
     const e = this._filtered, t = this.files.length;
-    return f`
+    return p`
       <div class="topbar">
         <button class="back-btn" @click=${this._onBack} title="Back">
           <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
@@ -6802,20 +6860,20 @@ const Mt = class Mt extends Z {
           <button class="chip ${this._filter === "success" ? "active" : ""}" @click=${this._setFilter("success")}>
             ✓ Uploaded (${this._successCount})
           </button>
-          ${this._failedCount > 0 ? f`<button class="chip ${this._filter === "failed" ? "active" : ""}" @click=${this._setFilter("failed")}>
+          ${this._failedCount > 0 ? p`<button class="chip ${this._filter === "failed" ? "active" : ""}" @click=${this._setFilter("failed")}>
                 ✗ Failed (${this._failedCount})
-              </button>` : C}
+              </button>` : S}
           <button class="clear-btn" @click=${this._onClear} title="Clear last upload from this browser">Clear</button>
         </div>
       </div>
 
       <div class="body">
-        ${e.length === 0 ? f`<div class="empty">No files match this filter.</div>` : f`<sfx-file-list .files=${e} mode="review" .getLocateUrl=${this.getLocateUrl} .showLocateButton=${this.showLocateButton} .showCopyCdnButton=${this.showCopyCdnButton}></sfx-file-list>`}
+        ${e.length === 0 ? p`<div class="empty">No files match this filter.</div>` : p`<sfx-file-list .files=${e} mode="review" .getLocateUrl=${this.getLocateUrl} .showLocateButton=${this.showLocateButton} .showCopyCdnButton=${this.showCopyCdnButton}></sfx-file-list>`}
       </div>
     `;
   }
 };
-Mt.styles = G`
+Nt.styles = X`
     :host {
       display: flex;
       flex-direction: column;
@@ -6954,29 +7012,29 @@ Mt.styles = G`
       .topbar { padding: 12px 16px; }
     }
   `;
-let ce = Mt;
-Ke([
-  j({ attribute: !1 })
-], ce.prototype, "files");
-Ke([
-  j({ attribute: !1 })
-], ce.prototype, "getLocateUrl");
-Ke([
-  j({ type: Boolean })
-], ce.prototype, "showLocateButton");
-Ke([
-  j({ type: Boolean })
-], ce.prototype, "showCopyCdnButton");
-Ke([
-  T()
-], ce.prototype, "_filter");
-customElements.define("sfx-last-upload-review", ce);
-var En = Object.defineProperty, se = (i, e, t, r) => {
+let pe = Nt;
+Ze([
+  D({ attribute: !1 })
+], pe.prototype, "files");
+Ze([
+  D({ attribute: !1 })
+], pe.prototype, "getLocateUrl");
+Ze([
+  D({ type: Boolean })
+], pe.prototype, "showLocateButton");
+Ze([
+  D({ type: Boolean })
+], pe.prototype, "showCopyCdnButton");
+Ze([
+  j()
+], pe.prototype, "_filter");
+customElements.define("sfx-last-upload-review", pe);
+var An = Object.defineProperty, ae = (i, e, t, r) => {
   for (var o = void 0, n = i.length - 1, s; n >= 0; n--)
     (s = i[n]) && (o = s(e, t, o) || o);
-  return o && En(e, t, o), o;
+  return o && An(e, t, o), o;
 };
-const Ht = class Ht extends Z {
+const Yt = class Yt extends Q {
   constructor() {
     super(...arguments), this.uploadState = "idle", this.fileCount = 0, this.totalSize = 0, this.failedCount = 0, this.showFillMetadata = !1, this.uploadDisabled = !1, this.uploadDisabledReason = "", this.completedCount = 0, this.uploadProgress = 0;
   }
@@ -7007,8 +7065,8 @@ const Ht = class Ht extends Z {
   }
   render() {
     const e = this.uploadState === "uploading";
-    return f`
-      ${e ? f`
+    return p`
+      ${e ? p`
             <div class="progress-row">
               <div
                 class="progress-track"
@@ -7020,17 +7078,17 @@ const Ht = class Ht extends Z {
               >
                 <div
                   class="progress-fill"
-                  style="width:${this.uploadProgress}%"
+                  ${V({ width: `${this.uploadProgress}%` })}
                 ></div>
               </div>
               <span class="progress-label"
                 >${this.completedCount}/${this.fileCount} files</span
               >
             </div>
-          ` : C}
+          ` : S}
       <div class="buttons-row">
         <div class="left">
-          ${this.showFillMetadata && this.uploadState === "idle" ? f`
+          ${this.showFillMetadata && this.uploadState === "idle" ? p`
                 <button class="btn-sec" @click=${this._fillMetadata} aria-label="Fill Metadata">
                   <svg
                     viewBox="0 0 24 24"
@@ -7050,7 +7108,7 @@ const Ht = class Ht extends Z {
                   </svg>
                   <span class="btn-label">Fill Metadata</span>
                 </button>
-              ` : C}
+              ` : S}
         </div>
         <div class="right">
           <button class="btn-ghost" @click=${this._clear} aria-label="Clear">
@@ -7083,7 +7141,7 @@ const Ht = class Ht extends Z {
             </svg>
             <span class="btn-label">Add more</span>
           </button>
-          ${this.failedCount > 0 ? f`
+          ${this.failedCount > 0 ? p`
                 <button
                   class="btn-retry"
                   @click=${this._retryAll}
@@ -7101,7 +7159,7 @@ const Ht = class Ht extends Z {
                   </svg>
                   <span class="btn-label">Retry all (${this.failedCount})</span>
                 </button>
-              ` : C}
+              ` : S}
           ${this._renderUploadButton()}
         </div>
       </div>
@@ -7109,7 +7167,7 @@ const Ht = class Ht extends Z {
   }
   _renderUploadButton() {
     const e = this.uploadState === "uploading", t = this.uploadState === "done", r = ["btn-primary", t ? "done-state" : ""].filter(Boolean).join(" "), o = e ? "Uploading" : t ? "Done" : "Upload";
-    return f`
+    return p`
       <button
         class=${r}
         @click=${this._upload}
@@ -7117,8 +7175,8 @@ const Ht = class Ht extends Z {
         title=${this.uploadDisabled ? this.uploadDisabledReason : ""}
         aria-label=${o}
       >
-        ${e ? f`<span class="btn-spin"></span
-              ><span class="btn-label">Uploading…</span>` : t ? f`
+        ${e ? p`<span class="btn-spin"></span
+              ><span class="btn-label">Uploading…</span>` : t ? p`
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
@@ -7129,7 +7187,7 @@ const Ht = class Ht extends Z {
                 <polyline points="20 6 9 17 4 12" />
               </svg>
               <span class="btn-label">Done!</span>
-            ` : f`
+            ` : p`
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
@@ -7147,10 +7205,10 @@ const Ht = class Ht extends Z {
     `;
   }
 };
-Ht.styles = [
-  Ge,
+Yt.styles = [
   Xe,
-  G`
+  Ke,
+  X`
       :host {
         display: flex;
         flex-direction: column;
@@ -7379,54 +7437,54 @@ Ht.styles = [
       }
     `
 ];
-let te = Ht;
-se([
-  j({ type: String })
-], te.prototype, "uploadState");
-se([
-  j({ type: Number })
-], te.prototype, "fileCount");
-se([
-  j({ type: Number })
-], te.prototype, "totalSize");
-se([
-  j({ type: Number })
-], te.prototype, "failedCount");
-se([
-  j({ type: Boolean })
-], te.prototype, "showFillMetadata");
-se([
-  j({ type: Boolean })
-], te.prototype, "uploadDisabled");
-se([
-  j({ type: String })
-], te.prototype, "uploadDisabledReason");
-se([
-  j({ type: Number })
-], te.prototype, "completedCount");
-se([
-  j({ type: Number })
-], te.prototype, "uploadProgress");
-const Pn = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
-function Tt(i, e) {
+let ie = Yt;
+ae([
+  D({ type: String })
+], ie.prototype, "uploadState");
+ae([
+  D({ type: Number })
+], ie.prototype, "fileCount");
+ae([
+  D({ type: Number })
+], ie.prototype, "totalSize");
+ae([
+  D({ type: Number })
+], ie.prototype, "failedCount");
+ae([
+  D({ type: Boolean })
+], ie.prototype, "showFillMetadata");
+ae([
+  D({ type: Boolean })
+], ie.prototype, "uploadDisabled");
+ae([
+  D({ type: String })
+], ie.prototype, "uploadDisabledReason");
+ae([
+  D({ type: Number })
+], ie.prototype, "completedCount");
+ae([
+  D({ type: Number })
+], ie.prototype, "uploadProgress");
+const Bn = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+function Ft(i, e) {
   return (t) => {
     if (t.key !== "Tab") return;
     const r = i();
     if (!r) return;
     const o = r.querySelector(e);
     if (!o) return;
-    const n = Array.from(o.querySelectorAll(Pn));
+    const n = Array.from(o.querySelectorAll(Bn));
     if (n.length === 0) return;
     const s = n[0], a = n[n.length - 1], l = r.activeElement;
     t.shiftKey ? (l === s || !o.contains(l)) && (t.preventDefault(), a.focus()) : (l === a || !o.contains(l)) && (t.preventDefault(), s.focus());
   };
 }
-var zn = Object.defineProperty, jt = (i, e, t, r) => {
+var In = Object.defineProperty, At = (i, e, t, r) => {
   for (var o = void 0, n = i.length - 1, s; n >= 0; n--)
     (s = i[n]) && (o = s(e, t, o) || o);
-  return o && zn(e, t, o), o;
+  return o && In(e, t, o), o;
 };
-const qt = class qt extends Z {
+const Vt = class Vt extends Q {
   constructor() {
     super(...arguments), this._url = "", this._name = "", this._error = "", this._onBackdropClick = (e) => {
       e.target === e.currentTarget && this._cancel();
@@ -7434,7 +7492,7 @@ const qt = class qt extends Z {
       this._url = e.target.value, this._error = "", this._autoName();
     }, this._onNameInput = (e) => {
       this._name = e.target.value;
-    }, this._focusTrap = Tt(() => this.shadowRoot, ".card"), this._onKeyDown = (e) => {
+    }, this._focusTrap = Ft(() => this.shadowRoot, ".card"), this._onKeyDown = (e) => {
       var t;
       e.key === "Escape" && this._cancel(), e.key === "Enter" && ((t = e.target) == null ? void 0 : t.tagName) === "INPUT" && this._submit(), this._focusTrap(e);
     };
@@ -7490,7 +7548,7 @@ const qt = class qt extends Z {
     });
   }
   render() {
-    return f`
+    return p`
       <div class="backdrop" @click=${this._onBackdropClick} @keydown=${this._onKeyDown}>
         <div class="card">
           <div class="head">
@@ -7524,7 +7582,7 @@ const qt = class qt extends Z {
                 @input=${this._onNameInput}
               />
             </div>
-            ${this._error ? f`<div class="error">${this._error}</div>` : ""}
+            ${this._error ? p`<div class="error">${this._error}</div>` : ""}
             <div class="actions">
               <button class="btn btn-ghost" @click=${this._cancel}>Cancel</button>
               <button class="btn btn-primary" @click=${this._submit}>
@@ -7537,7 +7595,7 @@ const qt = class qt extends Z {
     `;
   }
 };
-qt.styles = [Ge, Xe, G`
+Vt.styles = [Xe, Ke, X`
     :host {
       display: block;
     }
@@ -7711,26 +7769,26 @@ qt.styles = [Ge, Xe, G`
     }
 
   `];
-let Ye = qt;
-jt([
-  T()
-], Ye.prototype, "_url");
-jt([
-  T()
-], Ye.prototype, "_name");
-jt([
-  T()
-], Ye.prototype, "_error");
-var On = Object.defineProperty, at = (i, e, t, r) => {
+let Ve = Vt;
+At([
+  j()
+], Ve.prototype, "_url");
+At([
+  j()
+], Ve.prototype, "_name");
+At([
+  j()
+], Ve.prototype, "_error");
+var Mn = Object.defineProperty, lt = (i, e, t, r) => {
   for (var o = void 0, n = i.length - 1, s; n >= 0; n--)
     (s = i[n]) && (o = s(e, t, o) || o);
-  return o && On(e, t, o), o;
+  return o && Mn(e, t, o), o;
 };
-const Nt = class Nt extends Z {
+const Wt = class Wt extends Q {
   constructor() {
     super(...arguments), this._stream = null, this._error = "", this._captured = null, this._previewUrl = "", this._onBackdropClick = (e) => {
       e.target === e.currentTarget && this._cancel();
-    }, this._focusTrap = Tt(() => this.shadowRoot, ".card"), this._onKeyDown = (e) => {
+    }, this._focusTrap = Ft(() => this.shadowRoot, ".card"), this._onKeyDown = (e) => {
       e.key === "Escape" && this._cancel(), this._focusTrap(e);
     }, this._capture = () => {
       var o, n;
@@ -7771,7 +7829,7 @@ const Nt = class Nt extends Z {
     this._stopStream(), this.dispatchEvent(new CustomEvent("camera-cancel", { bubbles: !0, composed: !0 }));
   }
   render() {
-    return f`
+    return p`
       <div class="backdrop" @click=${this._onBackdropClick} @keydown=${this._onKeyDown}>
         <div class="card">
           <div class="head">
@@ -7785,13 +7843,13 @@ const Nt = class Nt extends Z {
             <button class="close-btn" aria-label="Close" @click=${this._cancel}>\u2715</button>
           </div>
           <div class="body">
-            ${this._error ? f`<div class="error">${this._error}</div>` : this._captured ? f`
+            ${this._error ? p`<div class="error">${this._error}</div>` : this._captured ? p`
                     <img class="preview-img" src=${this._previewUrl} alt="Captured photo" />
                     <div class="actions">
                       <button class="btn btn-ghost" @click=${this._retake}>Retake</button>
                       <button class="btn btn-primary" @click=${this._usePhoto}>Use photo</button>
                     </div>
-                  ` : f`
+                  ` : p`
                     <video autoplay playsinline muted></video>
                     <canvas></canvas>
                     <div class="actions">
@@ -7804,7 +7862,7 @@ const Nt = class Nt extends Z {
     `;
   }
 };
-Nt.styles = [Ge, Xe, G`
+Wt.styles = [Xe, Ke, X`
     :host { display: block; }
 
     .backdrop {
@@ -7885,29 +7943,29 @@ Nt.styles = [Ge, Xe, G`
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes slideUp { from { transform: translateY(18px) scale(0.97); } to { transform: translateY(0) scale(1); } }
   `];
-let Pe = Nt;
-at([
-  T()
-], Pe.prototype, "_stream");
-at([
-  T()
-], Pe.prototype, "_error");
-at([
-  T()
-], Pe.prototype, "_captured");
-at([
-  T()
-], Pe.prototype, "_previewUrl");
-var Rn = Object.defineProperty, Ze = (i, e, t, r) => {
+let Oe = Wt;
+lt([
+  j()
+], Oe.prototype, "_stream");
+lt([
+  j()
+], Oe.prototype, "_error");
+lt([
+  j()
+], Oe.prototype, "_captured");
+lt([
+  j()
+], Oe.prototype, "_previewUrl");
+var Hn = Object.defineProperty, Je = (i, e, t, r) => {
   for (var o = void 0, n = i.length - 1, s; n >= 0; n--)
     (s = i[n]) && (o = s(e, t, o) || o);
-  return o && Rn(e, t, o), o;
+  return o && Hn(e, t, o), o;
 };
-const Yt = class Yt extends Z {
+const Gt = class Gt extends Q {
   constructor() {
     super(...arguments), this._stream = null, this._recording = !1, this._error = "", this._recordedBlob = null, this._previewUrl = "", this._recorder = null, this._chunks = [], this._onBackdropClick = (e) => {
       e.target === e.currentTarget && this._cancel();
-    }, this._focusTrap = Tt(() => this.shadowRoot, ".card"), this._onKeyDown = (e) => {
+    }, this._focusTrap = Ft(() => this.shadowRoot, ".card"), this._onKeyDown = (e) => {
       e.key === "Escape" && this._cancel(), this._focusTrap(e);
     }, this._startRecording = async () => {
       var e;
@@ -7953,7 +8011,7 @@ const Yt = class Yt extends Z {
     this._stopAll(), this.dispatchEvent(new CustomEvent("screencast-cancel", { bubbles: !0, composed: !0 }));
   }
   render() {
-    return f`
+    return p`
       <div class="backdrop" @click=${this._onBackdropClick} @keydown=${this._onKeyDown}>
         <div class="card">
           <div class="head">
@@ -7968,19 +8026,19 @@ const Yt = class Yt extends Z {
             <button class="close-btn" aria-label="Close" @click=${this._cancel}>\u2715</button>
           </div>
           <div class="body">
-            ${this._error ? f`<div class="error">${this._error}</div>` : this._recordedBlob ? f`
+            ${this._error ? p`<div class="error">${this._error}</div>` : this._recordedBlob ? p`
                     <video src=${this._previewUrl} controls></video>
                     <div class="actions">
                       <button class="btn btn-ghost" @click=${this._discard}>Discard</button>
                       <button class="btn btn-primary" @click=${this._useRecording}>Use recording</button>
                     </div>
-                  ` : this._recording ? f`
+                  ` : this._recording ? p`
                       <video autoplay playsinline muted></video>
                       <div class="status"><div class="rec-dot"></div> Recording...</div>
                       <div class="actions">
                         <button class="btn btn-danger" @click=${this._stopRecording}>Stop recording</button>
                       </div>
-                    ` : f`
+                    ` : p`
                       <div class="start-view">
                         <div class="start-icon">
                           <svg viewBox="0 0 24 24">
@@ -8002,7 +8060,7 @@ const Yt = class Yt extends Z {
     `;
   }
 };
-Yt.styles = [Ge, Xe, G`
+Gt.styles = [Xe, Ke, X`
     :host { display: block; }
 
     .backdrop {
@@ -8101,28 +8159,28 @@ Yt.styles = [Ge, Xe, G`
     @keyframes slideUp { from { transform: translateY(18px) scale(0.97); } to { transform: translateY(0) scale(1); } }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
   `];
-let be = Yt;
-Ze([
-  T()
+let be = Gt;
+Je([
+  j()
 ], be.prototype, "_stream");
-Ze([
-  T()
+Je([
+  j()
 ], be.prototype, "_recording");
-Ze([
-  T()
+Je([
+  j()
 ], be.prototype, "_error");
-Ze([
-  T()
+Je([
+  j()
 ], be.prototype, "_recordedBlob");
-Ze([
-  T()
+Je([
+  j()
 ], be.prototype, "_previewUrl");
-var Dn = Object.defineProperty, Jr = (i, e, t, r) => {
+var qn = Object.defineProperty, ii = (i, e, t, r) => {
   for (var o = void 0, n = i.length - 1, s; n >= 0; n--)
     (s = i[n]) && (o = s(e, t, o) || o);
-  return o && Dn(e, t, o), o;
+  return o && qn(e, t, o), o;
 };
-const Vt = class Vt extends Z {
+const Xt = class Xt extends Q {
   constructor() {
     super(...arguments), this.duration = 6e3, this._toasts = [], this._nextId = 0;
   }
@@ -8139,19 +8197,19 @@ const Vt = class Vt extends Z {
     }, 200);
   }
   _iconForType(e) {
-    return e === "error" ? f`<svg class="toast-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+    return e === "error" ? p`<svg class="toast-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
         <circle cx="8" cy="8" r="6.5"/><line x1="8" y1="5" x2="8" y2="8.5"/><circle cx="8" cy="11" r="0.5" fill="currentColor" stroke="none"/>
-      </svg>` : e === "warning" ? f`<svg class="toast-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      </svg>` : e === "warning" ? p`<svg class="toast-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M8 1.5l6.5 12H1.5z"/><line x1="8" y1="6.5" x2="8" y2="9.5"/><circle cx="8" cy="11.5" r="0.5" fill="currentColor" stroke="none"/>
-      </svg>` : f`<svg class="toast-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+      </svg>` : p`<svg class="toast-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
       <circle cx="8" cy="8" r="6.5"/><line x1="8" y1="7" x2="8" y2="11"/><circle cx="8" cy="5" r="0.5" fill="currentColor" stroke="none"/>
     </svg>`;
   }
   render() {
-    return this._toasts.length === 0 ? f`` : f`
+    return this._toasts.length === 0 ? p`` : p`
       <div class="toast-stack">
         ${this._toasts.map(
-      (e) => f`
+      (e) => p`
             <div class="toast toast--${e.type} ${e.leaving ? "leaving" : ""}" role="alert">
               ${this._iconForType(e.type)}
               <span class="toast-msg">${e.message}</span>
@@ -8167,7 +8225,7 @@ const Vt = class Vt extends Z {
     `;
   }
 };
-Vt.styles = G`
+Xt.styles = X`
     :host {
       display: block;
       position: absolute;
@@ -8256,24 +8314,24 @@ Vt.styles = G`
       to   { opacity: 0; transform: translateY(8px) scale(0.96); }
     }
   `;
-let Ve = Vt;
-Jr([
-  j({ type: Number })
-], Ve.prototype, "duration");
-Jr([
-  T()
-], Ve.prototype, "_toasts");
-customElements.define("sfx-toast", Ve);
-var Tn = Object.defineProperty, H = (i, e, t, r) => {
+let We = Xt;
+ii([
+  D({ type: Number })
+], We.prototype, "duration");
+ii([
+  j()
+], We.prototype, "_toasts");
+customElements.define("sfx-toast", We);
+var Nn = Object.defineProperty, H = (i, e, t, r) => {
   for (var o = void 0, n = i.length - 1, s; n >= 0; n--)
     (s = i[n]) && (o = s(e, t, o) || o);
-  return o && Tn(e, t, o), o;
+  return o && Nn(e, t, o), o;
 };
-const Cr = /* @__PURE__ */ new Set(["unsplash"]), Ce = { isTus: !1, tusUploadUrl: null };
-var K;
-const M = (K = class extends Z {
+const Er = /* @__PURE__ */ new Set(["unsplash"]), Se = { isTus: !1, tusUploadUrl: null };
+var Z;
+const M = (Z = class extends Q {
   constructor() {
-    super(), this.config = null, this._isOpen = !1, this._activeConnector = null, this._showUrlDialog = !1, this._showCameraDialog = !1, this._showScreenCastDialog = !1, this._previewFileId = null, this._previewDims = "—", this._fileInfoOpen = !0, this._splitPct = 58, this._isResizing = !1, this._splitRafId = 0, this._previewDefaultApplied = !1, this._fullscreenPreviewUrl = null, this._fullscreenVideoFile = null, this._fullscreenZoomed = !1, this._fsPanX = 0, this._fsPanY = 0, this._fsDragging = !1, this._fsDragStartX = 0, this._fsDragStartY = 0, this._fsPanStartX = 0, this._fsPanStartY = 0, this._bodyDragOver = !1, this._isMinimized = !1, this._isPillExpanded = !1, this._metadataSchema = null, this._bulkMetadataOpen = !1, this._isReviewing = !1, this._reviewFiles = [], this._hasStoredReview = !1, this._metadataAutocomplete = null, this._videoBlobUrls = /* @__PURE__ */ new Map(), this._lastEta = 0, this._engine = null, this._cachedSources = Fe, this._cachedSourcesConfig = void 0, this._rejectedTimers = /* @__PURE__ */ new Map(), this._closeOnCompleteTimer = null, this._apiBase = null, this._authHeaders = null, this._authResolveId = 0, this._prevStoreState = null, this._unsubStoreEvents = null, this._portalContainer = null, this._onFileRename = (e) => {
+    super(), this.config = null, this._isOpen = !1, this._activeConnector = null, this._showUrlDialog = !1, this._showCameraDialog = !1, this._showScreenCastDialog = !1, this._previewFileId = null, this._previewDims = "—", this._fileInfoOpen = !0, this._splitPct = 58, this._isResizing = !1, this._splitRafId = 0, this._previewDefaultApplied = !1, this._fullscreenPreviewUrl = null, this._fullscreenVideoFile = null, this._fullscreenZoomed = !1, this._fsPanX = 0, this._fsPanY = 0, this._fsDragging = !1, this._fsDragStartX = 0, this._fsDragStartY = 0, this._fsPanStartX = 0, this._fsPanStartY = 0, this._bodyDragOver = !1, this._isMinimized = !1, this._isPillExpanded = !1, this._metadataSchema = null, this._bulkMetadataOpen = !1, this._isReviewing = !1, this._reviewFiles = [], this._hasStoredReview = !1, this._metadataAutocomplete = null, this._videoBlobUrls = /* @__PURE__ */ new Map(), this._lastEta = 0, this._engine = null, this._cachedSources = Ae, this._cachedSourcesConfig = void 0, this._rejectedTimers = /* @__PURE__ */ new Map(), this._closeOnCompleteTimer = null, this._apiBase = null, this._authHeaders = null, this._authResolveId = 0, this._prevStoreState = null, this._unsubStoreEvents = null, this._portalContainer = null, this._onFileRename = (e) => {
       this._onPreviewRename(e.detail.fileId, e.detail.name);
     }, this._onPreviewMetadataBlur = (e) => {
       const t = this._previewFileId;
@@ -8282,6 +8340,21 @@ const M = (K = class extends Z {
       if (!n) return;
       const s = new Map(this._store.getState().files);
       s.set(t, { ...n, meta: { ...n.meta, [r]: o } }), this._store.setState({ files: s });
+    }, this._transformRemoteThumbnail = (e, t) => {
+      var o;
+      const r = (o = this.config) == null ? void 0 : o.transformRemoteThumbnail;
+      if (!r) return e;
+      try {
+        return r(e, t) || e;
+      } catch (n) {
+        return console.warn("[sfx-uploader] transformRemoteThumbnail threw:", n), e;
+      }
+    }, this._connectorThumbnailTransform = (e) => {
+      const t = this._activeConnector;
+      return t ? this._transformRemoteThumbnail(e, {
+        source: "connector",
+        providerId: t
+      }) : e;
     }, this._onFilesSelected = (e) => {
       this._processIncomingFiles(e.detail.files);
     }, this._onDropTileSourceClick = (e) => {
@@ -8322,35 +8395,35 @@ const M = (K = class extends Z {
         return;
       }
       if ((((n = (o = this.config) == null ? void 0 : o.connectors) == null ? void 0 : n.providers) ?? []).includes(e)) {
-        if (Cr.has(e)) {
+        if (Er.has(e)) {
           if (!customElements.get("sfx-search-provider-browser")) {
-            const { SfxSearchProviderBrowser: a } = await import("./search-provider-browser-DN7XIYzb.js");
+            const { SfxSearchProviderBrowser: a } = await import("./search-provider-browser-BnTNCjkk.js");
             customElements.define(
               "sfx-search-provider-browser",
               a
             );
           }
         } else if (!customElements.get("sfx-provider-browser")) {
-          const { SfxProviderBrowser: a } = await import("./provider-browser-C0LhU7O7.js");
+          const { SfxProviderBrowser: a } = await import("./provider-browser-7WuL9fc6.js");
           customElements.define("sfx-provider-browser", a);
         }
         this._activeConnector = e;
       }
     }, this._onUrlSubmit = (e) => {
-      var w, P, R;
+      var k, $, z;
       this._showUrlDialog = !1;
-      const { url: t, name: r } = e.detail, o = (w = this.config) == null ? void 0 : w.callbacks, n = fn(r), s = n.startsWith("image/"), a = this._store.getState();
+      const { url: t, name: r } = e.detail, o = (k = this.config) == null ? void 0 : k.callbacks, n = _n(r), s = n.startsWith("image/"), a = this._store.getState();
       if ([...a.files.values()].some(
-        (z) => z.name === r && z.status !== "rejected" && z.status !== "cancelled"
+        (O) => O.name === r && O.status !== "rejected" && O.status !== "cancelled"
       )) return;
-      const p = kt(
+      const u = $t(
         { name: r, size: 0, type: n },
         a.restrictions,
         a.files
       );
-      if (p) {
-        const z = {
-          id: ke(),
+      if (u) {
+        const O = {
+          id: Ce(),
           status: "rejected",
           file: null,
           remoteUrl: t,
@@ -8362,30 +8435,30 @@ const M = (K = class extends Z {
           progress: 0,
           speed: 0,
           bytesUploaded: 0,
-          error: p,
+          error: u,
           retryCount: 0,
           response: null,
           addedAt: Date.now(),
           meta: {},
           tags: [],
           remoteInfo: null,
-          ...Ce
+          ...Se
         };
-        we(this._store, z), this._dispatchPublic(B.FILE_REJECTED, {
-          file: z,
-          reason: p
-        }), (P = o == null ? void 0 : o.onFileRejected) == null || P.call(o, z, p);
+        _e(this._store, O), this._dispatchPublic(B.FILE_REJECTED, {
+          file: O,
+          reason: u
+        }), ($ = o == null ? void 0 : o.onFileRejected) == null || $.call(o, O, u);
         return;
       }
-      const g = {
-        id: ke(),
+      const h = {
+        id: Ce(),
         status: "idle",
         file: null,
         remoteUrl: t,
         name: r,
         size: 0,
         type: n,
-        previewUrl: s ? t : null,
+        previewUrl: s ? this._transformRemoteThumbnail(t, { source: "url-import" }) : null,
         duration: null,
         progress: 0,
         speed: 0,
@@ -8397,9 +8470,9 @@ const M = (K = class extends Z {
         meta: {},
         tags: [],
         remoteInfo: null,
-        ...Ce
+        ...Se
       };
-      we(this._store, g), this._dispatchPublic(B.FILE_ADDED, { file: g }), (R = o == null ? void 0 : o.onFileAdded) == null || R.call(o, g), this._store.getState().queueConfig.autoProceed && this.upload();
+      _e(this._store, h), this._dispatchPublic(B.FILE_ADDED, { file: h }), (z = o == null ? void 0 : o.onFileAdded) == null || z.call(o, h), this._store.getState().queueConfig.autoProceed && this.upload();
     }, this._onUrlCancel = () => {
       this._showUrlDialog = !1;
     }, this._onCameraCapture = (e) => {
@@ -8419,7 +8492,7 @@ const M = (K = class extends Z {
     }, this._onFillMetadata = () => {
       var t, r, o, n;
       const e = [...this._store.getState().files.values()].filter(
-        (s) => K._MODIFIABLE_STATUSES.has(s.status)
+        (s) => Z._MODIFIABLE_STATUSES.has(s.status)
       );
       (t = this.config) != null && t.metadataConfig && this._metadataSchema && (this._bulkMetadataOpen = !0), this._dispatchPublic(B.FILL_METADATA, { files: e }), (n = (o = (r = this.config) == null ? void 0 : r.callbacks) == null ? void 0 : o.onFillMetadata) == null || n.call(o, e);
     }, this._onFileLocate = (e) => {
@@ -8515,51 +8588,54 @@ const M = (K = class extends Z {
       for (const s of e.detail.files) {
         const a = this._store.getState();
         if ([...a.files.values()].some(
-          (w) => w.name === s.name && w.size === s.size && w.status !== "rejected" && w.status !== "cancelled"
+          ($) => $.name === s.name && $.size === s.size && $.status !== "rejected" && $.status !== "cancelled"
         )) continue;
-        const p = kt(
+        const u = s.thumbnail ? this._transformRemoteThumbnail(s.thumbnail, {
+          source: "connector",
+          providerId: s.provider
+        }) : null, h = $t(
           { name: s.name, size: s.size, type: s.mimeType },
           a.restrictions,
           a.files
         );
-        if (p) {
-          const w = {
-            id: ke(),
+        if (h) {
+          const $ = {
+            id: Ce(),
             status: "rejected",
             file: null,
             remoteUrl: null,
             name: s.name,
             size: s.size,
             type: s.mimeType,
-            previewUrl: s.thumbnail,
+            previewUrl: u,
             duration: null,
             progress: 0,
             speed: 0,
             bytesUploaded: 0,
-            error: p,
+            error: h,
             retryCount: 0,
             response: null,
             addedAt: Date.now(),
             meta: {},
             tags: [],
             remoteInfo: s,
-            ...Ce
+            ...Se
           };
-          we(this._store, w), this._dispatchPublic(B.FILE_REJECTED, {
-            file: w,
-            reason: p
-          }), (o = t == null ? void 0 : t.onFileRejected) == null || o.call(t, w, p);
+          _e(this._store, $), this._dispatchPublic(B.FILE_REJECTED, {
+            file: $,
+            reason: h
+          }), (o = t == null ? void 0 : t.onFileRejected) == null || o.call(t, $, h);
           continue;
         }
-        const g = {
-          id: ke(),
+        const k = {
+          id: Ce(),
           status: "idle",
           file: null,
           remoteUrl: null,
           name: s.name,
           size: s.size,
           type: s.mimeType,
-          previewUrl: s.thumbnail,
+          previewUrl: u,
           duration: null,
           progress: 0,
           speed: 0,
@@ -8571,9 +8647,9 @@ const M = (K = class extends Z {
           meta: {},
           tags: [],
           remoteInfo: s,
-          ...Ce
+          ...Se
         };
-        we(this._store, g), this._dispatchPublic(B.FILE_ADDED, { file: g }), (n = t == null ? void 0 : t.onFileAdded) == null || n.call(t, g);
+        _e(this._store, k), this._dispatchPublic(B.FILE_ADDED, { file: k }), (n = t == null ? void 0 : t.onFileAdded) == null || n.call(t, k);
       }
       this._activeConnector = null, this._store.getState().queueConfig.autoProceed && this.upload();
     }, this._onConnectorClose = () => {
@@ -8682,7 +8758,7 @@ const M = (K = class extends Z {
       (Math.abs(r) > 3 || Math.abs(o) > 3) && (this._fsDragDidMove = !0), this._fsPanX = this._fsPanStartX + r, this._fsPanY = this._fsPanStartY + o, this.requestUpdate(), e.preventDefault();
     }, this._onFsClose = (e) => {
       e == null || e.stopPropagation(), this._fullscreenPreviewUrl = null, this._fullscreenVideoFile = null, this._fullscreenZoomed = !1, this._fsPanX = 0, this._fsPanY = 0;
-    }, this._store = ei(), this._storeCtrl = new ti(this, this._store);
+    }, this._store = ci(), this._storeCtrl = new pi(this, this._store);
   }
   /** Resolved storage key suffix for the last-upload review feature, or
    *  `null` when the feature is disabled (`lastUploadReview` is falsy). */
@@ -8707,13 +8783,13 @@ const M = (K = class extends Z {
   }
   /** Start uploading all queued files. */
   upload() {
-    var o, n, s, a, l, p, g;
+    var o, n, s, a, l, u, h;
     if (this._ensureEngine(), !this._engine) {
       console.warn("[sfx-uploader] Cannot upload: auth not resolved yet");
       return;
     }
     const e = [...this._store.getState().files.values()].filter(
-      (w) => w.status === "idle" || w.status === "queued"
+      (k) => k.status === "idle" || k.status === "queued"
     );
     if ((n = (o = this.config) == null ? void 0 : o.callbacks) != null && n.onBeforeUpload && this.config.callbacks.onBeforeUpload(e) === !1)
       return;
@@ -8723,7 +8799,7 @@ const M = (K = class extends Z {
       cancelable: !0,
       detail: { files: e }
     });
-    this.dispatchEvent(t) && (this._dispatchPublic(B.UPLOAD_STARTED, { files: e }), (l = (a = (s = this.config) == null ? void 0 : s.callbacks) == null ? void 0 : a.onUploadStarted) == null || l.call(a, e), this._engine.uploadAll(), (p = this.config) != null && p.minimizeOnUpload && ((g = this.config) == null ? void 0 : g.mode) !== "inline" && (this._isMinimized = !0, this._isPillExpanded = !0, this.requestUpdate()));
+    this.dispatchEvent(t) && (this._dispatchPublic(B.UPLOAD_STARTED, { files: e }), (l = (a = (s = this.config) == null ? void 0 : s.callbacks) == null ? void 0 : a.onUploadStarted) == null || l.call(a, e), this._engine.uploadAll(), (u = this.config) != null && u.minimizeOnUpload && ((h = this.config) == null ? void 0 : h.mode) !== "inline" && (this._isMinimized = !0, this._isPillExpanded = !0, this.requestUpdate()));
   }
   /** Programmatically add files. */
   addFiles(e) {
@@ -8769,7 +8845,7 @@ const M = (K = class extends Z {
   /** Update metadata and/or tags for a single file. */
   updateFileMeta(e, t, r) {
     const o = this._store.getState().files, n = o.get(e);
-    if (!n || !K._MODIFIABLE_STATUSES.has(n.status))
+    if (!n || !Z._MODIFIABLE_STATUSES.has(n.status))
       return;
     const s = new Map(o);
     s.set(e, {
@@ -8784,7 +8860,7 @@ const M = (K = class extends Z {
     let o = !1;
     for (const { fileId: n, meta: s, tags: a } of e) {
       const l = t.get(n);
-      !l || !K._MODIFIABLE_STATUSES.has(l.status) || (r.set(n, {
+      !l || !Z._MODIFIABLE_STATUSES.has(l.status) || (r.set(n, {
         ...l,
         meta: s != null ? { ...l.meta, ...s } : l.meta,
         tags: a ?? l.tags
@@ -8886,7 +8962,7 @@ const M = (K = class extends Z {
   }
   _updateFloatingPortal() {
     const e = [...this._storeCtrl.state.files.values()];
-    this._isMinimized && e.length > 0 ? (this._injectFloatStyles(), this._portalContainer || (this._portalContainer = document.createElement("div"), this._portalContainer.setAttribute("data-sfx-upload-float", ""), document.body.appendChild(this._portalContainer)), ge(this._renderFloatingPill(e), this._portalContainer)) : this._portalContainer && (ge(C, this._portalContainer), this._portalContainer.remove(), this._portalContainer = null);
+    this._isMinimized && e.length > 0 ? (this._injectFloatStyles(), this._portalContainer || (this._portalContainer = document.createElement("div"), this._portalContainer.setAttribute("data-sfx-upload-float", ""), document.body.appendChild(this._portalContainer)), ve(this._renderFloatingPill(e), this._portalContainer)) : this._portalContainer && (ve(S, this._portalContainer), this._portalContainer.remove(), this._portalContainer = null);
   }
   connectedCallback() {
     super.connectedCallback(), document.addEventListener("keydown", this._onKeyDown), this._prevStoreState = this._store.getState(), this._unsubStoreEvents = this._store.subscribe(() => this._onStoreChange());
@@ -8905,10 +8981,10 @@ const M = (K = class extends Z {
   // --- Config ---
   _applyConfig(e) {
     const t = {};
-    if (e.targetFolder && (t.targetFolder = e.targetFolder), e.restrictions && (t.restrictions = {
+    if (e.targetFolder && (t.targetFolder = e.targetFolder), (e.restrictions || e.forceName != null) && (t.restrictions = {
       ...this._store.getState().restrictions,
       ...e.restrictions
-    }), e.concurrency != null) {
+    }, e.forceName != null && (t.restrictions.maxNumberOfFiles = 1)), e.concurrency != null) {
       const o = this._store.getState().queueConfig;
       t.queueConfig = { ...o, concurrency: e.concurrency };
     }
@@ -8924,21 +9000,23 @@ const M = (K = class extends Z {
     var o, n;
     const t = e.auth;
     if (t.mode === "sass-key") {
-      this._apiBase = Dt(t.container), this._authHeaders = wt(t), this._ensureEngine(), (o = this._engine) == null || o.updateConfig({
+      this._apiBase = Lt(t.container), this._authHeaders = Ct(t), this._ensureEngine(), (o = this._engine) == null || o.updateConfig({
         apiBase: this._apiBase,
         authHeaders: this._authHeaders,
-        tusConfig: this._normalizeTusConfig()
+        tusConfig: this._normalizeTusConfig(),
+        resolveUploadParams: this._buildUploadParamsResolver()
       }), this._preloadMetadataSchema(e);
       return;
     }
     const r = ++this._authResolveId;
     try {
-      const s = await on(t);
+      const s = await hn(t);
       if (r !== this._authResolveId) return;
       this._apiBase = s.apiBase, this._authHeaders = s.headers, this._ensureEngine(), (n = this._engine) == null || n.updateConfig({
         apiBase: this._apiBase,
         authHeaders: this._authHeaders,
-        tusConfig: this._normalizeTusConfig()
+        tusConfig: this._normalizeTusConfig(),
+        resolveUploadParams: this._buildUploadParamsResolver()
       }), this._preloadMetadataSchema(e);
     } catch (s) {
       if (r !== this._authResolveId) return;
@@ -8962,11 +9040,42 @@ const M = (K = class extends Z {
     const e = (t = this.config) == null ? void 0 : t.tusConfig;
     return e === !0 ? {} : e || void 0;
   }
+  /**
+   * Whether the file picker should allow multi-select. False when
+   * `forceName` is set (single-asset slot) or when restrictions cap to 1.
+   */
+  get _allowMulti() {
+    var t;
+    if (((t = this.config) == null ? void 0 : t.forceName) != null) return !1;
+    const e = this._storeCtrl.state.restrictions.maxNumberOfFiles;
+    return e == null || e > 1;
+  }
+  /**
+   * Build the per-file upload-params resolver from `forceName` and
+   * `getUploadParams`. Host-supplied `getUploadParams` keys win on collision.
+   * Returns `undefined` when neither is configured.
+   */
+  _buildUploadParamsResolver() {
+    const e = this.config;
+    if (!e) return;
+    const { forceName: t, getUploadParams: r } = e;
+    if (!(t == null && !r))
+      return (o) => {
+        const n = {};
+        if (t != null) {
+          const a = typeof t == "function" ? t() : t;
+          a && (n.opt_force_name = a);
+        }
+        const s = r == null ? void 0 : r(o);
+        return s && Object.assign(n, s), Object.keys(n).length > 0 ? n : void 0;
+      };
+  }
   _ensureEngine() {
-    !this._engine && this._apiBase && this._authHeaders && (this._engine = new tn(this._store, {
+    !this._engine && this._apiBase && this._authHeaders && (this._engine = new un(this._store, {
       apiBase: this._apiBase,
       authHeaders: this._authHeaders,
-      tusConfig: this._normalizeTusConfig()
+      tusConfig: this._normalizeTusConfig(),
+      resolveUploadParams: this._buildUploadParamsResolver()
     }), this._engine.start());
   }
   // --- Metadata schema preloading ---
@@ -8974,7 +9083,7 @@ const M = (K = class extends Z {
     const t = e.metadataConfig;
     if (!(!t || !this._apiBase || !this._authHeaders))
       try {
-        const { fetchMetadataSchema: r, createTagsAutocomplete: o } = await import("./index-DggPxMMx.js");
+        const { fetchMetadataSchema: r, createTagsAutocomplete: o } = await import("./index-BwGZU0Wk.js");
         this._metadataSchema = await r(
           this._apiBase,
           this._authHeaders,
@@ -9031,77 +9140,77 @@ const M = (K = class extends Z {
    * for file status transitions.
    */
   _onStoreChange() {
-    var o, n, s, a, l, p, g, w, P, R;
+    var o, n, s, a, l, u, h, k, $, z;
     const e = this._store.getState(), t = this._prevStoreState;
     if (this._prevStoreState = e, !t) return;
     e.isUploading && !t.isUploading && (this._lastEta = 0);
     const r = (o = this.config) == null ? void 0 : o.callbacks;
-    for (const [z, k] of e.files) {
-      const E = t.files.get(z);
-      if (E) {
-        if (E.status !== k.status)
-          switch (k.status) {
+    for (const [O, w] of e.files) {
+      const P = t.files.get(O);
+      if (P) {
+        if (P.status !== w.status)
+          switch (w.status) {
             case "uploading":
-              E.status === "paused" && (this._dispatchPublic(B.UPLOAD_RESUMED, { file: k }), (n = r == null ? void 0 : r.onUploadResumed) == null || n.call(r, k));
+              P.status === "paused" && (this._dispatchPublic(B.UPLOAD_RESUMED, { file: w }), (n = r == null ? void 0 : r.onUploadResumed) == null || n.call(r, w));
               break;
             case "complete":
-              k.response && (this._dispatchPublic(B.UPLOAD_COMPLETE, {
-                file: k,
-                response: k.response
-              }), (s = r == null ? void 0 : r.onUploadComplete) == null || s.call(r, k, k.response));
+              w.response && (this._dispatchPublic(B.UPLOAD_COMPLETE, {
+                file: w,
+                response: w.response
+              }), (s = r == null ? void 0 : r.onUploadComplete) == null || s.call(r, w, w.response));
               break;
             case "error":
             case "failed": {
-              const S = new Error(k.error ?? "Upload failed");
+              const C = new Error(w.error ?? "Upload failed");
               this._dispatchPublic(B.UPLOAD_ERROR, {
-                file: k,
-                error: S
-              }), (a = r == null ? void 0 : r.onUploadError) == null || a.call(r, k, S);
+                file: w,
+                error: C
+              }), (a = r == null ? void 0 : r.onUploadError) == null || a.call(r, w, C);
               break;
             }
             case "retrying":
               this._dispatchPublic(B.UPLOAD_RETRY, {
-                file: k,
-                attempt: k.retryCount
-              }), (l = r == null ? void 0 : r.onUploadRetry) == null || l.call(r, k, k.retryCount);
+                file: w,
+                attempt: w.retryCount
+              }), (l = r == null ? void 0 : r.onUploadRetry) == null || l.call(r, w, w.retryCount);
               break;
             case "paused":
-              this._dispatchPublic(B.UPLOAD_PAUSED, { file: k }), (p = r == null ? void 0 : r.onUploadPaused) == null || p.call(r, k);
+              this._dispatchPublic(B.UPLOAD_PAUSED, { file: w }), (u = r == null ? void 0 : r.onUploadPaused) == null || u.call(r, w);
               break;
           }
-        k.status === "uploading" && E.progress !== k.progress && (this._dispatchPublic(B.UPLOAD_PROGRESS, {
-          file: k,
-          progress: k.progress,
-          speed: k.speed
-        }), (g = r == null ? void 0 : r.onUploadProgress) == null || g.call(r, k, k.progress, k.speed));
+        w.status === "uploading" && P.progress !== w.progress && (this._dispatchPublic(B.UPLOAD_PROGRESS, {
+          file: w,
+          progress: w.progress,
+          speed: w.speed
+        }), (h = r == null ? void 0 : r.onUploadProgress) == null || h.call(r, w, w.progress, w.speed));
       }
     }
     if (e.totalProgress !== t.totalProgress || e.totalSpeed !== t.totalSpeed) {
-      const z = e.totalSpeed > 0 ? (e.totalBytes - e.totalBytesUploaded) / e.totalSpeed : e.isUploading ? this._lastEta : 0;
-      e.totalSpeed > 0 && (this._lastEta = z), this._dispatchPublic(B.TOTAL_PROGRESS, {
+      const O = e.totalSpeed > 0 ? (e.totalBytes - e.totalBytesUploaded) / e.totalSpeed : e.isUploading ? this._lastEta : 0;
+      e.totalSpeed > 0 && (this._lastEta = O), this._dispatchPublic(B.TOTAL_PROGRESS, {
         percentage: e.totalProgress,
         speed: e.totalSpeed,
-        eta: z
-      }), (w = r == null ? void 0 : r.onTotalProgress) == null || w.call(r, e.totalProgress, e.totalSpeed, z);
+        eta: O
+      }), (k = r == null ? void 0 : r.onTotalProgress) == null || k.call(r, e.totalProgress, e.totalSpeed, O);
     }
     if (t.isUploading && !e.isUploading) {
-      const z = [...e.files.values()];
-      if (!z.some((E) => E.status === "cancelled")) {
-        const E = z.filter((h) => h.status === "complete"), S = z.filter(
-          (h) => h.status === "failed" || h.status === "error"
+      const O = [...e.files.values()];
+      if (!O.some((P) => P.status === "cancelled")) {
+        const P = O.filter((g) => g.status === "complete"), C = O.filter(
+          (g) => g.status === "failed" || g.status === "error"
         ), v = this._lastUploadId;
         if (v != null) {
-          const h = [...E, ...S];
-          De.save(v, h), this._hasStoredReview = h.length > 0;
+          const g = [...P, ...C];
+          De.save(v, g), this._hasStoredReview = g.length > 0;
         }
-        this._dispatchPublic(B.ALL_COMPLETE, { successful: E, failed: S }), (P = r == null ? void 0 : r.onAllComplete) == null || P.call(r, E, S);
-        const x = (R = this.config) == null ? void 0 : R.closeOnComplete;
+        this._dispatchPublic(B.ALL_COMPLETE, { successful: P, failed: C }), ($ = r == null ? void 0 : r.onAllComplete) == null || $.call(r, P, C);
+        const x = (z = this.config) == null ? void 0 : z.closeOnComplete;
         if (x) {
-          const h = typeof x == "number" ? x : 1500;
+          const g = typeof x == "number" ? x : 1500;
           this._closeOnCompleteTimer = setTimeout(() => {
-            var b, O, $;
-            this._closeOnCompleteTimer = null, this._phase === "complete" && (this._dispatchPublic(B.COMPLETE_ACTION, {}), ($ = (O = (b = this.config) == null ? void 0 : b.callbacks) == null ? void 0 : O.onCompleteAction) == null || $.call(O), this.close());
-          }, h);
+            var m, R, U;
+            this._closeOnCompleteTimer = null, this._phase === "complete" && (this._dispatchPublic(B.COMPLETE_ACTION, {}), (U = (R = (m = this.config) == null ? void 0 : m.callbacks) == null ? void 0 : R.onCompleteAction) == null || U.call(R), this.close());
+          }, g);
         }
       }
     }
@@ -9111,26 +9220,26 @@ const M = (K = class extends Z {
     const e = (l = this.config) == null ? void 0 : l.connectors;
     if (e === this._cachedSourcesConfig) return this._cachedSources;
     if (this._cachedSourcesConfig = e, !e)
-      return this._cachedSources = Fe, this._cachedSources;
-    const t = e.providers.length > 0 ? gn(e.providers) : [], r = e.customSources ?? [], o = Fe.filter(
-      (p) => p.id === "device" || p.id === "url"
-    ), n = Fe.filter(
-      (p) => p.id !== "device" && p.id !== "url"
+      return this._cachedSources = Ae, this._cachedSources;
+    const t = e.providers.length > 0 ? Sn(e.providers) : [], r = e.customSources ?? [], o = Ae.filter(
+      (u) => u.id === "device" || u.id === "url"
+    ), n = Ae.filter(
+      (u) => u.id !== "device" && u.id !== "url"
     ), s = /* @__PURE__ */ new Set(), a = [];
-    for (const p of [
+    for (const u of [
       ...o,
       ...t,
       ...n,
       ...r
     ])
-      if (!s.has(p.id)) {
-        if (K._RESERVED_IDS.has(p.id) && p.onActivate) {
+      if (!s.has(u.id)) {
+        if (Z._RESERVED_IDS.has(u.id) && u.onActivate) {
           console.warn(
-            `[sfx-uploader] Custom source id "${p.id}" conflicts with a built-in source and was skipped.`
+            `[sfx-uploader] Custom source id "${u.id}" conflicts with a built-in source and was skipped.`
           );
           continue;
         }
-        s.add(p.id), a.push(p);
+        s.add(u.id), a.push(u);
       }
     return this._cachedSources = a, this._cachedSources;
   }
@@ -9150,58 +9259,58 @@ const M = (K = class extends Z {
     for (const a of e) {
       const l = this._store.getState();
       if ([...l.files.values()].some(
-        (R) => R.name === a.name && R.size === a.size && R.status !== "rejected" && R.status !== "cancelled"
+        (z) => z.name === a.name && z.size === a.size && z.status !== "rejected" && z.status !== "cancelled"
       )) continue;
-      const g = hn(a, l.restrictions, l.files);
-      if (g) {
-        const R = a.type.startsWith("image/") ? URL.createObjectURL(a) : null, z = {
-          id: ke(),
+      const h = Cn(a, l.restrictions, l.files);
+      if (h) {
+        const z = a.type.startsWith("image/") ? URL.createObjectURL(a) : null, O = {
+          id: Ce(),
           status: "rejected",
           file: a,
           remoteUrl: null,
           name: a.name,
           size: a.size,
           type: a.type,
-          previewUrl: R,
+          previewUrl: z,
           duration: null,
           progress: 0,
           speed: 0,
           bytesUploaded: 0,
-          error: g,
+          error: h,
           retryCount: 0,
           response: null,
           addedAt: Date.now(),
           meta: {},
           tags: [],
           remoteInfo: null,
-          ...Ce
+          ...Se
         };
-        we(this._store, z), this._dispatchPublic(B.FILE_REJECTED, {
-          file: z,
-          reason: g
-        }), (o = t == null ? void 0 : t.onFileRejected) == null || o.call(t, z, g);
-        const k = (n = this.config) == null ? void 0 : n.rejectedFileAutoRemoveDelay, E = k === !1 || k === 0 || k === void 0 ? 0 : k;
-        if (E > 0) {
-          const S = z.id, v = setTimeout(() => {
-            this._rejectedTimers.delete(S);
-            const x = this._store.getState().files.get(S);
-            x && x.status === "rejected" && Wt(this._store, S);
-          }, E);
-          this._rejectedTimers.set(S, v);
+        _e(this._store, O), this._dispatchPublic(B.FILE_REJECTED, {
+          file: O,
+          reason: h
+        }), (o = t == null ? void 0 : t.onFileRejected) == null || o.call(t, O, h);
+        const w = (n = this.config) == null ? void 0 : n.rejectedFileAutoRemoveDelay, P = w === !1 || w === 0 || w === void 0 ? 0 : w;
+        if (P > 0) {
+          const C = O.id, v = setTimeout(() => {
+            this._rejectedTimers.delete(C);
+            const x = this._store.getState().files.get(C);
+            x && x.status === "rejected" && Zt(this._store, C);
+          }, P);
+          this._rejectedTimers.set(C, v);
         }
         continue;
       }
-      let w = null;
-      a.type.startsWith("image/") && (w = URL.createObjectURL(a));
-      const P = {
-        id: ke(),
+      let k = null;
+      a.type.startsWith("image/") && (k = URL.createObjectURL(a));
+      const $ = {
+        id: Ce(),
         status: "idle",
         file: a,
         remoteUrl: null,
         name: a.name,
         size: a.size,
         type: a.type,
-        previewUrl: w,
+        previewUrl: k,
         duration: null,
         progress: 0,
         speed: 0,
@@ -9213,28 +9322,28 @@ const M = (K = class extends Z {
         meta: {},
         tags: [],
         remoteInfo: null,
-        ...Ce
+        ...Se
       };
-      if (we(this._store, P), this._dispatchPublic(B.FILE_ADDED, { file: P }), (s = t == null ? void 0 : t.onFileAdded) == null || s.call(t, P), a.type.startsWith("video/")) {
-        un(a).then((z) => {
-          if (!z) return;
-          const k = this._store.getState(), E = k.files.get(P.id);
-          if (E) {
-            const S = new Map(k.files);
-            S.set(P.id, { ...E, previewUrl: z }), this._store.setState({ files: S });
+      if (_e(this._store, $), this._dispatchPublic(B.FILE_ADDED, { file: $ }), (s = t == null ? void 0 : t.onFileAdded) == null || s.call(t, $), a.type.startsWith("video/")) {
+        kn(a).then((O) => {
+          if (!O) return;
+          const w = this._store.getState(), P = w.files.get($.id);
+          if (P) {
+            const C = new Map(w.files);
+            C.set($.id, { ...P, previewUrl: O }), this._store.setState({ files: C });
           } else
-            URL.revokeObjectURL(z);
+            URL.revokeObjectURL(O);
         });
-        const R = document.createElement("video");
-        R.preload = "metadata", R.src = URL.createObjectURL(a), R.onerror = () => {
-          URL.revokeObjectURL(R.src);
-        }, R.onloadedmetadata = () => {
-          const z = R.duration;
-          if (URL.revokeObjectURL(R.src), !isFinite(z)) return;
-          const k = this._store.getState(), E = k.files.get(P.id);
-          if (E) {
-            const S = new Map(k.files);
-            S.set(P.id, { ...E, duration: z }), this._store.setState({ files: S });
+        const z = document.createElement("video");
+        z.preload = "metadata", z.src = URL.createObjectURL(a), z.onerror = () => {
+          URL.revokeObjectURL(z.src);
+        }, z.onloadedmetadata = () => {
+          const O = z.duration;
+          if (URL.revokeObjectURL(z.src), !isFinite(O)) return;
+          const w = this._store.getState(), P = w.files.get($.id);
+          if (P) {
+            const C = new Map(w.files);
+            C.set($.id, { ...P, duration: O }), this._store.setState({ files: C });
           }
         };
       }
@@ -9247,14 +9356,14 @@ const M = (K = class extends Z {
     if (!t) return;
     const r = { ...t };
     if ((this._fullscreenPreviewUrl && this._fullscreenPreviewUrl === t.previewUrl || this._fullscreenVideoFile && this._fullscreenVideoFile === t.file) && (this._fullscreenPreviewUrl = null, this._fullscreenVideoFile = null), t.previewUrl && URL.revokeObjectURL(t.previewUrl), t.file) {
-      const p = this._videoBlobUrls.get(t.file);
-      p && (URL.revokeObjectURL(p), this._videoBlobUrls.delete(t.file));
+      const u = this._videoBlobUrls.get(t.file);
+      u && (URL.revokeObjectURL(u), this._videoBlobUrls.delete(t.file));
     }
-    (t.status === "uploading" || t.status === "queued" || t.status === "retrying" || t.status === "paused") && ((n = this._engine) == null || n.cancelFile(e)), Wt(this._store, e), this._dimCache.delete(e);
+    (t.status === "uploading" || t.status === "queued" || t.status === "retrying" || t.status === "paused") && ((n = this._engine) == null || n.cancelFile(e)), Zt(this._store, e), this._dimCache.delete(e);
     const o = this._rejectedTimers.get(e);
     if (o && (clearTimeout(o), this._rejectedTimers.delete(e)), this._previewFileId === e) {
-      const p = [...this._store.getState().files.values()];
-      this._previewFileId = p.length > 0 ? p[0].id : null;
+      const u = [...this._store.getState().files.values()];
+      this._previewFileId = u.length > 0 ? u[0].id : null;
     }
     this._dispatchPublic(B.FILE_REMOVED, { file: r }), (l = (a = (s = this.config) == null ? void 0 : s.callbacks) == null ? void 0 : a.onFileRemoved) == null || l.call(a, r);
   }
@@ -9262,17 +9371,17 @@ const M = (K = class extends Z {
   render() {
     var r;
     const e = ((r = this.config) == null ? void 0 : r.mode) ?? "modal", t = [...this._storeCtrl.state.files.values()];
-    return e === "modal" ? f`
-        ${this._isOpen && !this._isMinimized ? f`
+    return e === "modal" ? p`
+        ${this._isOpen && !this._isMinimized ? p`
               <div class="modal-backdrop" @click=${this._onModalBackdropClick}>
                 <div class="modal-card">
                   ${this._renderHeader()} ${this._renderBody()}
                   <sfx-toast></sfx-toast>
                 </div>
               </div>
-            ` : C}
+            ` : S}
         ${this._renderFsOverlay()}
-      ` : f`
+      ` : p`
       <div class="inline ${t.length === 0 ? "no-files" : ""}">
         ${this._renderHeader()} ${this._renderBody()}
         <sfx-toast></sfx-toast>
@@ -9288,11 +9397,11 @@ const M = (K = class extends Z {
       their position:fixed always resolves to the viewport, even if some
       ancestor of fs-overlay establishes a containing block on first paint. */
   _renderFsOverlay() {
-    if (!this._fullscreenPreviewUrl && !this._fullscreenVideoFile) return C;
+    if (!this._fullscreenPreviewUrl && !this._fullscreenVideoFile) return S;
     const e = [...this._store.getState().files.values()].filter(
       (r) => r.previewUrl || r.type.startsWith("video/") && r.file
     ), t = e.findIndex((r) => r.id === this._previewFileId);
-    return f`
+    return p`
       <div
         class="fs-overlay ${this._fullscreenZoomed ? "zoomed" : ""} ${this._fsDragging ? "panning" : ""}"
         @click=${this._onFsOverlayClick}
@@ -9304,11 +9413,11 @@ const M = (K = class extends Z {
         @touchmove=${this._onFsTouchMove}
         @touchend=${this._onFsPanEnd}
       >
-        ${this._fullscreenVideoFile ? f`<video class="fs-img" src=${this._getVideoBlobUrl(this._fullscreenVideoFile)} controls playsinline draggable="false" @click=${(r) => r.stopPropagation()}></video>` : f`<img class="fs-img" src=${this._fullscreenPreviewUrl} alt="" style=${this._fullscreenZoomed ? `transform: scale(2) translate(${this._fsPanX}px, ${this._fsPanY}px)` : ""} draggable="false" />`}
+        ${this._fullscreenVideoFile ? p`<video class="fs-img" src=${this._getVideoBlobUrl(this._fullscreenVideoFile)} controls playsinline draggable="false" @click=${(r) => r.stopPropagation()}></video>` : p`<img class="fs-img" src=${this._fullscreenPreviewUrl} alt="" ${V(this._fullscreenZoomed ? { transform: `scale(2) translate(${this._fsPanX}px, ${this._fsPanY}px)` } : null)} draggable="false" />`}
       </div>
       <div class="fs-toolbar" @click=${(r) => r.stopPropagation()}>
         <button class="fs-btn" @click=${this._onFsToggleZoom} title="${this._fullscreenZoomed ? "Zoom out" : "Zoom in"}">
-          ${this._fullscreenZoomed ? f`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>` : f`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>`}
+          ${this._fullscreenZoomed ? p`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>` : p`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>`}
         </button>
         <button class="fs-btn" @click=${this._onFsClose} title="Close">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -9327,28 +9436,28 @@ const M = (K = class extends Z {
     `;
   }
   _renderInlineHeader(e) {
-    return f`
+    return p`
       <div class="inline-header">
         <div class="inline-header-top">
-          ${e.accent ? f`
+          ${e.accent ? p`
                 <div class="inline-header-accent">
                   <div class="accent-line"></div>
                   <span>${e.accent}</span>
                 </div>
-              ` : C}
-          ${e.title ? f`<h2 class="inline-header-title">${e.title}</h2>` : C}
+              ` : S}
+          ${e.title ? p`<h2 class="inline-header-title">${e.title}</h2>` : S}
         </div>
-        ${e.description ? f`<div class="inline-header-desc">${e.description}</div>` : C}
+        ${e.description ? p`<div class="inline-header-desc">${e.description}</div>` : S}
       </div>
     `;
   }
   _renderHeader() {
     var s, a, l;
-    if (this._phase === "complete") return C;
+    if (this._phase === "complete") return S;
     const e = ((s = this.config) == null ? void 0 : s.mode) ?? "modal";
     if (this._phase === "uploading") {
-      const g = [...this._storeCtrl.state.files.values()], w = g.filter((P) => P.status === "complete").length;
-      return f`
+      const h = [...this._storeCtrl.state.files.values()], k = h.filter(($) => $.status === "complete").length;
+      return p`
         <div class="header upload-header">
           <div class="float-header-left">
             <div class="float-icon">
@@ -9366,22 +9475,22 @@ const M = (K = class extends Z {
             </div>
             <div>
               <div class="float-title">
-                Uploading ${g.length}
-                ${g.length === 1 ? "file" : "files"}
+                Uploading ${h.length}
+                ${h.length === 1 ? "file" : "files"}
               </div>
               <div class="float-subtitle">
-                ${w} of
-                ${g.length}${this._lastEta > 0 ? ` · ~${pt(this._lastEta)} left` : ""}
+                ${k} of
+                ${h.length}${this._lastEta > 0 ? ` · ~${ht(this._lastEta)} left` : ""}
               </div>
             </div>
           </div>
         </div>
       `;
     }
-    if (e === "inline" && ((a = this.config) != null && a.inlineHeader)) return C;
+    if (e === "inline" && ((a = this.config) != null && a.inlineHeader)) return S;
     const t = ((l = this.config) == null ? void 0 : l.header) ?? (e === "modal" ? "close" : !0);
-    if (t === !1) return C;
-    const r = e === "modal" ? this._onModalDismiss : this._onInlineDismiss, o = t === "back" ? f`<button
+    if (t === !1) return S;
+    const r = e === "modal" ? this._onModalDismiss : this._onInlineDismiss, o = t === "back" ? p`<button
             class="header-btn header-btn-back"
             aria-label="Back to Asset Picker"
             @click=${r}
@@ -9396,7 +9505,7 @@ const M = (K = class extends Z {
             >
               <polyline points="15 18 9 12 15 6" />
             </svg>
-          </button>` : C, n = t === "close" ? f`<button
+          </button>` : S, n = t === "close" ? p`<button
             class="header-btn header-btn-close"
             aria-label="Close"
             @click=${r}
@@ -9411,11 +9520,11 @@ const M = (K = class extends Z {
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
-          </button>` : C;
-    return f`
+          </button>` : S;
+    return p`
       <div class="header">
         ${o}
-        ${t !== "back" ? f` <div class="header-icon">
+        ${t !== "back" ? p` <div class="header-icon">
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
@@ -9427,7 +9536,7 @@ const M = (K = class extends Z {
                 <line x1="12" y1="12" x2="12" y2="21" />
                 <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
               </svg>
-            </div>` : C}
+            </div>` : S}
         <div class="header-title">Upload Files</div>
         ${n}
       </div>
@@ -9447,7 +9556,7 @@ const M = (K = class extends Z {
   _renderUploadOverlay(e) {
     var n;
     const t = this._storeCtrl.state, r = Math.round(t.totalProgress ?? 0), o = e.filter((s) => s.status === "complete").length;
-    return f`
+    return p`
       <div class="upload-overlay">
         <div class="upload-overlay-spinner"></div>
         <div class="upload-overlay-percent">${r}%</div>
@@ -9456,10 +9565,10 @@ const M = (K = class extends Z {
         </div>
         <div class="upload-overlay-subtitle">
           ${o} of ${e.length}
-          complete${this._lastEta > 0 ? f` · ~${pt(this._lastEta)} left` : C}
+          complete${this._lastEta > 0 ? p` · ~${ht(this._lastEta)} left` : S}
         </div>
         <div class="upload-overlay-bar">
-          <div class="upload-overlay-bar-fill" style="width:${r}%"></div>
+          <div class="upload-overlay-bar-fill" ${V({ width: `${r}%` })}></div>
         </div>
         <div class="upload-overlay-actions">
           <button
@@ -9468,22 +9577,22 @@ const M = (K = class extends Z {
           >
             Cancel upload
           </button>
-          ${(n = this.config) != null && n.minimizeOnUpload ? f`<button
+          ${(n = this.config) != null && n.minimizeOnUpload ? p`<button
                 class="upload-overlay-minimize"
                 @click=${this._onMinimize}
               >
                 Minimize & continue in background
-              </button>` : C}
+              </button>` : S}
         </div>
       </div>
     `;
   }
   _renderFloatingPill(e) {
     const t = this._storeCtrl.state, r = Math.round(t.totalProgress ?? 0), o = this._phase === "complete", n = e.filter((a) => a.status === "complete").length, s = e.filter((a) => a.status === "failed").length;
-    return this._isPillExpanded === !1 ? f`
+    return this._isPillExpanded === !1 ? p`
         <div class="upload-float float-collapsed">
           <div class="float-collapsed-left">
-            ${o ? s > 0 ? n > 0 ? f`<div class="float-collapsed-icon warn">
+            ${o ? s > 0 ? n > 0 ? p`<div class="float-collapsed-icon warn">
                       <svg
                         viewBox="0 0 24 24"
                         fill="none"
@@ -9498,7 +9607,7 @@ const M = (K = class extends Z {
                         <line x1="12" y1="9" x2="12" y2="13" />
                         <line x1="12" y1="17" x2="12.01" y2="17" />
                       </svg>
-                    </div>` : f`<div class="float-collapsed-icon error">
+                    </div>` : p`<div class="float-collapsed-icon error">
                       <svg
                         viewBox="0 0 24 24"
                         fill="none"
@@ -9511,7 +9620,7 @@ const M = (K = class extends Z {
                         <line x1="12" y1="8" x2="12" y2="12" />
                         <line x1="12" y1="16" x2="12.01" y2="16" />
                       </svg>
-                    </div>` : f`<div class="float-collapsed-icon done">
+                    </div>` : p`<div class="float-collapsed-icon done">
                     <svg
                       viewBox="0 0 24 24"
                       fill="none"
@@ -9521,11 +9630,11 @@ const M = (K = class extends Z {
                     >
                       <polyline points="20 6 9 17 4 12" />
                     </svg>
-                  </div>` : f`<div class="float-collapsed-spinner"></div>`}
+                  </div>` : p`<div class="float-collapsed-spinner"></div>`}
             <span class="float-collapsed-text"
               >${o ? s > 0 ? n > 0 ? "Partially uploaded" : "Upload failed" : "Upload complete" : `Uploading ${e.length} ${e.length === 1 ? "file" : "files"}`}</span
             >
-            ${o ? C : f`<span class="float-collapsed-pct">${r}%</span>`}
+            ${o ? S : p`<span class="float-collapsed-pct">${r}%</span>`}
           </div>
           <div class="float-collapsed-actions">
             <button title="Open uploader" @click=${this._onPillExpand}>
@@ -9568,14 +9677,14 @@ const M = (K = class extends Z {
             </button>
           </div>
         </div>
-      ` : f`
+      ` : p`
       <div class="upload-float">
         <div class="float-header">
           <div class="float-header-left">
             <div
               class="float-icon ${o ? s > 0 ? n > 0 ? "warn" : "error" : "done" : ""}"
             >
-              ${o ? s > 0 ? n > 0 ? f`<svg
+              ${o ? s > 0 ? n > 0 ? p`<svg
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
@@ -9588,7 +9697,7 @@ const M = (K = class extends Z {
                         />
                         <line x1="12" y1="9" x2="12" y2="13" />
                         <line x1="12" y1="17" x2="12.01" y2="17" />
-                      </svg>` : f`<svg
+                      </svg>` : p`<svg
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
@@ -9599,7 +9708,7 @@ const M = (K = class extends Z {
                         <circle cx="12" cy="12" r="10" />
                         <line x1="12" y1="8" x2="12" y2="12" />
                         <line x1="12" y1="16" x2="12.01" y2="16" />
-                      </svg>` : f`<svg
+                      </svg>` : p`<svg
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
@@ -9607,7 +9716,7 @@ const M = (K = class extends Z {
                       stroke-linecap="round"
                     >
                       <polyline points="20 6 9 17 4 12" />
-                    </svg>` : f`<svg
+                    </svg>` : p`<svg
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -9624,7 +9733,7 @@ const M = (K = class extends Z {
                 ${o ? s > 0 ? n > 0 ? "Partially uploaded" : "Upload failed" : "Upload complete" : `Uploading ${e.length} ${e.length === 1 ? "file" : "files"}`}
               </div>
               <div class="float-subtitle">
-                ${o ? `${n} ${n === 1 ? "file" : "files"} uploaded${s > 0 ? `, ${s} failed` : ""}` : `${n} of ${e.length}${this._lastEta > 0 ? ` · ~${pt(this._lastEta)} left` : ""}`}
+                ${o ? `${n} ${n === 1 ? "file" : "files"} uploaded${s > 0 ? `, ${s} failed` : ""}` : `${n} of ${e.length}${this._lastEta > 0 ? ` · ~${ht(this._lastEta)} left` : ""}`}
               </div>
             </div>
           </div>
@@ -9680,20 +9789,20 @@ const M = (K = class extends Z {
           <div class="float-bar">
             <div
               class="float-bar-fill ${o ? s > 0 ? n > 0 ? "warn" : "error" : "done" : ""}"
-              style="width:${o ? 100 : r}%"
+              ${V({ width: `${o ? 100 : r}%` })}
             ></div>
           </div>
         </div>
         <div class="float-items">
           ${e.map((a) => {
       const l = a.status === "failed" || a.status === "error";
-      return f`
+      return p`
               <div class="float-item">
                 <div
                   class="float-item-thumb"
-                  style=${a.previewUrl ? `background-image:url(${a.previewUrl});background-size:cover;background-position:center` : ""}
+                  ${V(a.previewUrl ? { "background-image": `url(${a.previewUrl})`, "background-size": "cover", "background-position": "center" } : null)}
                 >
-                  ${a.previewUrl ? C : f`<svg
+                  ${a.previewUrl ? S : p`<svg
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
@@ -9709,7 +9818,7 @@ const M = (K = class extends Z {
                   <div class="float-item-size">${fe(a.size)}</div>
                 </div>
                 <div class="float-item-status">
-                  ${a.status === "complete" ? f`<div class="float-item-done">
+                  ${a.status === "complete" ? p`<div class="float-item-done">
                         <svg
                           viewBox="0 0 24 24"
                           fill="none"
@@ -9719,7 +9828,7 @@ const M = (K = class extends Z {
                         >
                           <polyline points="20 6 9 17 4 12" />
                         </svg>
-                      </div>` : l ? f` <div class="float-item-error-wrap">
+                      </div>` : l ? p` <div class="float-item-error-wrap">
                           <svg
                             class="float-item-error-icon"
                             viewBox="0 0 24 24"
@@ -9740,8 +9849,8 @@ const M = (K = class extends Z {
                         <button
                           class="float-item-retry"
                           @click=${() => {
-        var p;
-        this._ensureEngine(), (p = this._engine) == null || p.retryFile(a.id);
+        var u;
+        this._ensureEngine(), (u = this._engine) == null || u.retryFile(a.id);
       }}
                         >
                           <svg
@@ -9757,7 +9866,7 @@ const M = (K = class extends Z {
                             <path d="M3 22v-6h6" />
                             <path d="M21 12a9 9 0 0 1-15 6.7L3 16" />
                           </svg>
-                        </button>` : a.status === "paused" ? f`<svg
+                        </button>` : a.status === "paused" ? p`<svg
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="#d97706"
@@ -9781,7 +9890,7 @@ const M = (K = class extends Z {
                           rx="1"
                           fill="#d97706"
                         />
-                      </svg>` : f`<div class="float-item-spinner"></div>`}
+                      </svg>` : p`<div class="float-item-spinner"></div>`}
                 </div>
               </div>
             `;
@@ -9791,19 +9900,19 @@ const M = (K = class extends Z {
     `;
   }
   _renderPreviewLayout(e) {
-    var n, s, a, l, p;
-    if (e.length === 0) return C;
-    const t = e.find((g) => g.id === this._previewFileId) ?? e[0], r = ((n = t.name.split(".").pop()) == null ? void 0 : n.toUpperCase()) || "";
+    var n, s, a, l, u;
+    if (e.length === 0) return S;
+    const t = e.find((h) => h.id === this._previewFileId) ?? e[0], r = ((n = t.name.split(".").pop()) == null ? void 0 : n.toUpperCase()) || "";
     new Date(t.addedAt).toLocaleDateString(
       "en-US",
       { month: "short", day: "numeric", year: "numeric" }
     ), this._store.getState().targetFolder;
-    const o = e.reduce((g, w) => g + (w.size || 0), 0);
-    return f`
+    const o = e.reduce((h, k) => h + (k.size || 0), 0);
+    return p`
       <div class="preview-topbar"></div>
       <div class="preview-layout">
-        <div class="file-grid-side" style="flex:${this._splitPct}">
-          ${((s = this.config) == null ? void 0 : s.mode) === "inline" && ((a = this.config) != null && a.inlineHeader) ? this._renderInlineHeader(this.config.inlineHeader) : C}
+        <div class="file-grid-side" ${V({ flex: String(this._splitPct) })}>
+          ${((s = this.config) == null ? void 0 : s.mode) === "inline" && ((a = this.config) != null && a.inlineHeader) ? this._renderInlineHeader(this.config.inlineHeader) : S}
           <div class="file-grid-header">
             <span class="file-grid-header-text"
               >${e.length} ${e.length === 1 ? "asset" : "assets"} ·
@@ -9814,7 +9923,8 @@ const M = (K = class extends Z {
             .files=${e}
             .showDropTile=${!0}
             .sources=${this._mergedSources}
-            .accept=${mr(this._storeCtrl.state.restrictions)}
+            .accept=${kr(this._storeCtrl.state.restrictions)}
+            .multi=${this._allowMulti}
             ?drag-active=${this._bodyDragOver}
             @source-click=${this._onDropTileSourceClick}
           ></sfx-file-list>
@@ -9826,7 +9936,7 @@ const M = (K = class extends Z {
           @pointerup=${this._onSplitPointerUp}
           @lostpointercapture=${this._onSplitPointerUp}
         ></div>
-        <div class="preview-panel" style="flex:${100 - this._splitPct}">
+        <div class="preview-panel" ${V({ flex: String(100 - this._splitPct) })}>
           <div class="preview-panel-header">
             <button
               class="preview-back-btn"
@@ -9852,7 +9962,7 @@ const M = (K = class extends Z {
               >${t.name}</span
             >
             <div class="preview-header-actions">
-              ${t.previewUrl || t.type.startsWith("video/") && t.file ? f`
+              ${t.previewUrl || t.type.startsWith("video/") && t.file ? p`
                     <button
                       @click=${() => {
       this._fullscreenPreviewUrl = t.previewUrl, this._fullscreenVideoFile = t.type.startsWith("video/") && t.file ? t.file : null, this._fullscreenZoomed = !1, requestAnimationFrame(() => this.requestUpdate());
@@ -9873,7 +9983,7 @@ const M = (K = class extends Z {
                         <line x1="3" y1="21" x2="10" y2="14" />
                       </svg>
                     </button>
-                  ` : C}
+                  ` : S}
               <button
                 @click=${() => {
       this._previewFileId = null;
@@ -9893,7 +10003,7 @@ const M = (K = class extends Z {
               </button>
             </div>
           </div>
-          ${t.type.startsWith("video/") && t.file ? f`
+          ${t.type.startsWith("video/") && t.file ? p`
                 <div class="preview-media-area">
                   <div class="preview-img-wrap">
                     <video
@@ -9934,7 +10044,7 @@ const M = (K = class extends Z {
                     </svg>
                   </button>
                 </div>
-              ` : t.previewUrl ? f`
+              ` : t.previewUrl ? p`
                 <div class="preview-media-area">
                   <div class="preview-img-wrap">
                     <img
@@ -9974,16 +10084,16 @@ const M = (K = class extends Z {
                     </svg>
                   </button>
                 </div>
-              ` : f`
+              ` : p`
                 <div class="preview-media-area">
-                  <div class="preview-doc-wrap ${Wr(t)}">
+                  <div class="preview-doc-wrap ${Jr(t)}">
                     <img
                       class="preview-doc-type-img"
-                      src=${Xr(r)}
+                      src=${ei(r)}
                       alt="${r ? `${r} file` : "File"}"
-                      @error=${(g) => {
-      const w = g.target, P = Kr();
-      !w.dataset.fallback && w.src !== P && (w.dataset.fallback = "1", w.src = P);
+                      @error=${(h) => {
+      const k = h.target, $ = ti();
+      !k.dataset.fallback && k.src !== $ && (k.dataset.fallback = "1", k.src = $);
     }}
                     />
                   </div>
@@ -10019,12 +10129,12 @@ const M = (K = class extends Z {
                   </button>
                 </div>
               `}
-          ${this._metadataSchema && ((l = this.config) != null && l.metadataConfig) ? f`<div class="preview-meta-list">
+          ${this._metadataSchema && ((l = this.config) != null && l.metadataConfig) ? p`<div class="preview-meta-list">
                 <div class="preview-file-info">
                   ${r}${t.size ? ` · ${fe(t.size)}` : ""}${this._previewDims !== "—" ? ` · ${this._previewDims}` : ""}
                 </div>
-              </div>` : C}
-          ${this._metadataSchema && ((p = this.config) != null && p.metadataConfig) ? f`
+              </div>` : S}
+          ${this._metadataSchema && ((u = this.config) != null && u.metadataConfig) ? p`
                 <div
                   class="preview-metadata"
                   @field-blur=${this._onPreviewMetadataBlur}
@@ -10036,7 +10146,7 @@ const M = (K = class extends Z {
                     .autocomplete=${this._metadataAutocomplete}
                   ></sfx-metadata-form>
                 </div>
-              ` : f`
+              ` : p`
                 <div class="preview-file-info-panel">
                   <div
                     class="preview-file-info-header ${this._fileInfoOpen ? "open" : ""}"
@@ -10068,22 +10178,22 @@ const M = (K = class extends Z {
                       <div class="preview-file-info-key">Type</div>
                       <div class="preview-file-info-val">${r}</div>
                     </div>
-                    ${t.size ? f`
+                    ${t.size ? p`
                           <div class="preview-file-info-row">
                             <div class="preview-file-info-key">Size</div>
                             <div class="preview-file-info-val">
                               ${fe(t.size)}
                             </div>
                           </div>
-                        ` : C}
-                    ${this._previewDims !== "—" ? f`
+                        ` : S}
+                    ${this._previewDims !== "—" ? p`
                           <div class="preview-file-info-row">
                             <div class="preview-file-info-key">Dimensions</div>
                             <div class="preview-file-info-val">
                               ${this._previewDims}
                             </div>
                           </div>
-                        ` : C}
+                        ` : S}
                   </div>
                 </div>
               `}
@@ -10102,9 +10212,9 @@ const M = (K = class extends Z {
     }
   }
   _renderBody() {
-    var s, a, l, p, g, w, P, R, z, k, E;
-    const e = this._storeCtrl.state, t = [...e.files.values()], r = this._phase, o = mr(e.restrictions), n = t.length > 0;
-    return f`
+    var s, a, l, u, h, k, $, z, O, w, P;
+    const e = this._storeCtrl.state, t = [...e.files.values()], r = this._phase, o = kr(e.restrictions), n = t.length > 0;
+    return p`
       <div
         class="content"
         @files-selected=${this._onFilesSelected}
@@ -10135,46 +10245,47 @@ const M = (K = class extends Z {
       >
         <div
           class="body ${n ? "has-files" : ""} ${this._bodyDragOver ? "body-drag-over" : ""} ${this._previewFileId ? "has-preview" : ""}"
-          @dragenter=${n ? this._onBodyDragEnter : C}
-          @dragover=${n ? this._onBodyDragOver : C}
-          @dragleave=${n ? this._onBodyDragLeave : C}
-          @drop=${n ? this._onBodyDrop : C}
+          @dragenter=${n ? this._onBodyDragEnter : S}
+          @dragover=${n ? this._onBodyDragOver : S}
+          @dragleave=${n ? this._onBodyDragLeave : S}
+          @drop=${n ? this._onBodyDrop : S}
         >
-          ${((s = this.config) == null ? void 0 : s.mode) === "inline" && ((a = this.config) != null && a.inlineHeader) && !this._previewFileId && r !== "uploading" && r !== "complete" && !this._isReviewing ? this._renderInlineHeader(this.config.inlineHeader) : C}
-          ${this._isReviewing ? f`
+          ${((s = this.config) == null ? void 0 : s.mode) === "inline" && ((a = this.config) != null && a.inlineHeader) && !this._previewFileId && r !== "uploading" && r !== "complete" && !this._isReviewing ? this._renderInlineHeader(this.config.inlineHeader) : S}
+          ${this._isReviewing ? p`
                 <sfx-last-upload-review
                   .files=${this._reviewFiles}
                   .getLocateUrl=${(l = this.config) == null ? void 0 : l.getLocateUrl}
-                  .showLocateButton=${((p = this.config) == null ? void 0 : p.showLocateButton) ?? !1}
-                  .showCopyCdnButton=${((g = this.config) == null ? void 0 : g.showCopyCdnButton) ?? !1}
+                  .showLocateButton=${((u = this.config) == null ? void 0 : u.showLocateButton) ?? !1}
+                  .showCopyCdnButton=${((h = this.config) == null ? void 0 : h.showCopyCdnButton) ?? !1}
                   @back=${this._onExitReview}
                   @clear-history=${this._onClearReview}
                 ></sfx-last-upload-review>
-              ` : r === "complete" ? f`
+              ` : r === "complete" ? p`
                 <sfx-success-card
-                  .fileCount=${t.filter((S) => S.status === "complete").length}
-                  .totalSize=${t.filter((S) => S.status === "complete").reduce((S, v) => S + (v.size || 0), 0)}
-                  .thumbnails=${t.filter((S) => S.status === "complete" && S.previewUrl).map((S) => S.previewUrl)}
-                  .failedFiles=${t.filter((S) => S.status === "failed").map((S) => ({
-      id: S.id,
-      name: S.name,
-      error: S.error || "Upload failed"
+                  .fileCount=${t.filter((C) => C.status === "complete").length}
+                  .totalSize=${t.filter((C) => C.status === "complete").reduce((C, v) => C + (v.size || 0), 0)}
+                  .thumbnails=${t.filter((C) => C.status === "complete" && C.previewUrl).map((C) => C.previewUrl)}
+                  .failedFiles=${t.filter((C) => C.status === "failed").map((C) => ({
+      id: C.id,
+      name: C.name,
+      error: C.error || "Upload failed"
     }))}
                   @close-uploader=${this._onSuccessCardClose}
                   @file-retry=${this._onFileRetry}
                   @retry-all=${this._onRetryAll}
                   @review-files=${this._onEnterReview}
                 ></sfx-success-card>
-              ` : r === "uploading" ? this._renderUploadOverlay(t) : f`
-                ${n ? C : f`<sfx-drop-zone
+              ` : r === "uploading" ? this._renderUploadOverlay(t) : p`
+                ${n ? S : p`<sfx-drop-zone
                         .compact=${n}
                         .externalDragOver=${this._bodyDragOver}
                         .accept=${o}
                         .sources=${this._mergedSources}
-                        .sourcesLayout=${((w = this.config) == null ? void 0 : w.sourcesLayout) ?? "pills"}
-                        .mode=${((P = this.config) == null ? void 0 : P.mode) ?? "modal"}
+                        .sourcesLayout=${((k = this.config) == null ? void 0 : k.sourcesLayout) ?? "pills"}
+                        .mode=${(($ = this.config) == null ? void 0 : $.mode) ?? "modal"}
+                        .multi=${this._allowMulti}
                       ></sfx-drop-zone>
-                      ${this._hasStoredReview ? f`<button
+                      ${this._hasStoredReview ? p`<button
                             class="last-upload-pill"
                             @click=${this._onEnterReview}
                             title="View last upload batch"
@@ -10184,13 +10295,13 @@ const M = (K = class extends Z {
                               <circle cx="12" cy="12" r="10" />
                             </svg>
                             View last upload
-                          </button>` : C}`}
-                ${n ? this._previewFileId ? this._renderPreviewLayout(t) : f`
+                          </button>` : S}`}
+                ${n ? this._previewFileId ? this._renderPreviewLayout(t) : p`
                         <div class="asset-count">
                           ${t.length}
                           ${t.length === 1 ? "file" : "files"} ·
                           ${fe(
-      t.reduce((S, v) => S + (v.size || 0), 0)
+      t.reduce((C, v) => C + (v.size || 0), 0)
     )}
                         </div>
                         <sfx-file-list
@@ -10198,63 +10309,66 @@ const M = (K = class extends Z {
                           .showDropTile=${!0}
                           .sources=${this._mergedSources}
                           .accept=${o}
+                          .multi=${this._allowMulti}
                           ?drag-active=${this._bodyDragOver}
                           @source-click=${this._onDropTileSourceClick}
                         ></sfx-file-list>
-                      ` : C}
+                      ` : S}
               `}
         </div>
 
-        ${n && r !== "complete" && r !== "uploading" ? f`
+        ${n && r !== "complete" && r !== "uploading" ? p`
               <sfx-actions-bar
                 .uploadState=${"idle"}
                 .fileCount=${t.length}
-                .totalSize=${t.reduce((S, v) => S + (v.size || 0), 0)}
+                .totalSize=${t.reduce((C, v) => C + (v.size || 0), 0)}
                 .failedCount=${t.filter(
-      (S) => S.status === "failed" || S.status === "error"
+      (C) => C.status === "failed" || C.status === "error"
     ).length}
-                .completedCount=${t.filter((S) => S.status === "complete").length}
+                .completedCount=${t.filter((C) => C.status === "complete").length}
                 .uploadProgress=${e.totalProgress ?? 0}
-                .showFillMetadata=${!!(((R = this.config) == null ? void 0 : R.showFillMetadata) ?? ((z = this.config) == null ? void 0 : z.metadataConfig))}
+                .showFillMetadata=${!!(((z = this.config) == null ? void 0 : z.showFillMetadata) ?? ((O = this.config) == null ? void 0 : O.metadataConfig))}
                 .uploadDisabled=${this._hasUnfilledRequiredMetadata}
                 .uploadDisabledReason=${this._hasUnfilledRequiredMetadata ? "Fill required metadata first" : ""}
               ></sfx-actions-bar>
-            ` : C}
-        ${this._showUrlDialog ? f`<sfx-url-dialog></sfx-url-dialog>` : C}
-        ${this._showCameraDialog ? f`<sfx-camera-dialog></sfx-camera-dialog>` : C}
-        ${this._showScreenCastDialog ? f`<sfx-screen-cast-dialog></sfx-screen-cast-dialog>` : C}
-        ${this._activeConnector && ((k = this.config) != null && k.connectors) ? f`
+            ` : S}
+        ${this._showUrlDialog ? p`<sfx-url-dialog></sfx-url-dialog>` : S}
+        ${this._showCameraDialog ? p`<sfx-camera-dialog></sfx-camera-dialog>` : S}
+        ${this._showScreenCastDialog ? p`<sfx-screen-cast-dialog></sfx-screen-cast-dialog>` : S}
+        ${this._activeConnector && ((w = this.config) != null && w.connectors) ? p`
               <div
                 class="connector-modal-backdrop"
                 @click=${this._onConnectorBackdropClick}
               >
                 <div class="connector-modal">
-                  ${Cr.has(this._activeConnector) ? f`
+                  ${Er.has(this._activeConnector) ? p`
                         <sfx-search-provider-browser
                           .provider=${this._activeConnector}
                           .companionUrl=${this.config.connectors.companionUrl}
+                          .transformThumbnail=${this._connectorThumbnailTransform}
                         ></sfx-search-provider-browser>
-                      ` : f`
+                      ` : p`
                         <sfx-provider-browser
                           .provider=${this._activeConnector}
                           .companionUrl=${this.config.connectors.companionUrl}
+                          .transformThumbnail=${this._connectorThumbnailTransform}
                         ></sfx-provider-browser>
                       `}
                 </div>
               </div>
-            ` : C}
-        ${this._bulkMetadataOpen && this._metadataSchema ? f`
+            ` : S}
+        ${this._bulkMetadataOpen && this._metadataSchema ? p`
               <sfx-bulk-metadata-modal
                 .schema=${this._metadataSchema}
                 .files=${[...this._store.getState().files.values()].filter(
-      (S) => K._MODIFIABLE_STATUSES.has(S.status)
+      (C) => Z._MODIFIABLE_STATUSES.has(C.status)
     )}
-                .config=${((E = this.config) == null ? void 0 : E.metadataConfig) ?? null}
+                .config=${((P = this.config) == null ? void 0 : P.metadataConfig) ?? null}
                 .autocomplete=${this._metadataAutocomplete}
                 @metadata-save-batch=${this._onBulkMetadataSaveBatch}
                 @metadata-close=${this._onBulkMetadataClose}
               ></sfx-bulk-metadata-modal>
-            ` : C}
+            ` : S}
       </div>
     `;
   }
@@ -10277,7 +10391,7 @@ const M = (K = class extends Z {
     for (const e of this._videoBlobUrls.values()) URL.revokeObjectURL(e);
     this._videoBlobUrls.clear();
   }
-}, K.styles = G`
+}, Z.styles = X`
     :host {
       display: block;
       height: inherit;
@@ -12104,109 +12218,111 @@ const M = (K = class extends Z {
         max-height: min(280px, 55vh);
       }
     }
-  `, K._MODIFIABLE_STATUSES = /* @__PURE__ */ new Set([
+  `, Z._MODIFIABLE_STATUSES = /* @__PURE__ */ new Set([
   "idle",
   "queued",
   "rejected"
-]), K._RESERVED_IDS = /* @__PURE__ */ new Set([
+]), Z._RESERVED_IDS = /* @__PURE__ */ new Set([
   "device",
   "camera",
   "url",
   "screen-cast"
-]), K);
+]), Z);
 H([
-  j({ attribute: !1 })
+  D({ attribute: !1 })
 ], M.prototype, "config");
 H([
-  T()
+  j()
 ], M.prototype, "_isOpen");
 H([
-  T()
+  j()
 ], M.prototype, "_activeConnector");
 H([
-  T()
+  j()
 ], M.prototype, "_showUrlDialog");
 H([
-  T()
+  j()
 ], M.prototype, "_showCameraDialog");
 H([
-  T()
+  j()
 ], M.prototype, "_showScreenCastDialog");
 H([
-  T()
+  j()
 ], M.prototype, "_previewFileId");
 H([
-  T()
+  j()
 ], M.prototype, "_previewDims");
 H([
-  T()
+  j()
 ], M.prototype, "_fileInfoOpen");
 H([
-  T()
+  j()
 ], M.prototype, "_splitPct");
 H([
-  T()
+  j()
 ], M.prototype, "_fullscreenPreviewUrl");
 H([
-  T()
+  j()
 ], M.prototype, "_fullscreenVideoFile");
 H([
-  T()
+  j()
 ], M.prototype, "_fullscreenZoomed");
 H([
-  T()
+  j()
 ], M.prototype, "_bodyDragOver");
 H([
-  T()
+  j()
 ], M.prototype, "_isMinimized");
 H([
-  T()
+  j()
 ], M.prototype, "_isPillExpanded");
 H([
-  T()
+  j()
 ], M.prototype, "_metadataSchema");
 H([
-  T()
+  j()
 ], M.prototype, "_bulkMetadataOpen");
 H([
-  T()
+  j()
 ], M.prototype, "_isReviewing");
 H([
-  T()
+  j()
 ], M.prototype, "_reviewFiles");
 H([
-  T()
+  j()
 ], M.prototype, "_hasStoredReview");
-let Yn = M;
+let is = M;
 export {
-  Ut as A,
-  Fe as C,
+  Ot as A,
+  fe as B,
+  Ae as C,
   B as P,
-  te as S,
-  tn as U,
-  Nn as a,
-  ne as b,
+  ie as S,
+  un as U,
+  rs as a,
+  se as b,
   J as c,
-  _r as d,
-  Ct as e,
-  de as f,
-  Yn as g,
-  Qr as h,
-  wt as i,
-  ei as j,
-  rn as k,
-  Dt as l,
-  gn as m,
-  Ye as n,
-  Pe as o,
+  $r as d,
+  Ut as e,
+  ce as f,
+  is as g,
+  di as h,
+  Ct as i,
+  ci as j,
+  fn as k,
+  Lt as l,
+  Sn as m,
+  Ve as n,
+  Oe as o,
   be as p,
-  Bn as q,
-  on as r,
-  Hn as s,
-  qn as t,
-  In as u,
-  Mn as v,
-  Xr as w,
-  Kr as x,
-  fe as y
+  Zn as q,
+  hn as r,
+  es as s,
+  ts as t,
+  Jn as u,
+  Qn as v,
+  ge as w,
+  V as x,
+  ei as y,
+  ti as z
 };

@@ -57,6 +57,8 @@ import{h as t,c as e,d as o}from"./doc-utils-XkOyWBCy.js";const a={render(){retu
             <tr><td><code>showLocateButton</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Show "Locate" button on completed file tiles in the review screen. Fires <code>sfx-file-locate</code> event and <code>onFileLocate</code> callback.</td></tr>
             <tr><td><code>showCopyCdnButton</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Show "Copy CDN" button on completed file tiles in the review screen. Copies the CDN URL to clipboard and fires <code>sfx-file-copy-cdn</code> event.</td></tr>
             <tr><td><code>targetFolder</code></td><td><code>string</code></td><td><code>'/'</code></td><td>Destination folder path in Scaleflex</td></tr>
+            <tr><td><code>forceName</code></td><td><code>string | (() =&gt; string)</code></td><td><code>undefined</code></td><td>Force every uploaded file to be saved under this exact name in <code>targetFolder</code>, overwriting any existing file with the same name. Translates to <code>&amp;opt_force_name=…</code> on the upload request and works across every source (local file, URL import, Google Drive, Unsplash, …). Setting this implicitly clamps <code>restrictions.maxNumberOfFiles</code> to <code>1</code>, disables the multi-select on the file picker, and bypasses tus regardless of file size. Use for single-asset slots like watermarks, default images, or folder icons.</td></tr>
+            <tr><td><code>getUploadParams</code></td><td><code>(file) =&gt; Record&lt;string, string&gt; | undefined</code></td><td><code>undefined</code></td><td>Append arbitrary query parameters (typically Filerobot <code>opt_*</code> flags) to every upload request. Called per file just before its request is sent and merged into the URL of whichever upload path runs (XHR / URL / tus / Companion). Returning a non-empty object also forces the XHR path. Wins on key collision against <code>forceName</code>.</td></tr>
             <tr><td><code>tusConfig</code></td><td><code>TusConfig | boolean</code></td><td><code>undefined</code></td><td>Enable resumable uploads via the tus protocol for large files. Pass <code>true</code> for defaults (10 MB threshold, 5 MB chunks) or a <code>TusConfig</code> object. See <a href="#/examples/resumable-upload">Resumable upload example</a>.</td></tr>
           </tbody>
         </table>
@@ -81,6 +83,8 @@ import{h as t,c as e,d as o}from"./doc-utils-XkOyWBCy.js";const a={render(){retu
             <tr><td><code>callbacks</code></td><td><code>UploaderCallbacks</code></td><td><code>undefined</code></td><td>Lifecycle callbacks (see <a href="#/docs/api">API</a>)</td></tr>
             <tr><td><code>connectors</code></td><td><code>ConnectorConfig</code></td><td><code>undefined</code></td><td>Cloud provider configuration (see below)</td></tr>
             <tr><td><code>restrictions</code></td><td><code>UploadRestrictions</code></td><td><code>undefined</code></td><td>File validation rules (see below)</td></tr>
+            <tr><td><code>getLocateUrl</code></td><td><code>(file) =&gt; string | null | undefined</code></td><td><code>undefined</code></td><td>Override the URL opened by the "Locate" button on review-screen tiles. Receives the completed <code>UploadFile</code> and should return the host's file-manager URL for it. Return <code>null</code> / <code>undefined</code> to fall back to the file's public URL. Pairs with <code>showLocateButton: true</code>.</td></tr>
+            <tr><td><code>transformRemoteThumbnail</code></td><td><code>(url, ctx) =&gt; string</code></td><td><code>undefined</code></td><td>Rewrite third-party thumbnail URLs (URL imports + connector listings) into a CSP-allowed proxy URL. Use this when the host page enforces a Content-Security-Policy that disallows the original origin. See <a href="#csp-aware-deployments">CSP-aware deployments</a>.</td></tr>
           </tbody>
         </table>
 
@@ -222,6 +226,26 @@ uploaderB.config = {
         <h3>Resizable preview panel</h3>
         <p>When you click a file to preview it, the uploader splits into a <strong>file grid</strong> on the left and a <strong>preview panel</strong> on the right (420 px wide by default). Drag the vertical divider between them to resize — the file grid automatically adapts its column count (e.g. 3 → 4 columns) as you give it more space. The split range is clamped to 25 %–75 %.</p>
         <p>Images with transparency (PNG, WebP) display a <strong>checkerboard background</strong> in both the grid thumbnails and the preview panel so you can instantly see alpha areas.</p>
+
+        <h2 id="csp-aware-deployments">CSP-aware deployments</h2>
+        <p>When the host page enforces a strict <strong>Content-Security-Policy</strong> (e.g. <code>img-src 'self' data: blob: https://*.cloudimg.io https://*.filerobot.com</code>), thumbnails sourced from third-party origins — like an Unsplash search result, a Google Drive file listing, or an "Import from URL" preview pointing at <code>static.example.com</code> — are blocked by the browser before they render.</p>
+        <p>The uploader handles this in two layers:</p>
+
+        <h3>Post-upload CDN swap (automatic)</h3>
+        <p>Once a file finishes uploading, its <code>previewUrl</code> is automatically swapped to the Filerobot CDN URL returned by the upload response (<code>response.file.url.cdn</code>). This means success-card thumbnails, the file grid, and the bulk-metadata table all render from a CSP-allowed origin without any host configuration. Restricted to <code>image/*</code> MIME types — videos keep their locally generated poster blob.</p>
+
+        <h3>Pre-upload thumbnail rewriting (opt-in)</h3>
+        <p>For the window <em>before</em> a file is uploaded — when previews come from the third-party origin directly — set <code>transformRemoteThumbnail</code> to return a CSP-allowed proxy URL. The most common pattern is to wrap the original URL in a Cloudimage / Filerobot proxy:</p>
+        ${e("typescript",`uploader.config = {
+  auth: { /* ... */ },
+  transformRemoteThumbnail: (url, ctx) => {
+    // ctx.source: 'url-import' | 'connector'
+    // ctx.providerId: ProviderId | undefined  (only set when source === 'connector')
+    return \`https://demo.cloudimg.io/v7/\${encodeURIComponent(url)}?w=200\`;
+  },
+};`)}
+        <p>The hook applies in three places: the URL-import dialog, the file selected from a connector (Google Drive, Unsplash, etc.), and the listing thumbnails shown <em>while browsing</em> a connector. If your host doesn't have CSP restrictions, you can omit it entirely — the post-upload swap is enough for the long-lived state.</p>
+        <p>Errors and empty-string returns from the hook are caught and silently fall back to the original URL.</p>
 
         <h2>Upload restrictions</h2>
         <p>Restrict which files users can add via the <code>restrictions</code> config option.</p>

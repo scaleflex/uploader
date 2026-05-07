@@ -4,6 +4,11 @@ export declare class SfxSearchProviderBrowser extends LitElement {
     static styles: import('lit').CSSResult;
     provider: ProviderId;
     companionUrl: string;
+    /**
+     * Optional rewrite for listing thumbnail URLs so they pass the host CSP.
+     * Defaults to the identity function.
+     */
+    transformThumbnail: (url: string) => string;
     private _loading;
     private _loadingMore;
     private _items;

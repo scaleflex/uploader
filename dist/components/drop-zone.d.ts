@@ -5,6 +5,8 @@ export declare class SfxDropZone extends LitElement {
     compact: boolean;
     externalDragOver: boolean;
     accept: string;
+    /** Whether the file picker allows multiple selection. Set to false for single-asset slots. */
+    multi: boolean;
     sources: SourceDef[];
     sourcesLayout: "pills" | "cards";
     /** Set by sfx-uploader to scope the wide-host frame to inline mode only.

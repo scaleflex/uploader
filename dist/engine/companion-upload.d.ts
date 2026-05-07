@@ -5,6 +5,8 @@ export interface CompanionUploadOptions {
     apiBase: string;
     authHeaders: AuthHeaders;
     folder: string;
+    /** Extra query-string parameters appended to the Scaleflex endpoint URL Companion forwards to (e.g. `opt_force_name`). */
+    extraParams?: Record<string, string>;
     onProgress: (bytesUploaded: number, bytesTotal: number) => void;
     onComplete: (response: UploadResponse) => void;
     onError: (error: Error) => void;

@@ -1,11 +1,19 @@
 import { Store } from '../store/store';
-import { UploaderState } from '../store/store.types';
+import { UploaderState, UploadFile } from '../store/store.types';
 import { AuthHeaders } from '../auth/auth.types';
 import { TusConfig } from './tus-upload';
 export interface UploadEngineConfig {
     apiBase: string;
     authHeaders: AuthHeaders;
     tusConfig?: TusConfig;
+    /**
+     * Resolve extra query-string parameters (e.g. Filerobot `opt_*` flags)
+     * for a given file's upload request. Returning a non-empty object also
+     * forces the XHR path — tus is bypassed because Companion's tus relay
+     * does not support `opt_force_name` reliably and these flows are
+     * single-asset by design.
+     */
+    resolveUploadParams?: (file: UploadFile) => Record<string, string> | undefined;
 }
 export declare class UploadEngine {
     private store;

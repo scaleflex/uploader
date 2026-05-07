@@ -7,6 +7,8 @@ export declare class SfxFileList extends LitElement {
     showDropTile: boolean;
     sources: SourceDef[];
     accept: string;
+    /** Whether the drop-tile file picker allows multiple selection. */
+    multi: boolean;
     /** 'upload' (default): full controls; 'review': read-only post-upload review
      *  with status badges, Open links, and a Local-edit pill on edited files. */
     mode: 'upload' | 'review';

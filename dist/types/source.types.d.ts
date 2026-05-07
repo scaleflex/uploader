@@ -8,8 +8,10 @@ export interface SourceDef {
     icon: string;
     fillIcon?: boolean;
     iconColor?: string;
-    /** Complete HTML for brand icons that need custom rendering (multi-color SVGs, colored containers). When set, used instead of wrapping `icon` in an SVG tag. */
+    /** Inner HTML content for brand icons (SVG or text). Rendered inside a `.brand-ico` span. When set, used instead of wrapping `icon` in an SVG tag. */
     brandHtml?: string;
+    /** CSSOM styles applied to the `.brand-ico` wrapper span via cspStyle (CSP-safe). Built-in providers always set this. */
+    brandStyle?: Record<string, string>;
     onActivate?: (uploader: UploaderHandle) => void;
 }
 //# sourceMappingURL=source.types.d.ts.map

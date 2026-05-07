@@ -35,6 +35,21 @@ export interface InlineHeaderConfig {
     /** Description text below the title. */
     description?: string;
 }
+/**
+ * Context passed to {@link UploaderConfig.transformRemoteThumbnail} so the
+ * host can decide how to rewrite a third-party thumbnail URL (e.g. proxy it
+ * through Filerobot for CSP compliance, append a token, …).
+ */
+export interface RemoteThumbnailContext {
+    /**
+     * Where the URL came from:
+     * - `'url-import'` — pasted into the "Import from URL" dialog.
+     * - `'connector'` — listing/selection result from a Companion provider.
+     */
+    source: 'url-import' | 'connector';
+    /** Provider id when `source === 'connector'`. */
+    providerId?: import('./connectors/connector.types').ProviderId;
+}
 export interface UploaderConfig {
     auth: AuthConfig;
     targetFolder?: string;
@@ -144,6 +159,66 @@ export interface UploaderConfig {
      * Set to `true` for defaults, or pass a TusConfig object for fine-grained control.
      */
     tusConfig?: TusConfig | boolean;
+    /**
+     * Force every uploaded file to be saved under this exact name in
+     * `targetFolder`, overwriting any existing file with the same name.
+     * Use for single-asset slots (watermark, default image, folder icon)
+     * where the host always wants one file at a stable path.
+     *
+     * Translates to `&opt_force_name=<value>` on the upload request and
+     * works across every source — local file, URL import, Google Drive,
+     * Unsplash, etc. Setting this implicitly clamps
+     * `restrictions.maxNumberOfFiles` to `1`, disables multi-select on
+     * the file picker, and forces the XHR upload path regardless of file
+     * size (tus is bypassed because Companion's tus relay does not
+     * propagate `opt_force_name` reliably).
+     *
+     * Pass a function if the name needs to be derived per-session.
+     *
+     * @example
+     * forceName: `project-${projectUuid}`
+     */
+    forceName?: string | (() => string);
+    /**
+     * Append arbitrary query parameters (typically Filerobot `opt_*` flags)
+     * to every upload request. Called once per file just before its
+     * request is sent and merged into the URL of whichever upload path
+     * runs (XHR, URL, or Companion). Return `undefined` for no extras.
+     * Returning a non-empty object also forces the XHR path — tus is
+     * bypassed since its Companion relay does not propagate `opt_*` flags
+     * reliably.
+     *
+     * If a key collides with one produced by `forceName`, the value
+     * returned here wins.
+     *
+     * @example
+     * getUploadParams: (file) => ({
+     *   opt_force_name: deriveNameFor(file),
+     *   opt_overwrite_meta: 'true',
+     * })
+     */
+    getUploadParams?: (file: UploadFile) => Record<string, string> | undefined;
+    /**
+     * Rewrite third-party thumbnail URLs before they are rendered as `<img src>`.
+     * Use this when the host page enforces a Content-Security-Policy that
+     * disallows the original origin (e.g. Hub allowing only `*.filerobot.com`
+     * and `*.cloudimg.io`). The function receives the original URL and a
+     * {@link RemoteThumbnailContext} describing where it came from, and should
+     * return a CSP-allowed URL (typically a Filerobot/Cloudimage proxy).
+     *
+     * Applies to:
+     *  - URL imports (the pasted URL is used as the pre-upload preview).
+     *  - Connector listing/selection thumbnails (Google Drive, Unsplash, etc.).
+     *
+     * Once a file finishes uploading the preview is automatically swapped to
+     * the Filerobot CDN URL, so this hook only matters for the pre-upload
+     * preview window.
+     *
+     * @example
+     * transformRemoteThumbnail: (url) =>
+     *   `https://demo.cloudimg.io/v7/${encodeURIComponent(url)}?w=200`
+     */
+    transformRemoteThumbnail?: (url: string, ctx: RemoteThumbnailContext) => string;
 }
 export declare class SfxUploader extends LitElement {
     static styles: import('lit').CSSResult;
@@ -253,6 +328,17 @@ export declare class SfxUploader extends LitElement {
     private _formatAuthError;
     private _showToast;
     private _normalizeTusConfig;
+    /**
+     * Whether the file picker should allow multi-select. False when
+     * `forceName` is set (single-asset slot) or when restrictions cap to 1.
+     */
+    private get _allowMulti();
+    /**
+     * Build the per-file upload-params resolver from `forceName` and
+     * `getUploadParams`. Host-supplied `getUploadParams` keys win on collision.
+     * Returns `undefined` when neither is configured.
+     */
+    private _buildUploadParamsResolver;
     private _ensureEngine;
     private _preloadMetadataSchema;
     private _onFileRename;
@@ -263,6 +349,18 @@ export declare class SfxUploader extends LitElement {
     private get _metadataEnforcing();
     private get _hasUnfilledRequiredMetadata();
     private _dispatchPublic;
+    /**
+     * Run the host-supplied {@link UploaderConfig.transformRemoteThumbnail}
+     * over a third-party thumbnail URL, falling back to the original URL when
+     * no transform is configured or the transform throws.
+     */
+    private _transformRemoteThumbnail;
+    /**
+     * Stable bound transform passed to the connector browser components, so
+     * inline-arrow churn in the template doesn't force the children to re-render
+     * on every parent update.
+     */
+    private _connectorThumbnailTransform;
     /**
      * React to store changes and dispatch public events + callbacks
      * for file status transitions.
