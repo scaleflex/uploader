@@ -46,7 +46,18 @@ export function initRouter(uploader: SfxUploader) {
   const topbarNavLinks = document.querySelectorAll<HTMLElement>('.topbar-nav-link');
 
   async function navigate() {
-    const hash = location.hash.slice(1) || '/';
+    const rawHash = location.hash.slice(1) || '/';
+
+    // In-page anchor (e.g. "#quick-start"): scroll to the element rather than routing.
+    // If a page is already rendered, just scroll. Otherwise fall through and render
+    // the home page first, then scroll after render below.
+    const isAnchor = !rawHash.startsWith('/');
+    if (isAnchor && currentPage) {
+      document.getElementById(rawHash)?.scrollIntoView({ behavior: 'smooth' });
+      return;
+    }
+
+    const hash = isAnchor ? '/' : rawHash;
     const thisNav = ++navId;
 
     // Destroy previous page
@@ -88,8 +99,8 @@ export function initRouter(uploader: SfxUploader) {
     // Close mobile sidebar
     sidebar.classList.remove('mobile-open');
 
-    // Scroll to top
-    window.scrollTo(0, 0);
+    // Scroll to top (unless we're about to jump to an in-page anchor)
+    if (!isAnchor) window.scrollTo(0, 0);
 
     // Load & render page
     const page = await route.load();
@@ -97,6 +108,12 @@ export function initRouter(uploader: SfxUploader) {
     currentPage = page;
     content.innerHTML = page.render();
     if (page.init) page.init(uploader);
+
+    // Direct load with an in-page anchor (e.g. opening a `#quick-start` bookmark):
+    // scroll to the target element after the home page has rendered.
+    if (isAnchor) {
+      document.getElementById(rawHash)?.scrollIntoView({ behavior: 'smooth' });
+    }
   }
 
   window.addEventListener('hashchange', navigate);
