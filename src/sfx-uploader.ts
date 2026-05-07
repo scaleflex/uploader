@@ -104,6 +104,22 @@ export interface InlineHeaderConfig {
   description?: string;
 }
 
+/**
+ * Context passed to {@link UploaderConfig.transformRemoteThumbnail} so the
+ * host can decide how to rewrite a third-party thumbnail URL (e.g. proxy it
+ * through Filerobot for CSP compliance, append a token, …).
+ */
+export interface RemoteThumbnailContext {
+  /**
+   * Where the URL came from:
+   * - `'url-import'` — pasted into the "Import from URL" dialog.
+   * - `'connector'` — listing/selection result from a Companion provider.
+   */
+  source: 'url-import' | 'connector';
+  /** Provider id when `source === 'connector'`. */
+  providerId?: import('./connectors/connector.types').ProviderId;
+}
+
 export interface UploaderConfig {
   auth: AuthConfig;
   targetFolder?: string;
@@ -213,6 +229,27 @@ export interface UploaderConfig {
    * Set to `true` for defaults, or pass a TusConfig object for fine-grained control.
    */
   tusConfig?: TusConfig | boolean;
+  /**
+   * Rewrite third-party thumbnail URLs before they are rendered as `<img src>`.
+   * Use this when the host page enforces a Content-Security-Policy that
+   * disallows the original origin (e.g. Hub allowing only `*.filerobot.com`
+   * and `*.cloudimg.io`). The function receives the original URL and a
+   * {@link RemoteThumbnailContext} describing where it came from, and should
+   * return a CSP-allowed URL (typically a Filerobot/Cloudimage proxy).
+   *
+   * Applies to:
+   *  - URL imports (the pasted URL is used as the pre-upload preview).
+   *  - Connector listing/selection thumbnails (Google Drive, Unsplash, etc.).
+   *
+   * Once a file finishes uploading the preview is automatically swapped to
+   * the Filerobot CDN URL, so this hook only matters for the pre-upload
+   * preview window.
+   *
+   * @example
+   * transformRemoteThumbnail: (url) =>
+   *   `https://demo.cloudimg.io/v7/${encodeURIComponent(url)}?w=200`
+   */
+  transformRemoteThumbnail?: (url: string, ctx: RemoteThumbnailContext) => string;
 }
 
 /** Default tus-related fields for new UploadFile objects. */
@@ -2715,6 +2752,39 @@ export class SfxUploader extends LitElement {
   }
 
   /**
+   * Run the host-supplied {@link UploaderConfig.transformRemoteThumbnail}
+   * over a third-party thumbnail URL, falling back to the original URL when
+   * no transform is configured or the transform throws.
+   */
+  private _transformRemoteThumbnail = (
+    url: string,
+    ctx: RemoteThumbnailContext,
+  ): string => {
+    const fn = this.config?.transformRemoteThumbnail;
+    if (!fn) return url;
+    try {
+      return fn(url, ctx) || url;
+    } catch (err) {
+      console.warn("[sfx-uploader] transformRemoteThumbnail threw:", err);
+      return url;
+    }
+  };
+
+  /**
+   * Stable bound transform passed to the connector browser components, so
+   * inline-arrow churn in the template doesn't force the children to re-render
+   * on every parent update.
+   */
+  private _connectorThumbnailTransform = (url: string): string => {
+    const providerId = this._activeConnector;
+    if (!providerId) return url;
+    return this._transformRemoteThumbnail(url, {
+      source: "connector",
+      providerId,
+    });
+  };
+
+  /**
    * React to store changes and dispatch public events + callbacks
    * for file status transitions.
    */
@@ -3223,7 +3293,9 @@ export class SfxUploader extends LitElement {
       name,
       size: 0,
       type,
-      previewUrl: isImage ? url : null,
+      previewUrl: isImage
+        ? this._transformRemoteThumbnail(url, { source: "url-import" })
+        : null,
       duration: null,
       progress: 0,
       speed: 0,
@@ -3524,6 +3596,13 @@ export class SfxUploader extends LitElement {
       );
       if (isDuplicate) continue;
 
+      const previewUrl = info.thumbnail
+        ? this._transformRemoteThumbnail(info.thumbnail, {
+            source: "connector",
+            providerId: info.provider,
+          })
+        : null;
+
       const error = validateFileInfo(
         { name: info.name, size: info.size, type: info.mimeType },
         s.restrictions,
@@ -3538,7 +3617,7 @@ export class SfxUploader extends LitElement {
           name: info.name,
           size: info.size,
           type: info.mimeType,
-          previewUrl: info.thumbnail,
+          previewUrl,
           duration: null,
           progress: 0,
           speed: 0,
@@ -3569,7 +3648,7 @@ export class SfxUploader extends LitElement {
         name: info.name,
         size: info.size,
         type: info.mimeType,
-        previewUrl: info.thumbnail,
+        previewUrl,
         duration: null,
         progress: 0,
         speed: 0,
@@ -4991,12 +5070,16 @@ export class SfxUploader extends LitElement {
                         <sfx-search-provider-browser
                           .provider=${this._activeConnector}
                           .companionUrl=${this.config.connectors.companionUrl}
+                          .transformThumbnail=${this
+                            ._connectorThumbnailTransform}
                         ></sfx-search-provider-browser>
                       `
                     : html`
                         <sfx-provider-browser
                           .provider=${this._activeConnector}
                           .companionUrl=${this.config.connectors.companionUrl}
+                          .transformThumbnail=${this
+                            ._connectorThumbnailTransform}
                         ></sfx-provider-browser>
                       `}
                 </div>

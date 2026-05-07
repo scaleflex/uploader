@@ -670,6 +670,12 @@ export class SfxProviderBrowser extends LitElement {
 
   @property({ type: String }) provider: ProviderId = 'google-drive';
   @property({ type: String }) companionUrl = '';
+  /**
+   * Optional rewrite for listing thumbnail URLs so they pass the host CSP.
+   * Defaults to the identity function.
+   */
+  @property({ attribute: false })
+  transformThumbnail: (url: string) => string = (u) => u;
 
   @state() private _authenticated = false;
   @state() private _loading = false;
@@ -1088,7 +1094,7 @@ export class SfxProviderBrowser extends LitElement {
               />
               <div class="file-thumb">
                 ${item.thumbnail
-                  ? html`<img src=${item.thumbnail} alt="" loading="lazy" referrerpolicy="no-referrer"
+                  ? html`<img src=${this.transformThumbnail(item.thumbnail)} alt="" loading="lazy" referrerpolicy="no-referrer"
                       @error=${(e: Event) => {
                         const img = e.target as HTMLImageElement;
                         img.style.display = 'none';

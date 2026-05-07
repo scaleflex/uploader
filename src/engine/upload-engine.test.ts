@@ -166,6 +166,57 @@ describe('UploadEngine', () => {
       expect(updated.response).toEqual(mockResponse);
       expect(store.getState().isUploading).toBe(false);
     });
+
+    it('swaps previewUrl to CDN URL for image files', () => {
+      const revokeSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+      const file = makeUploadFile({
+        id: 'f1',
+        status: 'queued',
+        type: 'image/png',
+        previewUrl: 'blob:http://localhost/abc',
+      });
+      const { store, engine } = createEngine({
+        files: new Map([['f1', file]]),
+        isUploading: true,
+      });
+
+      (xhrUploadFile as ReturnType<typeof vi.fn>).mockImplementation((_f: any, opts: any) => {
+        setTimeout(() => opts.onComplete(mockResponse), 0);
+        return { abort: vi.fn() };
+      });
+
+      engine.start();
+      vi.runAllTimers();
+
+      const updated = store.getState().files.get('f1')!;
+      expect(updated.previewUrl).toBe('https://cdn');
+      expect(revokeSpy).toHaveBeenCalledWith('blob:http://localhost/abc');
+      revokeSpy.mockRestore();
+    });
+
+    it('keeps previewUrl unchanged for non-image files', () => {
+      const file = makeUploadFile({
+        id: 'f1',
+        status: 'queued',
+        type: 'video/mp4',
+        previewUrl: 'blob:http://localhost/poster',
+      });
+      const { store, engine } = createEngine({
+        files: new Map([['f1', file]]),
+        isUploading: true,
+      });
+
+      (xhrUploadFile as ReturnType<typeof vi.fn>).mockImplementation((_f: any, opts: any) => {
+        setTimeout(() => opts.onComplete(mockResponse), 0);
+        return { abort: vi.fn() };
+      });
+
+      engine.start();
+      vi.runAllTimers();
+
+      const updated = store.getState().files.get('f1')!;
+      expect(updated.previewUrl).toBe('blob:http://localhost/poster');
+    });
   });
 
   describe('handleError with retry', () => {

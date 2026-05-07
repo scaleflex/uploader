@@ -300,11 +300,28 @@ export class UploadEngine {
     response: import('../store/store.types').UploadResponse,
   ): void {
     this.activeUploads.delete(fileId);
-    updateFile(this.store, fileId, {
+
+    // Swap previewUrl to the CDN URL once the file is on Filerobot — without this,
+    // URL imports / connector imports keep their original third-party origin in
+    // previewUrl, which host CSPs that only allow *.filerobot.com / *.cloudimg.io
+    // will block. Restricted to image MIME types: a CDN URL for a video file is
+    // the video itself, not a poster image, so the locally-generated poster blob
+    // stays.
+    const file = this.store.getState().files.get(fileId);
+    const cdnUrl = response.file?.url?.cdn ?? null;
+    const update: Partial<UploadFile> = {
       status: 'complete',
       progress: 100,
       response,
-    });
+    };
+    if (file && cdnUrl && file.type.startsWith('image/')) {
+      if (file.previewUrl?.startsWith('blob:')) {
+        URL.revokeObjectURL(file.previewUrl);
+      }
+      update.previewUrl = cdnUrl;
+    }
+    updateFile(this.store, fileId, update);
+
     this.updateTotalProgress();
     this.checkAllComplete();
     this.processQueue();

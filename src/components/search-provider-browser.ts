@@ -317,6 +317,12 @@ export class SfxSearchProviderBrowser extends LitElement {
 
   @property({ type: String }) provider: ProviderId = 'unsplash';
   @property({ type: String }) companionUrl = '';
+  /**
+   * Optional rewrite for listing thumbnail URLs so they pass the host CSP.
+   * Defaults to the identity function.
+   */
+  @property({ attribute: false })
+  transformThumbnail: (url: string) => string = (u) => u;
 
   @state() private _loading = false;
   @state() private _loadingMore = false;
@@ -542,7 +548,7 @@ export class SfxSearchProviderBrowser extends LitElement {
                 @click=${() => this._toggleSelect(item)}
               >
                 ${item.thumbnail
-                  ? html`<img src=${item.thumbnail} alt=${item.name} loading="lazy" referrerpolicy="no-referrer" />`
+                  ? html`<img src=${this.transformThumbnail(item.thumbnail)} alt=${item.name} loading="lazy" referrerpolicy="no-referrer" />`
                   : nothing}
                 <div class="check">
                   ${this._selectedIds.has(item.id)
