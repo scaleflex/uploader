@@ -230,6 +230,45 @@ export interface UploaderConfig {
    */
   tusConfig?: TusConfig | boolean;
   /**
+   * Force every uploaded file to be saved under this exact name in
+   * `targetFolder`, overwriting any existing file with the same name.
+   * Use for single-asset slots (watermark, default image, folder icon)
+   * where the host always wants one file at a stable path.
+   *
+   * Translates to `&opt_force_name=<value>` on the upload request and
+   * works across every source — local file, URL import, Google Drive,
+   * Unsplash, etc. Setting this implicitly clamps
+   * `restrictions.maxNumberOfFiles` to `1`, disables multi-select on
+   * the file picker, and forces the XHR upload path regardless of file
+   * size (tus is bypassed because Companion's tus relay does not
+   * propagate `opt_force_name` reliably).
+   *
+   * Pass a function if the name needs to be derived per-session.
+   *
+   * @example
+   * forceName: `project-${projectUuid}`
+   */
+  forceName?: string | (() => string);
+  /**
+   * Append arbitrary query parameters (typically Filerobot `opt_*` flags)
+   * to every upload request. Called once per file just before its
+   * request is sent and merged into the URL of whichever upload path
+   * runs (XHR, URL, or Companion). Return `undefined` for no extras.
+   * Returning a non-empty object also forces the XHR path — tus is
+   * bypassed since its Companion relay does not propagate `opt_*` flags
+   * reliably.
+   *
+   * If a key collides with one produced by `forceName`, the value
+   * returned here wins.
+   *
+   * @example
+   * getUploadParams: (file) => ({
+   *   opt_force_name: deriveNameFor(file),
+   *   opt_overwrite_meta: 'true',
+   * })
+   */
+  getUploadParams?: (file: UploadFile) => Record<string, string> | undefined;
+  /**
    * Rewrite third-party thumbnail URLs before they are rendered as `<img src>`.
    * Use this when the host page enforces a Content-Security-Policy that
    * disallows the original origin (e.g. Hub allowing only `*.filerobot.com`
@@ -2532,11 +2571,16 @@ export class SfxUploader extends LitElement {
     const updates: Partial<UploaderState> = {};
 
     if (cfg.targetFolder) updates.targetFolder = cfg.targetFolder;
-    if (cfg.restrictions) {
+    if (cfg.restrictions || cfg.forceName != null) {
       updates.restrictions = {
         ...this._store.getState().restrictions,
         ...cfg.restrictions,
       };
+      // forceName implies a single-asset slot — clamp to one file regardless
+      // of any user-supplied maxNumberOfFiles.
+      if (cfg.forceName != null) {
+        updates.restrictions.maxNumberOfFiles = 1;
+      }
     }
     if (cfg.concurrency != null) {
       const qc = this._store.getState().queueConfig;
@@ -2577,6 +2621,7 @@ export class SfxUploader extends LitElement {
         apiBase: this._apiBase,
         authHeaders: this._authHeaders,
         tusConfig: this._normalizeTusConfig(),
+        resolveUploadParams: this._buildUploadParamsResolver(),
       });
       this._preloadMetadataSchema(cfg);
       return;
@@ -2595,6 +2640,7 @@ export class SfxUploader extends LitElement {
         apiBase: this._apiBase,
         authHeaders: this._authHeaders,
         tusConfig: this._normalizeTusConfig(),
+        resolveUploadParams: this._buildUploadParamsResolver(),
       });
       this._preloadMetadataSchema(cfg);
     } catch (err) {
@@ -2640,12 +2686,48 @@ export class SfxUploader extends LitElement {
     return raw === true ? {} : raw || undefined;
   }
 
+  /**
+   * Whether the file picker should allow multi-select. False when
+   * `forceName` is set (single-asset slot) or when restrictions cap to 1.
+   */
+  private get _allowMulti(): boolean {
+    if (this.config?.forceName != null) return false;
+    const max = this._storeCtrl.state.restrictions.maxNumberOfFiles;
+    return max == null || max > 1;
+  }
+
+  /**
+   * Build the per-file upload-params resolver from `forceName` and
+   * `getUploadParams`. Host-supplied `getUploadParams` keys win on collision.
+   * Returns `undefined` when neither is configured.
+   */
+  private _buildUploadParamsResolver():
+    | ((file: UploadFile) => Record<string, string> | undefined)
+    | undefined {
+    const cfg = this.config;
+    if (!cfg) return undefined;
+    const { forceName, getUploadParams } = cfg;
+    if (forceName == null && !getUploadParams) return undefined;
+
+    return (file: UploadFile) => {
+      const params: Record<string, string> = {};
+      if (forceName != null) {
+        const name = typeof forceName === "function" ? forceName() : forceName;
+        if (name) params.opt_force_name = name;
+      }
+      const extra = getUploadParams?.(file);
+      if (extra) Object.assign(params, extra);
+      return Object.keys(params).length > 0 ? params : undefined;
+    };
+  }
+
   private _ensureEngine() {
     if (!this._engine && this._apiBase && this._authHeaders) {
       this._engine = new UploadEngine(this._store, {
         apiBase: this._apiBase,
         authHeaders: this._authHeaders,
         tusConfig: this._normalizeTusConfig(),
+        resolveUploadParams: this._buildUploadParamsResolver(),
       });
       this._engine.start();
     }
@@ -4556,6 +4638,7 @@ export class SfxUploader extends LitElement {
             .showDropTile=${true}
             .sources=${this._mergedSources}
             .accept=${buildAcceptString(this._storeCtrl.state.restrictions)}
+            .multi=${this._allowMulti}
             ?drag-active=${this._bodyDragOver}
             @source-click=${this._onDropTileSourceClick}
           ></sfx-file-list>
@@ -4989,6 +5072,7 @@ export class SfxUploader extends LitElement {
                         .sources=${this._mergedSources}
                         .sourcesLayout=${this.config?.sourcesLayout ?? "pills"}
                         .mode=${this.config?.mode ?? "modal"}
+                        .multi=${this._allowMulti}
                       ></sfx-drop-zone>
                       ${this._hasStoredReview
                         ? html`<button
@@ -5019,6 +5103,7 @@ export class SfxUploader extends LitElement {
                           .showDropTile=${true}
                           .sources=${this._mergedSources}
                           .accept=${accept}
+                          .multi=${this._allowMulti}
                           ?drag-active=${this._bodyDragOver}
                           @source-click=${this._onDropTileSourceClick}
                         ></sfx-file-list>

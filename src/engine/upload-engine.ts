@@ -10,6 +10,14 @@ export interface UploadEngineConfig {
   apiBase: string;
   authHeaders: AuthHeaders;
   tusConfig?: TusConfig;
+  /**
+   * Resolve extra query-string parameters (e.g. Filerobot `opt_*` flags)
+   * for a given file's upload request. Returning a non-empty object also
+   * forces the XHR path — tus is bypassed because Companion's tus relay
+   * does not support `opt_force_name` reliably and these flows are
+   * single-asset by design.
+   */
+  resolveUploadParams?: (file: UploadFile) => Record<string, string> | undefined;
 }
 
 export class UploadEngine {
@@ -221,7 +229,17 @@ export class UploadEngine {
   }
 
   private startUpload(file: UploadFile): void {
-    const isTus = !file.remoteInfo && !file.remoteUrl && shouldUseTus(file, this.config.tusConfig);
+    const extraParams = this.config.resolveUploadParams?.(file);
+    const hasExtraParams = !!extraParams && Object.keys(extraParams).length > 0;
+    // Tus is bypassed when extra params are in play (e.g. opt_force_name) —
+    // Companion's tus relay does not propagate those reliably, and the
+    // canonical use case (single named asset, small image) doesn't need
+    // resumable uploads anyway.
+    const isTus =
+      !hasExtraParams &&
+      !file.remoteInfo &&
+      !file.remoteUrl &&
+      shouldUseTus(file, this.config.tusConfig);
     updateFile(this.store, file.id, { status: 'uploading', error: null, isTus });
 
     let lastLoaded = 0;
@@ -232,6 +250,7 @@ export class UploadEngine {
       apiBase: this.config.apiBase,
       authHeaders: this.config.authHeaders,
       folder: this.store.getState().targetFolder,
+      extraParams: hasExtraParams ? extraParams : undefined,
       onComplete: (response: import('../store/store.types').UploadResponse) =>
         this.handleComplete(file.id, response),
       onError: (error: Error) => this.handleError(file.id, error),

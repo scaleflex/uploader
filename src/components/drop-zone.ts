@@ -934,6 +934,8 @@ export class SfxDropZone extends LitElement {
   @property({ type: Boolean, attribute: "external-drag-over" })
   externalDragOver = false;
   @property({ type: String }) accept = "";
+  /** Whether the file picker allows multiple selection. Set to false for single-asset slots. */
+  @property({ type: Boolean }) multi = true;
   @property({ type: Array }) sources: SourceDef[] = [];
   @property({ type: String, attribute: "sources-layout" }) sourcesLayout:
     | "pills"
@@ -1463,7 +1465,7 @@ export class SfxDropZone extends LitElement {
         <div class="ripple"></div>
         <input
           type="file"
-          multiple
+          ?multiple=${this.multi}
           accept=${this.accept || nothing}
           @change=${this._onFileChange}
         />

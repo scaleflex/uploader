@@ -420,6 +420,8 @@ export class SfxFileList extends LitElement {
   @property({ type: Boolean }) showDropTile = false;
   @property({ attribute: false }) sources: SourceDef[] = [];
   @property({ type: String }) accept = '';
+  /** Whether the drop-tile file picker allows multiple selection. */
+  @property({ type: Boolean }) multi = true;
   /** 'upload' (default): full controls; 'review': read-only post-upload review
    *  with status badges, Open links, and a Local-edit pill on edited files. */
   @property({ type: String }) mode: 'upload' | 'review' = 'upload';
@@ -648,7 +650,7 @@ export class SfxFileList extends LitElement {
             </div>
           ` : nothing}
         </div>
-        <input type="file" multiple accept=${this.accept || nothing} @change=${this._onFileInput} />
+        <input type="file" ?multiple=${this.multi} accept=${this.accept || nothing} @change=${this._onFileInput} />
       </div>
     `;
   }

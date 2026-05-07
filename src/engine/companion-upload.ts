@@ -7,6 +7,8 @@ export interface CompanionUploadOptions {
   apiBase: string;
   authHeaders: AuthHeaders;
   folder: string;
+  /** Extra query-string parameters appended to the Scaleflex endpoint URL Companion forwards to (e.g. `opt_force_name`). */
+  extraParams?: Record<string, string>;
   onProgress: (bytesUploaded: number, bytesTotal: number) => void;
   onComplete: (response: UploadResponse) => void;
   onError: (error: Error) => void;
@@ -36,7 +38,13 @@ export function companionUploadFile(
   let socket: WebSocket | null = null;
 
   const base = opts.apiBase.replace(/\/+$/, '');
-  const endpoint = `${base}/v4/files?folder=${encodeURIComponent(opts.folder)}`;
+  let endpoint = `${base}/v4/files?folder=${encodeURIComponent(opts.folder)}`;
+  if (opts.extraParams) {
+    for (const [key, value] of Object.entries(opts.extraParams)) {
+      if (value == null) continue;
+      endpoint += `&${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+    }
+  }
 
   // Build metadata to pass through to Scaleflex (matches v5 behavior)
   const metadata: Record<string, unknown> = {};
