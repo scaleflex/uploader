@@ -40,7 +40,7 @@ const page: Page = {
         <h2>Config options</h2>
 
         <h3>Required</h3>
-        <table>
+        <table class="config-table">
           <thead><tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
           <tbody>
             <tr><td><code>auth</code></td><td><code>AuthConfig</code></td><td><strong>required</strong></td><td>Authentication credentials (see above)</td></tr>
@@ -48,7 +48,7 @@ const page: Page = {
         </table>
 
         <h3>Display</h3>
-        <table>
+        <table class="config-table">
           <thead><tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
           <tbody>
             <tr><td><code>header</code></td><td><code>boolean | 'close' | 'back'</code></td><td><code>'close'</code> (modal) / <code>true</code> (inline)</td><td>Controls the standard header bar. <code>'close'</code> shows an X button, <code>'back'</code> a back arrow, <code>true</code> shows header with no button, <code>false</code> hides the header entirely.</td></tr>
@@ -59,7 +59,7 @@ const page: Page = {
         </table>
 
         <h3>Upload behavior</h3>
-        <table>
+        <table class="config-table">
           <thead><tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
           <tbody>
             <tr><td><code>autoProceed</code></td><td><code>boolean</code></td><td><code>false</code></td><td>Start uploading immediately after files are added</td></tr>
@@ -75,7 +75,7 @@ const page: Page = {
         </table>
 
         <h3>Lifecycle</h3>
-        <table>
+        <table class="config-table">
           <thead><tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
           <tbody>
             <tr><td><code>clearOnClose</code></td><td><code>boolean</code></td><td><code>true</code></td><td>Whether closing the modal clears all files. Set to <code>false</code> to preserve files across open/close cycles.</td></tr>
@@ -88,7 +88,7 @@ const page: Page = {
         </table>
 
         <h3>Advanced</h3>
-        <table>
+        <table class="config-table">
           <thead><tr><th>Property</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
           <tbody>
             <tr><td><code>callbacks</code></td><td><code>UploaderCallbacks</code></td><td><code>undefined</code></td><td>Lifecycle callbacks (see <a href="#/docs/api">API</a>)</td></tr>

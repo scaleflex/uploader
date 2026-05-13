@@ -133,7 +133,7 @@ export class SfxDropZone extends LitElement {
       justify-content: center;
       margin-bottom: 24px;
       flex-shrink: 0;
-      overflow: hidden;
+      overflow: visible;
     }
 
     .drop-zone:not(.compact) .rings::before {

@@ -2143,7 +2143,8 @@ export class SfxUploader extends LitElement {
   private _previewDefaultApplied = false;
   @state() private _fullscreenPreviewUrl: string | null = null;
   @state() private _fullscreenVideoFile: File | null = null;
-  @state() private _fullscreenZoomed = false;
+  @state() private _fsZoom = 1;
+  private static readonly _FS_ZOOM_LEVELS = [1, 2, 3, 4] as const;
   private _fsPanX = 0;
   private _fsPanY = 0;
   private _fsDragging = false;
@@ -3958,7 +3959,7 @@ export class SfxUploader extends LitElement {
     const fsIdx = fsFiles.findIndex((f) => f.id === this._previewFileId);
     return html`
       <div
-        class="fs-overlay ${this._fullscreenZoomed ? "zoomed" : ""} ${this._fsDragging ? "panning" : ""}"
+        class="fs-overlay ${this._fsZoom > 1 ? "zoomed" : ""} ${this._fsDragging ? "panning" : ""}"
         @click=${this._onFsOverlayClick}
         @mousedown=${this._onFsPanStart}
         @mousemove=${this._onFsPanMove}
@@ -3970,11 +3971,11 @@ export class SfxUploader extends LitElement {
       >
         ${this._fullscreenVideoFile
           ? html`<video class="fs-img" src=${this._getVideoBlobUrl(this._fullscreenVideoFile)} controls playsinline draggable="false" @click=${(e: Event) => e.stopPropagation()}></video>`
-          : html`<img class="fs-img" src=${this._fullscreenPreviewUrl} alt="" ${cspStyle(this._fullscreenZoomed ? { transform: `scale(2) translate(${this._fsPanX}px, ${this._fsPanY}px)` } : null)} draggable="false" />`}
+          : html`<img class="fs-img" src=${this._fullscreenPreviewUrl} alt="" ${cspStyle(this._fsZoom > 1 ? { transform: `scale(${this._fsZoom}) translate(${this._fsPanX}px, ${this._fsPanY}px)` } : null)} draggable="false" />`}
       </div>
       <div class="fs-toolbar" @click=${(e: Event) => e.stopPropagation()}>
-        <button class="fs-btn" @click=${this._onFsToggleZoom} title="${this._fullscreenZoomed ? "Zoom out" : "Zoom in"}">
-          ${this._fullscreenZoomed
+        <button class="fs-btn" @click=${this._onFsToggleZoom} title="${this._fsZoom >= SfxUploader._FS_ZOOM_LEVELS[SfxUploader._FS_ZOOM_LEVELS.length - 1] ? "Reset zoom" : `Zoom in (${this._fsZoom}×)`}">
+          ${this._fsZoom >= SfxUploader._FS_ZOOM_LEVELS[SfxUploader._FS_ZOOM_LEVELS.length - 1]
             ? html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>`
             : html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>`}
         </button>
@@ -4687,7 +4688,7 @@ export class SfxUploader extends LitElement {
                           previewFile.file
                             ? previewFile.file
                             : null;
-                        this._fullscreenZoomed = false;
+                        this._fsZoom = 1;
                         // Force a second paint — on mobile WebKit the
                         // first paint of the fs-overlay sometimes skips
                         // the fixed-positioned toolbar/nav buttons until
@@ -5191,8 +5192,11 @@ export class SfxUploader extends LitElement {
 
   private _onFsToggleZoom = (e?: Event) => {
     e?.stopPropagation();
-    this._fullscreenZoomed = !this._fullscreenZoomed;
-    if (!this._fullscreenZoomed) {
+    const levels = SfxUploader._FS_ZOOM_LEVELS;
+    const i = levels.indexOf(this._fsZoom as (typeof levels)[number]);
+    const next = i === -1 ? 1 : (i + 1) % levels.length;
+    this._fsZoom = levels[next];
+    if (this._fsZoom === 1) {
       this._fsPanX = 0;
       this._fsPanY = 0;
     }
@@ -5208,7 +5212,7 @@ export class SfxUploader extends LitElement {
   private _fsDragDidMove = false;
 
   private _onFsPanStart = (e: MouseEvent) => {
-    if (!this._fullscreenZoomed) return;
+    if (this._fsZoom <= 1) return;
     this._fsDragging = true;
     this._fsDragDidMove = false;
     this._fsDragStartX = e.clientX;
@@ -5238,7 +5242,7 @@ export class SfxUploader extends LitElement {
 
   // --- Pan (touch) ---
   private _onFsTouchStart = (e: TouchEvent) => {
-    if (!this._fullscreenZoomed || e.touches.length !== 1) return;
+    if (this._fsZoom <= 1 || e.touches.length !== 1) return;
     const t = e.touches[0];
     this._fsDragging = true;
     this._fsDragDidMove = false;
@@ -5275,7 +5279,7 @@ export class SfxUploader extends LitElement {
           ? nextFile.file
           : null;
       this._previewFileId = nextFile.id;
-      this._fullscreenZoomed = false;
+      this._fsZoom = 1;
       this._fsPanX = 0;
       this._fsPanY = 0;
     }
@@ -5285,7 +5289,7 @@ export class SfxUploader extends LitElement {
     e?.stopPropagation();
     this._fullscreenPreviewUrl = null;
     this._fullscreenVideoFile = null;
-    this._fullscreenZoomed = false;
+    this._fsZoom = 1;
     this._fsPanX = 0;
     this._fsPanY = 0;
   };

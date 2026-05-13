@@ -106,7 +106,9 @@ export class SfxFileList extends LitElement {
 
     /* Preview area — flex:1 absorbs remaining row height so drop-tile total
        always matches the file-card height (info bar handles its own size).
-       container-type lets the inner rings/icon scale with tile width via cqi. */
+       container-type lets the inner rings/icon scale with tile width via cqi.
+       Padding-block gives the rings breathing room so they never hug the
+       top edge even when the cell is short. */
     .drop-tile-preview {
       flex: 1;
       min-height: 0;
@@ -114,14 +116,17 @@ export class SfxFileList extends LitElement {
       align-items: center;
       justify-content: center;
       overflow: hidden;
+      padding: 14px 8px 6px;
+      box-sizing: border-box;
       container-type: inline-size;
       container-name: drop-tile-preview;
     }
 
-    /* Info area — wider bottom padding so the source pills don't hug the
-       card edge. Natural height stays close to the file-card .info area. */
+    /* Info area — natural height stays close to the file-card .info area.
+       Bottom padding is trimmed so the preview has more room for the rings
+       when the cell is short. */
     .drop-tile-info {
-      padding: 12px 12px 24px;
+      padding: 8px 12px 14px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -131,14 +136,17 @@ export class SfxFileList extends LitElement {
       container-name: drop-tile-info;
     }
 
+    /* Rings scale with tile width (cqi) and shrink if the preview area is
+       too short — that's why we drop flex-shrink and use max-height. */
     .drop-tile-rings {
-      width: clamp(48px, 24cqi, 100px);
-      height: clamp(48px, 24cqi, 100px);
+      width: clamp(40px, 22cqi, 100px);
+      height: clamp(40px, 22cqi, 100px);
+      max-height: 100%;
+      aspect-ratio: 1;
       position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
-      flex-shrink: 0;
     }
 
     .drop-tile-ring {
