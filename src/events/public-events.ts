@@ -19,6 +19,7 @@ export const PublicEvents = {
   COMPLETE_ACTION: 'sfx-complete-action',
   FILE_PREVIEW: 'sfx-file-preview',
   FILL_METADATA: 'sfx-fill-metadata',
+  METADATA_SCHEMA: 'sfx-metadata-schema',
   FILE_LOCATE: 'sfx-file-locate',
   FILE_COPY_CDN: 'sfx-file-copy-cdn',
 } as const;

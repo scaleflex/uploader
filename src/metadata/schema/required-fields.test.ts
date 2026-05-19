@@ -1,6 +1,7 @@
 import {
   isAssetHasMetadataValue,
   getFilesWithMissingRequired,
+  firstMissingRequiredFieldKey,
   deepMergeMeta,
 } from './required-fields';
 import type { MetadataField, MetadataSchema } from './schema.types';
@@ -116,6 +117,106 @@ describe('getFilesWithMissingRequired', () => {
 
   it('returns empty for empty files map', () => {
     expect(getFilesWithMissingRequired(new Map(), schema)).toEqual({});
+  });
+});
+
+// ---------------------------------------------------------------------------
+// firstMissingRequiredFieldKey
+// ---------------------------------------------------------------------------
+
+describe('firstMissingRequiredFieldKey', () => {
+  const titleField = makeField({ key: 'title', ckey: 'title', required: 1 });
+  const descField = makeField({ key: 'desc', ckey: 'desc', required: 1 });
+  const tagField = makeField({ key: 'tag', ckey: 'tag', required: 0 });
+  const schema: MetadataSchema = {
+    groups: [
+      {
+        uuid: 'g1',
+        name: 'General',
+        isRoot: true,
+        fields: [titleField, descField, tagField],
+      },
+    ],
+    fields: [titleField, descField, tagField],
+    fieldsByKey: new Map([
+      ['title', titleField],
+      ['desc', descField],
+      ['tag', tagField],
+    ]),
+    forceFillingOnUpload: false,
+    regionalVariantsGroups: [],
+    language: 'en',
+  };
+
+  it('returns the first required field with an empty value', () => {
+    const files = new Map<string, UploadFile>([
+      ['f1', makeFile('f1', { title: 'Has title', desc: '' })],
+    ]);
+    expect(firstMissingRequiredFieldKey(files, schema)).toBe('desc');
+  });
+
+  it('returns the first required field in schema order even when later ones are also empty', () => {
+    const files = new Map<string, UploadFile>([
+      ['f1', makeFile('f1', { title: '', desc: '' })],
+    ]);
+    expect(firstMissingRequiredFieldKey(files, schema)).toBe('title');
+  });
+
+  it('returns null when everything is filled', () => {
+    const files = new Map<string, UploadFile>([
+      ['f1', makeFile('f1', { title: 'A', desc: 'B' })],
+    ]);
+    expect(firstMissingRequiredFieldKey(files, schema)).toBeNull();
+  });
+
+  it('returns null when there are no modifiable files', () => {
+    const files = new Map<string, UploadFile>([
+      [
+        'f1',
+        { ...makeFile('f1', { title: '' }), status: 'uploading' as const },
+      ],
+    ]);
+    expect(firstMissingRequiredFieldKey(files, schema)).toBeNull();
+  });
+
+  it('honors config.requiredFields (ckey-based)', () => {
+    const files = new Map<string, UploadFile>([
+      ['f1', makeFile('f1', { title: 'A', desc: 'B', tag: '' })],
+    ]);
+    expect(
+      firstMissingRequiredFieldKey(files, schema, {
+        requiredFields: ['tag'],
+        projectUuid: 'p1',
+      }),
+    ).toBe('tag');
+  });
+
+  it('returns the field even if only one of several files is missing it', () => {
+    const files = new Map<string, UploadFile>([
+      ['f1', makeFile('f1', { title: 'A', desc: 'B' })],
+      ['f2', makeFile('f2', { title: 'A', desc: '' })],
+    ]);
+    expect(firstMissingRequiredFieldKey(files, schema)).toBe('desc');
+  });
+
+  it('treats boolean `required: true` from the API the same as numeric `1`', () => {
+    const boolField = makeField({
+      key: 'mandatory',
+      ckey: 'mandatory',
+      required: true,
+    });
+    const boolSchema: MetadataSchema = {
+      groups: [{ uuid: 'g1', name: 'G', isRoot: true, fields: [boolField] }],
+      fields: [boolField],
+      fieldsByKey: new Map([['mandatory', boolField]]),
+      forceFillingOnUpload: false,
+      regionalVariantsGroups: [],
+      language: 'en',
+    };
+    const files = new Map<string, UploadFile>([
+      ['f1', makeFile('f1', { mandatory: '' })],
+    ]);
+    expect(firstMissingRequiredFieldKey(files, boolSchema)).toBe('mandatory');
   });
 });
 

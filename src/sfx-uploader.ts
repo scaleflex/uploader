@@ -46,6 +46,10 @@ import type {
   MetadataConfig,
   MetadataSchema,
 } from "./metadata/schema/schema.types";
+import {
+  firstMissingRequiredFieldKey,
+  isFieldRequired,
+} from "./metadata/schema/required-fields";
 import type { SfxToast } from "./components/toast";
 
 /** Providers that use search instead of OAuth file browsing. */
@@ -2157,6 +2161,8 @@ export class SfxUploader extends LitElement {
   @state() private _isPillExpanded = false;
   @state() private _metadataSchema: MetadataSchema | null = null;
   @state() private _bulkMetadataOpen = false;
+  /** When non-null, the bulk modal opens with this field active. */
+  @state() private _bulkMetadataInitialFieldKey: string | null = null;
   /** True when the user has clicked "Review files" on the success-card or
    *  the "View last upload" pill on the drop-zone screen. Renders the
    *  read-only last-upload-review screen instead of the normal phase view. */
@@ -2754,6 +2760,13 @@ export class SfxUploader extends LitElement {
         this._apiBase,
         this._authHeaders,
       );
+      const requiredFieldKeys = this._metadataSchema.fields
+        .filter((f) => isFieldRequired(f, mc))
+        .map((f) => f.key);
+      this._dispatchPublic(PublicEvents.METADATA_SCHEMA, {
+        schema: this._metadataSchema,
+        requiredFieldKeys,
+      });
     } catch (err) {
       console.error("[sfx-uploader] Failed to load metadata schema:", err);
       this._showToast("Failed to load metadata schema", "warning");
@@ -2794,33 +2807,25 @@ export class SfxUploader extends LitElement {
   private get _metadataEnforcing(): boolean {
     const mc = this.config?.metadataConfig;
     if (!mc || !this._metadataSchema) return false;
+    if (mc.enforceRequiredBeforeUpload === false) return false;
     if (mc.enforceRequiredBeforeUpload === true) return true;
-    if (mc.enforceRequiredBeforeUpload === "auto")
-      return this._metadataSchema.forceFillingOnUpload;
-    return false;
+    // 'auto' (the default) — see MetadataConfig.enforceRequiredBeforeUpload JSDoc.
+    if (this._metadataSchema.forceFillingOnUpload) return true;
+    if (mc.requiredFields && mc.requiredFields.length > 0) return true;
+    return this._metadataSchema.fields.some((f) => Boolean(f.required));
+  }
+
+  private _firstMissingRequiredFieldKey(): string | null {
+    if (!this._metadataEnforcing || !this._metadataSchema) return null;
+    return firstMissingRequiredFieldKey(
+      this._store.getState().files,
+      this._metadataSchema,
+      this.config?.metadataConfig,
+    );
   }
 
   private get _hasUnfilledRequiredMetadata(): boolean {
-    if (!this._metadataEnforcing || !this._metadataSchema) return false;
-    const requiredFields = this._metadataSchema.fields.filter((f) => {
-      const mc = this.config?.metadataConfig;
-      if (mc?.requiredFields) return mc.requiredFields.includes(f.ckey);
-      return f.required === 1;
-    });
-    if (requiredFields.length === 0) return false;
-    const files = [...this._store.getState().files.values()].filter(
-      (f) =>
-        f.status === "idle" || f.status === "queued" || f.status === "rejected",
-    );
-    return requiredFields.some((field) =>
-      files.some((file) => {
-        const val = file.meta[field.key];
-        if (val == null) return true;
-        if (Array.isArray(val)) return val.length === 0;
-        if (typeof val === "string") return val.length === 0;
-        return !val;
-      }),
-    );
+    return this._firstMissingRequiredFieldKey() != null;
   }
 
   // --- Public event dispatching (spec §13.1) ---
@@ -3491,8 +3496,10 @@ export class SfxUploader extends LitElement {
     const files = [...this._store.getState().files.values()].filter((f) =>
       SfxUploader._MODIFIABLE_STATUSES.has(f.status),
     );
-    // Open built-in bulk modal if metadata schema is available
     if (this.config?.metadataConfig && this._metadataSchema) {
+      // Land on the first missing required field when there is one, so the
+      // user is taken straight to what's blocking them.
+      this._bulkMetadataInitialFieldKey = this._firstMissingRequiredFieldKey();
       this._bulkMetadataOpen = true;
     }
     this._dispatchPublic(PublicEvents.FILL_METADATA, { files });
@@ -3532,6 +3539,7 @@ export class SfxUploader extends LitElement {
 
   private _onBulkMetadataClose = () => {
     this._bulkMetadataOpen = false;
+    this._bulkMetadataInitialFieldKey = null;
   };
 
   private _onFileRetry = (e: CustomEvent<{ fileId: string }>) => {
@@ -4994,6 +5002,7 @@ export class SfxUploader extends LitElement {
         @file-resume=${this._onFileResume}
         @file-rename=${this._onFileRename}
         @fill-metadata=${this._onFillMetadata}
+        @require-metadata=${this._onFillMetadata}
         @retry-all=${this._onRetryAll}
         @clear-all=${this._onClearAll}
         @add-more=${this._onAddMore}
@@ -5128,10 +5137,7 @@ export class SfxUploader extends LitElement {
                 .showFillMetadata=${!!(
                   this.config?.showFillMetadata ?? this.config?.metadataConfig
                 )}
-                .uploadDisabled=${this._hasUnfilledRequiredMetadata}
-                .uploadDisabledReason=${this._hasUnfilledRequiredMetadata
-                  ? "Fill required metadata first"
-                  : ""}
+                .requireMetadataFirst=${this._hasUnfilledRequiredMetadata}
               ></sfx-actions-bar>
             `
           : nothing}
@@ -5181,6 +5187,7 @@ export class SfxUploader extends LitElement {
                 )}
                 .config=${this.config?.metadataConfig ?? null}
                 .autocomplete=${this._metadataAutocomplete}
+                .initialFieldKey=${this._bulkMetadataInitialFieldKey}
                 @metadata-save-batch=${this._onBulkMetadataSaveBatch}
                 @metadata-close=${this._onBulkMetadataClose}
               ></sfx-bulk-metadata-modal>

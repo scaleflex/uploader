@@ -27,9 +27,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Breaking:** Last-upload review is now **disabled by default**. Set `lastUploadReview: true` (auto-scoped by `container` + `airboxPuid`) or pass an explicit string ID to enable it. Previously the feature was always on with a single global `sessionStorage` key, causing different airboxes to overwrite each other's review data.
+- Required-metadata enforcement is now on by default. `metadataConfig.enforceRequiredBeforeUpload` defaults to `'auto'` (was effectively `false`), and `'auto'` now also enforces when any schema field has `required: 1` or `metadataConfig.requiredFields` is provided — previously it only honored the `force_filling_metadata_on_upload` flag from the API store. Set `enforceRequiredBeforeUpload: false` to opt out.
+- Clicking **Upload** with required metadata still missing no longer leaves the button silently disabled. Instead, the bulk metadata editor opens positioned on the first missing required field (Airbox-parity behavior). The "Fill Metadata" button is promoted to primary in this state so the next action is obvious.
 
 ### Fixed
 
+- Required-metadata enforcement was a no-op for every Hub project: the schema parser typed `MetadataField.required` as `0 | 1` and every consumer compared with strict `=== 1`, but the Hub `/project/{uuid}` endpoint actually returns it as a JSON boolean. Switched to truthy checks (via a new `isFieldRequired` helper) and broadened the type to `boolean | 0 | 1`. The asterisk indicator now renders correctly, and clicking Upload with a missing required field now opens the bulk editor as intended.
 - Dropdown fields (select, multi-select, boolean) closing immediately when clicking options inside Shadow DOM — fixed outside-click detection to use `composedPath()` instead of `e.target`
 - Success-card and file-list thumbnails for URL-imported / connector-imported files no longer break under host CSPs that disallow the original origin — once the upload completes, `previewUrl` is automatically swapped to the Filerobot CDN URL from the upload response
 
