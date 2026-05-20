@@ -46,7 +46,9 @@ export function companionUploadFile(
     }
   }
 
-  // Build metadata to pass through to Scaleflex (matches v5 behavior)
+  // Build metadata to pass through to Scaleflex (matches v5 behavior).
+  // `filerobot-folder` is the form-field name FR reads on the Companion relay
+  // path — the `?folder=` query string alone is not honored here.
   const metadata: Record<string, unknown> = {};
   if (uploadFile.meta && Object.keys(uploadFile.meta).length > 0) {
     Object.assign(metadata, uploadFile.meta);
@@ -54,6 +56,7 @@ export function companionUploadFile(
   if (uploadFile.tags && uploadFile.tags.length > 0) {
     metadata.tags = uploadFile.tags;
   }
+  metadata['filerobot-folder'] = opts.folder;
 
   const isSearchProvider = !info.token;
 
@@ -62,7 +65,7 @@ export function companionUploadFile(
     endpoint,
     headers: opts.authHeaders,
     size: info.size,
-    metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
+    metadata,
   }, isSearchProvider)
     .then((result) => {
       if (aborted) return;
