@@ -26,6 +26,7 @@ const routes: RouteEntry[] = [
   { pattern: '/examples/modal', load: () => import('../pages/examples/modal').then((m) => m.default) },
   { pattern: '/examples/inline', load: () => import('../pages/examples/inline').then((m) => m.default) },
   { pattern: '/examples/sources-layout', load: () => import('../pages/examples/sources-layout').then((m) => m.default) },
+  { pattern: '/examples/core-sources', load: () => import('../pages/examples/core-sources').then((m) => m.default) },
   { pattern: '/examples/header-button', load: () => import('../pages/examples/header-button').then((m) => m.default) },
   { pattern: '/examples/minimize-to-background', load: () => import('../pages/examples/minimize-to-background').then((m) => m.default) },
   { pattern: '/examples/resumable-upload', load: () => import('../pages/examples/resumable-upload').then((m) => m.default) },

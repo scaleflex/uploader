@@ -22,7 +22,7 @@ export type {
 export { resolveAuth, exchangeSassKey, getApiBase, buildAuthHeaders } from './auth';
 
 // Connectors
-export type { ProviderId, ConnectorConfig, RemoteFileInfo } from './connectors';
+export type { ProviderId, ConnectorConfig, CoreSourceId, RemoteFileInfo } from './connectors';
 export { getProviderSources } from './connectors';
 
 // Components

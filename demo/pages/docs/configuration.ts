@@ -354,6 +354,29 @@ uploaderB.config = {
           </tbody>
         </table>
 
+        <h3>Built-in sources</h3>
+        <p>All four built-in sources are shown by default. Pass <code>coreSources</code> to render only a subset — for example, to hide <strong>Camera</strong> and <strong>Screen capture</strong> from the "More" menu:</p>
+        ${code(
+          'typescript',
+          `{
+  connectors: {
+    companionUrl: 'https://companion.example.com',
+    providers: ['google-drive', 'dropbox', 'onedrive'],
+    coreSources: ['device', 'url'], // hides Camera + Screen capture
+  }
+}`,
+        )}
+        <table>
+          <thead><tr><th>Source ID</th><th>Label</th></tr></thead>
+          <tbody>
+            <tr><td><code>'device'</code></td><td>My Device</td></tr>
+            <tr><td><code>'url'</code></td><td>URL link</td></tr>
+            <tr><td><code>'camera'</code></td><td>Camera</td></tr>
+            <tr><td><code>'screen-cast'</code></td><td>Screen capture</td></tr>
+          </tbody>
+        </table>
+        <p>Omit <code>coreSources</code> (or list all four) to keep the default behavior. Pass <code>[]</code> to hide every built-in source and rely solely on cloud <code>providers</code>.</p>
+
         ${docNav(
           { href: '#/docs/getting-started', label: 'Getting started' },
           { href: '#/docs/api', label: 'API' },

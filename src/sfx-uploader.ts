@@ -3037,11 +3037,19 @@ export class SfxUploader extends LitElement {
         : [];
     const custom = connectors.customSources ?? [];
 
+    // Allowlist of built-in sources (defaults to all when omitted).
+    const coreAllow = connectors.coreSources
+      ? new Set<string>(connectors.coreSources)
+      : null;
+    const coreSources = coreAllow
+      ? CORE_SOURCES.filter((s) => coreAllow.has(s.id))
+      : CORE_SOURCES;
+
     // Order: device, url → providers → remaining core (camera, screen-cast) → custom
-    const priorityCore = CORE_SOURCES.filter(
+    const priorityCore = coreSources.filter(
       (s) => s.id === "device" || s.id === "url",
     );
-    const remainingCore = CORE_SOURCES.filter(
+    const remainingCore = coreSources.filter(
       (s) => s.id !== "device" && s.id !== "url",
     );
 

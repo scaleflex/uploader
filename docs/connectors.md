@@ -88,9 +88,13 @@ Companion returns `{ "token": "socket-token" }`. The socket token can be used fo
 type ProviderId = 'google-drive' | 'dropbox' | 'onedrive' | 'box'
                 | 'instagram' | 'facebook' | 'unsplash';
 
+type CoreSourceId = 'device' | 'url' | 'camera' | 'screen-cast';
+
 interface ConnectorConfig {
   companionUrl: string;        // e.g. 'https://eu-on-24001.connector.filerobot.com'
   providers: ProviderId[];
+  customSources?: SourceDef[]; // external integrations (e.g. Canva via its own SDK)
+  coreSources?: CoreSourceId[]; // allowlist of built-in sources; defaults to all four
 }
 
 interface CompanionItem {

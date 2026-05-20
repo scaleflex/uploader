@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `connectors.coreSources` config option — allowlist of built-in sources to render in the More menu. When omitted, all four core sources (`device`, `url`, `camera`, `screen-cast`) are shown; set e.g. `coreSources: ['device', 'url']` to hide Camera and Screen capture.
 - `forceName` config option — forces every uploaded file to be saved under a fixed name in `targetFolder`, overwriting any existing file with the same name. Translates to `&opt_force_name=…` on the upload request and works across every source (local file, URL import, Google Drive, Unsplash, tus). Implicitly clamps `restrictions.maxNumberOfFiles` to `1` and disables multi-select. Use for single-asset slots like watermarks, default images, or folder icons. Accepts a string or a thunk for per-session derivation.
 - `getUploadParams` config option — appends arbitrary query parameters (typically Filerobot `opt_*` flags) to every upload request. Called per file just before its request is sent and merged into the URL of whichever upload path runs (XHR, URL, tus, or Companion). Wins on key collision against `forceName`.
 - `transformRemoteThumbnail` config option — host apps with restrictive CSPs (e.g. Hub allowing only `*.filerobot.com` / `*.cloudimg.io`) can rewrite third-party thumbnail URLs from URL imports and connector listings (Google Drive, Unsplash, …) into a CSP-allowed proxy URL before they're rendered.
