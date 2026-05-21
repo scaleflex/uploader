@@ -1,6 +1,6 @@
 import { LitElement, html, css, nothing } from 'lit';
 import { property, state } from 'lit/decorators.js';
-import type { UploadFile } from '../store/store.types';
+import type { UploadFile, TFunction } from '../store/store.types';
 import './file-list';
 
 type FilterMode = 'all' | 'success' | 'failed';
@@ -152,6 +152,7 @@ export class SfxLastUploadReview extends LitElement {
     }
   `;
 
+  @property({ attribute: false }) t: TFunction = (k, d) => (typeof d === 'string' ? d : k);
   @property({ attribute: false }) files: UploadFile[] = [];
   /** Forwarded to file-list → file-item for the Locate button URL override. */
   @property({ attribute: false }) getLocateUrl?: (file: UploadFile) => string | null | undefined;
@@ -196,31 +197,31 @@ export class SfxLastUploadReview extends LitElement {
 
     return html`
       <div class="topbar">
-        <button class="back-btn" @click=${this._onBack} title="Back">
+        <button class="back-btn" @click=${this._onBack} title=${this.t('back', 'Back')}>
           <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-          Back
+          ${this.t('back', 'Back')}
         </button>
-        <span class="title">Last upload <span class="count">— ${total} ${total === 1 ? 'file' : 'files'}</span></span>
+        <span class="title">${this.t('lastUpload', 'Last upload')} <span class="count">— ${this.t('fileCount', { count: total, defaultValue_one: '{{count}} file', defaultValue_other: '{{count}} files' })}</span></span>
         <div class="filters">
           <button class="chip ${this._filter === 'all' ? 'active' : ''}" @click=${this._setFilter('all')}>
-            All (${total})
+            ${this.t('all', 'All')} (${total})
           </button>
           <button class="chip ${this._filter === 'success' ? 'active' : ''}" @click=${this._setFilter('success')}>
-            ✓ Uploaded (${this._successCount})
+            ✓ ${this.t('uploaded', 'Uploaded')} (${this._successCount})
           </button>
           ${this._failedCount > 0
             ? html`<button class="chip ${this._filter === 'failed' ? 'active' : ''}" @click=${this._setFilter('failed')}>
-                ✗ Failed (${this._failedCount})
+                ✗ ${this.t('failed', 'Failed')} (${this._failedCount})
               </button>`
             : nothing}
-          <button class="clear-btn" @click=${this._onClear} title="Clear last upload from this browser">Clear</button>
+          <button class="clear-btn" @click=${this._onClear} title=${this.t('clearLastUpload', 'Clear last upload from this browser')}>${this.t('clear', 'Clear')}</button>
         </div>
       </div>
 
       <div class="body">
         ${filtered.length === 0
-          ? html`<div class="empty">No files match this filter.</div>`
-          : html`<sfx-file-list .files=${filtered} mode="review" .getLocateUrl=${this.getLocateUrl} .showLocateButton=${this.showLocateButton} .showCopyCdnButton=${this.showCopyCdnButton}></sfx-file-list>`}
+          ? html`<div class="empty">${this.t('noFilesMatchFilter', 'No files match this filter.')}</div>`
+          : html`<sfx-file-list .t=${this.t} .files=${filtered} mode="review" .getLocateUrl=${this.getLocateUrl} .showLocateButton=${this.showLocateButton} .showCopyCdnButton=${this.showCopyCdnButton}></sfx-file-list>`}
       </div>
     `;
   }

@@ -2,6 +2,7 @@ import { LitElement, html, css, nothing } from "lit";
 import { property } from "lit/decorators.js";
 import { cspStyle } from "../utils/csp-style";
 import { buttonStyles, focusStyles } from "./shared-styles";
+import type { TFunction } from "../store/store.types";
 
 export type UploadButtonState = "idle" | "uploading" | "done";
 
@@ -239,6 +240,7 @@ export class SfxActionsBar extends LitElement {
     `,
   ];
 
+  @property({ attribute: false }) t: TFunction = (k, d) => (typeof d === 'string' ? d : k);
   @property({ type: String }) uploadState: UploadButtonState = "idle";
   @property({ type: Number }) fileCount = 0;
   @property({ type: Number }) totalSize = 0;
@@ -292,7 +294,7 @@ export class SfxActionsBar extends LitElement {
                 aria-valuenow=${Math.round(this.uploadProgress)}
                 aria-valuemin="0"
                 aria-valuemax="100"
-                aria-label="Upload progress"
+                aria-label=${this.t('uploadProgress', 'Upload progress')}
               >
                 <div
                   class="progress-fill"
@@ -300,7 +302,7 @@ export class SfxActionsBar extends LitElement {
                 ></div>
               </div>
               <span class="progress-label"
-                >${this.completedCount}/${this.fileCount} files</span
+                >${this.completedCount}/${this.fileCount} ${this.t('files', 'files')}</span
               >
             </div>
           `
@@ -309,7 +311,7 @@ export class SfxActionsBar extends LitElement {
         <div class="left">
           ${this.showFillMetadata && this.uploadState === "idle"
             ? html`
-                <button class="btn-sec" @click=${this._fillMetadata} aria-label="Fill Metadata">
+                <button class="btn-sec" @click=${this._fillMetadata} aria-label=${this.t('fillMetadata', 'Fill Metadata')}>
                   <svg
                     viewBox="0 0 24 24"
                     fill="none"
@@ -326,13 +328,13 @@ export class SfxActionsBar extends LitElement {
                     <line x1="16" y1="17" x2="8" y2="17" />
                     <line x1="10" y1="9" x2="8" y2="9" />
                   </svg>
-                  <span class="btn-label">Fill Metadata</span>
+                  <span class="btn-label">${this.t('fillMetadata', 'Fill Metadata')}</span>
                 </button>
               `
             : nothing}
         </div>
         <div class="right">
-          <button class="btn-ghost" @click=${this._clear} aria-label="Clear">
+          <button class="btn-ghost" @click=${this._clear} aria-label=${this.t('clear', 'Clear')}>
             <svg
               viewBox="0 0 24 24"
               fill="none"
@@ -347,9 +349,9 @@ export class SfxActionsBar extends LitElement {
               <line x1="10" y1="11" x2="10" y2="17" />
               <line x1="14" y1="11" x2="14" y2="17" />
             </svg>
-            <span class="btn-label">Clear</span>
+            <span class="btn-label">${this.t('clear', 'Clear')}</span>
           </button>
-          <button class="btn-sec" @click=${this._addMore} aria-label="Add more">
+          <button class="btn-sec" @click=${this._addMore} aria-label=${this.t('addMore', 'Add more')}>
             <svg
               viewBox="0 0 24 24"
               fill="none"
@@ -360,14 +362,14 @@ export class SfxActionsBar extends LitElement {
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
-            <span class="btn-label">Add more</span>
+            <span class="btn-label">${this.t('addMore', 'Add more')}</span>
           </button>
           ${this.failedCount > 0
             ? html`
                 <button
                   class="btn-retry"
                   @click=${this._retryAll}
-                  aria-label="Retry all (${this.failedCount})"
+                  aria-label=${this.t('retryAll', 'Retry all ({{count}})', { count: this.failedCount })}
                 >
                   <svg
                     viewBox="0 0 24 24"
@@ -379,7 +381,7 @@ export class SfxActionsBar extends LitElement {
                     <polyline points="23 4 23 10 17 10" />
                     <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10" />
                   </svg>
-                  <span class="btn-label">Retry all (${this.failedCount})</span>
+                  <span class="btn-label">${this.t('retryAll', 'Retry all ({{count}})', { count: this.failedCount })}</span>
                 </button>
               `
             : nothing}
@@ -397,7 +399,7 @@ export class SfxActionsBar extends LitElement {
       .filter(Boolean)
       .join(" ");
 
-    const ariaLabel = isUploading ? "Uploading" : isDone ? "Done" : "Upload";
+    const ariaLabel = isUploading ? this.t('uploading', 'Uploading') : isDone ? this.t('done', 'Done') : this.t('upload', 'Upload');
 
     return html`
       <button
@@ -409,7 +411,7 @@ export class SfxActionsBar extends LitElement {
       >
         ${isUploading
           ? html`<span class="btn-spin"></span
-              ><span class="btn-label">Uploading…</span>`
+              ><span class="btn-label">${this.t('uploading', 'Uploading')}…</span>`
           : isDone
           ? html`
               <svg
@@ -421,7 +423,7 @@ export class SfxActionsBar extends LitElement {
               >
                 <polyline points="20 6 9 17 4 12" />
               </svg>
-              <span class="btn-label">Done!</span>
+              <span class="btn-label">${this.t('done', 'Done')}!</span>
             `
           : html`
               <svg
@@ -435,7 +437,7 @@ export class SfxActionsBar extends LitElement {
                 <line x1="12" y1="12" x2="12" y2="21" />
                 <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
               </svg>
-              <span class="btn-label">Upload</span>
+              <span class="btn-label">${this.t('upload', 'Upload')}</span>
             `}
       </button>
     `;

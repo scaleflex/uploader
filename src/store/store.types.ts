@@ -101,6 +101,14 @@ export interface UploadRestrictions {
   blockedFileTypes: string[] | null;
 }
 
+// --- i18n ---
+
+export type TFunction = (
+  key: string,
+  defaultValueOrOptions?: string | Record<string, unknown>,
+  options?: Record<string, unknown>,
+) => string
+
 // --- Root state ---
 
 export interface UploaderState {
@@ -125,4 +133,7 @@ export interface UploaderState {
 
   // UI state
   isUploading: boolean;
+
+  // i18n
+  t: TFunction;
 }

@@ -1,7 +1,7 @@
 import { LitElement, html, css, nothing } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { cspStyle } from '../utils/csp-style';
-import type { UploadFile } from '../store/store.types';
+import type { UploadFile, TFunction } from '../store/store.types';
 import { formatFileSize, getFileCategory, getFileExtension, getFileTypeIconUrl, getDefaultFileTypeIconUrl } from '../utils/file-utils';
 
 export class SfxFileItem extends LitElement {
@@ -541,6 +541,7 @@ export class SfxFileItem extends LitElement {
     }
   `;
 
+  @property({ attribute: false }) t: TFunction = (k, d) => (typeof d === 'string' ? d : k);
   @property({ attribute: false }) file!: UploadFile;
   /** 'upload' (default): full controls; 'review': read-only post-upload
    *  view with status badges and hover actions (Locate / Copy CDN). */
@@ -693,12 +694,12 @@ export class SfxFileItem extends LitElement {
                stacked Locate / Copy CDN actions instead) -->
           ${!isReview && !isDone && !isUploading && !isPaused && !isError && f.status !== 'rejected'
             ? html`
-                <button class="preview-btn" @click=${this._preview} aria-label="Details">
+                <button class="preview-btn" @click=${this._preview} aria-label=${this.t('details', 'Details')}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                     <circle cx="12" cy="12" r="3"/>
                   </svg>
-                  Details
+                  ${this.t('details', 'Details')}
                 </button>
               `
             : nothing}
@@ -711,17 +712,17 @@ export class SfxFileItem extends LitElement {
             ? html`
                 <div class="review-actions">
                   ${this.showLocateButton
-                    ? html`<button class="review-action secondary" @click=${this._locate} aria-label="Locate file in storage">
+                    ? html`<button class="review-action secondary" @click=${this._locate} aria-label=${this.t('locate', 'Locate')}>
                         <svg viewBox="0 0 24 24"><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><circle cx="12" cy="12" r="7"/></svg>
-                        Locate
+                        ${this.t('locate', 'Locate')}
                       </button>`
                     : nothing}
                   ${this.showCopyCdnButton && f.response.file.url.cdn
-                    ? html`<button class="review-action primary ${this._copied ? 'copied' : ''}" @click=${this._copyCdn} title="Copy CDN link" aria-label="Copy CDN link to clipboard">
+                    ? html`<button class="review-action primary ${this._copied ? 'copied' : ''}" @click=${this._copyCdn} title=${this.t('copyCdn', 'Copy CDN')} aria-label=${this.t('copyCdnLink', 'Copy CDN link to clipboard')}>
                         ${this._copied
                           ? html`<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>`
                           : html`<svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`}
-                        ${this._copied ? 'Copied' : 'Copy CDN'}
+                        ${this._copied ? this.t('copied', 'Copied') : this.t('copyCdn', 'Copy CDN')}
                       </button>`
                     : nothing}
                 </div>
@@ -750,7 +751,7 @@ export class SfxFileItem extends LitElement {
 
           <!-- Failed badge (review mode only — failed files get a visible status) -->
           ${isReview && isError
-            ? html`<div class="failed-badge" title=${f.error || 'Upload failed'}>
+            ? html`<div class="failed-badge" title=${f.error || this.t('uploadFailed', 'Upload failed')}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
                   <line x1="6" y1="6" x2="18" y2="18"/>
                   <line x1="18" y1="6" x2="6" y2="18"/>
@@ -783,7 +784,7 @@ export class SfxFileItem extends LitElement {
         <div class="actions">
           ${isUploading && f.isTus
             ? html`
-                <button class="act-btn pause" @click=${this._pause} title="Pause" aria-label="Pause upload">
+                <button class="act-btn pause" @click=${this._pause} title=${this.t('pause', 'Pause')} aria-label=${this.t('pauseUpload', 'Pause upload')}>
                   <svg viewBox="0 0 24 24" fill="currentColor">
                     <rect x="6" y="4" width="4" height="16" rx="1" />
                     <rect x="14" y="4" width="4" height="16" rx="1" />
@@ -793,7 +794,7 @@ export class SfxFileItem extends LitElement {
             : nothing}
           ${isPaused
             ? html`
-                <button class="act-btn resume" @click=${this._resume} title="Resume" aria-label="Resume upload">
+                <button class="act-btn resume" @click=${this._resume} title=${this.t('resume', 'Resume')} aria-label=${this.t('resumeUpload', 'Resume upload')}>
                   <svg viewBox="0 0 24 24" fill="currentColor">
                     <polygon points="5,3 19,12 5,21" />
                   </svg>
@@ -802,7 +803,7 @@ export class SfxFileItem extends LitElement {
             : nothing}
           ${isError
             ? html`
-                <button class="act-btn retry" @click=${this._retry} title="Retry" aria-label="Retry upload">
+                <button class="act-btn retry" @click=${this._retry} title=${this.t('retry', 'Retry')} aria-label=${this.t('retryUpload', 'Retry upload')}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
                     <polyline points="23 4 23 10 17 10" />
                     <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10" />
@@ -810,7 +811,7 @@ export class SfxFileItem extends LitElement {
                 </button>
               `
             : nothing}
-          <button class="act-btn del" @click=${this._remove} title="Remove" aria-label="Remove file">
+          <button class="act-btn del" @click=${this._remove} title=${this.t('remove', 'Remove')} aria-label=${this.t('removeFile', 'Remove file')}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="3 6 5 6 21 6" />
               <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
@@ -825,7 +826,7 @@ export class SfxFileItem extends LitElement {
         <!-- Info bar -->
         <div class="info">
           <input class="name-input" type="text" .value=${f.name} title=${f.name}
-            aria-label="File name"
+            aria-label=${this.t('fileName', 'File name')}
             ?readonly=${isReview}
             @change=${isReview ? nothing : this._rename} @click=${(e: Event) => e.stopPropagation()} />
           <div class="meta">${ext || ''}${f.size ? ` \u00B7 ${formatFileSize(f.size)}` : ''}${this._dims ? ` \u00B7 ${this._dims}` : ''}</div>

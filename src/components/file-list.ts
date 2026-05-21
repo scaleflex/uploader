@@ -4,7 +4,7 @@ import { unsafeSVG } from 'lit/directives/unsafe-svg.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { cspStyle } from '../utils/csp-style';
 import { brandIcon } from '../utils/brand-icon';
-import type { UploadFile } from '../store/store.types';
+import type { UploadFile, TFunction } from '../store/store.types';
 import type { SourceDef } from '../types/source.types';
 import { getPortalTarget } from '../utils/portal-target';
 
@@ -416,6 +416,7 @@ export class SfxFileList extends LitElement {
     }
   `;
 
+  @property({ attribute: false }) t: TFunction = (k, d) => (typeof d === 'string' ? d : k);
   @property({ attribute: false }) files: UploadFile[] = [];
   @property({ type: Boolean }) showDropTile = false;
   @property({ attribute: false }) sources: SourceDef[] = [];
@@ -642,7 +643,7 @@ export class SfxFileList extends LitElement {
               `)}
               ${overflowSources.length > 0 ? html`
                 <div class="drop-tile-more-wrap">
-                  <button class="drop-tile-more" title="More sources" @click=${(e: Event) => this._toggleMore(e)}>···</button>
+                  <button class="drop-tile-more" title=${this.t('moreSources', 'More sources')} @click=${(e: Event) => this._toggleMore(e)}>···</button>
                 </div>
               ` : nothing}
             </div>
@@ -658,7 +659,7 @@ export class SfxFileList extends LitElement {
       <div class="grid">
         ${this.showDropTile && this.mode !== 'review' ? this._renderDropTile() : nothing}
         ${this.files.map(
-          (f, i) => html`<sfx-file-item .file=${f} .mode=${this.mode} .getLocateUrl=${this.getLocateUrl} .showLocateButton=${this.showLocateButton} .showCopyCdnButton=${this.showCopyCdnButton} ${cspStyle({ '--tile-index': String(i) })}></sfx-file-item>`,
+          (f, i) => html`<sfx-file-item .t=${this.t} .file=${f} .mode=${this.mode} .getLocateUrl=${this.getLocateUrl} .showLocateButton=${this.showLocateButton} .showCopyCdnButton=${this.showCopyCdnButton} ${cspStyle({ '--tile-index': String(i) })}></sfx-file-item>`,
         )}
       </div>
     `;

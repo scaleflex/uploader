@@ -6,6 +6,8 @@ export interface UploaderHandle extends HTMLElement {
 export interface SourceDef {
   id: string;
   label: string;
+  /** i18n key for the label. When provided, used with t(labelKey, label) for translation. */
+  labelKey?: string;
   icon: string;        // inner SVG content (without outer <svg> tag)
   fillIcon?: boolean;  // true for brand icons that use fill instead of stroke
   iconColor?: string;  // CSS color for the icon (e.g. '#2563eb')

@@ -60,6 +60,7 @@ export function makeDefaultState(overrides: Partial<UploaderState> = {}): Upload
     totalBytesUploaded: 0,
     totalBytes: 0,
     isUploading: false,
+    t: (k, d) => (typeof d === 'string' ? d : k),
     ...overrides,
   };
 }

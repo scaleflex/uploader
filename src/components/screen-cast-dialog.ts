@@ -1,7 +1,8 @@
 import { LitElement, html, css } from 'lit';
-import { state } from 'lit/decorators.js';
+import { property, state } from 'lit/decorators.js';
 import { buttonStyles, focusStyles } from './shared-styles';
 import { createFocusTrap } from '../utils/focus-trap';
+import type { TFunction } from '../store/store.types';
 
 /**
  * Modal dialog for screen capture/recording.
@@ -111,6 +112,7 @@ export class SfxScreenCastDialog extends LitElement {
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
   `];
 
+  @property({ attribute: false }) t: TFunction = (k, d) => (typeof d === 'string' ? d : k);
   @state() private _stream: MediaStream | null = null;
   @state() private _recording = false;
   @state() private _error = '';
@@ -181,7 +183,7 @@ export class SfxScreenCastDialog extends LitElement {
       };
       this._recorder.start();
     } catch {
-      this._error = 'Could not start screen capture. Please check your permissions.';
+      this._error = this.t('screenCaptureError', 'Could not start screen capture. Please check your permissions.');
     }
   };
 
@@ -223,8 +225,8 @@ export class SfxScreenCastDialog extends LitElement {
                 <path d="M7 21h10"/>
               </svg>
             </div>
-            <div class="title">Screen cast</div>
-            <button class="close-btn" aria-label="Close" @click=${this._cancel}>\u2715</button>
+            <div class="title">${this.t('screenCast', 'Screen cast')}</div>
+            <button class="close-btn" aria-label=${this.t('close', 'Close')} @click=${this._cancel}>\u2715</button>
           </div>
           <div class="body">
             ${this._error
@@ -233,16 +235,16 @@ export class SfxScreenCastDialog extends LitElement {
                 ? html`
                     <video src=${this._previewUrl} controls></video>
                     <div class="actions">
-                      <button class="btn btn-ghost" @click=${this._discard}>Discard</button>
-                      <button class="btn btn-primary" @click=${this._useRecording}>Use recording</button>
+                      <button class="btn btn-ghost" @click=${this._discard}>${this.t('discard', 'Discard')}</button>
+                      <button class="btn btn-primary" @click=${this._useRecording}>${this.t('useRecording', 'Use recording')}</button>
                     </div>
                   `
                 : this._recording
                   ? html`
                       <video autoplay playsinline muted></video>
-                      <div class="status"><div class="rec-dot"></div> Recording...</div>
+                      <div class="status"><div class="rec-dot"></div> ${this.t('recording', 'Recording...')}</div>
                       <div class="actions">
-                        <button class="btn btn-danger" @click=${this._stopRecording}>Stop recording</button>
+                        <button class="btn btn-danger" @click=${this._stopRecording}>${this.t('stopRecording', 'Stop recording')}</button>
                       </div>
                     `
                   : html`
@@ -254,10 +256,10 @@ export class SfxScreenCastDialog extends LitElement {
                             <path d="M7 21h10"/>
                           </svg>
                         </div>
-                        <div class="start-text">Share your screen to record a video that will be added to your uploads.</div>
+                        <div class="start-text">${this.t('screenCastPrompt', 'Share your screen to record a video that will be added to your uploads.')}</div>
                         <div class="actions">
-                          <button class="btn btn-ghost" @click=${this._cancel}>Cancel</button>
-                          <button class="btn btn-primary" @click=${this._startRecording}>Start recording</button>
+                          <button class="btn btn-ghost" @click=${this._cancel}>${this.t('cancel', 'Cancel')}</button>
+                          <button class="btn btn-primary" @click=${this._startRecording}>${this.t('startRecording', 'Start recording')}</button>
                         </div>
                       </div>
                     `}

@@ -2,6 +2,7 @@ import { LitElement, html, css, nothing } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { formatFileSize } from '../utils/file-utils';
 import { buttonStyles, focusStyles } from './shared-styles';
+import type { TFunction } from '../store/store.types';
 
 const MAX_THUMBS_DESKTOP = 7;
 const MAX_THUMBS_MOBILE = 4;
@@ -330,6 +331,7 @@ export class SfxSuccessCard extends LitElement {
     }
   `];
 
+  @property({ attribute: false }) t: TFunction = (k, d) => (typeof d === 'string' ? d : k);
   @property({ type: Number }) fileCount = 0;
   @property({ type: Number }) totalSize = 0;
   @property({ type: Array }) thumbnails: string[] = [];
@@ -400,7 +402,7 @@ export class SfxSuccessCard extends LitElement {
     const allFailed = hasFailed && !hasSuccesses;
 
     return html`
-      <button class="close-btn" title="Close" @click=${this._close}>
+      <button class="close-btn" title=${this.t('close', 'Close')} @click=${this._close}>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
       <div class="card" role="status" aria-live="polite">
@@ -417,8 +419,12 @@ export class SfxSuccessCard extends LitElement {
                   <polyline points="20 6 9 17 4 12" />
                 </svg>`}
         </div>
-        <div class="title">${allFailed ? 'Upload failed' : hasFailed ? 'Partially uploaded' : 'Uploaded successfully!'}</div>
-        <div class="subtitle">${allFailed ? `${this.failedFiles.length === 1 ? 'File' : 'Files'} could not be uploaded` : hasFailed ? `${this.fileCount} ${this.fileCount === 1 ? 'file' : 'files'} uploaded, ${this.failedFiles.length} failed` : 'All files are ready for use'}</div>
+        <div class="title">${allFailed ? this.t('uploadFailed', 'Upload failed') : hasFailed ? this.t('partiallyUploaded', 'Partially uploaded') : this.t('uploadedSuccessfully', 'Uploaded successfully!')}</div>
+        <div class="subtitle">${allFailed
+          ? this.t('filesCouldNotBeUploaded', { count: this.failedFiles.length, defaultValue_one: 'File could not be uploaded', defaultValue_other: 'Files could not be uploaded' })
+          : hasFailed
+            ? this.t('partialUploadSummary', '{{uploaded}} uploaded, {{failed}} failed', { uploaded: this.fileCount, failed: this.failedFiles.length })
+            : this.t('allFilesReady', 'All files are ready for use')}</div>
 
         ${visibleThumbs.length > 0
           ? html`
@@ -433,7 +439,7 @@ export class SfxSuccessCard extends LitElement {
             `
           : nothing}
 
-        ${hasSuccesses ? html`<div class="summary">${this.fileCount} ${this.fileCount === 1 ? 'file' : 'files'} · ${formatFileSize(this.totalSize)} uploaded</div>` : nothing}
+        ${hasSuccesses ? html`<div class="summary">${this.t('uploadSummary', '{{total}} file · {{size}} uploaded', { total: this.fileCount, size: formatFileSize(this.totalSize) })}</div>` : nothing}
 
         ${hasFailed
           ? html`
@@ -445,7 +451,7 @@ export class SfxSuccessCard extends LitElement {
                     <div class="failed-name">${f.name}</div>
                     <div class="failed-reason">${f.error}</div>
                   </div>
-                  <button class="failed-retry" title="Retry" @click=${() => this._retryFile(f.id)}>
+                  <button class="failed-retry" title=${this.t('retry', 'Retry')} @click=${() => this._retryFile(f.id)}>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
                   </button>
                 </div>
@@ -455,11 +461,11 @@ export class SfxSuccessCard extends LitElement {
           : nothing}
 
         <div class="actions">
-          <button class="btn-ghost" @click=${this._uploadMore}>Upload more</button>
+          <button class="btn-ghost" @click=${this._uploadMore}>${this.t('uploadMore', 'Upload more')}</button>
           ${hasSuccesses || hasFailed
-            ? html`<button class="btn-ghost" @click=${this._reviewFiles}>Review files (${this.fileCount + this.failedFiles.length})</button>`
+            ? html`<button class="btn-ghost" @click=${this._reviewFiles}>${this.t('reviewFiles', 'Review files ({{count}})', { count: this.fileCount + this.failedFiles.length })}</button>`
             : nothing}
-          ${hasFailed ? html`<button class="btn-retry-all" @click=${this._retryAll}>Retry all (${this.failedFiles.length})</button>` : nothing}
+          ${hasFailed ? html`<button class="btn-retry-all" @click=${this._retryAll}>${this.t('retryAll', 'Retry all ({{count}})', { count: this.failedFiles.length })}</button>` : nothing}
           <button class="btn-primary" @click=${this._primaryAction}>${this.primaryLabel}</button>
         </div>
       </div>

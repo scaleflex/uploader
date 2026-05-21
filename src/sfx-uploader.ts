@@ -1,4 +1,5 @@
 import { LitElement, html, css, nothing, render as litRender } from "lit";
+import { initI18n, missingKeysHelper } from "./i18n";
 import { property, state } from "lit/decorators.js";
 import { cspStyle } from "./utils/csp-style";
 import { createStore, Store } from "./store";
@@ -2051,6 +2052,7 @@ export class SfxUploader extends LitElement {
   `;
 
   @property({ attribute: false }) config: UploaderConfig | null = null;
+  @property() language = typeof navigator !== 'undefined' ? navigator.language : 'en';
 
   @state() private _isOpen = false;
   @state() private _activeConnector: ProviderId | null = null;
@@ -2455,6 +2457,43 @@ export class SfxUploader extends LitElement {
     // Check if a previous upload batch exists in sessionStorage
     const id = this._lastUploadId;
     this._hasStoredReview = id != null && lastUploadStore.exists(id);
+    // Initialise i18n (fire-and-forget — failure is non-fatal)
+    void this._initI18n();
+  }
+
+  private async _initI18n() {
+    try {
+      const { i18n, isNew } = await initI18n(this.language || 'en');
+      if (isNew) {
+        i18n.on(
+          'missingKey',
+          (
+            _lngs: readonly string[],
+            ns: string,
+            key: string,
+            fallback: string,
+            _updateMissing: boolean,
+            options: Record<string, unknown>,
+          ) => {
+            const pluralMatch = key.match(/_(?:zero|one|two|few|many|other)$/);
+            const correctDefault =
+              pluralMatch && options?.[`defaultValue${pluralMatch[0]}`]
+                ? String(options[`defaultValue${pluralMatch[0]}`])
+                : fallback;
+            missingKeysHelper.handleMissingKey(key, correctDefault, ns);
+          },
+        );
+      }
+      const tFn: UploaderState['t'] = (key, defaultValueOrOptions?, options?) => {
+        if (typeof defaultValueOrOptions === 'string') {
+          return i18n.t(key, defaultValueOrOptions, options ?? {}) as string;
+        }
+        return i18n.t(key, defaultValueOrOptions ?? {}) as string;
+      };
+      this._store.setState({ t: tFn });
+    } catch {
+      // i18n failure is non-fatal — store keeps the pass-through t
+    }
   }
 
   disconnectedCallback() {
@@ -3755,6 +3794,7 @@ export class SfxUploader extends LitElement {
   render() {
     const mode = this.config?.mode ?? "modal";
     const files = [...this._storeCtrl.state.files.values()];
+    const t = this._storeCtrl.state.t;
 
     if (mode === "modal") {
       return html`
@@ -3763,7 +3803,7 @@ export class SfxUploader extends LitElement {
               <div class="modal-backdrop" @click=${this._onModalBackdropClick}>
                 <div class="modal-card">
                   ${this._renderHeader()} ${this._renderBody()}
-                  <sfx-toast></sfx-toast>
+                  <sfx-toast .t=${t}></sfx-toast>
                 </div>
               </div>
             `
@@ -3776,7 +3816,7 @@ export class SfxUploader extends LitElement {
     return html`
       <div class="inline ${files.length === 0 ? "no-files" : ""}">
         ${this._renderHeader()} ${this._renderBody()}
-        <sfx-toast></sfx-toast>
+          <sfx-toast .t=${t}></sfx-toast>
       </div>
       ${this._renderFsOverlay()}
     `;
@@ -3791,6 +3831,7 @@ export class SfxUploader extends LitElement {
       ancestor of fs-overlay establishes a containing block on first paint. */
   private _renderFsOverlay() {
     if (!this._fullscreenPreviewUrl && !this._fullscreenVideoFile) return nothing;
+    const t = this._storeCtrl.state.t;
     const fsFiles = [...this._store.getState().files.values()].filter(
       (f) => f.previewUrl || (f.type.startsWith("video/") && f.file),
     );
@@ -3812,12 +3853,12 @@ export class SfxUploader extends LitElement {
           : html`<img class="fs-img" src=${this._fullscreenPreviewUrl} alt="" ${cspStyle(this._fullscreenZoomed ? { transform: `scale(2) translate(${this._fsPanX}px, ${this._fsPanY}px)` } : null)} draggable="false" />`}
       </div>
       <div class="fs-toolbar" @click=${(e: Event) => e.stopPropagation()}>
-        <button class="fs-btn" @click=${this._onFsToggleZoom} title="${this._fullscreenZoomed ? "Zoom out" : "Zoom in"}">
+        <button class="fs-btn" @click=${this._onFsToggleZoom} title=${this._fullscreenZoomed ? t('zoomOut', 'Zoom out') : t('zoomIn', 'Zoom in')}>
           ${this._fullscreenZoomed
             ? html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>`
             : html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>`}
         </button>
-        <button class="fs-btn" @click=${this._onFsClose} title="Close">
+        <button class="fs-btn" @click=${this._onFsClose} title=${t('close', 'Close')}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
@@ -4025,6 +4066,7 @@ export class SfxUploader extends LitElement {
 
   private _renderFloatingPill(files: UploadFile[]) {
     const s = this._storeCtrl.state;
+    const t = s.t;
     const pct = Math.round(s.totalProgress ?? 0);
     const isDone = this._phase === "complete";
     const completed = files.filter((f) => f.status === "complete").length;
@@ -4096,7 +4138,7 @@ export class SfxUploader extends LitElement {
               : nothing}
           </div>
           <div class="float-collapsed-actions">
-            <button title="Open uploader" @click=${this._onPillExpand}>
+            <button title=${t('openUploader', 'Open uploader')} @click=${this._onPillExpand}>
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
@@ -4111,7 +4153,7 @@ export class SfxUploader extends LitElement {
                 <line x1="3" y1="21" x2="10" y2="14" />
               </svg>
             </button>
-            <button title="Expand" @click=${this._onPillClick}>
+            <button title=${t('expand', 'Expand')} @click=${this._onPillClick}>
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
@@ -4122,7 +4164,7 @@ export class SfxUploader extends LitElement {
                 <polyline points="18 15 12 9 6 15" />
               </svg>
             </button>
-            <button title="Close" @click=${this._onPillDismiss}>
+            <button title=${t('close', 'Close')} @click=${this._onPillDismiss}>
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
@@ -4227,7 +4269,7 @@ export class SfxUploader extends LitElement {
             </div>
           </div>
           <div class="float-actions">
-            <button title="Expand" @click=${this._onPillExpand}>
+            <button title=${t('expand', 'Expand')} @click=${this._onPillExpand}>
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
@@ -4242,7 +4284,7 @@ export class SfxUploader extends LitElement {
                 <line x1="3" y1="21" x2="10" y2="14" />
               </svg>
             </button>
-            <button title="Collapse" @click=${this._onPillClick}>
+            <button title=${t('collapse', 'Collapse')} @click=${this._onPillClick}>
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
@@ -4253,7 +4295,7 @@ export class SfxUploader extends LitElement {
                 <polyline points="6 9 12 15 18 9" />
               </svg>
             </button>
-            <button title="Close" @click=${this._onPillDismiss}>
+            <button title=${t('close', 'Close')} @click=${this._onPillDismiss}>
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
@@ -4449,6 +4491,7 @@ export class SfxUploader extends LitElement {
 
   private _renderPreviewLayout(files: UploadFile[]) {
     if (files.length === 0) return nothing;
+    const t = this._storeCtrl.state.t;
     const previewFile =
       files.find((f) => f.id === this._previewFileId) ?? files[0];
     const ext = previewFile.name.split(".").pop()?.toUpperCase() || "";
@@ -4473,6 +4516,7 @@ export class SfxUploader extends LitElement {
             >
           </div>
           <sfx-file-list
+            .t=${this._storeCtrl.state.t}
             .files=${files}
             .showDropTile=${true}
             .sources=${this._mergedSources}
@@ -4495,8 +4539,8 @@ export class SfxUploader extends LitElement {
               @click=${() => {
                 this._previewFileId = null;
               }}
-              aria-label="Back to file list"
-              title="Back"
+              aria-label=${t('backToFileList', 'Back to file list')}
+              title=${t('back', 'Back')}
             >
               <svg
                 viewBox="0 0 24 24"
@@ -4533,7 +4577,7 @@ export class SfxUploader extends LitElement {
                         // requestUpdate fixes it.
                         requestAnimationFrame(() => this.requestUpdate());
                       }}
-                      title="Fullscreen"
+                      title=${t('fullscreen', 'Fullscreen')}
                     >
                       <svg
                         viewBox="0 0 24 24"
@@ -4555,7 +4599,7 @@ export class SfxUploader extends LitElement {
                 @click=${() => {
                   this._previewFileId = null;
                 }}
-                title="Close"
+                title=${t('close', 'Close')}
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -4812,6 +4856,7 @@ export class SfxUploader extends LitElement {
 
   private _renderBody() {
     const s = this._storeCtrl.state;
+    const t = s.t;
     const files = [...s.files.values()];
     const phase = this._phase;
     const accept = buildAcceptString(s.restrictions);
@@ -4866,6 +4911,7 @@ export class SfxUploader extends LitElement {
           ${this._isReviewing
             ? html`
                 <sfx-last-upload-review
+                  .t=${t}
                   .files=${this._reviewFiles}
                   .getLocateUrl=${this.config?.getLocateUrl}
                   .showLocateButton=${this.config?.showLocateButton ?? false}
@@ -4877,6 +4923,7 @@ export class SfxUploader extends LitElement {
             : phase === "complete"
             ? html`
                 <sfx-success-card
+                  .t=${t}
                   .fileCount=${files.filter((f) => f.status === "complete")
                     .length}
                   .totalSize=${files
@@ -4904,6 +4951,7 @@ export class SfxUploader extends LitElement {
                 ${hasFiles
                   ? nothing
                   : html`<sfx-drop-zone
+                        .t=${t}
                         .compact=${hasFiles}
                         .externalDragOver=${this._bodyDragOver}
                         .accept=${accept}
@@ -4915,13 +4963,13 @@ export class SfxUploader extends LitElement {
                         ? html`<button
                             class="last-upload-pill"
                             @click=${this._onEnterReview}
-                            title="View last upload batch"
+                            title=${t('viewLastUploadBatch', 'View last upload batch')}
                           >
                             <svg viewBox="0 0 24 24">
                               <path d="M12 8v4l3 3" />
                               <circle cx="12" cy="12" r="10" />
                             </svg>
-                            View last upload
+                            ${t('viewLastUpload', 'View last upload')}
                           </button>`
                         : nothing}`}
                 ${hasFiles
@@ -4936,6 +4984,7 @@ export class SfxUploader extends LitElement {
                           )}
                         </div>
                         <sfx-file-list
+                          .t=${t}
                           .files=${files}
                           .showDropTile=${true}
                           .sources=${this._mergedSources}
@@ -4951,6 +5000,7 @@ export class SfxUploader extends LitElement {
         ${hasFiles && phase !== "complete" && phase !== "uploading"
           ? html`
               <sfx-actions-bar
+                .t=${t}
                 .uploadState=${"idle" as const}
                 .fileCount=${files.length}
                 .totalSize=${files.reduce((sum, f) => sum + (f.size || 0), 0)}
@@ -4971,13 +5021,13 @@ export class SfxUploader extends LitElement {
             `
           : nothing}
         ${this._showUrlDialog
-          ? html`<sfx-url-dialog></sfx-url-dialog>`
+          ? html`<sfx-url-dialog .t=${t}></sfx-url-dialog>`
           : nothing}
         ${this._showCameraDialog
-          ? html`<sfx-camera-dialog></sfx-camera-dialog>`
+          ? html`<sfx-camera-dialog .t=${t}></sfx-camera-dialog>`
           : nothing}
         ${this._showScreenCastDialog
-          ? html`<sfx-screen-cast-dialog></sfx-screen-cast-dialog>`
+          ? html`<sfx-screen-cast-dialog .t=${t}></sfx-screen-cast-dialog>`
           : nothing}
         ${this._activeConnector && this.config?.connectors
           ? html`
@@ -4989,12 +5039,14 @@ export class SfxUploader extends LitElement {
                   ${SEARCH_PROVIDERS.has(this._activeConnector)
                     ? html`
                         <sfx-search-provider-browser
+                          .t=${t}
                           .provider=${this._activeConnector}
                           .companionUrl=${this.config.connectors.companionUrl}
                         ></sfx-search-provider-browser>
                       `
                     : html`
                         <sfx-provider-browser
+                          .t=${t}
                           .provider=${this._activeConnector}
                           .companionUrl=${this.config.connectors.companionUrl}
                         ></sfx-provider-browser>
