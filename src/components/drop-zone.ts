@@ -421,6 +421,10 @@ export class SfxDropZone extends LitElement {
       height: 28px;
     }
 
+    .src-card .card-ico.muted {
+      color: var(--sfx-up-text-muted, #94a3b8);
+    }
+
     .src-card .card-ico svg {
       width: 28px;
       height: 28px;
@@ -1333,11 +1337,8 @@ export class SfxDropZone extends LitElement {
           class="src-card"
           @click=${(e: MouseEvent) => this._toggleMore(e)}
         >
-          <span
-            class="card-ico"
-            style="color: var(--sfx-up-text-muted, #94a3b8)"
-          >
-            <svg viewBox="0 0 24 24" style="fill: currentColor; stroke: none">
+          <span class="card-ico muted">
+            <svg class="fill-icon" viewBox="0 0 24 24">
               <circle cx="5" cy="12" r="2.5" />
               <circle cx="12" cy="12" r="2.5" />
               <circle cx="19" cy="12" r="2.5" />

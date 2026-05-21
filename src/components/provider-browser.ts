@@ -287,6 +287,13 @@ export class SfxProviderBrowser extends LitElement {
       font-size: 12px;
     }
 
+    .crumb-home {
+      width: 12px;
+      height: 12px;
+      vertical-align: middle;
+      margin-right: 2px;
+    }
+
     /* --- File list --- */
     .file-list {
       flex: 1;
@@ -1163,7 +1170,7 @@ export class SfxProviderBrowser extends LitElement {
     return html`
       <div class="breadcrumbs">
         <button class="crumb" @click=${() => this._onBreadcrumbClick(-1)}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:12px;height:12px;vertical-align:middle;margin-right:2px">
+          <svg class="crumb-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
           </svg>
           Root

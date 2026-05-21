@@ -232,7 +232,7 @@ export class SfxMetadataPanel extends LitElement {
               <button class="btn-ghost" ?disabled=${!this._hasPrev} @click=${this._onPrev}>
                 ${prevIcon} Prev
               </button>
-              <span style="font-size: 12px; color: var(--sfx-up-text-muted, #94a3b8);">
+              <span class="page-counter">
                 ${idx + 1} / ${mf.length}
               </span>
               <button class="btn-ghost" ?disabled=${!this._hasNext} @click=${this._onNext}>

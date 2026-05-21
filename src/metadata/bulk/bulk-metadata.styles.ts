@@ -872,6 +872,9 @@ export const bulkDiffStyles = css`
     background: var(--sfx-up-border-light, #f1f5f9);
     color: var(--sfx-up-text-secondary, #64748b);
   }
+  .diff-chip--empty {
+    opacity: 0.5;
+  }
   .diff-chip--added {
     background: #dcfce7;
     color: #166534;

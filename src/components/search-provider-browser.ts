@@ -249,6 +249,11 @@ export class SfxSearchProviderBrowser extends LitElement {
       text-align: center;
     }
 
+    .loading.loading-more {
+      flex: none;
+      padding: 16px 0;
+    }
+
     .spinner {
       width: 28px;
       height: 28px;
@@ -563,7 +568,7 @@ export class SfxSearchProviderBrowser extends LitElement {
           )}
         </div>
         ${this._loadingMore
-          ? html`<div class="loading" style="padding:16px 0"><div class="spinner"></div></div>`
+          ? html`<div class="loading loading-more"><div class="spinner"></div></div>`
           : nothing}
       </div>
 

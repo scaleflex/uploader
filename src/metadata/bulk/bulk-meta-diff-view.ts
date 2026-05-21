@@ -20,7 +20,7 @@ export class SfxBulkMetaDiffView extends LitElement {
     return html`
       <div class="diff-wrap" aria-label="Bulk operation preview">
         ${diff.items.length === 0
-          ? html`<span class="diff-chip diff-chip--kept" style="opacity:0.5">\u2014</span>`
+          ? html`<span class="diff-chip diff-chip--kept diff-chip--empty">\u2014</span>`
           : diff.items.map(
               (item) => html`
                 <span
