@@ -303,7 +303,7 @@ export class SfxUrlDialog extends LitElement {
               />
             </div>
             <div class="field">
-              <label for="nameInput">${this.t('fileName', 'File name')} <span class="optional">${this.t('optional', '(optional)')}</span></label>
+              <label for="nameInput">${this.t('fileName', 'File name')} <span class="optional">(${this.t('optional', 'optional')})</span></label>
               <input
                 id="nameInput"
                 type="text"

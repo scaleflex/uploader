@@ -242,7 +242,7 @@ export class SfxScreenCastDialog extends LitElement {
                 : this._recording
                   ? html`
                       <video autoplay playsinline muted></video>
-                      <div class="status"><div class="rec-dot"></div> ${this.t('recording', 'Recording...')}</div>
+                      <div class="status"><div class="rec-dot"></div> ${this.t('recording', 'Recording')}...</div>
                       <div class="actions">
                         <button class="btn btn-danger" @click=${this._stopRecording}>${this.t('stopRecording', 'Stop recording')}</button>
                       </div>
