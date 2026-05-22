@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Internationalisation (i18n) support via i18next — all UI strings are now translatable
+  - `locale` config option accepts any BCP 47 locale string (e.g. `'fr'`, `'de'`, `'en-US'`); defaults to `navigator.language`
+  - Translations loaded lazily from Wordplex CDN; English defaults used as fallback when a key is not yet translated
+  - Missing-key debug helper: set `localStorage.sfxUploaderTranslationsMissingKeysEnabled = 'true'` to log untranslated keys to the console
+  - `scripts/extract-i18n-keys.mjs` — static extractor that generates `up-keys.json` for submission to the Wordplex TMS grid
+
 - Configurable "Locate" and "Copy CDN" buttons on review-screen file tiles — hidden by default, opt-in via `showLocateButton` and `showCopyCdnButton` config options
   - Locate dispatches `sfx-file-locate` event and `onFileLocate` callback (no longer opens a URL directly — host app controls navigation)
   - Copy CDN copies the CDN URL to clipboard and dispatches `sfx-file-copy-cdn` event and `onFileCopyCdn` callback

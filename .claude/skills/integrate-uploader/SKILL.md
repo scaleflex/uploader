@@ -223,6 +223,11 @@ uploader.config = {
     providers: ['google-drive', 'dropbox', 'onedrive', 'box'],
   },
 
+  // Localisation
+  locale: 'en',                          // BCP 47 locale tag (default: navigator.language)
+                                         // Translations served from Wordplex CDN; falls back to
+                                         // English defaults when the locale is not yet translated.
+
   // UI options
   showFillMetadata: false,               // Show "Fill Metadata" button (default: false)
   clearOnClose: true,                    // Clear files on modal close (default: true)
@@ -448,6 +453,22 @@ uploader.addEventListener('sfx-before-upload', (e) => {
     uploader.resumeUpload(updatedFiles);
   });
 });
+```
+
+## Internationalisation
+
+The uploader ships with English defaults baked in. To render a different language, pass a BCP 47 locale tag:
+
+```js
+uploader.config = { auth: { /* ... */ }, locale: 'fr' };
+```
+
+Translations are loaded lazily from the Wordplex CDN on first use. If a key is missing in the requested locale, the English default is shown. Supported locales depend on what has been translated in the Wordplex grid — run `/update-translations` after adding new `t('key', 'default')` calls.
+
+To debug missing keys locally:
+```js
+localStorage.setItem('sfxUploaderTranslationsMissingKeysEnabled', 'true');
+// Reload — missing keys are logged to the console as [uploader] MISSING: key → default
 ```
 
 ## Troubleshooting
