@@ -4038,7 +4038,7 @@ export class SfxUploader extends LitElement {
           : html`<img class="fs-img" src=${this._fullscreenPreviewUrl} alt="" ${cspStyle(this._fsZoom > 1 ? { transform: `scale(${this._fsZoom}) translate(${this._fsPanX}px, ${this._fsPanY}px)` } : null)} draggable="false" />`}
       </div>
       <div class="fs-toolbar" @click=${(e: Event) => e.stopPropagation()}>
-        <button class="fs-btn" @click=${this._onFsToggleZoom} title="${this._fsZoom >= SfxUploader._FS_ZOOM_LEVELS[SfxUploader._FS_ZOOM_LEVELS.length - 1] ? "Reset zoom" : `Zoom in (${this._fsZoom}×)`}">
+        <button class="fs-btn" @click=${this._onFsToggleZoom} title=${this._fsZoom >= SfxUploader._FS_ZOOM_LEVELS[SfxUploader._FS_ZOOM_LEVELS.length - 1] ? t('resetZoom', 'Reset zoom') : t('zoomIn', 'Zoom in ({{zoom}}×)', { zoom: this._fsZoom })}>
           ${this._fsZoom >= SfxUploader._FS_ZOOM_LEVELS[SfxUploader._FS_ZOOM_LEVELS.length - 1]
             ? html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>`
             : html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>`}
