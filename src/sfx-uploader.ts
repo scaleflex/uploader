@@ -214,6 +214,12 @@ export interface UploaderConfig {
    * Set to `true` for defaults, or pass a TusConfig object for fine-grained control.
    */
   tusConfig?: TusConfig | boolean;
+  /**
+   * BCP 47 locale tag for the UI language (e.g. `'fr'`, `'de'`, `'en-US'`).
+   * Defaults to `navigator.language`. Translations are loaded lazily from the
+   * Wordplex CDN; English defaults are shown for any untranslated keys.
+   */
+  locale?: string;
 }
 
 /** Default tus-related fields for new UploadFile objects. */
@@ -2052,7 +2058,6 @@ export class SfxUploader extends LitElement {
   `;
 
   @property({ attribute: false }) config: UploaderConfig | null = null;
-  @property() language = typeof navigator !== 'undefined' ? navigator.language : 'en';
 
   @state() private _isOpen = false;
   @state() private _activeConnector: ProviderId | null = null;
@@ -2319,6 +2324,7 @@ export class SfxUploader extends LitElement {
     if (changed.has("config") && this.config) {
       this._applyConfig(this.config);
     }
+
     // Resolve image dimensions when preview file changes
     if (changed.has("_previewFileId") && this._previewFileId) {
       const targetId = this._previewFileId;
@@ -2458,12 +2464,12 @@ export class SfxUploader extends LitElement {
     const id = this._lastUploadId;
     this._hasStoredReview = id != null && lastUploadStore.exists(id);
     // Initialise i18n (fire-and-forget — failure is non-fatal)
-    void this._initI18n();
+    void this._initI18n(typeof navigator !== 'undefined' ? navigator.language : undefined);
   }
 
-  private async _initI18n() {
+  private async _initI18n(locale?: string) {
     try {
-      const { i18n, isNew } = await initI18n(this.language || 'en');
+      const { i18n, isNew } = await initI18n(locale || 'en');
       if (isNew) {
         i18n.on(
           'missingKey',
@@ -2533,6 +2539,7 @@ export class SfxUploader extends LitElement {
     // Update store with config values
     const updates: Partial<UploaderState> = {};
 
+    if (cfg.locale) void this._initI18n(cfg.locale);
     if (cfg.targetFolder) updates.targetFolder = cfg.targetFolder;
     if (cfg.restrictions) {
       updates.restrictions = {
@@ -3896,6 +3903,7 @@ export class SfxUploader extends LitElement {
 
   private _renderHeader() {
     if (this._phase === "complete") return nothing;
+    const t = this._storeCtrl.state.t;
     const mode = this.config?.mode ?? "modal";
     if (this._phase === "uploading") {
       const s = this._storeCtrl.state;
@@ -3919,12 +3927,10 @@ export class SfxUploader extends LitElement {
             </div>
             <div>
               <div class="float-title">
-                Uploading ${files.length}
-                ${files.length === 1 ? "file" : "files"}
+                ${t('uploadingFiles', { count: files.length, defaultValue_one: 'Uploading {{count}} file', defaultValue_other: 'Uploading {{count}} files' })}
               </div>
               <div class="float-subtitle">
-                ${completed} of
-                ${files.length}${this._lastEta > 0 ? ` · ~${formatEta(this._lastEta)} left` : ""}
+                ${t('nOfNComplete', '{{completed}} of {{total}} complete', { completed, total: files.length })}${this._lastEta > 0 ? ` · ${t('etaLeft', '~{{eta}} left', { eta: formatEta(this._lastEta) })}` : ""}
               </div>
             </div>
           </div>
@@ -3996,7 +4002,7 @@ export class SfxUploader extends LitElement {
               </svg>
             </div>`
           : nothing}
-        <div class="header-title">Upload Files</div>
+        <div class="header-title">${t('uploadFiles', 'Upload Files')}</div>
         ${closeBtn}
       </div>
     `;
@@ -4027,6 +4033,7 @@ export class SfxUploader extends LitElement {
 
   private _renderUploadOverlay(files: UploadFile[]) {
     const s = this._storeCtrl.state;
+    const t = s.t;
     const pct = Math.round(s.totalProgress ?? 0);
     const completed = files.filter((f) => f.status === "complete").length;
 
@@ -4035,11 +4042,10 @@ export class SfxUploader extends LitElement {
         <div class="upload-overlay-spinner"></div>
         <div class="upload-overlay-percent">${pct}%</div>
         <div class="upload-overlay-title">
-          Uploading ${files.length} ${files.length === 1 ? "file" : "files"}
+          ${t('uploadingFiles', { count: files.length, defaultValue_one: 'Uploading {{count}} file', defaultValue_other: 'Uploading {{count}} files' })}
         </div>
         <div class="upload-overlay-subtitle">
-          ${completed} of ${files.length}
-          complete${this._lastEta > 0 ? html` · ~${formatEta(this._lastEta)} left` : nothing}
+          ${t('nOfNComplete', '{{completed}} of {{total}} complete', { completed, total: files.length })}${this._lastEta > 0 ? html` · ${t('etaLeft', '~{{eta}} left', { eta: formatEta(this._lastEta) })}` : nothing}
         </div>
         <div class="upload-overlay-bar">
           <div class="upload-overlay-bar-fill" ${cspStyle({ width: `${pct}%` })}></div>
@@ -4049,14 +4055,14 @@ export class SfxUploader extends LitElement {
             class="upload-overlay-cancel"
             @click=${this._onCancelUpload}
           >
-            Cancel upload
+            ${t('cancelUpload', 'Cancel upload')}
           </button>
           ${this.config?.minimizeOnUpload
             ? html`<button
                 class="upload-overlay-minimize"
                 @click=${this._onMinimize}
               >
-                Minimize & continue in background
+                ${t('minimizeAndContinue', 'Minimize & continue in background')}
               </button>`
             : nothing}
         </div>
@@ -4126,12 +4132,10 @@ export class SfxUploader extends LitElement {
               >${isDone
                 ? failed > 0
                   ? completed > 0
-                    ? "Partially uploaded"
-                    : "Upload failed"
-                  : "Upload complete"
-                : `Uploading ${files.length} ${
-                    files.length === 1 ? "file" : "files"
-                  }`}</span
+                    ? t('partiallyUploaded', 'Partially uploaded')
+                    : t('uploadFailed', 'Upload failed')
+                  : t('uploadComplete', 'Upload complete')
+                : t('uploadingFiles', { count: files.length, defaultValue_one: 'Uploading {{count}} file', defaultValue_other: 'Uploading {{count}} files' })}</span
             >
             ${!isDone
               ? html`<span class="float-collapsed-pct">${pct}%</span>`
@@ -4250,21 +4254,15 @@ export class SfxUploader extends LitElement {
                 ${isDone
                   ? failed > 0
                     ? completed > 0
-                      ? "Partially uploaded"
-                      : "Upload failed"
-                    : "Upload complete"
-                  : `Uploading ${files.length} ${
-                      files.length === 1 ? "file" : "files"
-                    }`}
+                      ? t('partiallyUploaded', 'Partially uploaded')
+                      : t('uploadFailed', 'Upload failed')
+                    : t('uploadComplete', 'Upload complete')
+                  : t('uploadingFiles', { count: files.length, defaultValue_one: 'Uploading {{count}} file', defaultValue_other: 'Uploading {{count}} files' })}
               </div>
               <div class="float-subtitle">
                 ${isDone
-                  ? `${completed} ${
-                      completed === 1 ? "file" : "files"
-                    } uploaded${failed > 0 ? `, ${failed} failed` : ""}`
-                  : `${completed} of ${files.length}${
-                      this._lastEta > 0 ? ` · ~${formatEta(this._lastEta)} left` : ""
-                    }`}
+                  ? `${t('filesUploaded', { count: completed, defaultValue_one: '{{count}} file uploaded', defaultValue_other: '{{count}} files uploaded' })}${failed > 0 ? `, ${t('nFailed', '{{count}} failed', { count: failed })}` : ""}`
+                  : `${t('nOfNComplete', '{{completed}} of {{total}} complete', { completed, total: files.length })}${this._lastEta > 0 ? ` · ${t('etaLeft', '~{{eta}} left', { eta: formatEta(this._lastEta) })}` : ""}`}
               </div>
             </div>
           </div>
@@ -4783,7 +4781,7 @@ export class SfxUploader extends LitElement {
                       this._fileInfoOpen = !this._fileInfoOpen;
                     }}
                   >
-                    <span>File info</span>
+                    <span>${t('fileInfo', 'File info')}</span>
                     <svg
                       viewBox="0 0 24 24"
                       fill="none"
@@ -4800,19 +4798,19 @@ export class SfxUploader extends LitElement {
                       : ""}"
                   >
                     <div class="preview-file-info-row">
-                      <div class="preview-file-info-key">File name</div>
+                      <div class="preview-file-info-key">${t('fileName', 'File name')}</div>
                       <div class="preview-file-info-val">
                         ${previewFile.name}
                       </div>
                     </div>
                     <div class="preview-file-info-row">
-                      <div class="preview-file-info-key">Type</div>
+                      <div class="preview-file-info-key">${t('type', 'Type')}</div>
                       <div class="preview-file-info-val">${ext}</div>
                     </div>
                     ${previewFile.size
                       ? html`
                           <div class="preview-file-info-row">
-                            <div class="preview-file-info-key">Size</div>
+                            <div class="preview-file-info-key">${t('size', 'Size')}</div>
                             <div class="preview-file-info-val">
                               ${formatFileSize(previewFile.size)}
                             </div>
@@ -4822,7 +4820,7 @@ export class SfxUploader extends LitElement {
                     ${this._previewDims !== "\u2014"
                       ? html`
                           <div class="preview-file-info-row">
-                            <div class="preview-file-info-key">Dimensions</div>
+                            <div class="preview-file-info-key">${t('dimensions', 'Dimensions')}</div>
                             <div class="preview-file-info-val">
                               ${this._previewDims}
                             </div>
@@ -4924,6 +4922,7 @@ export class SfxUploader extends LitElement {
             ? html`
                 <sfx-success-card
                   .t=${t}
+                  .primaryLabel=${t('done', 'Done')}
                   .fileCount=${files.filter((f) => f.status === "complete")
                     .length}
                   .totalSize=${files

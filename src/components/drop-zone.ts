@@ -1115,7 +1115,7 @@ export class SfxDropZone extends LitElement {
                         s.icon,
                       )}</svg>`}
                 </div>
-                ${s.label}
+                ${s.labelKey ? this.t(s.labelKey, s.label) : s.label}
               </button>
             `,
           )}
@@ -1256,6 +1256,9 @@ export class SfxDropZone extends LitElement {
     if (changed.has("sourcesLayout")) {
       this._updateVisiblePills();
     }
+    if (changed.has("t") && this._moreOpen) {
+      this._updateDropdownPortal();
+    }
   }
 
   disconnectedCallback() {
@@ -1296,7 +1299,7 @@ export class SfxDropZone extends LitElement {
                 s.fillIcon ? "fill-icon" : ""
               }>${unsafeSVG(s.icon)}</svg>`}
             </span>`}
-        ${s.label}
+        ${s.labelKey ? this.t(s.labelKey, s.label) : s.label}
       </button>
     `;
   }
@@ -1305,7 +1308,7 @@ export class SfxDropZone extends LitElement {
     return html`
       <button
         class="src-card"
-        aria-label=${s.label}
+        aria-label=${s.labelKey ? this.t(s.labelKey, s.label) : s.label}
         @click=${(e: MouseEvent) => {
           e.stopPropagation();
           this._onSourceIconClick(s);
@@ -1321,7 +1324,7 @@ export class SfxDropZone extends LitElement {
                 s.fillIcon ? "fill-icon" : ""
               }>${unsafeSVG(s.icon)}</svg>`}
             </span>`}
-        <span class="card-label">${s.label}</span>
+        <span class="card-label">${s.labelKey ? this.t(s.labelKey, s.label) : s.label}</span>
       </button>
     `;
   }
@@ -1443,8 +1446,8 @@ export class SfxDropZone extends LitElement {
                     <button
                       class="src-ico"
                       ${cspStyle(s.iconColor && !s.brandHtml ? { color: s.iconColor } : null)}
-                      data-tip=${s.label}
-                      aria-label=${s.label}
+                      data-tip=${s.labelKey ? this.t(s.labelKey, s.label) : s.label}
+                      aria-label=${s.labelKey ? this.t(s.labelKey, s.label) : s.label}
                       @click=${(e: MouseEvent) => {
                         e.stopPropagation();
                         this._onSourceIconClick(s);
