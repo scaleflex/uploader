@@ -1,4 +1,4 @@
-export { SfxUploader, type UploaderConfig, type UploaderCallbacks, type InlineHeaderConfig } from './sfx-uploader';
+export { SfxUploader, type UploaderConfig, type UploaderCallbacks, type InlineHeaderConfig, type RemoteThumbnailContext } from './sfx-uploader';
 export { createStore, Store } from './store';
 export { UploadEngine, type UploadEngineConfig, type TusConfig } from './engine';
 export { PublicEvents } from './events/public-events';
@@ -22,7 +22,7 @@ export type {
 export { resolveAuth, exchangeSassKey, getApiBase, buildAuthHeaders } from './auth';
 
 // Connectors
-export type { ProviderId, ConnectorConfig, RemoteFileInfo } from './connectors';
+export type { ProviderId, ConnectorConfig, CoreSourceId, RemoteFileInfo } from './connectors';
 export { getProviderSources } from './connectors';
 
 // Components

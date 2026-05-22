@@ -3,7 +3,7 @@ import { property, state } from 'lit/decorators.js';
 import { cspStyle } from '../utils/csp-style';
 import type { MetadataSchema, MetadataConfig, MetadataField } from './schema/schema.types';
 import type { UploadFile } from '../store/store.types';
-import { isAssetHasMetadataValue } from './schema/required-fields';
+import { isAssetHasMetadataValue, isFieldRequired } from './schema/required-fields';
 import { metadataPanelStyles } from './metadata.styles';
 
 // Inline SVG icons (16x16)
@@ -73,10 +73,7 @@ export class SfxMetadataPanel extends LitElement {
 
   private get _requiredFields(): MetadataField[] {
     if (!this.schema || !this.config) return [];
-    return this.schema.fields.filter(f => {
-      if (this.config!.requiredFields) return this.config!.requiredFields.includes(f.ckey);
-      return f.required === 1;
-    });
+    return this.schema.fields.filter(f => isFieldRequired(f, this.config!));
   }
 
   private get _filledCount(): number {
@@ -235,7 +232,7 @@ export class SfxMetadataPanel extends LitElement {
               <button class="btn-ghost" ?disabled=${!this._hasPrev} @click=${this._onPrev}>
                 ${prevIcon} Prev
               </button>
-              <span style="font-size: 12px; color: var(--sfx-up-text-muted, #94a3b8);">
+              <span class="page-counter">
                 ${idx + 1} / ${mf.length}
               </span>
               <button class="btn-ghost" ?disabled=${!this._hasNext} @click=${this._onNext}>

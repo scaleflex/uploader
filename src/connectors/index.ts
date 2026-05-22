@@ -1,6 +1,7 @@
 export type {
   ProviderId,
   ConnectorConfig,
+  CoreSourceId,
   CompanionItem,
   CompanionListResponse,
   CompanionSearchItem,

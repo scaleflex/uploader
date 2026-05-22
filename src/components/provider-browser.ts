@@ -288,6 +288,13 @@ export class SfxProviderBrowser extends LitElement {
       font-size: 12px;
     }
 
+    .crumb-home {
+      width: 12px;
+      height: 12px;
+      vertical-align: middle;
+      margin-right: 2px;
+    }
+
     /* --- File list --- */
     .file-list {
       flex: 1;
@@ -672,6 +679,12 @@ export class SfxProviderBrowser extends LitElement {
   @property({ attribute: false }) t: TFunction = (k, d) => (typeof d === 'string' ? d : k);
   @property({ type: String }) provider: ProviderId = 'google-drive';
   @property({ type: String }) companionUrl = '';
+  /**
+   * Optional rewrite for listing thumbnail URLs so they pass the host CSP.
+   * Defaults to the identity function.
+   */
+  @property({ attribute: false })
+  transformThumbnail: (url: string) => string = (u) => u;
 
   @state() private _authenticated = false;
   @state() private _loading = false;
@@ -1090,7 +1103,7 @@ export class SfxProviderBrowser extends LitElement {
               />
               <div class="file-thumb">
                 ${item.thumbnail
-                  ? html`<img src=${item.thumbnail} alt="" loading="lazy" referrerpolicy="no-referrer"
+                  ? html`<img src=${this.transformThumbnail(item.thumbnail)} alt="" loading="lazy" referrerpolicy="no-referrer"
                       @error=${(e: Event) => {
                         const img = e.target as HTMLImageElement;
                         img.style.display = 'none';
@@ -1159,7 +1172,7 @@ export class SfxProviderBrowser extends LitElement {
     return html`
       <div class="breadcrumbs">
         <button class="crumb" @click=${() => this._onBreadcrumbClick(-1)}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:12px;height:12px;vertical-align:middle;margin-right:2px">
+          <svg class="crumb-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
           </svg>
           Root

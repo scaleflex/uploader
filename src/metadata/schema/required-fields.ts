@@ -1,6 +1,13 @@
 import type { UploadFile } from '../../store/store.types';
-import type { MetadataConfig, MetadataSchema } from './schema.types';
+import type { MetadataConfig, MetadataSchema, MetadataField } from './schema.types';
 import { isEmpty } from './validation';
+
+/** File statuses where metadata can still be edited before upload. */
+const MODIFIABLE_STATUSES = new Set<UploadFile['status']>([
+  'idle',
+  'queued',
+  'rejected',
+]);
 
 /**
  * Returns true if the value counts as a non-empty metadata value.
@@ -8,6 +15,29 @@ import { isEmpty } from './validation';
  */
 export function isAssetHasMetadataValue(value: unknown): boolean {
   return !isEmpty(value);
+}
+
+/**
+ * Whether a field is required. The Hub returns `required` as a JSON boolean,
+ * but legacy responses use 0/1 — accept both via truthy check.
+ */
+export function isFieldRequired(
+  field: MetadataField,
+  config?: MetadataConfig,
+): boolean {
+  if (config?.requiredFields?.includes(field.ckey)) return true;
+  return Boolean(field.required);
+}
+
+function getModifiableFiles(files: Map<string, UploadFile>): UploadFile[] {
+  return [...files.values()].filter(f => MODIFIABLE_STATUSES.has(f.status));
+}
+
+function getRequiredFields(
+  schema: MetadataSchema,
+  config?: MetadataConfig,
+): MetadataField[] {
+  return schema.fields.filter(f => isFieldRequired(f, config));
 }
 
 /**
@@ -22,22 +52,11 @@ export function getFilesWithMissingRequired(
   schema: MetadataSchema,
   config?: MetadataConfig,
 ): Record<string, UploadFile[]> {
-  const modifiableStatuses = new Set(['idle', 'queued', 'rejected']);
-
-  const modifiableFiles = [...files.values()].filter(f =>
-    modifiableStatuses.has(f.status),
-  );
-
+  const modifiableFiles = getModifiableFiles(files);
   if (modifiableFiles.length === 0) return {};
 
-  const requiredCkeys = new Set(config?.requiredFields ?? []);
-  const requiredFields = schema.fields.filter(
-    f => f.required === 1 || requiredCkeys.has(f.ckey),
-  );
-
   const result: Record<string, UploadFile[]> = {};
-
-  for (const field of requiredFields) {
+  for (const field of getRequiredFields(schema, config)) {
     const missing = modifiableFiles.filter(
       file => !isAssetHasMetadataValue(file.meta[field.key]),
     );
@@ -45,8 +64,29 @@ export function getFilesWithMissingRequired(
       result[field.key] = missing;
     }
   }
-
   return result;
+}
+
+/**
+ * Returns the key of the first required field (in schema iteration order) that
+ * has at least one modifiable file with an empty value. Returns null when
+ * everything is filled or there are no required fields.
+ */
+export function firstMissingRequiredFieldKey(
+  files: Map<string, UploadFile>,
+  schema: MetadataSchema,
+  config?: MetadataConfig,
+): string | null {
+  const modifiableFiles = getModifiableFiles(files);
+  if (modifiableFiles.length === 0) return null;
+
+  for (const field of getRequiredFields(schema, config)) {
+    const someMissing = modifiableFiles.some(
+      file => !isAssetHasMetadataValue(file.meta[field.key]),
+    );
+    if (someMissing) return field.key;
+  }
+  return null;
 }
 
 /**

@@ -9,11 +9,16 @@ export type ProviderId =
 
 import type { SourceDef } from '../types/source.types';
 
+/** Built-in source IDs always available unless filtered via {@link ConnectorConfig.coreSources}. */
+export type CoreSourceId = 'device' | 'url' | 'camera' | 'screen-cast';
+
 /** Connector configuration passed via UploaderConfig. */
 export interface ConnectorConfig {
   companionUrl: string; // e.g. 'https://eu-on-24001.connector.filerobot.com'
   providers: ProviderId[];
   customSources?: SourceDef[];  // external integrations (e.g. Canva via its own SDK)
+  /** Allowlist of built-in sources to render. When omitted, all core sources are shown. */
+  coreSources?: CoreSourceId[];
 }
 
 /** A file or folder item returned by Companion's list endpoint. */

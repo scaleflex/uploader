@@ -13,14 +13,35 @@ vi.mock('./companion-upload', () => ({
   companionUploadFile: vi.fn(() => ({ abort: vi.fn() })),
 }));
 
+// Keep `shouldUseTus` real (it's pure logic) but stub `tusUploadFile`
+// so tests can drive the tus-vs-xhr branch without spinning up tus-js-client.
+vi.mock('./tus-upload', async () => {
+  const actual = await vi.importActual<typeof import('./tus-upload')>('./tus-upload');
+  return {
+    ...actual,
+    tusUploadFile: vi.fn(() => ({
+      abort: vi.fn(),
+      pause: vi.fn(),
+      resume: vi.fn(),
+      isPaused: () => false,
+    })),
+  };
+});
+
 import { xhrUploadFile, xhrUploadUrl } from './xhr-upload';
 import { companionUploadFile } from './companion-upload';
+import { tusUploadFile } from './tus-upload';
+import type { UploadEngineConfig } from './upload-engine';
 
-function createEngine(stateOverrides: Partial<UploaderState> = {}) {
+function createEngine(
+  stateOverrides: Partial<UploaderState> = {},
+  configOverrides: Partial<UploadEngineConfig> = {},
+) {
   const store = new Store(makeDefaultState(stateOverrides));
-  const config = {
+  const config: UploadEngineConfig = {
     apiBase: 'https://api.filerobot.com/test',
     authHeaders: { 'X-Filerobot-Key': 'key' },
+    ...configOverrides,
   };
   const engine = new UploadEngine(store, config);
   return { store, engine };
@@ -165,6 +186,57 @@ describe('UploadEngine', () => {
       expect(updated.progress).toBe(100);
       expect(updated.response).toEqual(mockResponse);
       expect(store.getState().isUploading).toBe(false);
+    });
+
+    it('swaps previewUrl to CDN URL for image files', () => {
+      const revokeSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+      const file = makeUploadFile({
+        id: 'f1',
+        status: 'queued',
+        type: 'image/png',
+        previewUrl: 'blob:http://localhost/abc',
+      });
+      const { store, engine } = createEngine({
+        files: new Map([['f1', file]]),
+        isUploading: true,
+      });
+
+      (xhrUploadFile as ReturnType<typeof vi.fn>).mockImplementation((_f: any, opts: any) => {
+        setTimeout(() => opts.onComplete(mockResponse), 0);
+        return { abort: vi.fn() };
+      });
+
+      engine.start();
+      vi.runAllTimers();
+
+      const updated = store.getState().files.get('f1')!;
+      expect(updated.previewUrl).toBe('https://cdn');
+      expect(revokeSpy).toHaveBeenCalledWith('blob:http://localhost/abc');
+      revokeSpy.mockRestore();
+    });
+
+    it('keeps previewUrl unchanged for non-image files', () => {
+      const file = makeUploadFile({
+        id: 'f1',
+        status: 'queued',
+        type: 'video/mp4',
+        previewUrl: 'blob:http://localhost/poster',
+      });
+      const { store, engine } = createEngine({
+        files: new Map([['f1', file]]),
+        isUploading: true,
+      });
+
+      (xhrUploadFile as ReturnType<typeof vi.fn>).mockImplementation((_f: any, opts: any) => {
+        setTimeout(() => opts.onComplete(mockResponse), 0);
+        return { abort: vi.fn() };
+      });
+
+      engine.start();
+      vi.runAllTimers();
+
+      const updated = store.getState().files.get('f1')!;
+      expect(updated.previewUrl).toBe('blob:http://localhost/poster');
     });
   });
 
@@ -341,6 +413,177 @@ describe('UploadEngine', () => {
       engine.start();
       engine.start(); // should not subscribe twice
       engine.destroy();
+    });
+  });
+
+  describe('resolveUploadParams', () => {
+    it('forwards extraParams to xhrUploadFile when resolver returns non-empty', () => {
+      const file = makeUploadFile({ id: 'f1', status: 'queued' });
+      const { engine } = createEngine(
+        { files: new Map([['f1', file]]) },
+        { resolveUploadParams: () => ({ opt_force_name: 'project-uuid' }) },
+      );
+
+      engine.start();
+
+      expect(xhrUploadFile).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          extraParams: { opt_force_name: 'project-uuid' },
+        }),
+      );
+    });
+
+    it('forwards extraParams to xhrUploadUrl for URL imports', () => {
+      const file = makeUploadFile({
+        id: 'f1',
+        status: 'queued',
+        file: null,
+        remoteUrl: 'https://example.com/img.jpg',
+      });
+      const { engine } = createEngine(
+        { files: new Map([['f1', file]]) },
+        { resolveUploadParams: () => ({ opt_force_name: 'fixed' }) },
+      );
+
+      engine.start();
+
+      expect(xhrUploadUrl).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          extraParams: { opt_force_name: 'fixed' },
+        }),
+      );
+    });
+
+    it('forwards extraParams to companionUploadFile for cloud connectors', () => {
+      const file = makeUploadFile({
+        id: 'f1',
+        status: 'queued',
+        file: null,
+        remoteInfo: {
+          companionUrl: 'https://companion.test',
+          provider: 'google-drive',
+          token: 'tok',
+          requestPath: '/path',
+          fileId: 'gd-1',
+          name: 'doc.pdf',
+          mimeType: 'application/pdf',
+          size: 1000,
+          thumbnail: null,
+        },
+      });
+      const { engine } = createEngine(
+        { files: new Map([['f1', file]]) },
+        { resolveUploadParams: () => ({ opt_force_name: 'connector-asset' }) },
+      );
+
+      engine.start();
+
+      expect(companionUploadFile).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({
+          extraParams: { opt_force_name: 'connector-asset' },
+        }),
+      );
+    });
+
+    it('omits extraParams when no resolver is configured', () => {
+      const file = makeUploadFile({ id: 'f1', status: 'queued' });
+      const { engine } = createEngine({ files: new Map([['f1', file]]) });
+
+      engine.start();
+
+      expect(xhrUploadFile).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ extraParams: undefined }),
+      );
+    });
+
+    it('omits extraParams when resolver returns empty object', () => {
+      const file = makeUploadFile({ id: 'f1', status: 'queued' });
+      const { engine } = createEngine(
+        { files: new Map([['f1', file]]) },
+        { resolveUploadParams: () => ({}) },
+      );
+
+      engine.start();
+
+      expect(xhrUploadFile).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ extraParams: undefined }),
+      );
+    });
+
+    it('bypasses tus when resolver returns non-empty params, even for large files', () => {
+      // 20 MB file — well above the default 10 MB tus threshold
+      const largeFile = new File([new Uint8Array(20 * 1024 * 1024)], 'big.bin', {
+        type: 'application/octet-stream',
+      });
+      const file = makeUploadFile({
+        id: 'f1',
+        status: 'queued',
+        file: largeFile,
+        size: largeFile.size,
+        type: largeFile.type,
+      });
+      const { store, engine } = createEngine(
+        { files: new Map([['f1', file]]) },
+        {
+          tusConfig: {}, // enable tus with default threshold
+          resolveUploadParams: () => ({ opt_force_name: 'overwrite-me' }),
+        },
+      );
+
+      engine.start();
+
+      expect(tusUploadFile).not.toHaveBeenCalled();
+      expect(xhrUploadFile).toHaveBeenCalled();
+      expect(store.getState().files.get('f1')!.isTus).toBe(false);
+    });
+
+    it('still uses tus when no resolver is configured (control)', () => {
+      const largeFile = new File([new Uint8Array(20 * 1024 * 1024)], 'big.bin', {
+        type: 'application/octet-stream',
+      });
+      const file = makeUploadFile({
+        id: 'f1',
+        status: 'queued',
+        file: largeFile,
+        size: largeFile.size,
+        type: largeFile.type,
+      });
+      const { engine } = createEngine(
+        { files: new Map([['f1', file]]) },
+        { tusConfig: {} },
+      );
+
+      engine.start();
+
+      expect(tusUploadFile).toHaveBeenCalled();
+      expect(xhrUploadFile).not.toHaveBeenCalled();
+    });
+
+    it('re-invokes resolver on each upload start (e.g. retries)', () => {
+      const resolver = vi.fn(() => ({ opt_force_name: 'name-v1' }));
+      const file = makeUploadFile({ id: 'f1', status: 'queued' });
+      const { store, engine } = createEngine(
+        { files: new Map([['f1', file]]) },
+        { resolveUploadParams: resolver },
+      );
+
+      engine.start();
+      expect(resolver).toHaveBeenCalledTimes(1);
+
+      // Simulate a retry: mark failed, then retry
+      store.setState({
+        files: new Map([
+          ['f1', { ...store.getState().files.get('f1')!, status: 'failed' }],
+        ]),
+      });
+      engine.retryFile('f1');
+
+      expect(resolver).toHaveBeenCalledTimes(2);
     });
   });
 });

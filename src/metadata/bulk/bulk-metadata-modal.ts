@@ -22,6 +22,8 @@ export class SfxBulkMetadataModal extends LitElement {
   @property({ attribute: false }) files: UploadFile[] = [];
   @property({ attribute: false }) config: MetadataConfig | null = null;
   @property({ attribute: false }) autocomplete: unknown;
+  /** When set, the modal opens with this field active instead of the first one. */
+  @property({ attribute: false }) initialFieldKey: string | null = null;
 
   // --- Internal state ---
   @state() private _activeFieldKey = '';
@@ -96,8 +98,11 @@ export class SfxBulkMetadataModal extends LitElement {
     this._selected = selected;
     this._originalFiles = originals;
 
-    // Set first field as active
-    if (this.schema?.fields?.length > 0) {
+    // Set active field — prefer caller-supplied initial field, else first available
+    const initial = this.initialFieldKey;
+    if (initial && this.schema?.fieldsByKey?.has(initial)) {
+      this._activeFieldKey = initial;
+    } else if (this.schema?.fields?.length > 0) {
       this._activeFieldKey = this.schema.fields[0].key;
     }
   }

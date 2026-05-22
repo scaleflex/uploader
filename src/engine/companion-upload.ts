@@ -7,6 +7,8 @@ export interface CompanionUploadOptions {
   apiBase: string;
   authHeaders: AuthHeaders;
   folder: string;
+  /** Extra query-string parameters appended to the Scaleflex endpoint URL Companion forwards to (e.g. `opt_force_name`). */
+  extraParams?: Record<string, string>;
   onProgress: (bytesUploaded: number, bytesTotal: number) => void;
   onComplete: (response: UploadResponse) => void;
   onError: (error: Error) => void;
@@ -36,9 +38,17 @@ export function companionUploadFile(
   let socket: WebSocket | null = null;
 
   const base = opts.apiBase.replace(/\/+$/, '');
-  const endpoint = `${base}/v4/files?folder=${encodeURIComponent(opts.folder)}`;
+  let endpoint = `${base}/v4/files?folder=${encodeURIComponent(opts.folder)}`;
+  if (opts.extraParams) {
+    for (const [key, value] of Object.entries(opts.extraParams)) {
+      if (value == null) continue;
+      endpoint += `&${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+    }
+  }
 
-  // Build metadata to pass through to Scaleflex (matches v5 behavior)
+  // Build metadata to pass through to Scaleflex (matches v5 behavior).
+  // `filerobot-folder` is the form-field name FR reads on the Companion relay
+  // path — the `?folder=` query string alone is not honored here.
   const metadata: Record<string, unknown> = {};
   if (uploadFile.meta && Object.keys(uploadFile.meta).length > 0) {
     Object.assign(metadata, uploadFile.meta);
@@ -46,6 +56,7 @@ export function companionUploadFile(
   if (uploadFile.tags && uploadFile.tags.length > 0) {
     metadata.tags = uploadFile.tags;
   }
+  metadata['filerobot-folder'] = opts.folder;
 
   const isSearchProvider = !info.token;
 
@@ -54,7 +65,7 @@ export function companionUploadFile(
     endpoint,
     headers: opts.authHeaders,
     size: info.size,
-    metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
+    metadata,
   }, isSearchProvider)
     .then((result) => {
       if (aborted) return;

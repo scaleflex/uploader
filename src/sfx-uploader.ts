@@ -47,6 +47,10 @@ import type {
   MetadataConfig,
   MetadataSchema,
 } from "./metadata/schema/schema.types";
+import {
+  firstMissingRequiredFieldKey,
+  isFieldRequired,
+} from "./metadata/schema/required-fields";
 import type { SfxToast } from "./components/toast";
 
 /** Providers that use search instead of OAuth file browsing. */
@@ -103,6 +107,22 @@ export interface InlineHeaderConfig {
   title?: string;
   /** Description text below the title. */
   description?: string;
+}
+
+/**
+ * Context passed to {@link UploaderConfig.transformRemoteThumbnail} so the
+ * host can decide how to rewrite a third-party thumbnail URL (e.g. proxy it
+ * through Filerobot for CSP compliance, append a token, …).
+ */
+export interface RemoteThumbnailContext {
+  /**
+   * Where the URL came from:
+   * - `'url-import'` — pasted into the "Import from URL" dialog.
+   * - `'connector'` — listing/selection result from a Companion provider.
+   */
+  source: 'url-import' | 'connector';
+  /** Provider id when `source === 'connector'`. */
+  providerId?: import('./connectors/connector.types').ProviderId;
 }
 
 export interface UploaderConfig {
@@ -214,6 +234,66 @@ export interface UploaderConfig {
    * Set to `true` for defaults, or pass a TusConfig object for fine-grained control.
    */
   tusConfig?: TusConfig | boolean;
+  /**
+   * Force every uploaded file to be saved under this exact name in
+   * `targetFolder`, overwriting any existing file with the same name.
+   * Use for single-asset slots (watermark, default image, folder icon)
+   * where the host always wants one file at a stable path.
+   *
+   * Translates to `&opt_force_name=<value>` on the upload request and
+   * works across every source — local file, URL import, Google Drive,
+   * Unsplash, etc. Setting this implicitly clamps
+   * `restrictions.maxNumberOfFiles` to `1`, disables multi-select on
+   * the file picker, and forces the XHR upload path regardless of file
+   * size (tus is bypassed because Companion's tus relay does not
+   * propagate `opt_force_name` reliably).
+   *
+   * Pass a function if the name needs to be derived per-session.
+   *
+   * @example
+   * forceName: `project-${projectUuid}`
+   */
+  forceName?: string | (() => string);
+  /**
+   * Append arbitrary query parameters (typically Filerobot `opt_*` flags)
+   * to every upload request. Called once per file just before its
+   * request is sent and merged into the URL of whichever upload path
+   * runs (XHR, URL, or Companion). Return `undefined` for no extras.
+   * Returning a non-empty object also forces the XHR path — tus is
+   * bypassed since its Companion relay does not propagate `opt_*` flags
+   * reliably.
+   *
+   * If a key collides with one produced by `forceName`, the value
+   * returned here wins.
+   *
+   * @example
+   * getUploadParams: (file) => ({
+   *   opt_force_name: deriveNameFor(file),
+   *   opt_overwrite_meta: 'true',
+   * })
+   */
+  getUploadParams?: (file: UploadFile) => Record<string, string> | undefined;
+  /**
+   * Rewrite third-party thumbnail URLs before they are rendered as `<img src>`.
+   * Use this when the host page enforces a Content-Security-Policy that
+   * disallows the original origin (e.g. Hub allowing only `*.filerobot.com`
+   * and `*.cloudimg.io`). The function receives the original URL and a
+   * {@link RemoteThumbnailContext} describing where it came from, and should
+   * return a CSP-allowed URL (typically a Filerobot/Cloudimage proxy).
+   *
+   * Applies to:
+   *  - URL imports (the pasted URL is used as the pre-upload preview).
+   *  - Connector listing/selection thumbnails (Google Drive, Unsplash, etc.).
+   *
+   * Once a file finishes uploading the preview is automatically swapped to
+   * the Filerobot CDN URL, so this hook only matters for the pre-upload
+   * preview window.
+   *
+   * @example
+   * transformRemoteThumbnail: (url) =>
+   *   `https://demo.cloudimg.io/v7/${encodeURIComponent(url)}?w=200`
+   */
+  transformRemoteThumbnail?: (url: string, ctx: RemoteThumbnailContext) => string;
   /**
    * BCP 47 locale tag for the UI language (e.g. `'fr'`, `'de'`, `'en-US'`).
    * Defaults to `navigator.language`. Translations are loaded lazily from the
@@ -2074,7 +2154,8 @@ export class SfxUploader extends LitElement {
   private _previewDefaultApplied = false;
   @state() private _fullscreenPreviewUrl: string | null = null;
   @state() private _fullscreenVideoFile: File | null = null;
-  @state() private _fullscreenZoomed = false;
+  @state() private _fsZoom = 1;
+  private static readonly _FS_ZOOM_LEVELS = [1, 2, 3, 4] as const;
   private _fsPanX = 0;
   private _fsPanY = 0;
   private _fsDragging = false;
@@ -2087,6 +2168,8 @@ export class SfxUploader extends LitElement {
   @state() private _isPillExpanded = false;
   @state() private _metadataSchema: MetadataSchema | null = null;
   @state() private _bulkMetadataOpen = false;
+  /** When non-null, the bulk modal opens with this field active. */
+  @state() private _bulkMetadataInitialFieldKey: string | null = null;
   /** True when the user has clicked "Review files" on the success-card or
    *  the "View last upload" pill on the drop-zone screen. Renders the
    *  read-only last-upload-review screen instead of the normal phase view. */
@@ -2541,11 +2624,16 @@ export class SfxUploader extends LitElement {
 
     if (cfg.locale) void this._initI18n(cfg.locale);
     if (cfg.targetFolder) updates.targetFolder = cfg.targetFolder;
-    if (cfg.restrictions) {
+    if (cfg.restrictions || cfg.forceName != null) {
       updates.restrictions = {
         ...this._store.getState().restrictions,
         ...cfg.restrictions,
       };
+      // forceName implies a single-asset slot — clamp to one file regardless
+      // of any user-supplied maxNumberOfFiles.
+      if (cfg.forceName != null) {
+        updates.restrictions.maxNumberOfFiles = 1;
+      }
     }
     if (cfg.concurrency != null) {
       const qc = this._store.getState().queueConfig;
@@ -2586,6 +2674,7 @@ export class SfxUploader extends LitElement {
         apiBase: this._apiBase,
         authHeaders: this._authHeaders,
         tusConfig: this._normalizeTusConfig(),
+        resolveUploadParams: this._buildUploadParamsResolver(),
       });
       this._preloadMetadataSchema(cfg);
       return;
@@ -2604,6 +2693,7 @@ export class SfxUploader extends LitElement {
         apiBase: this._apiBase,
         authHeaders: this._authHeaders,
         tusConfig: this._normalizeTusConfig(),
+        resolveUploadParams: this._buildUploadParamsResolver(),
       });
       this._preloadMetadataSchema(cfg);
     } catch (err) {
@@ -2649,12 +2739,48 @@ export class SfxUploader extends LitElement {
     return raw === true ? {} : raw || undefined;
   }
 
+  /**
+   * Whether the file picker should allow multi-select. False when
+   * `forceName` is set (single-asset slot) or when restrictions cap to 1.
+   */
+  private get _allowMulti(): boolean {
+    if (this.config?.forceName != null) return false;
+    const max = this._storeCtrl.state.restrictions.maxNumberOfFiles;
+    return max == null || max > 1;
+  }
+
+  /**
+   * Build the per-file upload-params resolver from `forceName` and
+   * `getUploadParams`. Host-supplied `getUploadParams` keys win on collision.
+   * Returns `undefined` when neither is configured.
+   */
+  private _buildUploadParamsResolver():
+    | ((file: UploadFile) => Record<string, string> | undefined)
+    | undefined {
+    const cfg = this.config;
+    if (!cfg) return undefined;
+    const { forceName, getUploadParams } = cfg;
+    if (forceName == null && !getUploadParams) return undefined;
+
+    return (file: UploadFile) => {
+      const params: Record<string, string> = {};
+      if (forceName != null) {
+        const name = typeof forceName === "function" ? forceName() : forceName;
+        if (name) params.opt_force_name = name;
+      }
+      const extra = getUploadParams?.(file);
+      if (extra) Object.assign(params, extra);
+      return Object.keys(params).length > 0 ? params : undefined;
+    };
+  }
+
   private _ensureEngine() {
     if (!this._engine && this._apiBase && this._authHeaders) {
       this._engine = new UploadEngine(this._store, {
         apiBase: this._apiBase,
         authHeaders: this._authHeaders,
         tusConfig: this._normalizeTusConfig(),
+        resolveUploadParams: this._buildUploadParamsResolver(),
       });
       this._engine.start();
     }
@@ -2680,6 +2806,13 @@ export class SfxUploader extends LitElement {
         this._apiBase,
         this._authHeaders,
       );
+      const requiredFieldKeys = this._metadataSchema.fields
+        .filter((f) => isFieldRequired(f, mc))
+        .map((f) => f.key);
+      this._dispatchPublic(PublicEvents.METADATA_SCHEMA, {
+        schema: this._metadataSchema,
+        requiredFieldKeys,
+      });
     } catch (err) {
       console.error("[sfx-uploader] Failed to load metadata schema:", err);
       this._showToast("Failed to load metadata schema", "warning");
@@ -2720,33 +2853,25 @@ export class SfxUploader extends LitElement {
   private get _metadataEnforcing(): boolean {
     const mc = this.config?.metadataConfig;
     if (!mc || !this._metadataSchema) return false;
+    if (mc.enforceRequiredBeforeUpload === false) return false;
     if (mc.enforceRequiredBeforeUpload === true) return true;
-    if (mc.enforceRequiredBeforeUpload === "auto")
-      return this._metadataSchema.forceFillingOnUpload;
-    return false;
+    // 'auto' (the default) — see MetadataConfig.enforceRequiredBeforeUpload JSDoc.
+    if (this._metadataSchema.forceFillingOnUpload) return true;
+    if (mc.requiredFields && mc.requiredFields.length > 0) return true;
+    return this._metadataSchema.fields.some((f) => Boolean(f.required));
+  }
+
+  private _firstMissingRequiredFieldKey(): string | null {
+    if (!this._metadataEnforcing || !this._metadataSchema) return null;
+    return firstMissingRequiredFieldKey(
+      this._store.getState().files,
+      this._metadataSchema,
+      this.config?.metadataConfig,
+    );
   }
 
   private get _hasUnfilledRequiredMetadata(): boolean {
-    if (!this._metadataEnforcing || !this._metadataSchema) return false;
-    const requiredFields = this._metadataSchema.fields.filter((f) => {
-      const mc = this.config?.metadataConfig;
-      if (mc?.requiredFields) return mc.requiredFields.includes(f.ckey);
-      return f.required === 1;
-    });
-    if (requiredFields.length === 0) return false;
-    const files = [...this._store.getState().files.values()].filter(
-      (f) =>
-        f.status === "idle" || f.status === "queued" || f.status === "rejected",
-    );
-    return requiredFields.some((field) =>
-      files.some((file) => {
-        const val = file.meta[field.key];
-        if (val == null) return true;
-        if (Array.isArray(val)) return val.length === 0;
-        if (typeof val === "string") return val.length === 0;
-        return !val;
-      }),
-    );
+    return this._firstMissingRequiredFieldKey() != null;
   }
 
   // --- Public event dispatching (spec §13.1) ---
@@ -2759,6 +2884,39 @@ export class SfxUploader extends LitElement {
       new CustomEvent(eventName, { bubbles: true, composed: true, detail }),
     );
   }
+
+  /**
+   * Run the host-supplied {@link UploaderConfig.transformRemoteThumbnail}
+   * over a third-party thumbnail URL, falling back to the original URL when
+   * no transform is configured or the transform throws.
+   */
+  private _transformRemoteThumbnail = (
+    url: string,
+    ctx: RemoteThumbnailContext,
+  ): string => {
+    const fn = this.config?.transformRemoteThumbnail;
+    if (!fn) return url;
+    try {
+      return fn(url, ctx) || url;
+    } catch (err) {
+      console.warn("[sfx-uploader] transformRemoteThumbnail threw:", err);
+      return url;
+    }
+  };
+
+  /**
+   * Stable bound transform passed to the connector browser components, so
+   * inline-arrow churn in the template doesn't force the children to re-render
+   * on every parent update.
+   */
+  private _connectorThumbnailTransform = (url: string): string => {
+    const providerId = this._activeConnector;
+    if (!providerId) return url;
+    return this._transformRemoteThumbnail(url, {
+      source: "connector",
+      providerId,
+    });
+  };
 
   /**
    * React to store changes and dispatch public events + callbacks
@@ -2925,11 +3083,19 @@ export class SfxUploader extends LitElement {
         : [];
     const custom = connectors.customSources ?? [];
 
+    // Allowlist of built-in sources (defaults to all when omitted).
+    const coreAllow = connectors.coreSources
+      ? new Set<string>(connectors.coreSources)
+      : null;
+    const coreSources = coreAllow
+      ? CORE_SOURCES.filter((s) => coreAllow.has(s.id))
+      : CORE_SOURCES;
+
     // Order: device, url → providers → remaining core (camera, screen-cast) → custom
-    const priorityCore = CORE_SOURCES.filter(
+    const priorityCore = coreSources.filter(
       (s) => s.id === "device" || s.id === "url",
     );
-    const remainingCore = CORE_SOURCES.filter(
+    const remainingCore = coreSources.filter(
       (s) => s.id !== "device" && s.id !== "url",
     );
 
@@ -3269,7 +3435,9 @@ export class SfxUploader extends LitElement {
       name,
       size: 0,
       type,
-      previewUrl: isImage ? url : null,
+      previewUrl: isImage
+        ? this._transformRemoteThumbnail(url, { source: "url-import" })
+        : null,
       duration: null,
       progress: 0,
       speed: 0,
@@ -3382,8 +3550,10 @@ export class SfxUploader extends LitElement {
     const files = [...this._store.getState().files.values()].filter((f) =>
       SfxUploader._MODIFIABLE_STATUSES.has(f.status),
     );
-    // Open built-in bulk modal if metadata schema is available
     if (this.config?.metadataConfig && this._metadataSchema) {
+      // Land on the first missing required field when there is one, so the
+      // user is taken straight to what's blocking them.
+      this._bulkMetadataInitialFieldKey = this._firstMissingRequiredFieldKey();
       this._bulkMetadataOpen = true;
     }
     this._dispatchPublic(PublicEvents.FILL_METADATA, { files });
@@ -3423,6 +3593,7 @@ export class SfxUploader extends LitElement {
 
   private _onBulkMetadataClose = () => {
     this._bulkMetadataOpen = false;
+    this._bulkMetadataInitialFieldKey = null;
   };
 
   private _onFileRetry = (e: CustomEvent<{ fileId: string }>) => {
@@ -3570,6 +3741,13 @@ export class SfxUploader extends LitElement {
       );
       if (isDuplicate) continue;
 
+      const previewUrl = info.thumbnail
+        ? this._transformRemoteThumbnail(info.thumbnail, {
+            source: "connector",
+            providerId: info.provider,
+          })
+        : null;
+
       const error = validateFileInfo(
         { name: info.name, size: info.size, type: info.mimeType },
         s.restrictions,
@@ -3584,7 +3762,7 @@ export class SfxUploader extends LitElement {
           name: info.name,
           size: info.size,
           type: info.mimeType,
-          previewUrl: info.thumbnail,
+          previewUrl,
           duration: null,
           progress: 0,
           speed: 0,
@@ -3615,7 +3793,7 @@ export class SfxUploader extends LitElement {
         name: info.name,
         size: info.size,
         type: info.mimeType,
-        previewUrl: info.thumbnail,
+        previewUrl,
         duration: null,
         progress: 0,
         speed: 0,
@@ -3845,7 +4023,7 @@ export class SfxUploader extends LitElement {
     const fsIdx = fsFiles.findIndex((f) => f.id === this._previewFileId);
     return html`
       <div
-        class="fs-overlay ${this._fullscreenZoomed ? "zoomed" : ""} ${this._fsDragging ? "panning" : ""}"
+        class="fs-overlay ${this._fsZoom > 1 ? "zoomed" : ""} ${this._fsDragging ? "panning" : ""}"
         @click=${this._onFsOverlayClick}
         @mousedown=${this._onFsPanStart}
         @mousemove=${this._onFsPanMove}
@@ -3857,11 +4035,11 @@ export class SfxUploader extends LitElement {
       >
         ${this._fullscreenVideoFile
           ? html`<video class="fs-img" src=${this._getVideoBlobUrl(this._fullscreenVideoFile)} controls playsinline draggable="false" @click=${(e: Event) => e.stopPropagation()}></video>`
-          : html`<img class="fs-img" src=${this._fullscreenPreviewUrl} alt="" ${cspStyle(this._fullscreenZoomed ? { transform: `scale(2) translate(${this._fsPanX}px, ${this._fsPanY}px)` } : null)} draggable="false" />`}
+          : html`<img class="fs-img" src=${this._fullscreenPreviewUrl} alt="" ${cspStyle(this._fsZoom > 1 ? { transform: `scale(${this._fsZoom}) translate(${this._fsPanX}px, ${this._fsPanY}px)` } : null)} draggable="false" />`}
       </div>
       <div class="fs-toolbar" @click=${(e: Event) => e.stopPropagation()}>
-        <button class="fs-btn" @click=${this._onFsToggleZoom} title=${this._fullscreenZoomed ? t('zoomOut', 'Zoom out') : t('zoomIn', 'Zoom in')}>
-          ${this._fullscreenZoomed
+        <button class="fs-btn" @click=${this._onFsToggleZoom} title="${this._fsZoom >= SfxUploader._FS_ZOOM_LEVELS[SfxUploader._FS_ZOOM_LEVELS.length - 1] ? "Reset zoom" : `Zoom in (${this._fsZoom}×)`}">
+          ${this._fsZoom >= SfxUploader._FS_ZOOM_LEVELS[SfxUploader._FS_ZOOM_LEVELS.length - 1]
             ? html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>`
             : html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>`}
         </button>
@@ -4519,6 +4697,7 @@ export class SfxUploader extends LitElement {
             .showDropTile=${true}
             .sources=${this._mergedSources}
             .accept=${buildAcceptString(this._storeCtrl.state.restrictions)}
+            .multi=${this._allowMulti}
             ?drag-active=${this._bodyDragOver}
             @source-click=${this._onDropTileSourceClick}
           ></sfx-file-list>
@@ -4567,7 +4746,7 @@ export class SfxUploader extends LitElement {
                           previewFile.file
                             ? previewFile.file
                             : null;
-                        this._fullscreenZoomed = false;
+                        this._fsZoom = 1;
                         // Force a second paint — on mobile WebKit the
                         // first paint of the fs-overlay sometimes skips
                         // the fixed-positioned toolbar/nav buttons until
@@ -4874,6 +5053,7 @@ export class SfxUploader extends LitElement {
         @file-resume=${this._onFileResume}
         @file-rename=${this._onFileRename}
         @fill-metadata=${this._onFillMetadata}
+        @require-metadata=${this._onFillMetadata}
         @retry-all=${this._onRetryAll}
         @clear-all=${this._onClearAll}
         @add-more=${this._onAddMore}
@@ -4957,6 +5137,7 @@ export class SfxUploader extends LitElement {
                         .sources=${this._mergedSources}
                         .sourcesLayout=${this.config?.sourcesLayout ?? "pills"}
                         .mode=${this.config?.mode ?? "modal"}
+                        .multi=${this._allowMulti}
                       ></sfx-drop-zone>
                       ${this._hasStoredReview
                         ? html`<button
@@ -4988,6 +5169,7 @@ export class SfxUploader extends LitElement {
                           .showDropTile=${true}
                           .sources=${this._mergedSources}
                           .accept=${accept}
+                          .multi=${this._allowMulti}
                           ?drag-active=${this._bodyDragOver}
                           @source-click=${this._onDropTileSourceClick}
                         ></sfx-file-list>
@@ -5012,10 +5194,7 @@ export class SfxUploader extends LitElement {
                 .showFillMetadata=${!!(
                   this.config?.showFillMetadata ?? this.config?.metadataConfig
                 )}
-                .uploadDisabled=${this._hasUnfilledRequiredMetadata}
-                .uploadDisabledReason=${this._hasUnfilledRequiredMetadata
-                  ? "Fill required metadata first"
-                  : ""}
+                .requireMetadataFirst=${this._hasUnfilledRequiredMetadata}
               ></sfx-actions-bar>
             `
           : nothing}
@@ -5041,6 +5220,8 @@ export class SfxUploader extends LitElement {
                           .t=${t}
                           .provider=${this._activeConnector}
                           .companionUrl=${this.config.connectors.companionUrl}
+                          .transformThumbnail=${this
+                            ._connectorThumbnailTransform}
                         ></sfx-search-provider-browser>
                       `
                     : html`
@@ -5048,6 +5229,8 @@ export class SfxUploader extends LitElement {
                           .t=${t}
                           .provider=${this._activeConnector}
                           .companionUrl=${this.config.connectors.companionUrl}
+                          .transformThumbnail=${this
+                            ._connectorThumbnailTransform}
                         ></sfx-provider-browser>
                       `}
                 </div>
@@ -5063,6 +5246,7 @@ export class SfxUploader extends LitElement {
                 )}
                 .config=${this.config?.metadataConfig ?? null}
                 .autocomplete=${this._metadataAutocomplete}
+                .initialFieldKey=${this._bulkMetadataInitialFieldKey}
                 @metadata-save-batch=${this._onBulkMetadataSaveBatch}
                 @metadata-close=${this._onBulkMetadataClose}
               ></sfx-bulk-metadata-modal>
@@ -5074,8 +5258,11 @@ export class SfxUploader extends LitElement {
 
   private _onFsToggleZoom = (e?: Event) => {
     e?.stopPropagation();
-    this._fullscreenZoomed = !this._fullscreenZoomed;
-    if (!this._fullscreenZoomed) {
+    const levels = SfxUploader._FS_ZOOM_LEVELS;
+    const i = levels.indexOf(this._fsZoom as (typeof levels)[number]);
+    const next = i === -1 ? 1 : (i + 1) % levels.length;
+    this._fsZoom = levels[next];
+    if (this._fsZoom === 1) {
       this._fsPanX = 0;
       this._fsPanY = 0;
     }
@@ -5091,7 +5278,7 @@ export class SfxUploader extends LitElement {
   private _fsDragDidMove = false;
 
   private _onFsPanStart = (e: MouseEvent) => {
-    if (!this._fullscreenZoomed) return;
+    if (this._fsZoom <= 1) return;
     this._fsDragging = true;
     this._fsDragDidMove = false;
     this._fsDragStartX = e.clientX;
@@ -5121,7 +5308,7 @@ export class SfxUploader extends LitElement {
 
   // --- Pan (touch) ---
   private _onFsTouchStart = (e: TouchEvent) => {
-    if (!this._fullscreenZoomed || e.touches.length !== 1) return;
+    if (this._fsZoom <= 1 || e.touches.length !== 1) return;
     const t = e.touches[0];
     this._fsDragging = true;
     this._fsDragDidMove = false;
@@ -5158,7 +5345,7 @@ export class SfxUploader extends LitElement {
           ? nextFile.file
           : null;
       this._previewFileId = nextFile.id;
-      this._fullscreenZoomed = false;
+      this._fsZoom = 1;
       this._fsPanX = 0;
       this._fsPanY = 0;
     }
@@ -5168,7 +5355,7 @@ export class SfxUploader extends LitElement {
     e?.stopPropagation();
     this._fullscreenPreviewUrl = null;
     this._fullscreenVideoFile = null;
-    this._fullscreenZoomed = false;
+    this._fsZoom = 1;
     this._fsPanX = 0;
     this._fsPanY = 0;
   };

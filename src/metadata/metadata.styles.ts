@@ -275,6 +275,11 @@ export const metadataPanelStyles = css`
   }
   .panel-footer .spacer { flex: 1; }
 
+  .panel-footer .page-counter {
+    font-size: 12px;
+    color: var(--sfx-up-text-muted, #94a3b8);
+  }
+
   /* Shared button styles */
   .btn,
   .btn-ghost,

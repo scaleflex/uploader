@@ -246,8 +246,12 @@ export class SfxActionsBar extends LitElement {
   @property({ type: Number }) totalSize = 0;
   @property({ type: Number }) failedCount = 0;
   @property({ type: Boolean }) showFillMetadata = false;
-  @property({ type: Boolean }) uploadDisabled = false;
-  @property({ type: String }) uploadDisabledReason = "";
+  /**
+   * When true, the Fill Metadata button is rendered as primary (prominent),
+   * and clicking Upload dispatches `require-metadata` instead of `upload-start`
+   * so the host can open the metadata editor first.
+   */
+  @property({ type: Boolean }) requireMetadataFirst = false;
   @property({ type: Number }) completedCount = 0;
   @property({ type: Number }) uploadProgress = 0;
 
@@ -270,6 +274,12 @@ export class SfxActionsBar extends LitElement {
   }
 
   private _upload() {
+    if (this.requireMetadataFirst) {
+      this.dispatchEvent(
+        new CustomEvent("require-metadata", { bubbles: true, composed: true }),
+      );
+      return;
+    }
     this.dispatchEvent(
       new CustomEvent("upload-start", { bubbles: true, composed: true }),
     );
@@ -311,7 +321,11 @@ export class SfxActionsBar extends LitElement {
         <div class="left">
           ${this.showFillMetadata && this.uploadState === "idle"
             ? html`
-                <button class="btn-sec" @click=${this._fillMetadata} aria-label=${this.t('fillMetadata', 'Fill Metadata')}>
+                <button
+                  class=${this.requireMetadataFirst ? "btn-primary" : "btn-sec"}
+                  @click=${this._fillMetadata}
+                  aria-label=${this.t('fillMetadata', 'Fill Metadata')}
+                >
                   <svg
                     viewBox="0 0 24 24"
                     fill="none"
@@ -405,8 +419,7 @@ export class SfxActionsBar extends LitElement {
       <button
         class=${cls}
         @click=${this._upload}
-        ?disabled=${isUploading || this.uploadDisabled}
-        title=${this.uploadDisabled ? this.uploadDisabledReason : ""}
+        ?disabled=${isUploading}
         aria-label=${ariaLabel}
       >
         ${isUploading

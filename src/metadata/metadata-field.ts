@@ -2,6 +2,7 @@ import { LitElement, html, css, nothing } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import type { MetadataField, MetadataConfig } from './schema/schema.types';
 import { validateField } from './schema/validation';
+import { isFieldRequired } from './schema/required-fields';
 import { mapValueToBackend, mapValueFromBackend } from './schema/value-transforms';
 import { metadataFieldStyles } from './metadata.styles';
 
@@ -20,8 +21,7 @@ export class SfxMetadataFieldEl extends LitElement {
   private _dispatching = false;
 
   private get _isRequired(): boolean {
-    if (this.config?.requiredFields?.includes(this.field.ckey)) return true;
-    return this.field.required === 1;
+    return isFieldRequired(this.field, this.config ?? undefined);
   }
 
   private _onFieldBlur(e: CustomEvent) {

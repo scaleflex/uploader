@@ -134,7 +134,7 @@ export class SfxDropZone extends LitElement {
       justify-content: center;
       margin-bottom: 24px;
       flex-shrink: 0;
-      overflow: hidden;
+      overflow: visible;
     }
 
     .drop-zone:not(.compact) .rings::before {
@@ -420,6 +420,10 @@ export class SfxDropZone extends LitElement {
       flex-shrink: 0;
       width: 28px;
       height: 28px;
+    }
+
+    .src-card .card-ico.muted {
+      color: var(--sfx-up-text-muted, #94a3b8);
     }
 
     .src-card .card-ico svg {
@@ -936,6 +940,8 @@ export class SfxDropZone extends LitElement {
   @property({ type: Boolean, attribute: "external-drag-over" })
   externalDragOver = false;
   @property({ type: String }) accept = "";
+  /** Whether the file picker allows multiple selection. Set to false for single-asset slots. */
+  @property({ type: Boolean }) multi = true;
   @property({ type: Array }) sources: SourceDef[] = [];
   @property({ type: String, attribute: "sources-layout" }) sourcesLayout:
     | "pills"
@@ -1337,11 +1343,8 @@ export class SfxDropZone extends LitElement {
           class="src-card"
           @click=${(e: MouseEvent) => this._toggleMore(e)}
         >
-          <span
-            class="card-ico"
-            style="color: var(--sfx-up-text-muted, #94a3b8)"
-          >
-            <svg viewBox="0 0 24 24" style="fill: currentColor; stroke: none">
+          <span class="card-ico muted">
+            <svg class="fill-icon" viewBox="0 0 24 24">
               <circle cx="5" cy="12" r="2.5" />
               <circle cx="12" cy="12" r="2.5" />
               <circle cx="19" cy="12" r="2.5" />
@@ -1469,7 +1472,7 @@ export class SfxDropZone extends LitElement {
         <div class="ripple"></div>
         <input
           type="file"
-          multiple
+          ?multiple=${this.multi}
           accept=${this.accept || nothing}
           @change=${this._onFileChange}
         />

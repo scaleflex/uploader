@@ -1,6 +1,7 @@
 import { LitElement, html, nothing } from 'lit';
 import { property, state } from 'lit/decorators.js';
-import type { MetadataSchema, MetadataConfig } from '../schema/schema.types';
+import type { MetadataSchema, MetadataConfig, MetadataField } from '../schema/schema.types';
+import { isFieldRequired } from '../schema/required-fields';
 import { fieldTypeIcon } from '../field-type-icons';
 import { bulkSidebarStyles } from './bulk-metadata.styles';
 
@@ -49,9 +50,8 @@ export class SfxBulkMetaSidebar extends LitElement {
     if (next !== this._isNarrow) this._isNarrow = next;
   };
 
-  private _isRequired(field: { ckey: string; required: 0 | 1 }): boolean {
-    if (this.config?.requiredFields?.includes(field.ckey)) return true;
-    return field.required === 1;
+  private _isRequired(field: MetadataField): boolean {
+    return isFieldRequired(field, this.config ?? undefined);
   }
 
   private _toggleGroup(uuid: string) {
@@ -72,6 +72,15 @@ export class SfxBulkMetaSidebar extends LitElement {
         composed: true,
       }),
     );
+  }
+
+  updated(changed: Map<string, unknown>) {
+    super.updated?.(changed);
+    if (!changed.has('activeFieldKey') || !this.activeFieldKey) return;
+    const active = this.renderRoot?.querySelector(
+      '.field-item.active',
+    ) as HTMLElement | null;
+    active?.scrollIntoView({ block: 'nearest' });
   }
 
   render() {

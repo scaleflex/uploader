@@ -126,7 +126,7 @@ const page: Page = {
           <li>Click a file to open the preview sidebar &mdash; edit that file's metadata inline.</li>
           <li>Click "Fill Metadata" to open the bulk editing modal &mdash; apply metadata across multiple files at once using SET, ADD, or DELETE operations.</li>
           <li>In the bulk modal, use the sidebar to navigate fields, the operation bar to bulk-apply values, or click individual cells to edit per-file.</li>
-          <li>When <code>enforceRequiredBeforeUpload</code> is enabled, the Upload button is disabled until all required fields are filled.</li>
+          <li>When required fields are missing, clicking <strong>Upload</strong> opens the bulk metadata editor positioned on the first missing field, and the "Fill Metadata" button is promoted to primary. Enforcement is on by default (<code>enforceRequiredBeforeUpload: 'auto'</code>) whenever a field has <code>required: 1</code>, the API sets <code>force_filling_metadata_on_upload</code>, or you pass an explicit <code>requiredFields</code> list. Set it to <code>false</code> to opt out.</li>
           <li>Metadata is included in the upload request automatically &mdash; no changes to the upload flow needed.</li>
         </ol>
         <div style="margin-top: 12px; padding: 12px 16px; background: #eff6ff; border-radius: 8px; font-size: 13px; color: #1e40af;">
@@ -197,8 +197,8 @@ const page: Page = {
             <tr style="border-bottom: 1px solid #f1f5f9;">
               <td style="padding: 8px 12px;"><code>enforceRequiredBeforeUpload</code></td>
               <td style="padding: 8px 12px;"><code>boolean | 'auto'</code></td>
-              <td style="padding: 8px 12px;"><code>false</code></td>
-              <td style="padding: 8px 12px;">Block upload until required fields are filled. <code>'auto'</code> reads from the project's metadata settings.</td>
+              <td style="padding: 8px 12px;"><code>'auto'</code></td>
+              <td style="padding: 8px 12px;">When the user clicks Upload with a missing required field, the bulk metadata editor opens at the first missing field instead of starting the upload. <code>'auto'</code> (default) enforces when the schema has <code>force_filling_metadata_on_upload</code> set, any field has <code>required: 1</code>, or <code>requiredFields</code> is provided. Set to <code>false</code> to opt out, <code>true</code> to force enforcement.</td>
             </tr>
             <tr style="border-bottom: 1px solid #f1f5f9;">
               <td style="padding: 8px 12px;"><code>showTags</code></td>
@@ -311,6 +311,14 @@ uploader.config = {
     const events: Array<[string, (e: CustomEvent) => void]> = [
       ['sfx-file-added', (e) => log('file-added', { name: e.detail.file?.name })],
       ['sfx-fill-metadata', (e) => log('fill-metadata', { files: e.detail.files?.length })],
+      ['sfx-metadata-schema', (e) => {
+        const fields = e.detail.schema?.fields ?? [];
+        log('metadata-schema', {
+          totalFields: fields.length,
+          requiredFieldKeys: e.detail.requiredFieldKeys ?? [],
+          forceFillingOnUpload: e.detail.schema?.forceFillingOnUpload,
+        });
+      }],
       ['sfx-upload-complete', (e) => log('upload-complete', { name: e.detail.file?.name, meta: e.detail.response?.file?.meta })],
       ['sfx-all-complete', (e) => log('all-complete', { ok: e.detail.successful?.length, failed: e.detail.failed?.length })],
     ];

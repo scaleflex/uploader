@@ -31,7 +31,13 @@ export interface MetadataField {
   type: MetadataFieldType;
   placeholder?: string;
   hint?: string;
-  required: 0 | 1;
+  /**
+   * Whether the field must be filled before upload.
+   * The Hub returns this as a JSON boolean (`true`/`false`), but some legacy
+   * shapes use a numeric flag (`0`/`1`) — both are accepted and treated as
+   * truthy/falsy by the uploader.
+   */
+  required: boolean | 0 | 1;
   possible_values: PossibleValue[];
   regional_variants_group_uuid: string | null;
   validation?: string;
@@ -128,7 +134,25 @@ export interface MetadataConfig {
    */
   hubHeaders?: Record<string, string>;
   fields?: 'all' | string[];
+  /**
+   * Override the schema's required flags by ckey. Fields listed here are
+   * treated as required even if their schema entry has `required: 0`.
+   */
   requiredFields?: string[];
+  /**
+   * Controls whether the user must fill required metadata before uploading.
+   *
+   * - `true`  — always enforce
+   * - `false` — never enforce
+   * - `'auto'` (default) — enforce when any of:
+   *   1. the API schema has `store.force_filling_metadata_on_upload === true`
+   *   2. any schema field has `required === 1`
+   *   3. `requiredFields` is set and non-empty
+   *
+   * When enforcing and the user clicks **Upload** with a required field still
+   * empty, the bulk metadata editor opens positioned on the first missing
+   * field; the upload does not start.
+   */
   enforceRequiredBeforeUpload?: boolean | 'auto';
   showTags?: boolean;
   language?: string;

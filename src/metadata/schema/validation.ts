@@ -9,8 +9,9 @@ export function validateField(
   value: unknown,
   config?: MetadataConfig,
 ): string | null {
+  // Inlined to avoid an import cycle with required-fields.ts (which uses isEmpty).
   const isRequired =
-    config?.requiredFields?.includes(field.ckey) || field.required === 1;
+    config?.requiredFields?.includes(field.ckey) || Boolean(field.required);
 
   // Required check
   if (isRequired && isEmpty(value)) {

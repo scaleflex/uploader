@@ -1715,6 +1715,35 @@ body:not(.has-sidebar) #content {
   white-space: nowrap;
 }
 
+.doc-content table.config-table {
+  table-layout: fixed;
+}
+
+.doc-content table.config-table th:nth-child(1),
+.doc-content table.config-table td:nth-child(1) {
+  width: 18%;
+}
+
+.doc-content table.config-table th:nth-child(2),
+.doc-content table.config-table td:nth-child(2) {
+  width: 26%;
+}
+
+.doc-content table.config-table th:nth-child(3),
+.doc-content table.config-table td:nth-child(3) {
+  width: 16%;
+}
+
+.doc-content table.config-table th:nth-child(4),
+.doc-content table.config-table td:nth-child(4) {
+  width: 40%;
+}
+
+.doc-content table.config-table td code {
+  white-space: normal;
+  word-break: break-word;
+}
+
 .doc-content blockquote {
   margin: 0 0 20px;
   padding: 16px 20px;

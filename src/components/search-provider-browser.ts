@@ -250,6 +250,11 @@ export class SfxSearchProviderBrowser extends LitElement {
       text-align: center;
     }
 
+    .loading.loading-more {
+      flex: none;
+      padding: 16px 0;
+    }
+
     .spinner {
       width: 28px;
       height: 28px;
@@ -319,6 +324,12 @@ export class SfxSearchProviderBrowser extends LitElement {
   @property({ attribute: false }) t: TFunction = (k, d) => (typeof d === 'string' ? d : k);
   @property({ type: String }) provider: ProviderId = 'unsplash';
   @property({ type: String }) companionUrl = '';
+  /**
+   * Optional rewrite for listing thumbnail URLs so they pass the host CSP.
+   * Defaults to the identity function.
+   */
+  @property({ attribute: false })
+  transformThumbnail: (url: string) => string = (u) => u;
 
   @state() private _loading = false;
   @state() private _loadingMore = false;
@@ -544,7 +555,7 @@ export class SfxSearchProviderBrowser extends LitElement {
                 @click=${() => this._toggleSelect(item)}
               >
                 ${item.thumbnail
-                  ? html`<img src=${item.thumbnail} alt=${item.name} loading="lazy" referrerpolicy="no-referrer" />`
+                  ? html`<img src=${this.transformThumbnail(item.thumbnail)} alt=${item.name} loading="lazy" referrerpolicy="no-referrer" />`
                   : nothing}
                 <div class="check">
                   ${this._selectedIds.has(item.id)
@@ -559,7 +570,7 @@ export class SfxSearchProviderBrowser extends LitElement {
           )}
         </div>
         ${this._loadingMore
-          ? html`<div class="loading" style="padding:16px 0"><div class="spinner"></div></div>`
+          ? html`<div class="loading loading-more"><div class="spinner"></div></div>`
           : nothing}
       </div>
 
