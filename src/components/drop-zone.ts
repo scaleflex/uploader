@@ -7,6 +7,7 @@ import { brandIcon } from "../utils/brand-icon";
 import { svg as svgTag } from "lit";
 import type { SourceDef } from "./source-pills";
 import { getPortalTarget } from "../utils/portal-target";
+import type { TFunction } from "../store/store.types";
 
 /** Number of source pills shown directly; the rest go into "More" dropdown. */
 const VISIBLE_PILLS = 3;
@@ -934,6 +935,7 @@ export class SfxDropZone extends LitElement {
     }
   `;
 
+  @property({ attribute: false }) t: TFunction = (k, d) => (typeof d === 'string' ? d : k);
   @property({ type: Boolean, reflect: true }) compact = false;
   @property({ type: Boolean, attribute: "external-drag-over" })
   externalDragOver = false;
@@ -1119,7 +1121,7 @@ export class SfxDropZone extends LitElement {
                         s.icon,
                       )}</svg>`}
                 </div>
-                ${s.label}
+                ${s.labelKey ? this.t(s.labelKey, s.label) : s.label}
               </button>
             `,
           )}
@@ -1257,8 +1259,12 @@ export class SfxDropZone extends LitElement {
   }
 
   updated(changed: Map<string, unknown>) {
+    super.updated(changed);
     if (changed.has("sourcesLayout")) {
       this._updateVisiblePills();
+    }
+    if (changed.has("t") && this._moreOpen) {
+      this._updateDropdownPortal();
     }
   }
 
@@ -1300,7 +1306,7 @@ export class SfxDropZone extends LitElement {
                 s.fillIcon ? "fill-icon" : ""
               }>${unsafeSVG(s.icon)}</svg>`}
             </span>`}
-        ${s.label}
+        ${s.labelKey ? this.t(s.labelKey, s.label) : s.label}
       </button>
     `;
   }
@@ -1309,7 +1315,7 @@ export class SfxDropZone extends LitElement {
     return html`
       <button
         class="src-card"
-        aria-label=${s.label}
+        aria-label=${s.labelKey ? this.t(s.labelKey, s.label) : s.label}
         @click=${(e: MouseEvent) => {
           e.stopPropagation();
           this._onSourceIconClick(s);
@@ -1325,7 +1331,7 @@ export class SfxDropZone extends LitElement {
                 s.fillIcon ? "fill-icon" : ""
               }>${unsafeSVG(s.icon)}</svg>`}
             </span>`}
-        <span class="card-label">${s.label}</span>
+        <span class="card-label">${s.labelKey ? this.t(s.labelKey, s.label) : s.label}</span>
       </button>
     `;
   }
@@ -1344,7 +1350,7 @@ export class SfxDropZone extends LitElement {
               <circle cx="19" cy="12" r="2.5" />
             </svg>
           </span>
-          <span class="card-label">More</span>
+          <span class="card-label">${this.t('more', 'More')}</span>
         </button>
       </div>
     `;
@@ -1357,7 +1363,7 @@ export class SfxDropZone extends LitElement {
           class="more-pill"
           @click=${(e: MouseEvent) => this._toggleMore(e)}
         >
-          More
+          ${this.t('more', 'More')}
           <svg class="more-chevron" viewBox="0 0 24 24">
             <polyline points="6 9 12 15 18 9" />
           </svg>
@@ -1383,7 +1389,7 @@ export class SfxDropZone extends LitElement {
         class=${classes}
         role="button"
         tabindex="0"
-        aria-label="Drop files here or click to browse"
+        aria-label=${this.t('dropFilesHere', 'Drop files here or click to browse')}
         @dragenter=${this._onDragEnter}
         @dragover=${this._onDragOver}
         @dragleave=${this._onDragLeave}
@@ -1410,13 +1416,13 @@ export class SfxDropZone extends LitElement {
           </div>
         </div>
 
-        <div class="title">Drag & Drop or click to <span>browse</span></div>
+        <div class="title">${this.t('dragAndDrop', 'Drag & Drop or click to')} <span>${this.t('browse', 'browse')}</span></div>
         ${!this.compact
-          ? html`<div class="subtitle">Drop files anywhere on this page</div>`
+          ? html`<div class="subtitle">${this.t('dropFilesAnywhere', 'Drop files anywhere on this page')}</div>`
           : nothing}
         ${!this.compact && this.sources.length > 0
           ? html`
-              <div class="import-divider"><span>or import from</span></div>
+              <div class="import-divider"><span>${this.t('orImportFrom', 'or import from')}</span></div>
               ${this.sourcesLayout === "cards"
                 ? html`
                     <div class="sources-cards">
@@ -1444,8 +1450,8 @@ export class SfxDropZone extends LitElement {
                     <button
                       class="src-ico"
                       ${cspStyle(s.iconColor && !s.brandHtml ? { color: s.iconColor } : null)}
-                      data-tip=${s.label}
-                      aria-label=${s.label}
+                      data-tip=${s.labelKey ? this.t(s.labelKey, s.label) : s.label}
+                      aria-label=${s.labelKey ? this.t(s.labelKey, s.label) : s.label}
                       @click=${(e: MouseEvent) => {
                         e.stopPropagation();
                         this._onSourceIconClick(s);

@@ -4,6 +4,7 @@ import { unsafeSVG } from 'lit/directives/unsafe-svg.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { brandIcon } from '../utils/brand-icon';
 import { svg as svgTag } from 'lit';
+import type { TFunction } from '../store/store.types';
 
 export type { SourceDef, UploaderHandle } from '../types/source.types';
 import type { SourceDef } from '../types/source.types';
@@ -14,10 +15,10 @@ const CAMERA_ICON = `<path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4
 const SCREEN_CAST_ICON = `<rect x="2" y="3" width="20" height="14" rx="2"/><circle cx="12" cy="10" r="1"/><path d="M7 21l5-5 5 5"/>`;
 
 export const CORE_SOURCES: SourceDef[] = [
-  { id: 'device', label: 'My Device', icon: DEVICE_ICON, iconColor: '#2563eb' },
-  { id: 'url', label: 'URL link', icon: URL_ICON, iconColor: '#16a34a' },
-  { id: 'camera', label: 'Camera', icon: CAMERA_ICON, iconColor: '#7c3aed' },
-  { id: 'screen-cast', label: 'Screen capture', icon: SCREEN_CAST_ICON, iconColor: '#ea580c' },
+  { id: 'device', labelKey: 'myDevice', label: 'My Device', icon: DEVICE_ICON, iconColor: '#2563eb' },
+  { id: 'url', labelKey: 'urlLink', label: 'URL link', icon: URL_ICON, iconColor: '#16a34a' },
+  { id: 'camera', labelKey: 'camera', label: 'Camera', icon: CAMERA_ICON, iconColor: '#7c3aed' },
+  { id: 'screen-cast', labelKey: 'screenCapture', label: 'Screen capture', icon: SCREEN_CAST_ICON, iconColor: '#ea580c' },
 ];
 
 export class SfxSourcePills extends LitElement {
@@ -95,6 +96,7 @@ export class SfxSourcePills extends LitElement {
     }
   `;
 
+  @property({ attribute: false }) t: TFunction = (k, d) => (typeof d === 'string' ? d : k);
   @property({ type: Array }) sources: SourceDef[] = CORE_SOURCES;
 
   private _handleClick(source: SourceDef) {
@@ -115,7 +117,7 @@ export class SfxSourcePills extends LitElement {
             ${s.brandHtml
               ? brandIcon(s)
               : svgTag`<svg viewBox="0 0 24 24" class=${s.fillIcon ? 'fill-icon' : ''}>${unsafeSVG(s.icon)}</svg>`}
-            ${s.label}
+            ${s.labelKey ? this.t(s.labelKey, s.label) : s.label}
           </button>
         `,
       )}

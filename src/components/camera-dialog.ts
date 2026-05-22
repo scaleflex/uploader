@@ -1,7 +1,8 @@
 import { LitElement, html, css, nothing } from 'lit';
-import { state } from 'lit/decorators.js';
+import { property, state } from 'lit/decorators.js';
 import { buttonStyles, focusStyles } from './shared-styles';
 import { createFocusTrap } from '../utils/focus-trap';
+import type { TFunction } from '../store/store.types';
 
 /**
  * Modal dialog for capturing photos/video via webcam.
@@ -93,6 +94,7 @@ export class SfxCameraDialog extends LitElement {
     @keyframes slideUp { from { transform: translateY(18px) scale(0.97); } to { transform: translateY(0) scale(1); } }
   `];
 
+  @property({ attribute: false }) t: TFunction = (k, d) => (typeof d === 'string' ? d : k);
   @state() private _stream: MediaStream | null = null;
   @state() private _error = '';
   @state() private _captured: Blob | null = null;
@@ -129,7 +131,7 @@ export class SfxCameraDialog extends LitElement {
         video.srcObject = this._stream;
       }
     } catch {
-      this._error = 'Could not access camera. Please check your permissions.';
+      this._error = this.t('cameraAccessError', 'Could not access camera. Please check your permissions.');
     }
   }
 
@@ -186,18 +188,18 @@ export class SfxCameraDialog extends LitElement {
                 <circle cx="12" cy="13" r="4"/>
               </svg>
             </div>
-            <div class="title">Camera</div>
-            <button class="close-btn" aria-label="Close" @click=${this._cancel}>\u2715</button>
+            <div class="title">${this.t('camera', 'Camera')}</div>
+            <button class="close-btn" aria-label=${this.t('close', 'Close')} @click=${this._cancel}>\u2715</button>
           </div>
           <div class="body">
             ${this._error
               ? html`<div class="error">${this._error}</div>`
               : this._captured
                 ? html`
-                    <img class="preview-img" src=${this._previewUrl} alt="Captured photo" />
+                    <img class="preview-img" src=${this._previewUrl} alt=${this.t('capturedPhoto', 'Captured photo')} />
                     <div class="actions">
-                      <button class="btn btn-ghost" @click=${this._retake}>Retake</button>
-                      <button class="btn btn-primary" @click=${this._usePhoto}>Use photo</button>
+                      <button class="btn btn-ghost" @click=${this._retake}>${this.t('retake', 'Retake')}</button>
+                      <button class="btn btn-primary" @click=${this._usePhoto}>${this.t('usePhoto', 'Use photo')}</button>
                     </div>
                   `
                 : html`

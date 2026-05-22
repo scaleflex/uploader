@@ -55,6 +55,7 @@ const page: Page = {
             <tr><td><code>inlineHeader</code></td><td><code>InlineHeaderConfig</code></td><td><code>undefined</code></td><td>Branded header for inline mode with <code>accent</code>, <code>title</code>, and <code>description</code> fields. When set, replaces the standard header. See <a href="#/examples/inline">Inline example</a>.</td></tr>
             <tr><td><code>mode</code></td><td><code>'modal' | 'inline'</code></td><td><code>'modal'</code></td><td>Display mode</td></tr>
             <tr><td><code>sourcesLayout</code></td><td><code>'pills' | 'cards'</code></td><td><code>'pills'</code></td><td>Layout for the import-from sources section. <code>'pills'</code> shows compact horizontal buttons; <code>'cards'</code> shows a grid of square cards with large icons.</td></tr>
+            <tr><td><code>locale</code></td><td><code>string</code></td><td><code>navigator.language</code></td><td>BCP 47 locale tag for the UI language (e.g. <code>'fr'</code>, <code>'de'</code>, <code>'en-US'</code>). Translations are loaded lazily from the Wordplex CDN; falls back to English for any untranslated keys.</td></tr>
           </tbody>
         </table>
 
@@ -183,6 +184,21 @@ uploader.open();`,
   auth: { /* ... */ },
   sourcesLayout: 'cards',
 };`,
+        )}
+
+        <h2>Internationalisation</h2>
+        <p>The uploader ships with English strings baked in as fallbacks. To render the UI in a different language, pass a <a href="https://www.rfc-editor.org/rfc/rfc5646" target="_blank" rel="noopener">BCP 47</a> locale tag via <code>locale</code>. Translations are loaded lazily from the Wordplex CDN on first use; if a key is not yet translated the English default is shown.</p>
+        ${code(
+          'typescript',
+          `uploader.config = {
+  auth: { /* ... */ },
+  locale: 'fr', // 'fr', 'de', 'en-US', etc. — defaults to navigator.language
+};`,
+        )}
+        <p>To debug missing translations locally, set the flag in <code>localStorage</code> and reload — untranslated keys are logged to the console:</p>
+        ${code(
+          'javascript',
+          `localStorage.setItem('sfxUploaderTranslationsMissingKeysEnabled', 'true');`,
         )}
 
         <h2>Behavior options</h2>

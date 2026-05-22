@@ -1,7 +1,8 @@
 import { LitElement, html, css } from 'lit';
-import { state } from 'lit/decorators.js';
+import { property, state } from 'lit/decorators.js';
 import { buttonStyles, focusStyles } from './shared-styles';
 import { createFocusTrap } from '../utils/focus-trap';
+import type { TFunction } from '../store/store.types';
 
 /**
  * Modal dialog for importing a file via URL.
@@ -186,6 +187,7 @@ export class SfxUrlDialog extends LitElement {
 
   `];
 
+  @property({ attribute: false }) t: TFunction = (k, d) => (typeof d === 'string' ? d : k);
   @state() private _url = '';
   @state() private _name = '';
   @state() private _error = '';
@@ -236,13 +238,13 @@ export class SfxUrlDialog extends LitElement {
   private _submit() {
     const url = this._url.trim();
     if (!url) {
-      this._error = 'Please enter a URL';
+      this._error = this.t('pleaseEnterUrl', 'Please enter a URL');
       return;
     }
     try {
       new URL(url);
     } catch {
-      this._error = 'Please enter a valid URL';
+      this._error = this.t('pleaseEnterValidUrl', 'Please enter a valid URL');
       return;
     }
     this._error = '';
@@ -286,35 +288,35 @@ export class SfxUrlDialog extends LitElement {
                 <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
               </svg>
             </div>
-            <div class="title">Import from URL</div>
-            <button class="close-btn" aria-label="Close" @click=${this._cancel}>\u2715</button>
+            <div class="title">${this.t('importFromUrl', 'Import from URL')}</div>
+            <button class="close-btn" aria-label=${this.t('close', 'Close')} @click=${this._cancel}>\u2715</button>
           </div>
           <div class="body">
             <div class="field">
-              <label for="urlInput">File URL</label>
+              <label for="urlInput">${this.t('fileUrl', 'File URL')}</label>
               <input
                 id="urlInput"
                 type="url"
-                placeholder="https://example.com/file.pdf"
+                placeholder=${this.t('fileUrlPlaceholder', 'https://example.com/file.pdf')}
                 .value=${this._url}
                 @input=${this._onUrlInput}
               />
             </div>
             <div class="field">
-              <label for="nameInput">File name <span class="optional">(optional)</span></label>
+              <label for="nameInput">${this.t('fileName', 'File name')} <span class="optional">(${this.t('optional', 'optional')})</span></label>
               <input
                 id="nameInput"
                 type="text"
-                placeholder="document.pdf"
+                placeholder=${this.t('fileNamePlaceholder', 'document.pdf')}
                 .value=${this._name}
                 @input=${this._onNameInput}
               />
             </div>
             ${this._error ? html`<div class="error">${this._error}</div>` : ''}
             <div class="actions">
-              <button class="btn btn-ghost" @click=${this._cancel}>Cancel</button>
+              <button class="btn btn-ghost" @click=${this._cancel}>${this.t('cancel', 'Cancel')}</button>
               <button class="btn btn-primary" @click=${this._submit}>
-                Import file
+                ${this.t('importFile', 'Import file')}
               </button>
             </div>
           </div>

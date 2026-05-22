@@ -34,6 +34,28 @@ export function createStore(): Store<UploaderState> {
     totalBytes: 0,
 
     isUploading: false,
+
+    t: (_key, defaultValueOrOptions?, options?) => {
+      const interpolate = (str: string, opts: Record<string, unknown>) =>
+        str.replace(/\{\{(\w+)\}\}/g, (_, k) => String(opts[k] ?? ''));
+      if (typeof defaultValueOrOptions === 'string') {
+        return interpolate(defaultValueOrOptions, options ?? {});
+      }
+      if (typeof defaultValueOrOptions === 'object' && defaultValueOrOptions !== null) {
+        const opts = defaultValueOrOptions;
+        const count = opts.count as number | undefined;
+        if (count !== undefined) {
+          const val = String(
+            (count === 1 ? opts.defaultValue_one : opts.defaultValue_other) ??
+              opts.defaultValue ??
+              _key,
+          );
+          return interpolate(val, opts);
+        }
+        return interpolate(String(opts.defaultValue ?? _key), opts);
+      }
+      return _key;
+    },
   });
 }
 

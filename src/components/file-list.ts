@@ -4,7 +4,7 @@ import { unsafeSVG } from 'lit/directives/unsafe-svg.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { cspStyle } from '../utils/csp-style';
 import { brandIcon } from '../utils/brand-icon';
-import type { UploadFile } from '../store/store.types';
+import type { UploadFile, TFunction } from '../store/store.types';
 import type { SourceDef } from '../types/source.types';
 import { getPortalTarget } from '../utils/portal-target';
 
@@ -424,6 +424,7 @@ export class SfxFileList extends LitElement {
     }
   `;
 
+  @property({ attribute: false }) t: TFunction = (k, d) => (typeof d === 'string' ? d : k);
   @property({ attribute: false }) files: UploadFile[] = [];
   @property({ type: Boolean }) showDropTile = false;
   @property({ attribute: false }) sources: SourceDef[] = [];
@@ -502,6 +503,13 @@ export class SfxFileList extends LitElement {
     window.removeEventListener('resize', this._onScrollOrResize);
   }
 
+  updated(changed: Map<string, unknown>) {
+    super.updated(changed);
+    if (changed.has('t') && this._moreOpen) {
+      this._openPortal();
+    }
+  }
+
   private _toggleMore(e: Event) {
     e.stopPropagation();
     this._moreOpen = !this._moreOpen;
@@ -537,7 +545,7 @@ export class SfxFileList extends LitElement {
                 ? brandIcon(s)
                 : svgTag`<svg viewBox="0 0 24 24" class=${s.fillIcon ? 'fill-icon' : ''}>${unsafeSVG(s.icon)}</svg>`}
             </span>
-            ${s.label}
+            ${s.labelKey ? this.t(s.labelKey, s.label) : s.label}
           </button>
         `)}
       </div>`,
@@ -635,14 +643,14 @@ export class SfxFileList extends LitElement {
           </div>
         </div>
         <div class="drop-tile-info">
-          <div class="drop-tile-text">Drop or click to <span>browse</span></div>
+          <div class="drop-tile-text">${this.t('dropOrClickTo', 'Drop or click to')} <span>${this.t('browse', 'browse')}</span></div>
           ${visibleSources.length > 0 ? html`
             <div class="drop-tile-sources">
               ${visibleSources.map((s) => html`
                 <button
                   class="drop-tile-src"
                   ${cspStyle(s.iconColor && !s.brandHtml ? { color: s.iconColor } : null)}
-                  title=${s.label}
+                  title=${s.labelKey ? this.t(s.labelKey, s.label) : s.label}
                   @click=${(e: Event) => this._onSourceClick(e, s)}
                 >
                   ${s.brandHtml
@@ -652,7 +660,7 @@ export class SfxFileList extends LitElement {
               `)}
               ${overflowSources.length > 0 ? html`
                 <div class="drop-tile-more-wrap">
-                  <button class="drop-tile-more" title="More sources" @click=${(e: Event) => this._toggleMore(e)}>···</button>
+                  <button class="drop-tile-more" title=${this.t('moreSources', 'More sources')} @click=${(e: Event) => this._toggleMore(e)}>···</button>
                 </div>
               ` : nothing}
             </div>
@@ -668,7 +676,7 @@ export class SfxFileList extends LitElement {
       <div class="grid">
         ${this.showDropTile && this.mode !== 'review' ? this._renderDropTile() : nothing}
         ${this.files.map(
-          (f, i) => html`<sfx-file-item .file=${f} .mode=${this.mode} .getLocateUrl=${this.getLocateUrl} .showLocateButton=${this.showLocateButton} .showCopyCdnButton=${this.showCopyCdnButton} ${cspStyle({ '--tile-index': String(i) })}></sfx-file-item>`,
+          (f, i) => html`<sfx-file-item .t=${this.t} .file=${f} .mode=${this.mode} .getLocateUrl=${this.getLocateUrl} .showLocateButton=${this.showLocateButton} .showCopyCdnButton=${this.showCopyCdnButton} ${cspStyle({ '--tile-index': String(i) })}></sfx-file-item>`,
         )}
       </div>
     `;

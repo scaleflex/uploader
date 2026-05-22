@@ -4,6 +4,7 @@ import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { cspStyle } from '../utils/csp-style';
 import { brandIcon } from '../utils/brand-icon';
 import type { ProviderId, CompanionItem, RemoteFileInfo } from '../connectors/connector.types';
+import type { TFunction } from '../store/store.types';
 import {
   getAuthUrl,
   listFiles,
@@ -675,6 +676,7 @@ export class SfxProviderBrowser extends LitElement {
     }
   `;
 
+  @property({ attribute: false }) t: TFunction = (k, d) => (typeof d === 'string' ? d : k);
   @property({ type: String }) provider: ProviderId = 'google-drive';
   @property({ type: String }) companionUrl = '';
   /**
@@ -795,7 +797,7 @@ export class SfxProviderBrowser extends LitElement {
         removeToken(this.provider);
         this._authenticated = false;
       } else {
-        this._error = err instanceof Error ? err.message : 'Failed to load files';
+        this._error = err instanceof Error ? err.message : this.t('failedToLoadFiles', 'Failed to load files');
       }
     } finally {
       this._loading = false;
@@ -953,7 +955,7 @@ export class SfxProviderBrowser extends LitElement {
     const def = this._providerDef;
     return html`
       <div class="browser-header">
-        <button class="back-btn" @click=${this._onClose} title="Back">
+        <button class="back-btn" @click=${this._onClose} title=${this.t('back', 'Back')}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
             <polyline points="15 18 9 12 15 6" />
           </svg>
@@ -1132,7 +1134,7 @@ export class SfxProviderBrowser extends LitElement {
                 ?disabled=${this._loadingMore}
                 @click=${this._onLoadMore}
               >
-                ${this._loadingMore ? 'Loading' : 'Load more'}
+                ${this._loadingMore ? this.t('loading', 'Loading') : this.t('loadMore', 'Load more')}
               </button>
             `
           : nothing}
@@ -1143,12 +1145,12 @@ export class SfxProviderBrowser extends LitElement {
             <div class="browser-footer">
               <div class="footer-left">
                 <button class="select-all-btn" @click=${this._toggleSelectAll}>
-                  ${files.every((f) => this._selectedIds.has(f.id)) ? 'Deselect all' : 'Select all'}
+                  ${files.every((f) => this._selectedIds.has(f.id)) ? this.t('deselectAll', 'Deselect all') : this.t('selectAll', 'Select all')}
                 </button>
                 <span class="selected-count ${selectedCount > 0 ? 'has-selection' : ''}">
                   ${selectedCount > 0
-                    ? `${selectedCount} file${selectedCount === 1 ? '' : 's'} selected`
-                    : 'No files selected'}
+                    ? this.t('filesSelected', { count: selectedCount, defaultValue_one: '{{count}} file selected', defaultValue_other: '{{count}} files selected' })
+                    : this.t('noFilesSelected', 'No files selected')}
                 </span>
               </div>
               <button

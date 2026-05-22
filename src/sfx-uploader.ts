@@ -1,4 +1,5 @@
 import { LitElement, html, css, nothing, render as litRender } from "lit";
+import { initI18n, missingKeysHelper } from "./i18n";
 import { property, state } from "lit/decorators.js";
 import { cspStyle } from "./utils/csp-style";
 import { createStore, Store } from "./store";
@@ -293,6 +294,12 @@ export interface UploaderConfig {
    *   `https://demo.cloudimg.io/v7/${encodeURIComponent(url)}?w=200`
    */
   transformRemoteThumbnail?: (url: string, ctx: RemoteThumbnailContext) => string;
+  /**
+   * BCP 47 locale tag for the UI language (e.g. `'fr'`, `'de'`, `'en-US'`).
+   * Defaults to `navigator.language`. Translations are loaded lazily from the
+   * Wordplex CDN; English defaults are shown for any untranslated keys.
+   */
+  locale?: string;
 }
 
 /** Default tus-related fields for new UploadFile objects. */
@@ -2400,6 +2407,7 @@ export class SfxUploader extends LitElement {
     if (changed.has("config") && this.config) {
       this._applyConfig(this.config);
     }
+
     // Resolve image dimensions when preview file changes
     if (changed.has("_previewFileId") && this._previewFileId) {
       const targetId = this._previewFileId;
@@ -2538,6 +2546,43 @@ export class SfxUploader extends LitElement {
     // Check if a previous upload batch exists in sessionStorage
     const id = this._lastUploadId;
     this._hasStoredReview = id != null && lastUploadStore.exists(id);
+    // Initialise i18n (fire-and-forget — failure is non-fatal)
+    void this._initI18n(typeof navigator !== 'undefined' ? navigator.language : undefined);
+  }
+
+  private async _initI18n(locale?: string) {
+    try {
+      const { i18n, isNew } = await initI18n(locale || 'en');
+      if (isNew) {
+        i18n.on(
+          'missingKey',
+          (
+            _lngs: readonly string[],
+            ns: string,
+            key: string,
+            fallback: string,
+            _updateMissing: boolean,
+            options: Record<string, unknown>,
+          ) => {
+            const pluralMatch = key.match(/_(?:zero|one|two|few|many|other)$/);
+            const correctDefault =
+              pluralMatch && options?.[`defaultValue${pluralMatch[0]}`]
+                ? String(options[`defaultValue${pluralMatch[0]}`])
+                : fallback;
+            missingKeysHelper.handleMissingKey(key, correctDefault, ns);
+          },
+        );
+      }
+      const tFn: UploaderState['t'] = (key, defaultValueOrOptions?, options?) => {
+        if (typeof defaultValueOrOptions === 'string') {
+          return i18n.t(key, defaultValueOrOptions, options ?? {}) as string;
+        }
+        return i18n.t(key, defaultValueOrOptions ?? {}) as string;
+      };
+      this._store.setState({ t: tFn });
+    } catch {
+      // i18n failure is non-fatal — store keeps the pass-through t
+    }
   }
 
   disconnectedCallback() {
@@ -2577,6 +2622,7 @@ export class SfxUploader extends LitElement {
     // Update store with config values
     const updates: Partial<UploaderState> = {};
 
+    if (cfg.locale) void this._initI18n(cfg.locale);
     if (cfg.targetFolder) updates.targetFolder = cfg.targetFolder;
     if (cfg.restrictions || cfg.forceName != null) {
       updates.restrictions = {
@@ -3933,6 +3979,7 @@ export class SfxUploader extends LitElement {
   render() {
     const mode = this.config?.mode ?? "modal";
     const files = [...this._storeCtrl.state.files.values()];
+    const t = this._storeCtrl.state.t;
 
     if (mode === "modal") {
       return html`
@@ -3941,7 +3988,7 @@ export class SfxUploader extends LitElement {
               <div class="modal-backdrop" @click=${this._onModalBackdropClick}>
                 <div class="modal-card">
                   ${this._renderHeader()} ${this._renderBody()}
-                  <sfx-toast></sfx-toast>
+                  <sfx-toast .t=${t}></sfx-toast>
                 </div>
               </div>
             `
@@ -3954,7 +4001,7 @@ export class SfxUploader extends LitElement {
     return html`
       <div class="inline ${files.length === 0 ? "no-files" : ""}">
         ${this._renderHeader()} ${this._renderBody()}
-        <sfx-toast></sfx-toast>
+          <sfx-toast .t=${t}></sfx-toast>
       </div>
       ${this._renderFsOverlay()}
     `;
@@ -3969,6 +4016,7 @@ export class SfxUploader extends LitElement {
       ancestor of fs-overlay establishes a containing block on first paint. */
   private _renderFsOverlay() {
     if (!this._fullscreenPreviewUrl && !this._fullscreenVideoFile) return nothing;
+    const t = this._storeCtrl.state.t;
     const fsFiles = [...this._store.getState().files.values()].filter(
       (f) => f.previewUrl || (f.type.startsWith("video/") && f.file),
     );
@@ -3990,12 +4038,12 @@ export class SfxUploader extends LitElement {
           : html`<img class="fs-img" src=${this._fullscreenPreviewUrl} alt="" ${cspStyle(this._fsZoom > 1 ? { transform: `scale(${this._fsZoom}) translate(${this._fsPanX}px, ${this._fsPanY}px)` } : null)} draggable="false" />`}
       </div>
       <div class="fs-toolbar" @click=${(e: Event) => e.stopPropagation()}>
-        <button class="fs-btn" @click=${this._onFsToggleZoom} title="${this._fsZoom >= SfxUploader._FS_ZOOM_LEVELS[SfxUploader._FS_ZOOM_LEVELS.length - 1] ? "Reset zoom" : `Zoom in (${this._fsZoom}×)`}">
+        <button class="fs-btn" @click=${this._onFsToggleZoom} title=${this._fsZoom >= SfxUploader._FS_ZOOM_LEVELS[SfxUploader._FS_ZOOM_LEVELS.length - 1] ? t('resetZoom', 'Reset zoom') : t('zoomIn', 'Zoom in ({{zoom}}×)', { zoom: this._fsZoom })}>
           ${this._fsZoom >= SfxUploader._FS_ZOOM_LEVELS[SfxUploader._FS_ZOOM_LEVELS.length - 1]
             ? html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>`
             : html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>`}
         </button>
-        <button class="fs-btn" @click=${this._onFsClose} title="Close">
+        <button class="fs-btn" @click=${this._onFsClose} title=${t('close', 'Close')}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
@@ -4033,6 +4081,7 @@ export class SfxUploader extends LitElement {
 
   private _renderHeader() {
     if (this._phase === "complete") return nothing;
+    const t = this._storeCtrl.state.t;
     const mode = this.config?.mode ?? "modal";
     if (this._phase === "uploading") {
       const s = this._storeCtrl.state;
@@ -4056,12 +4105,10 @@ export class SfxUploader extends LitElement {
             </div>
             <div>
               <div class="float-title">
-                Uploading ${files.length}
-                ${files.length === 1 ? "file" : "files"}
+                ${t('uploadingFiles', { count: files.length, defaultValue_one: 'Uploading {{count}} file', defaultValue_other: 'Uploading {{count}} files' })}
               </div>
               <div class="float-subtitle">
-                ${completed} of
-                ${files.length}${this._lastEta > 0 ? ` · ~${formatEta(this._lastEta)} left` : ""}
+                ${t('nOfNComplete', '{{completed}} of {{total}} complete', { completed, total: files.length })}${this._lastEta > 0 ? ` · ${t('etaLeft', '~{{eta}} left', { eta: formatEta(this._lastEta) })}` : ""}
               </div>
             </div>
           </div>
@@ -4133,7 +4180,7 @@ export class SfxUploader extends LitElement {
               </svg>
             </div>`
           : nothing}
-        <div class="header-title">Upload Files</div>
+        <div class="header-title">${t('uploadFiles', 'Upload Files')}</div>
         ${closeBtn}
       </div>
     `;
@@ -4164,6 +4211,7 @@ export class SfxUploader extends LitElement {
 
   private _renderUploadOverlay(files: UploadFile[]) {
     const s = this._storeCtrl.state;
+    const t = s.t;
     const pct = Math.round(s.totalProgress ?? 0);
     const completed = files.filter((f) => f.status === "complete").length;
 
@@ -4172,11 +4220,10 @@ export class SfxUploader extends LitElement {
         <div class="upload-overlay-spinner"></div>
         <div class="upload-overlay-percent">${pct}%</div>
         <div class="upload-overlay-title">
-          Uploading ${files.length} ${files.length === 1 ? "file" : "files"}
+          ${t('uploadingFiles', { count: files.length, defaultValue_one: 'Uploading {{count}} file', defaultValue_other: 'Uploading {{count}} files' })}
         </div>
         <div class="upload-overlay-subtitle">
-          ${completed} of ${files.length}
-          complete${this._lastEta > 0 ? html` · ~${formatEta(this._lastEta)} left` : nothing}
+          ${t('nOfNComplete', '{{completed}} of {{total}} complete', { completed, total: files.length })}${this._lastEta > 0 ? html` · ${t('etaLeft', '~{{eta}} left', { eta: formatEta(this._lastEta) })}` : nothing}
         </div>
         <div class="upload-overlay-bar">
           <div class="upload-overlay-bar-fill" ${cspStyle({ width: `${pct}%` })}></div>
@@ -4186,14 +4233,14 @@ export class SfxUploader extends LitElement {
             class="upload-overlay-cancel"
             @click=${this._onCancelUpload}
           >
-            Cancel upload
+            ${t('cancelUpload', 'Cancel upload')}
           </button>
           ${this.config?.minimizeOnUpload
             ? html`<button
                 class="upload-overlay-minimize"
                 @click=${this._onMinimize}
               >
-                Minimize & continue in background
+                ${t('minimizeAndContinue', 'Minimize & continue in background')}
               </button>`
             : nothing}
         </div>
@@ -4203,6 +4250,7 @@ export class SfxUploader extends LitElement {
 
   private _renderFloatingPill(files: UploadFile[]) {
     const s = this._storeCtrl.state;
+    const t = s.t;
     const pct = Math.round(s.totalProgress ?? 0);
     const isDone = this._phase === "complete";
     const completed = files.filter((f) => f.status === "complete").length;
@@ -4262,19 +4310,17 @@ export class SfxUploader extends LitElement {
               >${isDone
                 ? failed > 0
                   ? completed > 0
-                    ? "Partially uploaded"
-                    : "Upload failed"
-                  : "Upload complete"
-                : `Uploading ${files.length} ${
-                    files.length === 1 ? "file" : "files"
-                  }`}</span
+                    ? t('partiallyUploaded', 'Partially uploaded')
+                    : t('uploadFailed', 'Upload failed')
+                  : t('uploadComplete', 'Upload complete')
+                : t('uploadingFiles', { count: files.length, defaultValue_one: 'Uploading {{count}} file', defaultValue_other: 'Uploading {{count}} files' })}</span
             >
             ${!isDone
               ? html`<span class="float-collapsed-pct">${pct}%</span>`
               : nothing}
           </div>
           <div class="float-collapsed-actions">
-            <button title="Open uploader" @click=${this._onPillExpand}>
+            <button title=${t('openUploader', 'Open uploader')} @click=${this._onPillExpand}>
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
@@ -4289,7 +4335,7 @@ export class SfxUploader extends LitElement {
                 <line x1="3" y1="21" x2="10" y2="14" />
               </svg>
             </button>
-            <button title="Expand" @click=${this._onPillClick}>
+            <button title=${t('expand', 'Expand')} @click=${this._onPillClick}>
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
@@ -4300,7 +4346,7 @@ export class SfxUploader extends LitElement {
                 <polyline points="18 15 12 9 6 15" />
               </svg>
             </button>
-            <button title="Close" @click=${this._onPillDismiss}>
+            <button title=${t('close', 'Close')} @click=${this._onPillDismiss}>
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
@@ -4386,26 +4432,20 @@ export class SfxUploader extends LitElement {
                 ${isDone
                   ? failed > 0
                     ? completed > 0
-                      ? "Partially uploaded"
-                      : "Upload failed"
-                    : "Upload complete"
-                  : `Uploading ${files.length} ${
-                      files.length === 1 ? "file" : "files"
-                    }`}
+                      ? t('partiallyUploaded', 'Partially uploaded')
+                      : t('uploadFailed', 'Upload failed')
+                    : t('uploadComplete', 'Upload complete')
+                  : t('uploadingFiles', { count: files.length, defaultValue_one: 'Uploading {{count}} file', defaultValue_other: 'Uploading {{count}} files' })}
               </div>
               <div class="float-subtitle">
                 ${isDone
-                  ? `${completed} ${
-                      completed === 1 ? "file" : "files"
-                    } uploaded${failed > 0 ? `, ${failed} failed` : ""}`
-                  : `${completed} of ${files.length}${
-                      this._lastEta > 0 ? ` · ~${formatEta(this._lastEta)} left` : ""
-                    }`}
+                  ? `${t('filesUploaded', { count: completed, defaultValue_one: '{{count}} file uploaded', defaultValue_other: '{{count}} files uploaded' })}${failed > 0 ? `, ${t('nFailed', '{{count}} failed', { count: failed })}` : ""}`
+                  : `${t('nOfNComplete', '{{completed}} of {{total}} complete', { completed, total: files.length })}${this._lastEta > 0 ? ` · ${t('etaLeft', '~{{eta}} left', { eta: formatEta(this._lastEta) })}` : ""}`}
               </div>
             </div>
           </div>
           <div class="float-actions">
-            <button title="Expand" @click=${this._onPillExpand}>
+            <button title=${t('expand', 'Expand')} @click=${this._onPillExpand}>
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
@@ -4420,7 +4460,7 @@ export class SfxUploader extends LitElement {
                 <line x1="3" y1="21" x2="10" y2="14" />
               </svg>
             </button>
-            <button title="Collapse" @click=${this._onPillClick}>
+            <button title=${t('collapse', 'Collapse')} @click=${this._onPillClick}>
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
@@ -4431,7 +4471,7 @@ export class SfxUploader extends LitElement {
                 <polyline points="6 9 12 15 18 9" />
               </svg>
             </button>
-            <button title="Close" @click=${this._onPillDismiss}>
+            <button title=${t('close', 'Close')} @click=${this._onPillDismiss}>
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
@@ -4627,6 +4667,7 @@ export class SfxUploader extends LitElement {
 
   private _renderPreviewLayout(files: UploadFile[]) {
     if (files.length === 0) return nothing;
+    const t = this._storeCtrl.state.t;
     const previewFile =
       files.find((f) => f.id === this._previewFileId) ?? files[0];
     const ext = previewFile.name.split(".").pop()?.toUpperCase() || "";
@@ -4651,6 +4692,7 @@ export class SfxUploader extends LitElement {
             >
           </div>
           <sfx-file-list
+            .t=${this._storeCtrl.state.t}
             .files=${files}
             .showDropTile=${true}
             .sources=${this._mergedSources}
@@ -4674,8 +4716,8 @@ export class SfxUploader extends LitElement {
               @click=${() => {
                 this._previewFileId = null;
               }}
-              aria-label="Back to file list"
-              title="Back"
+              aria-label=${t('backToFileList', 'Back to file list')}
+              title=${t('back', 'Back')}
             >
               <svg
                 viewBox="0 0 24 24"
@@ -4712,7 +4754,7 @@ export class SfxUploader extends LitElement {
                         // requestUpdate fixes it.
                         requestAnimationFrame(() => this.requestUpdate());
                       }}
-                      title="Fullscreen"
+                      title=${t('fullscreen', 'Fullscreen')}
                     >
                       <svg
                         viewBox="0 0 24 24"
@@ -4734,7 +4776,7 @@ export class SfxUploader extends LitElement {
                 @click=${() => {
                   this._previewFileId = null;
                 }}
-                title="Close"
+                title=${t('close', 'Close')}
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -4918,7 +4960,7 @@ export class SfxUploader extends LitElement {
                       this._fileInfoOpen = !this._fileInfoOpen;
                     }}
                   >
-                    <span>File info</span>
+                    <span>${t('fileInfo', 'File info')}</span>
                     <svg
                       viewBox="0 0 24 24"
                       fill="none"
@@ -4935,19 +4977,19 @@ export class SfxUploader extends LitElement {
                       : ""}"
                   >
                     <div class="preview-file-info-row">
-                      <div class="preview-file-info-key">File name</div>
+                      <div class="preview-file-info-key">${t('fileName', 'File name')}</div>
                       <div class="preview-file-info-val">
                         ${previewFile.name}
                       </div>
                     </div>
                     <div class="preview-file-info-row">
-                      <div class="preview-file-info-key">Type</div>
+                      <div class="preview-file-info-key">${t('type', 'Type')}</div>
                       <div class="preview-file-info-val">${ext}</div>
                     </div>
                     ${previewFile.size
                       ? html`
                           <div class="preview-file-info-row">
-                            <div class="preview-file-info-key">Size</div>
+                            <div class="preview-file-info-key">${t('size', 'Size')}</div>
                             <div class="preview-file-info-val">
                               ${formatFileSize(previewFile.size)}
                             </div>
@@ -4957,7 +4999,7 @@ export class SfxUploader extends LitElement {
                     ${this._previewDims !== "\u2014"
                       ? html`
                           <div class="preview-file-info-row">
-                            <div class="preview-file-info-key">Dimensions</div>
+                            <div class="preview-file-info-key">${t('dimensions', 'Dimensions')}</div>
                             <div class="preview-file-info-val">
                               ${this._previewDims}
                             </div>
@@ -4991,6 +5033,7 @@ export class SfxUploader extends LitElement {
 
   private _renderBody() {
     const s = this._storeCtrl.state;
+    const t = s.t;
     const files = [...s.files.values()];
     const phase = this._phase;
     const accept = buildAcceptString(s.restrictions);
@@ -5046,6 +5089,7 @@ export class SfxUploader extends LitElement {
           ${this._isReviewing
             ? html`
                 <sfx-last-upload-review
+                  .t=${t}
                   .files=${this._reviewFiles}
                   .getLocateUrl=${this.config?.getLocateUrl}
                   .showLocateButton=${this.config?.showLocateButton ?? false}
@@ -5057,6 +5101,8 @@ export class SfxUploader extends LitElement {
             : phase === "complete"
             ? html`
                 <sfx-success-card
+                  .t=${t}
+                  .primaryLabel=${t('done', 'Done')}
                   .fileCount=${files.filter((f) => f.status === "complete")
                     .length}
                   .totalSize=${files
@@ -5084,6 +5130,7 @@ export class SfxUploader extends LitElement {
                 ${hasFiles
                   ? nothing
                   : html`<sfx-drop-zone
+                        .t=${t}
                         .compact=${hasFiles}
                         .externalDragOver=${this._bodyDragOver}
                         .accept=${accept}
@@ -5096,13 +5143,13 @@ export class SfxUploader extends LitElement {
                         ? html`<button
                             class="last-upload-pill"
                             @click=${this._onEnterReview}
-                            title="View last upload batch"
+                            title=${t('viewLastUploadBatch', 'View last upload batch')}
                           >
                             <svg viewBox="0 0 24 24">
                               <path d="M12 8v4l3 3" />
                               <circle cx="12" cy="12" r="10" />
                             </svg>
-                            View last upload
+                            ${t('viewLastUpload', 'View last upload')}
                           </button>`
                         : nothing}`}
                 ${hasFiles
@@ -5117,6 +5164,7 @@ export class SfxUploader extends LitElement {
                           )}
                         </div>
                         <sfx-file-list
+                          .t=${t}
                           .files=${files}
                           .showDropTile=${true}
                           .sources=${this._mergedSources}
@@ -5133,6 +5181,7 @@ export class SfxUploader extends LitElement {
         ${hasFiles && phase !== "complete" && phase !== "uploading"
           ? html`
               <sfx-actions-bar
+                .t=${t}
                 .uploadState=${"idle" as const}
                 .fileCount=${files.length}
                 .totalSize=${files.reduce((sum, f) => sum + (f.size || 0), 0)}
@@ -5150,13 +5199,13 @@ export class SfxUploader extends LitElement {
             `
           : nothing}
         ${this._showUrlDialog
-          ? html`<sfx-url-dialog></sfx-url-dialog>`
+          ? html`<sfx-url-dialog .t=${t}></sfx-url-dialog>`
           : nothing}
         ${this._showCameraDialog
-          ? html`<sfx-camera-dialog></sfx-camera-dialog>`
+          ? html`<sfx-camera-dialog .t=${t}></sfx-camera-dialog>`
           : nothing}
         ${this._showScreenCastDialog
-          ? html`<sfx-screen-cast-dialog></sfx-screen-cast-dialog>`
+          ? html`<sfx-screen-cast-dialog .t=${t}></sfx-screen-cast-dialog>`
           : nothing}
         ${this._activeConnector && this.config?.connectors
           ? html`
@@ -5168,6 +5217,7 @@ export class SfxUploader extends LitElement {
                   ${SEARCH_PROVIDERS.has(this._activeConnector)
                     ? html`
                         <sfx-search-provider-browser
+                          .t=${t}
                           .provider=${this._activeConnector}
                           .companionUrl=${this.config.connectors.companionUrl}
                           .transformThumbnail=${this
@@ -5176,6 +5226,7 @@ export class SfxUploader extends LitElement {
                       `
                     : html`
                         <sfx-provider-browser
+                          .t=${t}
                           .provider=${this._activeConnector}
                           .companionUrl=${this.config.connectors.companionUrl}
                           .transformThumbnail=${this

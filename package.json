@@ -45,6 +45,8 @@
     "push:source": "git push gitlab main"
   },
   "dependencies": {
+    "i18next": "^26.2.0",
+    "i18next-http-backend": "^4.0.0",
     "lit": "^3.2.0",
     "tus-js-client": "^4.3.1"
   },

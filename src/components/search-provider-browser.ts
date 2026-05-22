@@ -3,6 +3,7 @@ import { property, state } from 'lit/decorators.js';
 import type { ProviderId, CompanionSearchItem, RemoteFileInfo } from '../connectors/connector.types';
 import { searchProvider } from '../connectors/companion-client';
 import { getProviderSources } from '../connectors/provider-registry';
+import type { TFunction } from '../store/store.types';
 
 export class SfxSearchProviderBrowser extends LitElement {
   static styles = css`
@@ -320,6 +321,7 @@ export class SfxSearchProviderBrowser extends LitElement {
     }
   `;
 
+  @property({ attribute: false }) t: TFunction = (k, d) => (typeof d === 'string' ? d : k);
   @property({ type: String }) provider: ProviderId = 'unsplash';
   @property({ type: String }) companionUrl = '';
   /**
@@ -384,7 +386,7 @@ export class SfxSearchProviderBrowser extends LitElement {
       });
       this._nextPageQuery = res.nextPageQuery;
     } catch (err) {
-      this._error = err instanceof Error ? err.message : 'Search failed';
+      this._error = err instanceof Error ? err.message : this.t('searchFailed', 'Search failed');
     } finally {
       this._loading = false;
     }
@@ -491,7 +493,7 @@ export class SfxSearchProviderBrowser extends LitElement {
         <input
           class="search-input"
           type="text"
-          placeholder="Search for images"
+          placeholder=${this.t('searchForImages', 'Search for images')}
           .value=${this._searchQuery}
           @input=${this._onSearchInput}
           @keydown=${this._onSearchKeydown}
@@ -577,15 +579,15 @@ export class SfxSearchProviderBrowser extends LitElement {
             <div class="browser-footer">
               <span class="selected-count">
                 ${selectedCount > 0
-                  ? `${selectedCount} image${selectedCount === 1 ? '' : 's'} selected`
-                  : 'Select images to add'}
+                  ? this.t('imagesSelected', { count: selectedCount, defaultValue_one: '{{count}} image selected', defaultValue_other: '{{count}} images selected' })
+                  : this.t('selectImagesToAdd', 'Select images to add')}
               </span>
               <button
                 class="add-btn"
                 ?disabled=${selectedCount === 0}
                 @click=${this._onAddSelected}
               >
-                Add ${selectedCount > 0 ? selectedCount : ''} image${selectedCount === 1 ? '' : 's'}
+                ${this.t('addImages', { count: selectedCount > 0 ? selectedCount : 0, defaultValue_one: 'Add {{count}} image', defaultValue_other: 'Add {{count}} images' })}
               </button>
             </div>
           `

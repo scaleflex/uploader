@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { property, state } from 'lit/decorators.js';
+import type { TFunction } from '../store/store.types';
 
 export type ToastType = 'error' | 'warning' | 'info';
 
@@ -106,6 +107,7 @@ export class SfxToast extends LitElement {
     }
   `;
 
+  @property({ attribute: false }) t: TFunction = (k, d) => (typeof d === 'string' ? d : k);
   @property({ type: Number }) duration = 6000;
 
   @state() private _toasts: ToastItem[] = [];
@@ -160,7 +162,7 @@ export class SfxToast extends LitElement {
             <div class="toast toast--${t.type} ${t.leaving ? 'leaving' : ''}" role="alert">
               ${this._iconForType(t.type)}
               <span class="toast-msg">${t.message}</span>
-              <button class="toast-close" @click=${() => this._dismiss(t.id)} aria-label="Dismiss">
+              <button class="toast-close" @click=${() => this._dismiss(t.id)} aria-label=${this.t('dismiss', 'Dismiss')}>
                 <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                   <line x1="4" y1="4" x2="12" y2="12"/><line x1="12" y1="4" x2="4" y2="12"/>
                 </svg>
