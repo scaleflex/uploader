@@ -494,6 +494,7 @@ export class SfxFileList extends LitElement {
   }
 
   updated(changed: Map<string, unknown>) {
+    super.updated(changed);
     if (changed.has('t') && this._moreOpen) {
       this._openPortal();
     }

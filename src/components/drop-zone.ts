@@ -1253,6 +1253,7 @@ export class SfxDropZone extends LitElement {
   }
 
   updated(changed: Map<string, unknown>) {
+    super.updated(changed);
     if (changed.has("sourcesLayout")) {
       this._updateVisiblePills();
     }
