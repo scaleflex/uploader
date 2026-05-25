@@ -64,7 +64,7 @@ export interface UploadResponse {
     extension: string;
     type: string;
     size: number;
-    url: { public: string; cdn: string };
+    url: { public: string; cdn: string; cdn_permalink?: string; permalink?: string };
     meta: Record<string, unknown>;
     tags: string[];
     info: { img_w?: number; img_h?: number };

@@ -30,13 +30,24 @@ interface StoredPayload {
 }
 
 /** Strip non-serializable fields and substitute previewUrl for completed files
- *  with the server-side CDN URL so thumbnails survive page reloads. */
+ *  with a server-side URL so thumbnails survive page reloads. Prefers the
+ *  engine-resolved `file.previewUrl` (already runs through `cdn_permalink`
+ *  preference + the host's `transformRemoteThumbnail` hook), falling back to
+ *  the raw response URLs for non-image files where `previewUrl` is a blob
+ *  poster or null. */
 function serialize(file: UploadFile): StoredFile {
   const { file: _blob, previewUrl: _objUrl, ...rest } = file;
-  const cdnPreview =
-    file.status === 'complete' && file.response?.file?.url?.cdn
-      ? file.response.file.url.cdn
-      : null;
+  let cdnPreview: string | null = null;
+  if (file.status === 'complete') {
+    if (file.previewUrl && !file.previewUrl.startsWith('blob:')) {
+      cdnPreview = file.previewUrl;
+    } else {
+      cdnPreview =
+        file.response?.file?.url?.cdn_permalink ??
+        file.response?.file?.url?.cdn ??
+        null;
+    }
+  }
   return { ...rest, previewUrl: cdnPreview };
 }
 

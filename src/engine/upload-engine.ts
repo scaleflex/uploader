@@ -18,6 +18,13 @@ export interface UploadEngineConfig {
    * single-asset by design.
    */
   resolveUploadParams?: (file: UploadFile) => Record<string, string> | undefined;
+  /**
+   * Rewrite the post-upload preview URL (defaulting to `cdn_permalink ??
+   * cdn` from the upload response) before it replaces a file's preview.
+   * Hosts with CSPs that disallow a project's custom CDN CNAME can route
+   * the URL through a Filerobot/Cloudimage proxy here.
+   */
+  transformPreviewUrl?: (url: string) => string;
 }
 
 export class UploadEngine {
@@ -322,22 +329,28 @@ export class UploadEngine {
 
     // Swap previewUrl to the CDN URL once the file is on Filerobot — without this,
     // URL imports / connector imports keep their original third-party origin in
-    // previewUrl, which host CSPs that only allow *.filerobot.com / *.cloudimg.io
-    // will block. Restricted to image MIME types: a CDN URL for a video file is
-    // the video itself, not a poster image, so the locally-generated poster blob
-    // stays.
+    // previewUrl, which host CSPs would block. Prefer `cdn_permalink` (always
+    // on `*.filerobot.com`) over `cdn` because `cdn` may be a project's custom
+    // CNAME that isn't in the host CSP allowlist. Hosts can still rewrite the
+    // chosen URL via `transformPreviewUrl` (e.g. to proxy through Cloudimage).
+    // Restricted to image MIME types: a CDN URL for a video file is the video
+    // itself, not a poster image, so the locally-generated poster blob stays.
     const file = this.store.getState().files.get(fileId);
-    const cdnUrl = response.file?.url?.cdn ?? null;
+    const rawPreview =
+      response.file?.url?.cdn_permalink ?? response.file?.url?.cdn ?? null;
+    const previewUrl = rawPreview
+      ? (this.config.transformPreviewUrl?.(rawPreview) ?? rawPreview)
+      : null;
     const update: Partial<UploadFile> = {
       status: 'complete',
       progress: 100,
       response,
     };
-    if (file && cdnUrl && file.type.startsWith('image/')) {
+    if (file && previewUrl && file.type.startsWith('image/')) {
       if (file.previewUrl?.startsWith('blob:')) {
         URL.revokeObjectURL(file.previewUrl);
       }
-      update.previewUrl = cdnUrl;
+      update.previewUrl = previewUrl;
     }
     updateFile(this.store, fileId, update);
 

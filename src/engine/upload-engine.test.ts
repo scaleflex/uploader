@@ -215,6 +215,70 @@ describe('UploadEngine', () => {
       revokeSpy.mockRestore();
     });
 
+    it('prefers cdn_permalink over cdn for the preview swap', () => {
+      const file = makeUploadFile({
+        id: 'f1',
+        status: 'queued',
+        type: 'image/png',
+        previewUrl: 'blob:http://localhost/abc',
+      });
+      const { store, engine } = createEngine({
+        files: new Map([['f1', file]]),
+        isUploading: true,
+      });
+
+      const response: UploadResponse = {
+        ...mockResponse,
+        file: {
+          ...mockResponse.file,
+          url: {
+            public: 'https://pub',
+            cdn: 'https://branded.example.com/img.png',
+            cdn_permalink: 'https://abc.filerobot.com/img.png',
+          },
+        },
+      };
+
+      (xhrUploadFile as ReturnType<typeof vi.fn>).mockImplementation((_f: any, opts: any) => {
+        setTimeout(() => opts.onComplete(response), 0);
+        return { abort: vi.fn() };
+      });
+
+      engine.start();
+      vi.runAllTimers();
+
+      expect(store.getState().files.get('f1')!.previewUrl).toBe(
+        'https://abc.filerobot.com/img.png',
+      );
+    });
+
+    it('applies transformPreviewUrl to the chosen preview URL', () => {
+      const transform = vi.fn((u: string) => `https://proxy.test/?u=${encodeURIComponent(u)}`);
+      const file = makeUploadFile({
+        id: 'f1',
+        status: 'queued',
+        type: 'image/png',
+        previewUrl: null,
+      });
+      const { store, engine } = createEngine(
+        { files: new Map([['f1', file]]), isUploading: true },
+        { transformPreviewUrl: transform },
+      );
+
+      (xhrUploadFile as ReturnType<typeof vi.fn>).mockImplementation((_f: any, opts: any) => {
+        setTimeout(() => opts.onComplete(mockResponse), 0);
+        return { abort: vi.fn() };
+      });
+
+      engine.start();
+      vi.runAllTimers();
+
+      expect(transform).toHaveBeenCalledWith('https://cdn');
+      expect(store.getState().files.get('f1')!.previewUrl).toBe(
+        'https://proxy.test/?u=https%3A%2F%2Fcdn',
+      );
+    });
+
     it('keeps previewUrl unchanged for non-image files', () => {
       const file = makeUploadFile({
         id: 'f1',
