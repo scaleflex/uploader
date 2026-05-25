@@ -330,19 +330,19 @@ export class UploadEngine {
     // Swap previewUrl to a server URL once the file is on Filerobot — without
     // this, URL imports / connector imports keep their original third-party
     // origin in previewUrl, which host CSPs would block. Preference order:
+    // `cdn` (the project's delivery URL, possibly a custom CNAME — fastest for
+    // the end user), then `cdn_permalink` (CDN-cached `*.filerobot.com`), then
     // `permalink` (canonical `api.filerobot.com/.../v4/get/{uuid}` endpoint —
-    // always on `*.filerobot.com`, the most stable choice), then
-    // `cdn_permalink` (CDN-cached `*.filerobot.com` — fast but occasionally
-    // misconfigured on a project), then `cdn` (may be a project's custom CNAME
-    // that isn't in the host CSP allowlist). Hosts can still rewrite the
-    // chosen URL via `transformPreviewUrl` (e.g. to proxy through Cloudimage).
+    // always on `*.filerobot.com`, the most stable fallback). Hosts can still
+    // rewrite the chosen URL via `transformPreviewUrl` (e.g. to proxy through
+    // Cloudimage).
     // Restricted to image MIME types: a CDN URL for a video file is the video
     // itself, not a poster image, so the locally-generated poster blob stays.
     const file = this.store.getState().files.get(fileId);
     const rawPreview =
-      response.file?.url?.permalink ??
-      response.file?.url?.cdn_permalink ??
       response.file?.url?.cdn ??
+      response.file?.url?.cdn_permalink ??
+      response.file?.url?.permalink ??
       null;
     const previewUrl = rawPreview
       ? (this.config.transformPreviewUrl?.(rawPreview) ?? rawPreview)
