@@ -293,9 +293,10 @@ export interface UploaderConfig {
    *    (`source: 'connector'`).
    *  - Post-upload preview swap — when the upload response's `cdn` URL is on
    *    a custom CNAME that isn't CSP-allowed (`source: 'cdn-complete'`). The
-   *    engine already defaults to `cdn_permalink` (always on `*.filerobot.com`)
-   *    when present, so this branch usually only fires for hosts whose CSP is
-   *    even tighter than that.
+   *    engine already defaults to `permalink` (`api.filerobot.com/.../v4/get`
+   *    — always on `*.filerobot.com`), then falls back to `cdn_permalink` and
+   *    `cdn`. This branch usually only fires for hosts whose CSP is even
+   *    tighter than that.
    *
    * @example
    * transformRemoteThumbnail: (url) =>

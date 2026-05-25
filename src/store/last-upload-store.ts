@@ -43,6 +43,7 @@ function serialize(file: UploadFile): StoredFile {
       cdnPreview = file.previewUrl;
     } else {
       cdnPreview =
+        file.response?.file?.url?.permalink ??
         file.response?.file?.url?.cdn_permalink ??
         file.response?.file?.url?.cdn ??
         null;

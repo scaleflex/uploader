@@ -215,7 +215,45 @@ describe('UploadEngine', () => {
       revokeSpy.mockRestore();
     });
 
-    it('prefers cdn_permalink over cdn for the preview swap', () => {
+    it('prefers permalink, then cdn_permalink, then cdn for the preview swap', () => {
+      const file = makeUploadFile({
+        id: 'f1',
+        status: 'queued',
+        type: 'image/png',
+        previewUrl: 'blob:http://localhost/abc',
+      });
+      const { store, engine } = createEngine({
+        files: new Map([['f1', file]]),
+        isUploading: true,
+      });
+
+      const response: UploadResponse = {
+        ...mockResponse,
+        file: {
+          ...mockResponse.file,
+          url: {
+            public: 'https://pub',
+            cdn: 'https://branded.example.com/img.png',
+            cdn_permalink: 'https://abc.filerobot.com/img.png',
+            permalink: 'https://api.filerobot.com/abc/v4/get/uuid',
+          },
+        },
+      };
+
+      (xhrUploadFile as ReturnType<typeof vi.fn>).mockImplementation((_f: any, opts: any) => {
+        setTimeout(() => opts.onComplete(response), 0);
+        return { abort: vi.fn() };
+      });
+
+      engine.start();
+      vi.runAllTimers();
+
+      expect(store.getState().files.get('f1')!.previewUrl).toBe(
+        'https://api.filerobot.com/abc/v4/get/uuid',
+      );
+    });
+
+    it('falls back to cdn_permalink when permalink is missing', () => {
       const file = makeUploadFile({
         id: 'f1',
         status: 'queued',
