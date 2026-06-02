@@ -679,6 +679,8 @@ export class SfxProviderBrowser extends LitElement {
   @property({ attribute: false }) t: TFunction = (k, d) => (typeof d === 'string' ? d : k);
   @property({ type: String }) provider: ProviderId = 'google-drive';
   @property({ type: String }) companionUrl = '';
+  /** When false, only one file can be selected at a time (single-asset mode). */
+  @property({ type: Boolean }) multi = true;
   /**
    * Optional rewrite for listing thumbnail URLs so they pass the host CSP.
    * Defaults to the identity function.
@@ -849,6 +851,13 @@ export class SfxProviderBrowser extends LitElement {
   private _toggleSelect(item: CompanionItem, e?: MouseEvent) {
     const files = this._items.filter((i) => !i.isFolder);
     const currentIndex = files.findIndex((f) => f.id === item.id);
+
+    if (!this.multi) {
+      // Single-select mode: clicking a file replaces the selection
+      this._selectedIds = this._selectedIds.has(item.id) ? new Set() : new Set([item.id]);
+      if (currentIndex !== -1) this._lastClickedIndex = currentIndex;
+      return;
+    }
 
     if (e?.shiftKey && this._lastClickedIndex !== null && currentIndex !== -1) {
       const start = Math.min(this._lastClickedIndex, currentIndex);
@@ -1144,9 +1153,9 @@ export class SfxProviderBrowser extends LitElement {
         ? html`
             <div class="browser-footer">
               <div class="footer-left">
-                <button class="select-all-btn" @click=${this._toggleSelectAll}>
+                ${this.multi ? html`<button class="select-all-btn" @click=${this._toggleSelectAll}>
                   ${files.every((f) => this._selectedIds.has(f.id)) ? this.t('deselectAll', 'Deselect all') : this.t('selectAll', 'Select all')}
-                </button>
+                </button>` : nothing}
                 <span class="selected-count ${selectedCount > 0 ? 'has-selection' : ''}">
                   ${selectedCount > 0
                     ? this.t('filesSelected', { count: selectedCount, defaultValue_one: '{{count}} file selected', defaultValue_other: '{{count}} files selected' })
