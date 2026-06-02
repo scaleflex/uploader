@@ -24,6 +24,7 @@ import { PublicEvents, type PublicEventName } from "./events/public-events";
 import {
   generateFileId,
   guessMimeType,
+  isBrowserUnrenderableImage,
   formatFileSize,
   formatEta,
   generateVideoThumbnail,
@@ -3176,12 +3177,22 @@ export class SfxUploader extends LitElement {
       );
       if (isDuplicate) continue;
 
-      const error = validateFile(file, s.restrictions, s.files);
+      // Browsers may report an empty MIME type for formats they don't
+      // recognise (e.g. HEIC/HEIF). Fall back to a guessed type so that
+      // allowedFileTypes patterns like 'image/*' match correctly.
+      const effectiveType = file.type || guessMimeType(file.name);
+
+      const error = validateFileInfo(
+        { name: file.name, size: file.size, type: effectiveType },
+        s.restrictions,
+        s.files,
+      );
       if (error) {
         // Create a rejected file entry so the user sees the error
-        const rejectedPreview = file.type.startsWith("image/")
-          ? URL.createObjectURL(file)
-          : null;
+        const rejectedPreview =
+          effectiveType.startsWith("image/") && !isBrowserUnrenderableImage(effectiveType)
+            ? URL.createObjectURL(file)
+            : null;
         const uploadFile: UploadFile = {
           id: generateFileId(),
           status: "rejected",
@@ -3189,7 +3200,7 @@ export class SfxUploader extends LitElement {
           remoteUrl: null,
           name: file.name,
           size: file.size,
-          type: file.type,
+          type: effectiveType,
           previewUrl: rejectedPreview,
           duration: null,
           progress: 0,
@@ -3228,9 +3239,10 @@ export class SfxUploader extends LitElement {
         continue;
       }
 
-      // Create preview for images; video thumbnails are generated async below
+      // Create preview for images; video thumbnails are generated async below.
+      // Exclude HEIC/HEIF — browsers can't decode them for inline display.
       let previewUrl: string | null = null;
-      if (file.type.startsWith("image/")) {
+      if (effectiveType.startsWith("image/") && !isBrowserUnrenderableImage(effectiveType)) {
         previewUrl = URL.createObjectURL(file);
       }
 
@@ -3241,7 +3253,7 @@ export class SfxUploader extends LitElement {
         remoteUrl: null,
         name: file.name,
         size: file.size,
-        type: file.type,
+        type: effectiveType,
         previewUrl,
         duration: null,
         progress: 0,
@@ -4097,7 +4109,9 @@ export class SfxUploader extends LitElement {
     if (this._phase === "uploading") {
       const s = this._storeCtrl.state;
       const files = [...s.files.values()];
-      const completed = files.filter((f) => f.status === "complete").length;
+      const activeFiles = files.filter((f) => f.status !== "rejected" && f.status !== "cancelled");
+      const total = activeFiles.length;
+      const completed = activeFiles.filter((f) => f.status === "complete").length;
       return html`
         <div class="header upload-header">
           <div class="float-header-left">
@@ -4116,10 +4130,10 @@ export class SfxUploader extends LitElement {
             </div>
             <div>
               <div class="float-title">
-                ${t('uploadingFiles', { count: files.length, defaultValue_one: 'Uploading {{count}} file', defaultValue_other: 'Uploading {{count}} files' })}
+                ${t('uploadingFiles', { count: total, defaultValue_one: 'Uploading {{count}} file', defaultValue_other: 'Uploading {{count}} files' })}
               </div>
               <div class="float-subtitle">
-                ${t('nOfNComplete', '{{completed}} of {{total}} complete', { completed, total: files.length })}${this._lastEta > 0 ? ` · ${t('etaLeft', '~{{eta}} left', { eta: formatEta(this._lastEta) })}` : ""}
+                ${t('nOfNComplete', '{{completed}} of {{total}} complete', { completed, total })}${this._lastEta > 0 ? ` · ${t('etaLeft', '~{{eta}} left', { eta: formatEta(this._lastEta) })}` : ""}
               </div>
             </div>
           </div>
@@ -4224,17 +4238,20 @@ export class SfxUploader extends LitElement {
     const s = this._storeCtrl.state;
     const t = s.t;
     const pct = Math.round(s.totalProgress ?? 0);
-    const completed = files.filter((f) => f.status === "complete").length;
+    // Exclude rejected/cancelled files — they are not part of the active upload
+    const activeFiles = files.filter((f) => f.status !== "rejected" && f.status !== "cancelled");
+    const total = activeFiles.length;
+    const completed = activeFiles.filter((f) => f.status === "complete").length;
 
     return html`
       <div class="upload-overlay">
         <div class="upload-overlay-spinner"></div>
         <div class="upload-overlay-percent">${pct}%</div>
         <div class="upload-overlay-title">
-          ${t('uploadingFiles', { count: files.length, defaultValue_one: 'Uploading {{count}} file', defaultValue_other: 'Uploading {{count}} files' })}
+          ${t('uploadingFiles', { count: total, defaultValue_one: 'Uploading {{count}} file', defaultValue_other: 'Uploading {{count}} files' })}
         </div>
         <div class="upload-overlay-subtitle">
-          ${t('nOfNComplete', '{{completed}} of {{total}} complete', { completed, total: files.length })}${this._lastEta > 0 ? html` · ${t('etaLeft', '~{{eta}} left', { eta: formatEta(this._lastEta) })}` : nothing}
+          ${t('nOfNComplete', '{{completed}} of {{total}} complete', { completed, total })}${this._lastEta > 0 ? html` · ${t('etaLeft', '~{{eta}} left', { eta: formatEta(this._lastEta) })}` : nothing}
         </div>
         <div class="upload-overlay-bar">
           <div class="upload-overlay-bar-fill" ${cspStyle({ width: `${pct}%` })}></div>
@@ -5046,6 +5063,9 @@ export class SfxUploader extends LitElement {
     const s = this._storeCtrl.state;
     const t = s.t;
     const files = [...s.files.values()];
+    const uploadableFiles = files.filter(
+      (f) => f.status === "idle" || f.status === "queued" || f.status === "error" || f.status === "failed",
+    );
     const phase = this._phase;
     const accept = buildAcceptString(s.restrictions);
     const hasFiles = files.length > 0;
@@ -5194,8 +5214,8 @@ export class SfxUploader extends LitElement {
               <sfx-actions-bar
                 .t=${t}
                 .uploadState=${"idle" as const}
-                .fileCount=${files.length}
-                .totalSize=${files.reduce((sum, f) => sum + (f.size || 0), 0)}
+                .fileCount=${uploadableFiles.length}
+                .totalSize=${uploadableFiles.reduce((sum, f) => sum + (f.size || 0), 0)}
                 .failedCount=${files.filter(
                   (f) => f.status === "failed" || f.status === "error",
                 ).length}
@@ -5242,6 +5262,7 @@ export class SfxUploader extends LitElement {
                           .companionUrl=${this.config.connectors.companionUrl}
                           .transformThumbnail=${this
                             ._connectorThumbnailTransform}
+                          .multi=${this._allowMulti}
                         ></sfx-provider-browser>
                       `}
                 </div>
