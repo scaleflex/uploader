@@ -188,8 +188,35 @@ describe('UploadEngine', () => {
       expect(store.getState().isUploading).toBe(false);
     });
 
-    it('swaps previewUrl to CDN URL for image files', () => {
-      const revokeSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+    it('swaps a non-blob (URL/connector) preview to the CDN URL for image files', () => {
+      // A remote http preview (third-party origin) must be replaced with a
+      // CSP-safe server URL once the file is on Filerobot.
+      const file = makeUploadFile({
+        id: 'f1',
+        status: 'queued',
+        type: 'image/png',
+        previewUrl: 'https://remote.example/orig.jpg',
+      });
+      const { store, engine } = createEngine({
+        files: new Map([['f1', file]]),
+        isUploading: true,
+      });
+
+      (xhrUploadFile as ReturnType<typeof vi.fn>).mockImplementation((_f: any, opts: any) => {
+        setTimeout(() => opts.onComplete(mockResponse), 0);
+        return { abort: vi.fn() };
+      });
+
+      engine.start();
+      vi.runAllTimers();
+
+      expect(store.getState().files.get('f1')!.previewUrl).toBe('https://cdn');
+    });
+
+    it('keeps the local blob preview for device-uploaded images', () => {
+      // Local blob previews are CSP-safe and always render — they must NOT be
+      // swapped to the just-uploaded CDN URL, which may serve a "missing origin
+      // image" placeholder until processing/caching catches up.
       const file = makeUploadFile({
         id: 'f1',
         status: 'queued',
@@ -209,18 +236,15 @@ describe('UploadEngine', () => {
       engine.start();
       vi.runAllTimers();
 
-      const updated = store.getState().files.get('f1')!;
-      expect(updated.previewUrl).toBe('https://cdn');
-      expect(revokeSpy).toHaveBeenCalledWith('blob:http://localhost/abc');
-      revokeSpy.mockRestore();
+      expect(store.getState().files.get('f1')!.previewUrl).toBe('blob:http://localhost/abc');
     });
 
-    it('prefers permalink, then cdn_permalink, then cdn for the preview swap', () => {
+    it('prefers cdn for the preview swap of a remote preview', () => {
       const file = makeUploadFile({
         id: 'f1',
         status: 'queued',
         type: 'image/png',
-        previewUrl: 'blob:http://localhost/abc',
+        previewUrl: 'https://remote.example/orig.jpg',
       });
       const { store, engine } = createEngine({
         files: new Map([['f1', file]]),
@@ -249,16 +273,16 @@ describe('UploadEngine', () => {
       vi.runAllTimers();
 
       expect(store.getState().files.get('f1')!.previewUrl).toBe(
-        'https://api.filerobot.com/abc/v4/get/uuid',
+        'https://branded.example.com/img.png',
       );
     });
 
-    it('falls back to cdn_permalink when permalink is missing', () => {
+    it('falls back to cdn_permalink when cdn is absent', () => {
       const file = makeUploadFile({
         id: 'f1',
         status: 'queued',
         type: 'image/png',
-        previewUrl: 'blob:http://localhost/abc',
+        previewUrl: 'https://remote.example/orig.jpg',
       });
       const { store, engine } = createEngine({
         files: new Map([['f1', file]]),
@@ -271,9 +295,9 @@ describe('UploadEngine', () => {
           ...mockResponse.file,
           url: {
             public: 'https://pub',
-            cdn: 'https://branded.example.com/img.png',
             cdn_permalink: 'https://abc.filerobot.com/img.png',
-          },
+            permalink: 'https://api.filerobot.com/abc/v4/get/uuid',
+          } as UploadResponse['file']['url'],
         },
       };
 
