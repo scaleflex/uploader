@@ -104,6 +104,7 @@ export function getDefaultFileTypeIconUrl(): string {
 const MIME_MAP: Record<string, string> = {
   jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif',
   webp: 'image/webp', svg: 'image/svg+xml', bmp: 'image/bmp', ico: 'image/x-icon',
+  heic: 'image/heic', heif: 'image/heif',
   mp4: 'video/mp4', mov: 'video/quicktime', avi: 'video/x-msvideo', webm: 'video/webm',
   pdf: 'application/pdf', zip: 'application/zip',
   doc: 'application/msword', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -113,6 +114,11 @@ const MIME_MAP: Record<string, string> = {
 export function guessMimeType(name: string): string {
   const ext = name.split('.').pop()?.toLowerCase() ?? '';
   return MIME_MAP[ext] || '';
+}
+
+/** Returns true for image MIME types that browsers cannot render natively as <img>. */
+export function isBrowserUnrenderableImage(mimeType: string): boolean {
+  return mimeType === 'image/heic' || mimeType === 'image/heif';
 }
 
 /** Generate a thumbnail from the first frame of a video file. Returns a blob URL or null. */

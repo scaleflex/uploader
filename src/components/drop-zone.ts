@@ -46,18 +46,13 @@ export class SfxDropZone extends LitElement {
     .drop-zone {
       border: none;
       border-radius: 12px;
-      background: var(--sfx-up-bg, #fff);
-      padding: 50px 40px 50px;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      text-align: center;
-      cursor: pointer;
       position: relative;
       overflow: auto;
       transition: background 0.22s;
-      user-select: none;
       flex: 1;
     }
 
@@ -65,12 +60,29 @@ export class SfxDropZone extends LitElement {
       height: 100%;
     }
 
-    .drop-zone:hover {
+    /* Inner clickable content area — only this triggers file browse on click */
+    .dz-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      cursor: pointer;
+      padding: 50px 40px;
+      border-radius: 12px;
+      user-select: none;
+      background: var(--sfx-up-bg, #fff);
+      position: relative;
+      outline: none;
+      transition: background 0.22s;
+    }
+
+    .dz-content:hover {
       background: transparent;
     }
 
     /* Drag over state */
-    .drop-zone.drag-over {
+    .drop-zone.drag-over .dz-content {
       background: var(--sfx-up-primary-bg, #eff6ff);
     }
 
@@ -93,15 +105,20 @@ export class SfxDropZone extends LitElement {
 
     /* Compact state when files exist */
     .drop-zone.compact {
+      overflow: visible;
+      border: 1.5px dashed var(--sfx-up-ring-color, #c4d5ef);
+      border-radius: 12px;
+      animation: compactIn 0.3s ease both;
+    }
+
+    .drop-zone.compact .dz-content {
       padding: 14px 16px;
       flex-direction: row;
       align-items: center;
       gap: 12px;
       justify-content: flex-start;
-      overflow: visible;
-      border: 1.5px dashed var(--sfx-up-ring-color, #c4d5ef);
-      border-radius: 12px;
-      animation: compactIn 0.3s ease both;
+      background: none;
+      border-radius: 0;
     }
 
     @keyframes compactIn {
@@ -196,7 +213,7 @@ export class SfxDropZone extends LitElement {
       height: 26px;
     }
 
-    .drop-zone:hover .core {
+    .dz-content:hover .core {
       transform: translateY(-2px);
       box-shadow: 0 5px 18px rgba(37, 99, 235, 0.22);
     }
@@ -1010,7 +1027,7 @@ export class SfxDropZone extends LitElement {
 
   private _onClick = (e: MouseEvent) => {
     // Ripple effect
-    const zone = this.shadowRoot!.querySelector(".drop-zone") as HTMLElement;
+    const zone = this.shadowRoot!.querySelector(".dz-content") as HTMLElement;
     if (zone && this._rippleEl) {
       const rect = zone.getBoundingClientRect();
       this._rippleEl.style.left = `${e.clientX - rect.left}px`;
@@ -1387,89 +1404,93 @@ export class SfxDropZone extends LitElement {
     return html`
       <div
         class=${classes}
-        role="button"
-        tabindex="0"
-        aria-label=${this.t('dropFilesHere', 'Drop files here or click to browse')}
         @dragenter=${this._onDragEnter}
         @dragover=${this._onDragOver}
         @dragleave=${this._onDragLeave}
         @drop=${this._onDrop}
-        @click=${this._onClick}
-        @keydown=${this._onKeyDown}
       >
-        <div class="dz-glow"></div>
-        <div class="rings">
-          <div class="ring"></div>
-          <div class="ring"></div>
-          <div class="core">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2.2"
-              stroke-linecap="round"
-            >
-              <polyline points="16 16 12 12 8 16" />
-              <line x1="12" y1="12" x2="12" y2="21" />
-              <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
-            </svg>
+        <div
+          class="dz-content"
+          role="button"
+          tabindex="0"
+          aria-label=${this.t('dropFilesHere', 'Drop files here or click to browse')}
+          @click=${this._onClick}
+          @keydown=${this._onKeyDown}
+        >
+          <div class="dz-glow"></div>
+          <div class="rings">
+            <div class="ring"></div>
+            <div class="ring"></div>
+            <div class="core">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+                stroke-linecap="round"
+              >
+                <polyline points="16 16 12 12 8 16" />
+                <line x1="12" y1="12" x2="12" y2="21" />
+                <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
+              </svg>
+            </div>
           </div>
+
+          <div class="title">${this.t('dragAndDrop', 'Drag & Drop or click to')} <span>${this.t('browse', 'browse')}</span></div>
+          ${!this.compact
+            ? html`<div class="subtitle">${this.t('dropFilesAnywhere', 'Drop files anywhere on this page')}</div>`
+            : nothing}
+          ${!this.compact && this.sources.length > 0
+            ? html`
+                <div class="import-divider"><span>${this.t('orImportFrom', 'or import from')}</span></div>
+                ${this.sourcesLayout === "cards"
+                  ? html`
+                      <div class="sources-cards">
+                        ${visibleSources.map((s) => this._renderCard(s))}
+                        ${overflowSources.length > 0
+                          ? this._renderMoreCard()
+                          : nothing}
+                      </div>
+                    `
+                  : html`
+                      <div class="sources-grid">
+                        ${visibleSources.map((s) => this._renderPill(s))}
+                        ${overflowSources.length > 0
+                          ? this._renderMoreDropdown()
+                          : nothing}
+                      </div>
+                    `}
+              `
+            : nothing}
+          ${this.compact && this.sources.length > 0
+            ? html`
+                <div class="sources-row">
+                  ${this.sources.map(
+                    (s) => html`
+                      <button
+                        class="src-ico"
+                        ${cspStyle(s.iconColor && !s.brandHtml ? { color: s.iconColor } : null)}
+                        data-tip=${s.labelKey ? this.t(s.labelKey, s.label) : s.label}
+                        aria-label=${s.labelKey ? this.t(s.labelKey, s.label) : s.label}
+                        @click=${(e: MouseEvent) => {
+                          e.stopPropagation();
+                          this._onSourceIconClick(s);
+                        }}
+                      >
+                        ${s.brandHtml
+                          ? brandIcon(s)
+                          : svgTag`<svg viewBox="0 0 24 24" class=${
+                              s.fillIcon ? "fill-icon" : ""
+                            }>${unsafeSVG(s.icon)}</svg>`}
+                      </button>
+                    `,
+                  )}
+                </div>
+              `
+            : nothing}
+
+          <div class="ripple"></div>
         </div>
-
-        <div class="title">${this.t('dragAndDrop', 'Drag & Drop or click to')} <span>${this.t('browse', 'browse')}</span></div>
-        ${!this.compact
-          ? html`<div class="subtitle">${this.t('dropFilesAnywhere', 'Drop files anywhere on this page')}</div>`
-          : nothing}
-        ${!this.compact && this.sources.length > 0
-          ? html`
-              <div class="import-divider"><span>${this.t('orImportFrom', 'or import from')}</span></div>
-              ${this.sourcesLayout === "cards"
-                ? html`
-                    <div class="sources-cards">
-                      ${visibleSources.map((s) => this._renderCard(s))}
-                      ${overflowSources.length > 0
-                        ? this._renderMoreCard()
-                        : nothing}
-                    </div>
-                  `
-                : html`
-                    <div class="sources-grid">
-                      ${visibleSources.map((s) => this._renderPill(s))}
-                      ${overflowSources.length > 0
-                        ? this._renderMoreDropdown()
-                        : nothing}
-                    </div>
-                  `}
-            `
-          : nothing}
-        ${this.compact && this.sources.length > 0
-          ? html`
-              <div class="sources-row">
-                ${this.sources.map(
-                  (s) => html`
-                    <button
-                      class="src-ico"
-                      ${cspStyle(s.iconColor && !s.brandHtml ? { color: s.iconColor } : null)}
-                      data-tip=${s.labelKey ? this.t(s.labelKey, s.label) : s.label}
-                      aria-label=${s.labelKey ? this.t(s.labelKey, s.label) : s.label}
-                      @click=${(e: MouseEvent) => {
-                        e.stopPropagation();
-                        this._onSourceIconClick(s);
-                      }}
-                    >
-                      ${s.brandHtml
-                        ? brandIcon(s)
-                        : svgTag`<svg viewBox="0 0 24 24" class=${
-                            s.fillIcon ? "fill-icon" : ""
-                          }>${unsafeSVG(s.icon)}</svg>`}
-                    </button>
-                  `,
-                )}
-              </div>
-            `
-          : nothing}
-
-        <div class="ripple"></div>
         <input
           type="file"
           ?multiple=${this.multi}

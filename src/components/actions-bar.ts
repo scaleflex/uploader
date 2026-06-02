@@ -419,7 +419,7 @@ export class SfxActionsBar extends LitElement {
       <button
         class=${cls}
         @click=${this._upload}
-        ?disabled=${isUploading}
+        ?disabled=${isUploading || (this.fileCount === 0 && !isDone)}
         aria-label=${ariaLabel}
       >
         ${isUploading
