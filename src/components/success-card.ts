@@ -113,21 +113,36 @@ export class SfxSuccessCard extends LitElement {
       margin-bottom: 22px;
     }
 
-    /* --- Neutral "already exists" info note (not an error) --- */
+    /* --- Info banner (design-system "status-info" component) --- */
     .info-note {
-      display: inline-flex;
+      display: flex;
       align-items: center;
-      gap: 6px;
-      font-size: 12.5px;
-      color: var(--sfx-up-text-muted, #64748b);
-      margin-top: -12px;
+      justify-content: center;
+      gap: 8px;
+      box-sizing: border-box;
+      width: 100%;
+      max-width: 400px;
+      min-height: 36px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      /* Inset shadow draws the 1px border WITHOUT adding to the box height,
+         so the banner stays exactly 36px tall (8 + 20 line + 8) — matching the
+         Figma inside-stroke. A real border would add 2px → 38px. */
+      box-shadow: inset 0 0 0 1px var(--sfx-up-info-border, rgba(0, 144, 228, 0.20));
+      background: var(--sfx-up-info-bg, rgba(0, 144, 228, 0.04));
+      color: var(--sfx-up-info-text, #024a71);
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 20px;
+      margin-top: -8px;
       margin-bottom: 22px;
     }
 
     .info-note svg {
-      width: 14px;
-      height: 14px;
+      width: 16px;
+      height: 16px;
       flex-shrink: 0;
+      color: var(--sfx-up-info, #0090e4);
     }
 
     .actions {
