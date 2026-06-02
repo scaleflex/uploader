@@ -2,6 +2,7 @@ import type { UploadFile, UploadResponse } from '../store/store.types';
 import type { AuthHeaders } from '../auth/auth.types';
 import { uploadRemoteFile, getSocketHost } from '../connectors/companion-client';
 import type { XhrUploadHandle } from './xhr-upload';
+import { isSameAssetExists, buildSameAssetResponse } from './same-asset';
 
 export interface CompanionUploadOptions {
   apiBase: string;
@@ -111,6 +112,12 @@ export function companionUploadFile(
                   const body = JSON.parse(payload.response.responseText) as UploadResponse;
                   if (body.status === 'success') {
                     opts.onComplete(body);
+                    return;
+                  }
+                  if (isSameAssetExists(body)) {
+                    // Identical content already exists — treat as a successful
+                    // upload of the pre-existing asset rather than an error.
+                    opts.onComplete(buildSameAssetResponse(body, uploadFile));
                     return;
                   }
                   opts.onError(new Error(body.msg || 'Upload failed'));

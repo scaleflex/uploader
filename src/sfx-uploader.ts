@@ -5129,6 +5129,9 @@ export class SfxUploader extends LitElement {
                       name: f.name,
                       error: f.error || "Upload failed",
                     }))}
+                  .alreadyExistedCount=${files.filter(
+                    (f) => f.status === "complete" && f.alreadyExisted,
+                  ).length}
                   @close-uploader=${this._onSuccessCardClose}
                   @file-retry=${this._onFileRetry}
                   @retry-all=${this._onRetryAll}

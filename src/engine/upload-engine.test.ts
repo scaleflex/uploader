@@ -317,6 +317,53 @@ describe('UploadEngine', () => {
       );
     });
 
+    it('flags alreadyExisted and marks complete for a SAME_ASSET response', () => {
+      // The transport normalizes the backend error into a success response
+      // carrying the original `code` + `existing_file_uuid` (see same-asset.ts).
+      const sameAssetResponse: UploadResponse = {
+        ...mockResponse,
+        code: 'SAME_ASSET_EXISTS_SKIP_UPLOAD',
+        existing_file_uuid: 'e176a9d7-71c9-5de9-bc6a-98fadf350000',
+        file: { ...mockResponse.file, uuid: 'e176a9d7-71c9-5de9-bc6a-98fadf350000' },
+      };
+      const file = makeUploadFile({ id: 'f1', status: 'queued' });
+      const { store, engine } = createEngine({
+        files: new Map([['f1', file]]),
+        isUploading: true,
+      });
+
+      (xhrUploadFile as ReturnType<typeof vi.fn>).mockImplementation((_f: any, opts: any) => {
+        setTimeout(() => opts.onComplete(sameAssetResponse), 0);
+        return { abort: vi.fn() };
+      });
+
+      engine.start();
+      vi.runAllTimers();
+
+      const updated = store.getState().files.get('f1')!;
+      expect(updated.status).toBe('complete');
+      expect(updated.alreadyExisted).toBe(true);
+      expect(updated.response?.file.uuid).toBe('e176a9d7-71c9-5de9-bc6a-98fadf350000');
+    });
+
+    it('does not flag alreadyExisted for an ordinary success', () => {
+      const file = makeUploadFile({ id: 'f1', status: 'queued' });
+      const { store, engine } = createEngine({
+        files: new Map([['f1', file]]),
+        isUploading: true,
+      });
+
+      (xhrUploadFile as ReturnType<typeof vi.fn>).mockImplementation((_f: any, opts: any) => {
+        setTimeout(() => opts.onComplete(mockResponse), 0);
+        return { abort: vi.fn() };
+      });
+
+      engine.start();
+      vi.runAllTimers();
+
+      expect(store.getState().files.get('f1')!.alreadyExisted).toBe(false);
+    });
+
     it('keeps previewUrl unchanged for non-image files', () => {
       const file = makeUploadFile({
         id: 'f1',

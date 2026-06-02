@@ -41,6 +41,11 @@ export interface UploadFile {
   // Server response (populated on complete)
   response: UploadResponse | null;
 
+  // True when the backend reported the identical content already exists in the
+  // target directory (code `SAME_ASSET_EXISTS_SKIP_UPLOAD`) — treated as a
+  // successful upload but surfaced with a neutral "already uploaded" note.
+  alreadyExisted?: boolean;
+
   // Ordering
   addedAt: number;           // Date.now() at insertion — used for queue ordering
 
@@ -73,6 +78,21 @@ export interface UploadResponse {
   };
   msg?: string;
   hint?: string;
+
+  // --- Backend status codes ---
+  /** Machine-readable status code (e.g. `SAME_ASSET_EXISTS_SKIP_UPLOAD`). */
+  code?: string;
+  /** UUID of the pre-existing asset when the same content already exists. */
+  existing_file_uuid?: string;
+  /** Path of a similar (not necessarily identical) existing file, if any. */
+  similar_file_path?: string;
+  /** Backend context returned alongside status codes. */
+  info?: {
+    version?: number;
+    uniq_id?: string;
+    project_uuid?: string;
+    company_uuid?: string;
+  };
 }
 
 // --- Queue config (spec §5.4) ---

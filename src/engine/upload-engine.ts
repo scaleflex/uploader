@@ -5,6 +5,7 @@ import { updateFile } from '../store/helpers';
 import { xhrUploadFile, xhrUploadUrl, type XhrUploadHandle } from './xhr-upload';
 import { companionUploadFile } from './companion-upload';
 import { tusUploadFile, shouldUseTus, type TusConfig, type TusUploadHandle } from './tus-upload';
+import { isSameAssetExists } from './same-asset';
 
 export interface UploadEngineConfig {
   apiBase: string;
@@ -351,6 +352,7 @@ export class UploadEngine {
       status: 'complete',
       progress: 100,
       response,
+      alreadyExisted: isSameAssetExists(response),
     };
     if (file && previewUrl && file.type.startsWith('image/')) {
       if (file.previewUrl?.startsWith('blob:')) {

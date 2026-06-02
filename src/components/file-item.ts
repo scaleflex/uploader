@@ -474,6 +474,33 @@ export class SfxFileItem extends LitElement {
       box-shadow: 0 0 0 2px var(--sfx-up-error, #dc2626);
     }
 
+    /* --- "Already uploaded" note (neutral, not an error) --- */
+    .exists-badge {
+      position: absolute;
+      bottom: 6px;
+      left: 6px;
+      right: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 500;
+      line-height: 1.3;
+      color: #fff;
+      background: color-mix(in srgb, var(--sfx-up-text, #1e293b) 72%, transparent);
+      border-radius: 6px;
+      padding: 4px 8px;
+      text-align: center;
+      overflow: hidden;
+    }
+
+    .exists-badge svg {
+      width: 12px;
+      height: 12px;
+      flex-shrink: 0;
+    }
+
     /* --- Paused state --- */
     .tile.paused .spinner-overlay {
       opacity: 1;
@@ -773,8 +800,18 @@ export class SfxFileItem extends LitElement {
             ? html`<div class="error-badge" title=${f.error}>${f.error}</div>`
             : nothing}
 
-          <!-- Video duration badge (hidden when error badge is shown to avoid overlap) -->
-          ${!(isError || isRejected) && f.duration != null && f.duration > 0
+          <!-- "Already uploaded" note (same content already on the server —
+               neutral, not an error). Shown for completed files in both the
+               upload-complete view and the review screen. -->
+          ${isDone && f.alreadyExisted
+            ? html`<div class="exists-badge" title=${this.t('alreadyUploaded', 'Already uploaded')}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                <span>${this.t('alreadyUploaded', 'Already uploaded')}</span>
+              </div>`
+            : nothing}
+
+          <!-- Video duration badge (hidden when error badge or exists badge is shown to avoid overlap) -->
+          ${!(isError || isRejected) && !(isDone && f.alreadyExisted) && f.duration != null && f.duration > 0
             ? html`<div class="duration-badge">${this._formatDuration(f.duration)}</div>`
             : nothing}
         </div>

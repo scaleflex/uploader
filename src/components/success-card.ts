@@ -113,6 +113,23 @@ export class SfxSuccessCard extends LitElement {
       margin-bottom: 22px;
     }
 
+    /* --- Neutral "already exists" info note (not an error) --- */
+    .info-note {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12.5px;
+      color: var(--sfx-up-text-muted, #64748b);
+      margin-top: -12px;
+      margin-bottom: 22px;
+    }
+
+    .info-note svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+    }
+
     .actions {
       display: flex;
       gap: 8px;
@@ -337,6 +354,8 @@ export class SfxSuccessCard extends LitElement {
   @property({ type: Array }) thumbnails: string[] = [];
   @property({ type: String }) primaryLabel = 'Done';
   @property({ type: Array }) failedFiles: { id: string; name: string; error: string }[] = [];
+  /** How many of the successful files already existed (same content) on the server. */
+  @property({ type: Number }) alreadyExistedCount = 0;
 
   @state() private _maxThumbs = MAX_THUMBS_DESKTOP;
 
@@ -440,6 +459,13 @@ export class SfxSuccessCard extends LitElement {
           : nothing}
 
         ${hasSuccesses ? html`<div class="summary">${this.t('uploadSummary', '{{total}} file · {{size}} uploaded', { total: this.fileCount, size: formatFileSize(this.totalSize) })}</div>` : nothing}
+
+        ${this.alreadyExistedCount > 0
+          ? html`<div class="info-note">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              <span>${this.t('alreadyInLibrary', { count: this.alreadyExistedCount, defaultValue_one: '{{count}} file was already in your library', defaultValue_other: '{{count}} files were already in your library' })}</span>
+            </div>`
+          : nothing}
 
         ${hasFailed
           ? html`
