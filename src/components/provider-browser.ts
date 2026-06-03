@@ -324,6 +324,12 @@ export class SfxProviderBrowser extends LitElement {
       border-color: var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.15));
     }
 
+    .file-item.disabled {
+      opacity: 0.4;
+      cursor: default;
+      pointer-events: none;
+    }
+
     .file-item input[type='checkbox'] {
       width: 16px;
       height: 16px;
@@ -681,6 +687,8 @@ export class SfxProviderBrowser extends LitElement {
   @property({ type: String }) companionUrl = '';
   /** When false, only one file can be selected at a time (single-asset mode). */
   @property({ type: Boolean }) multi = true;
+  /** Maximum number of files that can be selected. null = unlimited. */
+  @property({ type: Number }) maxSelect: number | null = null;
   /**
    * Optional rewrite for listing thumbnail URLs so they pass the host CSP.
    * Defaults to the identity function.
@@ -859,19 +867,23 @@ export class SfxProviderBrowser extends LitElement {
       return;
     }
 
+    const atLimit = this.maxSelect !== null && this._selectedIds.size >= this.maxSelect;
+
     if (e?.shiftKey && this._lastClickedIndex !== null && currentIndex !== -1) {
       const start = Math.min(this._lastClickedIndex, currentIndex);
       const end = Math.max(this._lastClickedIndex, currentIndex);
       const next = new Set(this._selectedIds);
       for (let i = start; i <= end; i++) {
-        next.add(files[i].id);
+        if (!next.has(files[i].id) && !atLimit) {
+          next.add(files[i].id);
+        }
       }
       this._selectedIds = next;
     } else {
       const next = new Set(this._selectedIds);
       if (next.has(item.id)) {
         next.delete(item.id);
-      } else {
+      } else if (!atLimit) {
         next.add(item.id);
       }
       this._selectedIds = next;
@@ -1098,10 +1110,14 @@ export class SfxProviderBrowser extends LitElement {
           `,
         )}
 
-        ${files.map(
-          (item) => html`
+        ${(() => {
+          const atLimit = this.maxSelect !== null && this._selectedIds.size >= this.maxSelect;
+          return files.map((item) => {
+            const isSelected = this._selectedIds.has(item.id);
+            const isDisabled = !isSelected && atLimit;
+            return html`
             <div
-              class="file-item ${this._selectedIds.has(item.id) ? 'selected' : ''}"
+              class="file-item ${isSelected ? 'selected' : ''} ${isDisabled ? 'disabled' : ''}"
               @click=${(e: MouseEvent) => this._toggleSelect(item, e)}
             >
               <input
@@ -1133,8 +1149,9 @@ export class SfxProviderBrowser extends LitElement {
                 </div>
               </div>
             </div>
-          `,
-        )}
+          `;
+          });
+        })()}
 
         ${this._nextPagePath
           ? html`
