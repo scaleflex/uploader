@@ -1,4 +1,5 @@
 import type { UploadFile, UploadResponse } from '../store/store.types';
+import type { AuthHeaders } from '../auth/auth.types';
 
 /**
  * Backend status code returned when an upload is skipped because a file with
@@ -21,6 +22,39 @@ export function isSameAssetExists(
   body: Pick<UploadResponse, 'code'> | null | undefined,
 ): boolean {
   return body?.code === SAME_ASSET_EXISTS_CODE;
+}
+
+/**
+ * Fetch the file record for an already-existing asset by UUID and return a full
+ * success response with a real `url.cdn` / `url.public`.
+ *
+ * Falls back to `buildSameAssetResponse` if the fetch fails or the API returns
+ * no usable file object — never throws, always resolves.
+ */
+export async function fetchSameAssetResponse(
+  body: UploadResponse,
+  uploadFile: UploadFile,
+  apiBase: string,
+  authHeaders: AuthHeaders,
+): Promise<UploadResponse> {
+  const uuid = body.existing_file_uuid;
+  if (!uuid) return buildSameAssetResponse(body, uploadFile);
+
+  try {
+    const base = apiBase.replace(/\/+$/, '');
+    const res = await fetch(`${base}/v4/files/${encodeURIComponent(uuid)}`, {
+      headers: authHeaders,
+    });
+    if (!res.ok) return buildSameAssetResponse(body, uploadFile);
+
+    const data = await res.json() as UploadResponse;
+    if (data.status === 'success' && data.file) {
+      return { ...body, status: 'success', file: data.file };
+    }
+    return buildSameAssetResponse(body, uploadFile);
+  } catch {
+    return buildSameAssetResponse(body, uploadFile);
+  }
 }
 
 /**

@@ -1,7 +1,7 @@
 import { Upload, DetailedError } from 'tus-js-client';
 import type { UploadFile, UploadResponse } from '../store/store.types';
 import type { AuthHeaders } from '../auth/auth.types';
-import { isSameAssetExists, buildSameAssetResponse } from './same-asset';
+import { isSameAssetExists, fetchSameAssetResponse } from './same-asset';
 
 export interface TusConfig {
   /** Files larger than this (bytes) use tus. Default: 10 MB. Set to 0 to always use tus. */
@@ -156,13 +156,13 @@ export function tusUploadFile(
         fetchFileJson(fileId, uploadFile.size)
           .then((response) => {
             if (aborted) return;
-            // Identical content already exists — treat as a successful upload
-            // of the pre-existing asset (synthesize a file from existing uuid).
-            opts.onComplete(
-              isSameAssetExists(response)
-                ? buildSameAssetResponse(response, uploadFile)
-                : response,
-            );
+            if (isSameAssetExists(response)) {
+              // Identical content already exists — fetch the existing file
+              // record so consumers get a real URL rather than empty strings.
+              return fetchSameAssetResponse(response, uploadFile, opts.apiBase, opts.authHeaders)
+                .then((r) => { if (!aborted) opts.onComplete(r); });
+            }
+            opts.onComplete(response);
           })
           .catch((err) => {
             if (!aborted) opts.onError(err);
