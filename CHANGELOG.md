@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- "Already uploaded" handling for duplicate content. When the backend reports that
+  identical content already exists in the target directory
+  (`code: "SAME_ASSET_EXISTS_SKIP_UPLOAD"`), the upload is now treated as a
+  **success** instead of showing the red "Upload failed" card. The pre-existing
+  asset's `existing_file_uuid` is mapped into `response.file.uuid`, so `onUploadComplete`
+  / `sfx-upload-complete` fire normally with the existing asset reference. A neutral
+  "Already uploaded" note is shown on the file tile and a summary line on the success
+  card. Applies to all upload paths (direct file, URL import, and cloud connectors).
 - `connectors.coreSources` config option — allowlist of built-in sources to render in the More menu. When omitted, all four core sources (`device`, `url`, `camera`, `screen-cast`) are shown; set e.g. `coreSources: ['device', 'url']` to hide Camera and Screen capture.
 - `forceName` config option — forces every uploaded file to be saved under a fixed name in `targetFolder`, overwriting any existing file with the same name. Translates to `&opt_force_name=…` on the upload request and works across every source (local file, URL import, Google Drive, Unsplash, tus). Implicitly clamps `restrictions.maxNumberOfFiles` to `1` and disables multi-select. Use for single-asset slots like watermarks, default images, or folder icons. Accepts a string or a thunk for per-session derivation.
 - `getUploadParams` config option — appends arbitrary query parameters (typically Filerobot `opt_*` flags) to every upload request. Called per file just before its request is sent and merged into the URL of whichever upload path runs (XHR, URL, tus, or Companion). Wins on key collision against `forceName`.
@@ -39,6 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Thumbnails for device / camera / screen / paste uploads no longer flash the Filerobot "Missing origin image" placeholder right after upload. Their local `blob:` preview (always renderable and CSP-safe) is now kept instead of being swapped to the just-uploaded `cdn` URL, which can serve a placeholder until processing/caching catches up. URL imports and cloud-connector previews (remote http origins a host CSP may block) are still swapped to a server URL as before.
 - Clicking anywhere in the modal body (outside the visual drop-zone widget) no longer opens the OS file picker. The clickable browse area is now scoped to the visual drag-and-drop widget only; the full modal area continues to accept drag-and-drop events.
 - Google Drive connector now enforces single-file selection when `forceName` is set or `restrictions.maxNumberOfFiles: 1` is configured — previously users could select multiple files regardless. The "Select all" button is also hidden in single-select mode.
 - HEIC/HEIF files are no longer incorrectly rejected when `allowedFileTypes: ['image/*']` is configured. Browsers report an empty MIME type for these formats; the uploader now infers the correct type from the file extension before validation. File previews are intentionally omitted for HEIC/HEIF since browsers cannot render them natively.

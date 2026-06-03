@@ -5,6 +5,7 @@ import { updateFile } from '../store/helpers';
 import { xhrUploadFile, xhrUploadUrl, type XhrUploadHandle } from './xhr-upload';
 import { companionUploadFile } from './companion-upload';
 import { tusUploadFile, shouldUseTus, type TusConfig, type TusUploadHandle } from './tus-upload';
+import { isSameAssetExists } from './same-asset';
 
 export interface UploadEngineConfig {
   apiBase: string;
@@ -327,18 +328,24 @@ export class UploadEngine {
   ): void {
     this.activeUploads.delete(fileId);
 
-    // Swap previewUrl to a server URL once the file is on Filerobot — without
-    // this, URL imports / connector imports keep their original third-party
-    // origin in previewUrl, which host CSPs would block. Preference order:
-    // `cdn` (the project's delivery URL, possibly a custom CNAME — fastest for
-    // the end user), then `cdn_permalink` (CDN-cached `*.filerobot.com`), then
-    // `permalink` (canonical `api.filerobot.com/.../v4/get/{uuid}` endpoint —
-    // always on `*.filerobot.com`, the most stable fallback). Hosts can still
-    // rewrite the chosen URL via `transformPreviewUrl` (e.g. to proxy through
-    // Cloudimage).
+    // Swap previewUrl to a server URL once the file is on Filerobot — but ONLY
+    // for previews that need it. URL imports / connector imports keep their
+    // original third-party origin in previewUrl, which host CSPs would block, so
+    // those must be replaced. Device / camera / screen / paste uploads already
+    // have a local `blob:` preview that is CSP-safe and always renders — keeping
+    // it avoids the CDN "missing origin image" placeholder that a just-uploaded
+    // file's `cdn` URL serves until processing/caching catches up.
+    //
+    // Preference order for the (remote) swap: `cdn` (the project's delivery URL,
+    // possibly a custom CNAME — fastest for the end user), then `cdn_permalink`
+    // (CDN-cached `*.filerobot.com`), then `permalink` (canonical
+    // `api.filerobot.com/.../v4/get/{uuid}` endpoint — always on
+    // `*.filerobot.com`, the most stable fallback). Hosts can still rewrite the
+    // chosen URL via `transformPreviewUrl` (e.g. to proxy through Cloudimage).
     // Restricted to image MIME types: a CDN URL for a video file is the video
     // itself, not a poster image, so the locally-generated poster blob stays.
     const file = this.store.getState().files.get(fileId);
+    const hasLocalBlobPreview = file?.previewUrl?.startsWith('blob:') ?? false;
     const rawPreview =
       response.file?.url?.cdn ??
       response.file?.url?.cdn_permalink ??
@@ -351,11 +358,9 @@ export class UploadEngine {
       status: 'complete',
       progress: 100,
       response,
+      alreadyExisted: isSameAssetExists(response),
     };
-    if (file && previewUrl && file.type.startsWith('image/')) {
-      if (file.previewUrl?.startsWith('blob:')) {
-        URL.revokeObjectURL(file.previewUrl);
-      }
+    if (file && previewUrl && file.type.startsWith('image/') && !hasLocalBlobPreview) {
       update.previewUrl = previewUrl;
     }
     updateFile(this.store, fileId, update);

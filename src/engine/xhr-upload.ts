@@ -1,5 +1,6 @@
 import type { UploadFile, UploadResponse } from '../store/store.types';
 import type { AuthHeaders } from '../auth/auth.types';
+import { isSameAssetExists, buildSameAssetResponse } from './same-asset';
 
 export interface XhrUploadOptions {
   apiBase: string;          // e.g. "https://api.filerobot.com/mycontainer"
@@ -72,6 +73,10 @@ export function xhrUploadFile(
 
     if (xhr.status >= 200 && xhr.status < 300 && body.status === 'success') {
       opts.onComplete(body);
+    } else if (isSameAssetExists(body)) {
+      // Identical content already exists in the target directory — not a real
+      // failure. Treat as a successful upload of the pre-existing asset.
+      opts.onComplete(buildSameAssetResponse(body, uploadFile));
     } else {
       opts.onError(new Error(body.hint || body.msg || `Upload failed (HTTP ${xhr.status})`));
     }
@@ -161,6 +166,10 @@ export function xhrUploadUrl(
 
     if (xhr.status >= 200 && xhr.status < 300 && body.status === 'success') {
       opts.onComplete(body);
+    } else if (isSameAssetExists(body)) {
+      // Identical content already exists in the target directory — not a real
+      // failure. Treat as a successful upload of the pre-existing asset.
+      opts.onComplete(buildSameAssetResponse(body, uploadFile));
     } else {
       opts.onError(new Error(body.hint || body.msg || `Upload failed (HTTP ${xhr.status})`));
     }
