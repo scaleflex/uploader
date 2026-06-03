@@ -140,6 +140,12 @@ export class SfxSearchProviderBrowser extends LitElement {
       border-color: var(--sfx-up-primary, #2563eb);
     }
 
+    .result-item.disabled {
+      opacity: 0.4;
+      cursor: default;
+      pointer-events: none;
+    }
+
     .result-item img {
       width: 100%;
       height: 100%;
@@ -331,6 +337,9 @@ export class SfxSearchProviderBrowser extends LitElement {
   @property({ attribute: false })
   transformThumbnail: (url: string) => string = (u) => u;
 
+  @property({ type: Boolean }) multi = true;
+  @property({ type: Number }) maxSelect: number | null = null;
+
   @state() private _loading = false;
   @state() private _loadingMore = false;
   @state() private _items: CompanionSearchItem[] = [];
@@ -418,10 +427,15 @@ export class SfxSearchProviderBrowser extends LitElement {
   // --- Selection ---
 
   private _toggleSelect(item: CompanionSearchItem) {
+    if (!this.multi) {
+      this._selectedIds = this._selectedIds.has(item.id) ? new Set() : new Set([item.id]);
+      return;
+    }
+    const atLimit = this.maxSelect !== null && this._selectedIds.size >= this.maxSelect;
     const next = new Set(this._selectedIds);
     if (next.has(item.id)) {
       next.delete(item.id);
-    } else {
+    } else if (!atLimit) {
       next.add(item.id);
     }
     this._selectedIds = next;
@@ -548,17 +562,21 @@ export class SfxSearchProviderBrowser extends LitElement {
     return html`
       <div class="results" @scroll=${this._onResultsScroll}>
         <div class="results-grid">
-          ${this._items.map(
-            (item) => html`
+          ${(() => {
+            const atLimit = this.maxSelect !== null && this._selectedIds.size >= this.maxSelect;
+            return this._items.map((item) => {
+              const isSelected = this._selectedIds.has(item.id);
+              const isDisabled = !isSelected && atLimit;
+              return html`
               <div
-                class="result-item ${this._selectedIds.has(item.id) ? 'selected' : ''}"
+                class="result-item ${isSelected ? 'selected' : ''} ${isDisabled ? 'disabled' : ''}"
                 @click=${() => this._toggleSelect(item)}
               >
                 ${item.thumbnail
                   ? html`<img src=${this.transformThumbnail(item.thumbnail)} alt=${item.name} loading="lazy" referrerpolicy="no-referrer" />`
                   : nothing}
                 <div class="check">
-                  ${this._selectedIds.has(item.id)
+                  ${isSelected
                     ? html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12" /></svg>`
                     : nothing}
                 </div>
@@ -566,8 +584,9 @@ export class SfxSearchProviderBrowser extends LitElement {
                   ? html`<div class="author">${item.author.name}</div>`
                   : nothing}
               </div>
-            `,
-          )}
+            `;
+            });
+          })()}
         </div>
         ${this._loadingMore
           ? html`<div class="loading loading-more"><div class="spinner"></div></div>`

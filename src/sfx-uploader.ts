@@ -2748,10 +2748,20 @@ export class SfxUploader extends LitElement {
    * Whether the file picker should allow multi-select. False when
    * `forceName` is set (single-asset slot) or when restrictions cap to 1.
    */
+  private get _remainingSlots(): number | null {
+    const max = this._storeCtrl.state.restrictions.maxNumberOfFiles;
+    if (max == null) return null;
+    let activeCount = 0;
+    for (const f of this._storeCtrl.state.files.values()) {
+      if (f.status !== 'rejected' && f.status !== 'cancelled') activeCount++;
+    }
+    return Math.max(0, max - activeCount);
+  }
+
   private get _allowMulti(): boolean {
     if (this.config?.forceName != null) return false;
-    const max = this._storeCtrl.state.restrictions.maxNumberOfFiles;
-    return max == null || max > 1;
+    const remaining = this._remainingSlots;
+    return remaining === null || remaining > 1;
   }
 
   /**
@@ -5251,6 +5261,8 @@ export class SfxUploader extends LitElement {
                           .companionUrl=${this.config.connectors.companionUrl}
                           .transformThumbnail=${this
                             ._connectorThumbnailTransform}
+                          .multi=${this._allowMulti}
+                          .maxSelect=${this._remainingSlots}
                         ></sfx-search-provider-browser>
                       `
                     : html`
@@ -5261,6 +5273,7 @@ export class SfxUploader extends LitElement {
                           .transformThumbnail=${this
                             ._connectorThumbnailTransform}
                           .multi=${this._allowMulti}
+                          .maxSelect=${this._remainingSlots}
                         ></sfx-provider-browser>
                       `}
                 </div>
