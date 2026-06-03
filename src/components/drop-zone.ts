@@ -307,9 +307,7 @@ export class SfxDropZone extends LitElement {
       box-sizing: border-box;
       border-radius: 50px;
       border: 1.5px solid rgba(226, 232, 240, 0.6);
-      background: rgba(255, 255, 255, 0.7);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
+      background: #fff;
       font-size: 14px;
       font-weight: 500;
       color: var(--sfx-up-text-secondary, #475569);
@@ -407,9 +405,7 @@ export class SfxDropZone extends LitElement {
       padding: 20px 12px 16px;
       border-radius: 16px;
       border: 1.5px solid rgba(226, 232, 240, 0.6);
-      background: rgba(255, 255, 255, 0.7);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
+      background: #fff;
       cursor: pointer;
       transition: all 0.18s ease;
       flex: 1;
@@ -516,9 +512,7 @@ export class SfxDropZone extends LitElement {
       padding: 9px 18px;
       border-radius: 50px;
       border: 1.5px solid rgba(226, 232, 240, 0.6);
-      background: rgba(255, 255, 255, 0.7);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
+      background: #fff;
       font-size: 14px;
       font-weight: 500;
       color: var(--sfx-up-text-secondary, #475569);

@@ -364,7 +364,6 @@ export class SfxUploader extends LitElement {
       position: fixed;
       inset: 0;
       background: var(--sfx-up-backdrop);
-      backdrop-filter: blur(6px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1719,7 +1718,6 @@ export class SfxUploader extends LitElement {
       inset: 0;
       z-index: 1000;
       background: var(--sfx-up-backdrop);
-      backdrop-filter: blur(6px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1831,7 +1829,6 @@ export class SfxUploader extends LitElement {
       border-radius: 6px;
       border: none;
       background: rgba(255, 255, 255, 0.12);
-      backdrop-filter: blur(8px);
       color: #fff;
       cursor: pointer;
       display: flex;
@@ -1858,7 +1855,6 @@ export class SfxUploader extends LitElement {
       border-radius: 50%;
       border: none;
       background: rgba(255, 255, 255, 0.15);
-      backdrop-filter: blur(8px);
       color: #fff;
       cursor: pointer;
       display: flex;
@@ -1899,7 +1895,6 @@ export class SfxUploader extends LitElement {
       font-size: 13px;
       font-weight: 500;
       background: rgba(0, 0, 0, 0.4);
-      backdrop-filter: blur(8px);
       padding: 6px 16px;
       border-radius: 8px;
       white-space: nowrap;
