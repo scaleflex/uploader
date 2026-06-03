@@ -1,7 +1,9 @@
 import { LitElement } from 'lit';
 import { ProviderId } from '../connectors/connector.types';
+import { TFunction } from '../store/store.types';
 export declare class SfxSearchProviderBrowser extends LitElement {
     static styles: import('lit').CSSResult;
+    t: TFunction;
     provider: ProviderId;
     companionUrl: string;
     /**
@@ -9,6 +11,8 @@ export declare class SfxSearchProviderBrowser extends LitElement {
      * Defaults to the identity function.
      */
     transformThumbnail: (url: string) => string;
+    multi: boolean;
+    maxSelect: number | null;
     private _loading;
     private _loadingMore;
     private _items;

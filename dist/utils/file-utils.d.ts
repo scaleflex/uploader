@@ -17,6 +17,8 @@ export declare function getFileTypeIconUrl(extension: string): string;
 export declare function getDefaultFileTypeIconUrl(): string;
 /** Guess MIME type from a filename. */
 export declare function guessMimeType(name: string): string;
+/** Returns true for image MIME types that browsers cannot render natively as <img>. */
+export declare function isBrowserUnrenderableImage(mimeType: string): boolean;
 /** Generate a thumbnail from the first frame of a video file. Returns a blob URL or null. */
 export declare function generateVideoThumbnail(file: File): Promise<string | null>;
 //# sourceMappingURL=file-utils.d.ts.map

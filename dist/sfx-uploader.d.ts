@@ -45,8 +45,13 @@ export interface RemoteThumbnailContext {
      * Where the URL came from:
      * - `'url-import'` — pasted into the "Import from URL" dialog.
      * - `'connector'` — listing/selection result from a Companion provider.
+     * - `'cdn-complete'` — post-upload CDN URL from the Filerobot response,
+     *   used to replace the file tile's preview after upload finishes. Fires
+     *   when the project's `cdn` URL is on a custom CNAME (e.g. a branded
+     *   domain) that isn't in the host CSP allowlist; rewrite it to a
+     *   Filerobot/Cloudimage proxy URL so the preview renders.
      */
-    source: 'url-import' | 'connector';
+    source: 'url-import' | 'connector' | 'cdn-complete';
     /** Provider id when `source === 'connector'`. */
     providerId?: import('./connectors/connector.types').ProviderId;
 }
@@ -199,26 +204,36 @@ export interface UploaderConfig {
      */
     getUploadParams?: (file: UploadFile) => Record<string, string> | undefined;
     /**
-     * Rewrite third-party thumbnail URLs before they are rendered as `<img src>`.
-     * Use this when the host page enforces a Content-Security-Policy that
-     * disallows the original origin (e.g. Hub allowing only `*.filerobot.com`
-     * and `*.cloudimg.io`). The function receives the original URL and a
+     * Rewrite thumbnail URLs before they are rendered as `<img src>`. Use this
+     * when the host page enforces a Content-Security-Policy that disallows the
+     * URL's origin (e.g. Hub allowing only `*.filerobot.com` and
+     * `*.cloudimg.io`). The function receives the original URL and a
      * {@link RemoteThumbnailContext} describing where it came from, and should
      * return a CSP-allowed URL (typically a Filerobot/Cloudimage proxy).
      *
      * Applies to:
-     *  - URL imports (the pasted URL is used as the pre-upload preview).
-     *  - Connector listing/selection thumbnails (Google Drive, Unsplash, etc.).
-     *
-     * Once a file finishes uploading the preview is automatically swapped to
-     * the Filerobot CDN URL, so this hook only matters for the pre-upload
-     * preview window.
+     *  - URL imports — pasted URL used as the pre-upload preview
+     *    (`source: 'url-import'`).
+     *  - Connector listing/selection thumbnails — Google Drive, Unsplash, etc.
+     *    (`source: 'connector'`).
+     *  - Post-upload preview swap — when the upload response's `cdn` URL is on
+     *    a custom CNAME that isn't CSP-allowed (`source: 'cdn-complete'`). The
+     *    engine already defaults to `permalink` (`api.filerobot.com/.../v4/get`
+     *    — always on `*.filerobot.com`), then falls back to `cdn_permalink` and
+     *    `cdn`. This branch usually only fires for hosts whose CSP is even
+     *    tighter than that.
      *
      * @example
      * transformRemoteThumbnail: (url) =>
      *   `https://demo.cloudimg.io/v7/${encodeURIComponent(url)}?w=200`
      */
     transformRemoteThumbnail?: (url: string, ctx: RemoteThumbnailContext) => string;
+    /**
+     * BCP 47 locale tag for the UI language (e.g. `'fr'`, `'de'`, `'en-US'`).
+     * Defaults to `navigator.language`. Translations are loaded lazily from the
+     * Wordplex CDN; English defaults are shown for any untranslated keys.
+     */
+    locale?: string;
 }
 export declare class SfxUploader extends LitElement {
     static styles: import('lit').CSSResult;
@@ -238,7 +253,8 @@ export declare class SfxUploader extends LitElement {
     private _previewDefaultApplied;
     private _fullscreenPreviewUrl;
     private _fullscreenVideoFile;
-    private _fullscreenZoomed;
+    private _fsZoom;
+    private static readonly _FS_ZOOM_LEVELS;
     private _fsPanX;
     private _fsPanY;
     private _fsDragging;
@@ -251,6 +267,8 @@ export declare class SfxUploader extends LitElement {
     private _isPillExpanded;
     private _metadataSchema;
     private _bulkMetadataOpen;
+    /** When non-null, the bulk modal opens with this field active. */
+    private _bulkMetadataInitialFieldKey;
     /** True when the user has clicked "Review files" on the success-card or
      *  the "View last upload" pill on the drop-zone screen. Renders the
      *  read-only last-upload-review screen instead of the normal phase view. */
@@ -322,6 +340,7 @@ export declare class SfxUploader extends LitElement {
     private _updateFloatingPortal;
     private _portalContainer;
     connectedCallback(): void;
+    private _initI18n;
     disconnectedCallback(): void;
     private _applyConfig;
     private _resolveAuthAndEngine;
@@ -332,6 +351,7 @@ export declare class SfxUploader extends LitElement {
      * Whether the file picker should allow multi-select. False when
      * `forceName` is set (single-asset slot) or when restrictions cap to 1.
      */
+    private get _remainingSlots();
     private get _allowMulti();
     /**
      * Build the per-file upload-params resolver from `forceName` and
@@ -347,6 +367,7 @@ export declare class SfxUploader extends LitElement {
     /** Handle field-blur from inline metadata form in the preview sidebar. */
     private _onPreviewMetadataBlur;
     private get _metadataEnforcing();
+    private _firstMissingRequiredFieldKey;
     private get _hasUnfilledRequiredMetadata();
     private _dispatchPublic;
     /**

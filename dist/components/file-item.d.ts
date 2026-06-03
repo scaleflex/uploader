@@ -1,7 +1,8 @@
 import { LitElement, nothing } from 'lit';
-import { UploadFile } from '../store/store.types';
+import { UploadFile, TFunction } from '../store/store.types';
 export declare class SfxFileItem extends LitElement {
     static styles: import('lit').CSSResult;
+    t: TFunction;
     file: UploadFile;
     /** 'upload' (default): full controls; 'review': read-only post-upload
      *  view with status badges and hover actions (Locate / Copy CDN). */

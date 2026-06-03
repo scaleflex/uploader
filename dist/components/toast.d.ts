@@ -1,4 +1,5 @@
 import { LitElement } from 'lit';
+import { TFunction } from '../store/store.types';
 export type ToastType = 'error' | 'warning' | 'info';
 /**
  * Lightweight toast notification container.
@@ -7,6 +8,7 @@ export type ToastType = 'error' | 'warning' | 'info';
  */
 export declare class SfxToast extends LitElement {
     static styles: import('lit').CSSResult;
+    t: TFunction;
     duration: number;
     private _toasts;
     private _nextId;

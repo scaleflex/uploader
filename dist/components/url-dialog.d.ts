@@ -1,4 +1,5 @@
 import { LitElement } from 'lit';
+import { TFunction } from '../store/store.types';
 /**
  * Modal dialog for importing a file via URL.
  *
@@ -8,6 +9,7 @@ import { LitElement } from 'lit';
  */
 export declare class SfxUrlDialog extends LitElement {
     static styles: import('lit').CSSResult[];
+    t: TFunction;
     private _url;
     private _name;
     private _error;

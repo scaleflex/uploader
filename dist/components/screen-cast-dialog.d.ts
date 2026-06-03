@@ -1,4 +1,5 @@
 import { LitElement } from 'lit';
+import { TFunction } from '../store/store.types';
 /**
  * Modal dialog for screen capture/recording.
  *
@@ -8,6 +9,7 @@ import { LitElement } from 'lit';
  */
 export declare class SfxScreenCastDialog extends LitElement {
     static styles: import('lit').CSSResult[];
+    t: TFunction;
     private _stream;
     private _recording;
     private _error;

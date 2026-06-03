@@ -1,7 +1,9 @@
 import { LitElement } from 'lit';
 import { SourceDef } from './source-pills';
+import { TFunction } from '../store/store.types';
 export declare class SfxDropZone extends LitElement {
     static styles: import('lit').CSSResult;
+    t: TFunction;
     compact: boolean;
     externalDragOver: boolean;
     accept: string;

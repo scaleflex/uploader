@@ -1,9 +1,15 @@
 import { LitElement } from 'lit';
 import { ProviderId } from '../connectors/connector.types';
+import { TFunction } from '../store/store.types';
 export declare class SfxProviderBrowser extends LitElement {
     static styles: import('lit').CSSResult;
+    t: TFunction;
     provider: ProviderId;
     companionUrl: string;
+    /** When false, only one file can be selected at a time (single-asset mode). */
+    multi: boolean;
+    /** Maximum number of files that can be selected. null = unlimited. */
+    maxSelect: number | null;
     /**
      * Optional rewrite for listing thumbnail URLs so they pass the host CSP.
      * Defaults to the identity function.

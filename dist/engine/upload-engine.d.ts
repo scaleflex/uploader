@@ -14,6 +14,13 @@ export interface UploadEngineConfig {
      * single-asset by design.
      */
     resolveUploadParams?: (file: UploadFile) => Record<string, string> | undefined;
+    /**
+     * Rewrite the post-upload preview URL (defaulting to `cdn_permalink ??
+     * cdn` from the upload response) before it replaces a file's preview.
+     * Hosts with CSPs that disallow a project's custom CDN CNAME can route
+     * the URL through a Filerobot/Cloudimage proxy here.
+     */
+    transformPreviewUrl?: (url: string) => string;
 }
 export declare class UploadEngine {
     private store;

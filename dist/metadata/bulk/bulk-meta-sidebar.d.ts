@@ -25,6 +25,7 @@ export declare class SfxBulkMetaSidebar extends LitElement {
     private _isRequired;
     private _toggleGroup;
     private _onFieldClick;
+    updated(changed: Map<string, unknown>): void;
     render(): typeof nothing | import('lit-html').TemplateResult<1>;
 }
 //# sourceMappingURL=bulk-meta-sidebar.d.ts.map

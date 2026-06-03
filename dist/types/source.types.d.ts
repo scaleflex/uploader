@@ -5,6 +5,8 @@ export interface UploaderHandle extends HTMLElement {
 export interface SourceDef {
     id: string;
     label: string;
+    /** i18n key for the label. When provided, used with t(labelKey, label) for translation. */
+    labelKey?: string;
     icon: string;
     fillIcon?: boolean;
     iconColor?: string;

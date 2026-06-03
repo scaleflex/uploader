@@ -22,7 +22,7 @@
   <a href="https://scaleflex.github.io/uploader/">Live Demo</a> |
   <a href="https://scaleflex.github.io/uploader/#/docs/getting-started">Documentation</a> |
   <a href="https://scaleflex.github.io/uploader/#/examples/basic">Examples</a> |
-  <a href="https://cdn.scaleflex.com/uploader/1.0.10/sfx-uploader.min.js">CDN</a> |
+  <a href="https://cdn.scaleflex.com/uploader/1.3.3/sfx-uploader.min.js">CDN</a> |
   <a href="https://www.npmjs.com/package/@scaleflex/uploader">npm</a> |
   <a href="https://www.scaleflex.com">Scaleflex</a>
 </p>
@@ -37,6 +37,7 @@
 - **Real-time progress** — per-file and aggregate progress with speed and ETA
 - **File restrictions** — type, size, and count limits with clear rejection reasons
 - **Modal or inline** — use as a modal overlay or embed directly in your page, with configurable header buttons (`close`, `back`, or `none`) for wizard and step flows
+- **Internationalisation** — built-in i18n via i18next; pass `locale` in config (`'fr'`, `'de'`, `'en-US'`, etc.) — falls back to English for untranslated keys
 - **Fully themeable** — CSS custom properties with `--sfx-up-*` prefix
 - **React wrapper** — controlled `open` prop and imperative ref via `@scaleflex/uploader/react`
 - **Lit 3** — lightweight Web Component with Shadow DOM encapsulation
@@ -51,11 +52,11 @@ npm install @scaleflex/uploader
 Or use the CDN for a no-bundler setup:
 
 ```
-https://cdn.scaleflex.com/uploader/1.0.10/sfx-uploader.min.js
+https://cdn.scaleflex.com/uploader/1.3.3/sfx-uploader.min.js
 ```
 
 ```html
-<script src="https://cdn.scaleflex.com/uploader/1.0.10/sfx-uploader.min.js"></script>
+<script src="https://cdn.scaleflex.com/uploader/1.3.3/sfx-uploader.min.js"></script>
 ```
 
 ## Quick start
@@ -73,6 +74,7 @@ https://cdn.scaleflex.com/uploader/1.0.10/sfx-uploader.min.js
             container: 'YOUR_CONTAINER',
             securityTemplateId: 'SECU_...',
         },
+        locale: 'fr', // optional — defaults to navigator.language
     };
     uploader.open();
 </script>
@@ -100,6 +102,7 @@ function App() {
             container: 'YOUR_CONTAINER',
             securityTemplateId: 'SECU_...',
           },
+          locale: 'fr', // optional — defaults to navigator.language
         }}
         onClose={() => setOpen(false)}
         onAllComplete={(ok, failed) => console.log('Done', ok, failed)}

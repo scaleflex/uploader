@@ -1,10 +1,14 @@
 import { SourceDef } from '../types/source.types';
 export type ProviderId = 'google-drive' | 'dropbox' | 'onedrive' | 'box' | 'instagram' | 'facebook' | 'unsplash';
+/** Built-in source IDs always available unless filtered via {@link ConnectorConfig.coreSources}. */
+export type CoreSourceId = 'device' | 'url' | 'camera' | 'screen-cast';
 /** Connector configuration passed via UploaderConfig. */
 export interface ConnectorConfig {
     companionUrl: string;
     providers: ProviderId[];
     customSources?: SourceDef[];
+    /** Allowlist of built-in sources to render. When omitted, all core sources are shown. */
+    coreSources?: CoreSourceId[];
 }
 /** A file or folder item returned by Companion's list endpoint. */
 export interface CompanionItem {

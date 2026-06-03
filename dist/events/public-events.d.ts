@@ -18,6 +18,7 @@ export declare const PublicEvents: {
     readonly COMPLETE_ACTION: "sfx-complete-action";
     readonly FILE_PREVIEW: "sfx-file-preview";
     readonly FILL_METADATA: "sfx-fill-metadata";
+    readonly METADATA_SCHEMA: "sfx-metadata-schema";
     readonly FILE_LOCATE: "sfx-file-locate";
     readonly FILE_COPY_CDN: "sfx-file-copy-cdn";
 };

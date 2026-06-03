@@ -1,8 +1,9 @@
 import { LitElement } from 'lit';
-import { UploadFile } from '../store/store.types';
+import { UploadFile, TFunction } from '../store/store.types';
 import { SourceDef } from '../types/source.types';
 export declare class SfxFileList extends LitElement {
     static styles: import('lit').CSSResult;
+    t: TFunction;
     files: UploadFile[];
     showDropTile: boolean;
     sources: SourceDef[];
@@ -27,6 +28,7 @@ export declare class SfxFileList extends LitElement {
     private _onKeyDown;
     private _addGlobalListeners;
     private _removeGlobalListeners;
+    updated(changed: Map<string, unknown>): void;
     private _toggleMore;
     private _openPortal;
     private _positionPortal;

@@ -1,6 +1,8 @@
 import { LitElement } from 'lit';
+import { TFunction } from '../store/store.types';
 export declare class SfxSuccessCard extends LitElement {
     static styles: import('lit').CSSResult[];
+    t: TFunction;
     fileCount: number;
     totalSize: number;
     thumbnails: string[];
@@ -10,6 +12,8 @@ export declare class SfxSuccessCard extends LitElement {
         name: string;
         error: string;
     }[];
+    /** How many of the successful files already existed (same content) on the server. */
+    alreadyExistedCount: number;
     private _maxThumbs;
     connectedCallback(): void;
     disconnectedCallback(): void;

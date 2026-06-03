@@ -11,6 +11,8 @@ export declare class SfxBulkMetadataModal extends LitElement {
     files: UploadFile[];
     config: MetadataConfig | null;
     autocomplete: unknown;
+    /** When set, the modal opens with this field active instead of the first one. */
+    initialFieldKey: string | null;
     private _activeFieldKey;
     private _staged;
     private _selected;

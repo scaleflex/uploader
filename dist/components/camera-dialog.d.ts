@@ -1,4 +1,5 @@
 import { LitElement } from 'lit';
+import { TFunction } from '../store/store.types';
 /**
  * Modal dialog for capturing photos/video via webcam.
  *
@@ -8,6 +9,7 @@ import { LitElement } from 'lit';
  */
 export declare class SfxCameraDialog extends LitElement {
     static styles: import('lit').CSSResult[];
+    t: TFunction;
     private _stream;
     private _error;
     private _captured;

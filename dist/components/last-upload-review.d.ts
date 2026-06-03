@@ -1,5 +1,5 @@
 import { LitElement } from 'lit';
-import { UploadFile } from '../store/store.types';
+import { UploadFile, TFunction } from '../store/store.types';
 /**
  * Read-only review screen for the most recently uploaded batch (success +
  * failed). Renders <sfx-file-list mode="review">, plus a top bar with
@@ -8,6 +8,7 @@ import { UploadFile } from '../store/store.types';
  */
 export declare class SfxLastUploadReview extends LitElement {
     static styles: import('lit').CSSResult;
+    t: TFunction;
     files: UploadFile[];
     /** Forwarded to file-list → file-item for the Locate button URL override. */
     getLocateUrl?: (file: UploadFile) => string | null | undefined;

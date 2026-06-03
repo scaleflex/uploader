@@ -16,6 +16,7 @@ export interface UploadFile {
     error: string | null;
     retryCount: number;
     response: UploadResponse | null;
+    alreadyExisted?: boolean;
     addedAt: number;
     meta: Record<string, unknown>;
     tags: string[];
@@ -34,6 +35,8 @@ export interface UploadResponse {
         url: {
             public: string;
             cdn: string;
+            cdn_permalink?: string;
+            permalink?: string;
         };
         meta: Record<string, unknown>;
         tags: string[];
@@ -46,6 +49,19 @@ export interface UploadResponse {
     };
     msg?: string;
     hint?: string;
+    /** Machine-readable status code (e.g. `SAME_ASSET_EXISTS_SKIP_UPLOAD`). */
+    code?: string;
+    /** UUID of the pre-existing asset when the same content already exists. */
+    existing_file_uuid?: string;
+    /** Path of a similar (not necessarily identical) existing file, if any. */
+    similar_file_path?: string;
+    /** Backend context returned alongside status codes. */
+    info?: {
+        version?: number;
+        uniq_id?: string;
+        project_uuid?: string;
+        company_uuid?: string;
+    };
 }
 export interface RetryConfig {
     maxRetries: number;
@@ -66,6 +82,7 @@ export interface UploadRestrictions {
     allowedFileTypes: string[] | null;
     blockedFileTypes: string[] | null;
 }
+export type TFunction = (key: string, defaultValueOrOptions?: string | Record<string, unknown>, options?: Record<string, unknown>) => string;
 export interface UploaderState {
     files: Map<string, UploadFile>;
     queueConfig: QueueConfig;
@@ -77,5 +94,6 @@ export interface UploaderState {
     totalBytesUploaded: number;
     totalBytes: number;
     isUploading: boolean;
+    t: TFunction;
 }
 //# sourceMappingURL=store.types.d.ts.map
