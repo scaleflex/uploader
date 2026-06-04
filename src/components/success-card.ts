@@ -473,12 +473,14 @@ export class SfxSuccessCard extends LitElement {
             ? this.t('partiallyUploaded', 'Partially uploaded')
             : allAlreadyExisted
               ? this.t('alreadyInLibrary', { count: this.alreadyExistedCount, defaultValue_one: '{{count}} file was already in your library', defaultValue_other: '{{count}} files were already in your library' })
-              : this.t('uploadedSuccessfully', 'Uploaded successfully!')}</div>
+              : this.t('uploadedSuccessfullyCount', { count: uploadedCount, defaultValue_one: '{{count}} file uploaded successfully!', defaultValue_other: '{{count}} files uploaded successfully!' })}</div>
         <div class="subtitle">${allFailed
           ? this.t('filesCouldNotBeUploaded', { count: this.failedFiles.length, defaultValue_one: 'File could not be uploaded', defaultValue_other: 'Files could not be uploaded' })
           : hasFailed
             ? this.t('partialUploadSummary', '{{uploaded}} uploaded, {{failed}} failed', { uploaded: this.fileCount, failed: this.failedFiles.length })
-            : this.t('allFilesReady', 'All files are ready for use')}</div>
+            : allAlreadyExisted
+              ? this.t('alreadyInLibrarySubtitle', { count: this.alreadyExistedCount, defaultValue_one: 'It’s ready to use — nothing new to upload', defaultValue_other: 'They’re ready to use — nothing new to upload' })
+              : this.t('allFilesReady', 'All files are ready for use')}</div>
 
         ${visibleThumbs.length > 0
           ? html`
@@ -493,7 +495,7 @@ export class SfxSuccessCard extends LitElement {
             `
           : nothing}
 
-        ${hasSuccesses && !allAlreadyExisted ? html`<div class="summary">${this.t('uploadSummary', '{{total}} file · {{size}} uploaded', { total: uploadedCount, size: formatFileSize(this.totalSize) })}</div>` : nothing}
+        ${hasSuccesses && !allAlreadyExisted ? html`<div class="summary">${this.t('uploadedSize', '{{size}} uploaded', { size: formatFileSize(this.totalSize) })}</div>` : nothing}
 
         ${this.alreadyExistedCount > 0 && !allAlreadyExisted
           ? html`<div class="info-note">
