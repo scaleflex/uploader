@@ -477,7 +477,7 @@ export class SfxSuccessCard extends LitElement {
         <div class="subtitle">${allFailed
           ? this.t('filesCouldNotBeUploaded', { count: this.failedFiles.length, defaultValue_one: 'File could not be uploaded', defaultValue_other: 'Files could not be uploaded' })
           : hasFailed
-            ? this.t('partialUploadSummary', '{{uploaded}} uploaded, {{failed}} failed', { uploaded: this.fileCount, failed: this.failedFiles.length })
+            ? this.t('partialUploadSummary', '{{uploaded}} uploaded, {{failed}} failed', { uploaded: uploadedCount, failed: this.failedFiles.length })
             : allAlreadyExisted
               ? this.t('alreadyInLibrarySubtitle', { count: this.alreadyExistedCount, defaultValue_one: 'It’s ready to use — nothing new to upload', defaultValue_other: 'They’re ready to use — nothing new to upload' })
               : this.t('allFilesReady', 'All files are ready for use')}</div>
