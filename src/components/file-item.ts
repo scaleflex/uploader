@@ -17,7 +17,6 @@ export class SfxFileItem extends LitElement {
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.06);
       animation: tileIn 0.45s cubic-bezier(0.34, 1.2, 0.64, 1) both;
       animation-delay: calc(min(var(--tile-index, 0), 8) * 0.04s);
-      will-change: transform, opacity;
       transition: box-shadow 0.15s, transform 0.15s;
       cursor: default;
       display: flex;
@@ -428,8 +427,6 @@ export class SfxFileItem extends LitElement {
     .review-action.secondary {
       background: rgba(255, 255, 255, 0.96);
       color: var(--sfx-up-text, #1e293b);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
     }
 
     /* Primary — solid blue (matches + Select in design system) */

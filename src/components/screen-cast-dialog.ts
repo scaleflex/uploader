@@ -18,7 +18,6 @@ export class SfxScreenCastDialog extends LitElement {
     .backdrop {
       position: fixed; inset: 0; z-index: 1000;
       background: var(--sfx-up-backdrop, rgba(0, 0, 0, 0.45));
-      backdrop-filter: blur(6px);
       display: flex; align-items: center; justify-content: center;
       padding: 20px;
       animation: fadeIn 0.18s ease both;

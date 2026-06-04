@@ -70,18 +70,14 @@ export const bulkModalStyles = css`
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(17, 24, 39, 0.45);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
+    background: rgba(17, 24, 39, 0.5);
   }
 
   /* ---- Confirm discard dialog ---- */
   .fm-confirm-overlay {
     position: absolute;
     inset: 0;
-    background: rgba(17, 24, 39, 0.35);
-    backdrop-filter: blur(3px);
-    -webkit-backdrop-filter: blur(3px);
+    background: rgba(17, 24, 39, 0.45);
     display: flex;
     align-items: center;
     justify-content: center;
