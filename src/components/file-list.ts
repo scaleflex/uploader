@@ -61,6 +61,63 @@ export class SfxFileList extends LitElement {
       padding: 4px var(--sfx-grid-pad-r, 8px) 16px var(--sfx-grid-pad-l, 16px);
     }
 
+    /* Instruction banner shown while picking images for the similarity check */
+    .similar-banner {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 0 var(--sfx-grid-pad-r, 8px) 12px var(--sfx-grid-pad-l, 16px);
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: var(--sfx-up-primary-bg, #eff6ff);
+      border: 1px solid var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.18));
+    }
+
+    .similar-banner-ico {
+      flex: 0 0 30px;
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      background: var(--sfx-up-bg, #fff);
+      color: var(--sfx-up-primary, #2563eb);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .similar-banner-ico svg { width: 16px; height: 16px; }
+
+    .similar-banner-txt { flex: 1; min-width: 0; }
+    .similar-banner-txt b {
+      display: block;
+      font-size: 13px;
+      color: var(--sfx-up-text, #1e293b);
+    }
+    .similar-banner-txt span {
+      font-size: 11.5px;
+      color: var(--sfx-up-text-secondary, #475569);
+    }
+
+    .similar-select-all {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      flex: 0 0 auto;
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--sfx-up-primary, #2563eb);
+      cursor: pointer;
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    .similar-select-all input {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--sfx-up-primary, #2563eb);
+      cursor: pointer;
+    }
+
     /* Mobile: 2 cols at <=768, 1 col at <=440. Use viewport @media not
        container queries — container queries fire on local file-list width
        which is narrow in desktop preview mode, breaking desktop layout. */
@@ -438,6 +495,14 @@ export class SfxFileList extends LitElement {
   @property({ attribute: false }) getLocateUrl?: (file: UploadFile) => string | null | undefined;
   @property({ type: Boolean }) showLocateButton = false;
   @property({ type: Boolean }) showCopyCdnButton = false;
+  /** Show the per-tile "Check similar" button (images only, when enabled). */
+  @property({ type: Boolean }) showCheckSimilar = false;
+  /** When true, tiles show selection checkboxes for the similarity check. */
+  @property({ type: Boolean }) selectMode = false;
+  /** Ids of images currently picked in selection mode. */
+  @property({ attribute: false }) selectedIds: Set<string> = new Set();
+  /** Whether every selectable image is currently picked (for "Select all"). */
+  @property({ type: Boolean }) allSelected = false;
 
   @state() private _moreOpen = false;
   @state() private _dropTileMaxVisible = 3;
@@ -671,12 +736,47 @@ export class SfxFileList extends LitElement {
     `;
   }
 
+  private _onSelectAll(e: Event) {
+    const checked = (e.target as HTMLInputElement).checked;
+    this.dispatchEvent(
+      new CustomEvent('similar-select-all', {
+        detail: { selected: checked },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
   render() {
     return html`
+      ${this.selectMode
+        ? html`
+            <div class="similar-banner">
+              <span class="similar-banner-ico">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                  <circle cx="11" cy="11" r="7" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+              </span>
+              <div class="similar-banner-txt">
+                <b>${this.t('selectImagesToCheck', 'Select images to check for similar assets')}</b>
+                <span>${this.t('selectImagesHint', 'Pick one or more, then click Check')}</span>
+              </div>
+              <label class="similar-select-all">
+                <input
+                  type="checkbox"
+                  .checked=${this.allSelected}
+                  @change=${this._onSelectAll}
+                />
+                ${this.t('selectAll', 'Select all')}
+              </label>
+            </div>
+          `
+        : nothing}
       <div class="grid">
-        ${this.showDropTile && this.mode !== 'review' ? this._renderDropTile() : nothing}
+        ${this.showDropTile && this.mode !== 'review' && !this.selectMode ? this._renderDropTile() : nothing}
         ${this.files.map(
-          (f, i) => html`<sfx-file-item .t=${this.t} .file=${f} .mode=${this.mode} .getLocateUrl=${this.getLocateUrl} .showLocateButton=${this.showLocateButton} .showCopyCdnButton=${this.showCopyCdnButton} ${cspStyle({ '--tile-index': String(i) })}></sfx-file-item>`,
+          (f, i) => html`<sfx-file-item .t=${this.t} .file=${f} .mode=${this.mode} .getLocateUrl=${this.getLocateUrl} .showLocateButton=${this.showLocateButton} .showCopyCdnButton=${this.showCopyCdnButton} .showCheckSimilar=${this.showCheckSimilar} .selectMode=${this.selectMode} .isSelected=${this.selectedIds.has(f.id)} ${cspStyle({ '--tile-index': String(i) })}></sfx-file-item>`,
         )}
       </div>
     `;

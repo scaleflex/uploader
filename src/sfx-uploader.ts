@@ -152,6 +152,14 @@ export interface UploaderConfig {
   connectors?: ConnectorConfig;
   /** Show "Fill Metadata" button in the actions bar. */
   showFillMetadata?: boolean;
+  /**
+   * Enable the "Check similar assets" feature (gated). When enabled, a
+   * "Check similar" button appears in the actions bar and on image tiles,
+   * letting the user check uploaded images against similar assets in the
+   * library. The settings screen and similarity-confidence docs are handled
+   * separately; `confidence` maps to the backend similarity threshold.
+   */
+  similarityCheck?: { enabled: boolean; confidence?: "low" | "mid" | "high" };
   /** Metadata editing configuration. When provided, enables the built-in metadata form. */
   metadataConfig?: MetadataConfig;
   /** Layout for the import-from sources section: horizontal pills (default) or cards grid. */
@@ -2149,6 +2157,10 @@ export class SfxUploader extends LitElement {
   @state() private _showUrlDialog = false;
   @state() private _showCameraDialog = false;
   @state() private _showScreenCastDialog = false;
+  /** "Check similar assets": whether the image-selection mode is active. */
+  @state() private _similarSelectMode = false;
+  /** "Check similar assets": ids of images picked for the similarity check. */
+  @state() private _similarSelectedIds = new Set<string>();
   @state() private _previewFileId: string | null = null;
   @state() private _previewDims: string = "—";
   @state() private _fileInfoOpen: boolean = true;
@@ -3588,6 +3600,82 @@ export class SfxUploader extends LitElement {
     this.config?.callbacks?.onFillMetadata?.(files);
   };
 
+  // --- "Check similar assets" (FRA-10365) --------------------------------
+  // The selection UX is fully wired here; the actual similarity request is
+  // left to the engine integration — see _runSimilarityCheck below.
+
+  /** Images eligible for the similarity check (renderable images only). */
+  private _similarImageFiles(): UploadFile[] {
+    return [...this._store.getState().files.values()].filter(
+      (f) => getFileCategory(f) === "image" && !isBrowserUnrenderableImage(f.type),
+    );
+  }
+
+  private _onCheckSimilarEnter = () => {
+    this._similarSelectedIds = new Set();
+    this._similarSelectMode = true;
+  };
+
+  private _onCheckSimilarCancel = () => {
+    this._similarSelectMode = false;
+    this._similarSelectedIds = new Set();
+  };
+
+  private _onSimilarToggle = (e: CustomEvent<{ fileId: string }>) => {
+    const id = e.detail.fileId;
+    // Reassign the Set (don't mutate) so Lit detects the change and re-renders.
+    const next = new Set(this._similarSelectedIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    this._similarSelectedIds = next;
+  };
+
+  private _onSimilarSelectAll = (e: CustomEvent<{ selected: boolean }>) => {
+    this._similarSelectedIds = e.detail.selected
+      ? new Set(this._similarImageFiles().map((f) => f.id))
+      : new Set();
+  };
+
+  private _onCheckSimilarRun = () => {
+    const files = this._similarImageFiles().filter((f) =>
+      this._similarSelectedIds.has(f.id),
+    );
+    if (!files.length) return;
+    this._runSimilarityCheck(files);
+    this._similarSelectMode = false;
+    this._similarSelectedIds = new Set();
+  };
+
+  private _onCheckSimilarSingle = (
+    e: CustomEvent<{ fileId: string; file: UploadFile }>,
+  ) => {
+    const file = e.detail.file;
+    if (!file) return;
+    this._runSimilarityCheck([file]);
+  };
+
+  /**
+   * Runs the similarity check for the given images.
+   *
+   * TODO(dev): implement the real request. For each image, send a w=300
+   * version to the embedding endpoint
+   * (https://ai.scaleflex.com/images/embedding/...) with the threshold derived
+   * from `this.config?.similarityCheck?.confidence` (low 0.60 / mid 0.75 /
+   * high 0.90), then surface the returned `similar_assets` in a results panel
+   * with "Open in new window" / "Discard from upload" actions. The UI plumbing
+   * (selection mode, per-tile button, events) is already in place — only the
+   * network call and results rendering remain.
+   */
+  private _runSimilarityCheck(files: UploadFile[]) {
+    const n = files.length;
+    this._showToast(
+      n === 1
+        ? `Checking "${files[0].name}" for similar assets…`
+        : `Checking ${n} images for similar assets…`,
+      "info",
+    );
+  }
+
   private _onFileLocate = (e: CustomEvent<{ fileId: string; file: UploadFile }>) => {
     const file = e.detail.file;
     if (!file) return;
@@ -4711,6 +4799,15 @@ export class SfxUploader extends LitElement {
 
     const targetFolder = this._store.getState().targetFolder;
     const totalSize = files.reduce((sum, f) => sum + (f.size || 0), 0);
+    // Mirror the similarity-check wiring of the main grid so selection works
+    // in the preview (split) layout too.
+    const similarityEnabled = !!this.config?.similarityCheck?.enabled;
+    const similarImageIds = files
+      .filter((f) => getFileCategory(f) === "image" && !isBrowserUnrenderableImage(f.type))
+      .map((f) => f.id);
+    const allSimilarSelected =
+      similarImageIds.length > 0 &&
+      similarImageIds.every((id) => this._similarSelectedIds.has(id));
     return html`
       <div class="preview-topbar"></div>
       <div class="preview-layout">
@@ -4731,6 +4828,10 @@ export class SfxUploader extends LitElement {
             .sources=${this._mergedSources}
             .accept=${buildAcceptString(this._storeCtrl.state.restrictions)}
             .multi=${this._allowMulti}
+            .showCheckSimilar=${similarityEnabled}
+            .selectMode=${this._similarSelectMode}
+            .selectedIds=${this._similarSelectedIds}
+            .allSelected=${allSimilarSelected}
             ?drag-active=${this._bodyDragOver}
             @source-click=${this._onDropTileSourceClick}
           ></sfx-file-list>
@@ -5074,6 +5175,14 @@ export class SfxUploader extends LitElement {
     const phase = this._phase;
     const accept = buildAcceptString(s.restrictions);
     const hasFiles = files.length > 0;
+    const similarityEnabled = !!this.config?.similarityCheck?.enabled;
+    // "Select all" reflects whether every selectable image is already picked.
+    const similarImageIds = files
+      .filter((f) => getFileCategory(f) === "image" && !isBrowserUnrenderableImage(f.type))
+      .map((f) => f.id);
+    const allSimilarSelected =
+      similarImageIds.length > 0 &&
+      similarImageIds.every((id) => this._similarSelectedIds.has(id));
 
     return html`
       <div
@@ -5093,6 +5202,12 @@ export class SfxUploader extends LitElement {
         @retry-all=${this._onRetryAll}
         @clear-all=${this._onClearAll}
         @add-more=${this._onAddMore}
+        @check-similar-enter=${this._onCheckSimilarEnter}
+        @check-similar-cancel=${this._onCheckSimilarCancel}
+        @check-similar-run=${this._onCheckSimilarRun}
+        @check-similar-single=${this._onCheckSimilarSingle}
+        @similar-toggle=${this._onSimilarToggle}
+        @similar-select-all=${this._onSimilarSelectAll}
         @upload-start=${this._onUploadStart}
         @upload-more=${this._onUploadMore}
         @primary-action=${this._onPrimaryAction}
@@ -5209,6 +5324,10 @@ export class SfxUploader extends LitElement {
                           .sources=${this._mergedSources}
                           .accept=${accept}
                           .multi=${this._allowMulti}
+                          .showCheckSimilar=${similarityEnabled}
+                          .selectMode=${this._similarSelectMode}
+                          .selectedIds=${this._similarSelectedIds}
+                          .allSelected=${allSimilarSelected}
                           ?drag-active=${this._bodyDragOver}
                           @source-click=${this._onDropTileSourceClick}
                         ></sfx-file-list>
@@ -5234,6 +5353,9 @@ export class SfxUploader extends LitElement {
                   this.config?.showFillMetadata ?? this.config?.metadataConfig
                 )}
                 .requireMetadataFirst=${this._hasUnfilledRequiredMetadata}
+                .showCheckSimilar=${similarityEnabled}
+                .selectMode=${this._similarSelectMode}
+                .selectedCount=${this._similarSelectedIds.size}
               ></sfx-actions-bar>
             `
           : nothing}

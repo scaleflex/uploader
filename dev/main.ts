@@ -13,6 +13,7 @@ const modalBtn = document.getElementById('cfg-modal') as HTMLButtonElement;
 const stepBtn = document.getElementById('cfg-step') as HTMLButtonElement;
 const cardsBtn = document.getElementById('cfg-cards') as HTMLButtonElement;
 const langBtn = document.getElementById('cfg-lang') as HTMLButtonElement;
+const similarityCheckInput = document.getElementById('cfg-similarity-check') as HTMLInputElement;
 
 // Clear stale localStorage to use new defaults
 localStorage.removeItem('sfx-uploader-dev-config');
@@ -49,6 +50,9 @@ function applyConfig(
     mode,
     ...(header !== undefined ? { header } : {}),
     ...(sourcesLayout ? { sourcesLayout } : {}),
+    ...(similarityCheckInput.checked
+      ? { similarityCheck: { enabled: true } }
+      : {}),
     connectors: {
       companionUrl: 'https://eu-on-24001.connector.filerobot.com',
       providers: ['google-drive', 'dropbox', 'onedrive', 'box', 'unsplash'],
@@ -96,6 +100,15 @@ langBtn.addEventListener('click', () => {
   const lang = LANGUAGES[langIndex];
   if (uploader.config) uploader.config = { ...uploader.config, locale: lang };
   langBtn.textContent = `Lang: ${lang.toUpperCase()}`;
+});
+
+// Toggle the "Check similar assets" feature live without losing current mode.
+similarityCheckInput.addEventListener('change', () => {
+  if (!uploader.config) return;
+  uploader.config = {
+    ...uploader.config,
+    similarityCheck: { enabled: similarityCheckInput.checked },
+  };
 });
 
 // Auto-apply if we have default values filled in

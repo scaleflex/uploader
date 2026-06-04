@@ -224,51 +224,147 @@ export class SfxFileItem extends LitElement {
     }
 
     /* --- Preview button --- */
-    .preview-btn {
+    /* Centered hover actions wrapper (Details + optional Check similar).
+       Flex column with stretch so both buttons share one width. */
+    .center-actions {
       position: absolute;
-      bottom: 50%;
+      top: 50%;
       left: 50%;
-      transform: translate(-50%, 50%);
-      padding: 6px 16px;
-      border-radius: 6px;
-      border: 1.5px solid var(--sfx-up-primary, #2563eb);
-      background: var(--sfx-up-bg, #fff);
-      cursor: pointer;
+      transform: translate(-50%, -50%);
       display: flex;
-      align-items: center;
-      gap: 5px;
+      flex-direction: column;
+      gap: 6px;
+      align-items: stretch;
       opacity: 0;
-      transition: all 0.15s ease;
-      color: var(--sfx-up-primary, #2563eb);
-      font-family: inherit;
-      font-size: 11px;
-      font-weight: 600;
-      white-space: nowrap;
+      transition: opacity 0.15s ease;
       z-index: 5;
     }
 
-    .tile:hover .preview-btn,
-    .tile:focus-within .preview-btn {
+    .tile:hover .center-actions,
+    .tile:focus-within .center-actions {
       opacity: 1;
     }
 
     @media (hover: none) {
-      .preview-btn { opacity: 1; }
+      .center-actions { opacity: 1; }
+    }
+
+    .preview-btn,
+    .check-similar-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      padding: 6px 16px;
+      /* Consistent width so Details matches Check similar in both modes. */
+      min-width: 150px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+
+    /* Details — white, borderless (transparent border keeps the same box
+       height as Check similar), blue text. On hover it stays white and scales
+       up slightly (no blue fill, no darkening). Same look in both modes. */
+    .preview-btn {
+      border: 1px solid var(--sfx-up-primary, #2563eb);
+      background: var(--sfx-up-bg, #fff);
+      color: var(--sfx-up-primary, #2563eb);
     }
 
     .preview-btn:hover {
-      background: var(--sfx-up-primary, #2563eb);
-      color: var(--sfx-up-bg, #fff);
+      background: var(--sfx-up-bg, #fff);
+      color: var(--sfx-up-primary, #2563eb);
+      transform: scale(1.05);
     }
 
     .preview-btn:hover svg {
-      stroke: var(--sfx-up-bg, #fff);
+      stroke: var(--sfx-up-primary, #2563eb);
     }
 
-    .preview-btn svg {
+    /* Check similar — filled primary, visually distinct from Details */
+    .check-similar-btn {
+      border: 1.5px solid var(--sfx-up-primary, #2563eb);
+      background: var(--sfx-up-primary, #2563eb);
+      color: var(--sfx-up-bg, #fff);
+      box-shadow: 0 2px 8px var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.35));
+    }
+
+    /* No darkening on hover — same color, just a slight scale-up (both
+       buttons grow on hover, not only Details). */
+    .check-similar-btn:hover {
+      background: var(--sfx-up-primary, #2563eb);
+      border-color: var(--sfx-up-primary, #2563eb);
+      transform: scale(1.05);
+    }
+
+    .preview-btn svg,
+    .check-similar-btn svg {
       width: 13px;
       height: 13px;
     }
+
+    /* Asset-picker style: on hover a dark semi-transparent overlay covers the
+       preview, with the Details / Check similar buttons sitting on top. Only
+       when the feature is enabled (cs-overlay) — normal mode is untouched. */
+    .tile.cs-overlay .preview::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0);
+      transition: background 0.15s ease;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .tile.cs-overlay:hover .preview::after {
+      background: rgba(0, 0, 0, 0.45);
+    }
+
+    /* --- Similar-image selection mode (asset-picker look) --- */
+    .tile.selectable { cursor: pointer; }
+    /* Selected: blue ring hugging the card, depth shadow preserved. */
+    .tile.selected {
+      box-shadow:
+        0 0 0 1px var(--sfx-up-primary, #2563eb),
+        0 1px 3px rgba(0, 0, 0, 0.04),
+        0 4px 12px rgba(0, 0, 0, 0.06);
+    }
+    /* Non-image tiles can't be checked — dim them while selecting. */
+    .tile.select-dimmed { opacity: 0.5; }
+
+    /* Always-visible checkbox: empty white square → filled blue when checked. */
+    .similar-cb {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      box-sizing: border-box;
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      border: 1.5px solid #cbd5e1;
+      background: var(--sfx-up-bg, #fff);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 11;
+      transition: all 0.15s ease;
+    }
+
+    .similar-cb svg { width: 16px; height: 16px; opacity: 0; transition: opacity 0.15s ease; }
+
+    .similar-cb.checked {
+      background: var(--sfx-up-primary, #2563eb);
+      border-color: var(--sfx-up-primary, #2563eb);
+    }
+
+    .similar-cb.checked svg { opacity: 1; }
 
     /* --- Progress bar --- */
     .progress {
@@ -578,6 +674,12 @@ export class SfxFileItem extends LitElement {
   @property({ type: Boolean }) showLocateButton = false;
   /** Whether to show the "Copy CDN" hover action on completed review tiles. */
   @property({ type: Boolean }) showCopyCdnButton = false;
+  /** Show the per-tile "Check similar" button (images only, when enabled). */
+  @property({ type: Boolean }) showCheckSimilar = false;
+  /** When true, the tile is in similar-image selection mode (shows a checkbox). */
+  @property({ type: Boolean }) selectMode = false;
+  /** Whether this tile is currently picked in selection mode. */
+  @property({ type: Boolean }) isSelected = false;
   @state() private _dims = '';
   /** Brief flash on the Copy CDN button after a successful copy. */
   @state() private _copied = false;
@@ -641,6 +743,19 @@ export class SfxFileItem extends LitElement {
     this._emit('file-preview');
   }
 
+  /** Per-tile "Check similar" — check this single image against the library. */
+  private _checkSimilarSingle(e: Event) {
+    e.stopPropagation();
+    if (!this.file) return;
+    this._emit('check-similar-single', { file: this.file });
+  }
+
+  /** Toggle this image's selection while in similar-image selection mode. */
+  private _toggleSimilar(e: Event) {
+    e.stopPropagation();
+    this._emit('similar-toggle');
+  }
+
   private _locate(e: Event) {
     e.stopPropagation();
     if (!this.file) return;
@@ -679,6 +794,18 @@ export class SfxFileItem extends LitElement {
     const isRejected = f.status === 'rejected';
     const isReview = this.mode === 'review';
     const ext = getFileExtension(f.name);
+    const isImage = category === 'image';
+    // Similar-image selection applies only to selectable images (upload mode).
+    const inSelectMode = this.selectMode && isImage && !isReview;
+    // Centered hover actions (Details + optional Check similar) show only on a
+    // normal, not-yet-uploaded tile and not while picking images.
+    const showCenterActions =
+      !isReview && !isDone && !isUploading && !isPaused && !isError &&
+      f.status !== 'rejected' && !this.selectMode;
+    // Dark hover overlay whenever the centered actions show — for every file
+    // type (documents/videos included), so Details always has a backdrop.
+    // The Check similar button itself still only appears on images.
+    const csOverlay = showCenterActions;
 
     const tileClass = [
       'tile',
@@ -687,10 +814,18 @@ export class SfxFileItem extends LitElement {
       isPaused ? 'paused' : '',
       isRejected ? 'rejected' : '',
       isReview ? 'review' : '',
+      inSelectMode ? 'selectable' : '',
+      inSelectMode && this.isSelected ? 'selected' : '',
+      this.selectMode && !isImage && !isReview ? 'select-dimmed' : '',
+      csOverlay ? 'cs-overlay' : '',
     ].filter(Boolean).join(' ');
 
     return html`
-      <div class=${tileClass} tabindex="0">
+      <div
+        class=${tileClass}
+        tabindex="0"
+        @click=${inSelectMode ? this._toggleSimilar : undefined}
+      >
         <!-- Preview area -->
         <div class="preview">
           ${f.previewUrl
@@ -714,17 +849,48 @@ export class SfxFileItem extends LitElement {
                 </div>
               `}
 
-          <!-- Preview button (not in review mode — review uses its own
-               stacked Locate / Copy CDN actions instead) -->
-          ${!isReview && !isDone && !isUploading && !isPaused && !isError && f.status !== 'rejected'
+          <!-- Similar-image selection checkbox (selection mode, images only) -->
+          ${inSelectMode
             ? html`
-                <button class="preview-btn" @click=${this._preview} aria-label=${this.t('details', 'Details')}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                    <circle cx="12" cy="12" r="3"/>
+                <span
+                  class="similar-cb ${this.isSelected ? 'checked' : ''}"
+                  @click=${this._toggleSimilar}
+                  role="checkbox"
+                  aria-checked=${this.isSelected ? 'true' : 'false'}
+                  aria-label=${this.t('selectImage', 'Select image')}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
                   </svg>
-                  ${this.t('details', 'Details')}
-                </button>
+                </span>
+              `
+            : nothing}
+
+          <!-- Centered hover actions: Details + (optional) Check similar.
+               Not in review mode (review uses Locate / Copy CDN) and hidden
+               while picking images in similar-selection mode. -->
+          ${showCenterActions
+            ? html`
+                <div class="center-actions">
+                  <button class="preview-btn" @click=${this._preview} aria-label=${this.t('details', 'Details')}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                    ${this.t('details', 'Details')}
+                  </button>
+                  ${this.showCheckSimilar && isImage
+                    ? html`
+                        <button class="check-similar-btn" @click=${this._checkSimilarSingle} aria-label=${this.t('checkSimilar', 'Check similar')}>
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                            <circle cx="11" cy="11" r="7"/>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                          </svg>
+                          ${this.t('checkSimilar', 'Check similar')}
+                        </button>
+                      `
+                    : nothing}
+                </div>
               `
             : nothing}
 
@@ -813,8 +979,9 @@ export class SfxFileItem extends LitElement {
             : nothing}
         </div>
 
-        <!-- Action buttons (hidden in review mode — files are read-only) -->
-        ${isReview ? nothing : html`
+        <!-- Action buttons (hidden in review mode and while picking images
+             for the similarity check — files are read-only there) -->
+        ${isReview || this.selectMode ? nothing : html`
         <div class="actions">
           ${isUploading && f.isTus
             ? html`
