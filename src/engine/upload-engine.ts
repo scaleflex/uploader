@@ -2,8 +2,8 @@ import type { Store } from '../store/store';
 import type { UploaderState, UploadFile, FileStatus } from '../store/store.types';
 import type { AuthHeaders } from '../auth/auth.types';
 import { updateFile } from '../store/helpers';
-import { xhrUploadFile, xhrUploadUrl, type XhrUploadHandle } from './xhr-upload';
-import { companionUploadFile } from './companion-upload';
+import { xhrUploadFile, type XhrUploadHandle } from './xhr-upload';
+import { companionUploadFile, companionUploadUrl } from './companion-upload';
 import { tusUploadFile, shouldUseTus, type TusConfig, type TusUploadHandle } from './tus-upload';
 import { isSameAssetExists } from './same-asset';
 
@@ -11,6 +11,13 @@ export interface UploadEngineConfig {
   apiBase: string;
   authHeaders: AuthHeaders;
   tusConfig?: TusConfig;
+  /**
+   * Companion connector base URL. Required for "Upload from URL" — the URL
+   * import flow routes through Companion's `url` provider (matches the
+   * legacy Hub behavior) so the connector handles remote fetch, redirects,
+   * and streaming into `/v4/files`. When omitted, URL import is disabled.
+   */
+  companionUrl?: string;
   /**
    * Resolve extra query-string parameters (e.g. Filerobot `opt_*` flags)
    * for a given file's upload request. Returning a non-empty object also
@@ -286,8 +293,32 @@ export class UploadEngine {
       // Companion proxy upload (cloud connector files)
       handle = companionUploadFile(file, { ...baseOpts, onProgress });
     } else if (file.remoteUrl) {
-      // Direct URL upload
-      handle = xhrUploadUrl(file, baseOpts);
+      // URL import via Companion's `url` provider (matches legacy Hub).
+      // Requires `companionUrl` to be configured — guarded at submission
+      // time (the URL source pill is hidden), but fail terminally here as a
+      // safety net. Skip the retry loop: this is a config error, not a
+      // transient failure, so retrying can never succeed.
+      if (!this.config.companionUrl) {
+        updateFile(this.store, file.id, {
+          status: 'failed',
+          error: 'URL import requires connectors.companionUrl to be configured',
+        });
+        this.checkAllComplete();
+        this.processQueue();
+        return;
+      }
+      handle = companionUploadUrl(file, {
+        ...baseOpts,
+        onProgress,
+        companionUrl: this.config.companionUrl,
+        onMeta: (meta) => {
+          updateFile(this.store, file.id, {
+            size: meta.size,
+            // Trust Companion's resolved MIME over our extension guess
+            type: meta.type || file.type,
+          });
+        },
+      });
     } else if (isTus) {
       // Resumable tus upload for large files
       const tusHandle = tusUploadFile(file, {

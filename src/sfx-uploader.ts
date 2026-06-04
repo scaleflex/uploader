@@ -2679,6 +2679,7 @@ export class SfxUploader extends LitElement {
         apiBase: this._apiBase,
         authHeaders: this._authHeaders,
         tusConfig: this._normalizeTusConfig(),
+        companionUrl: cfg.connectors?.companionUrl,
         resolveUploadParams: this._buildUploadParamsResolver(),
       });
       this._preloadMetadataSchema(cfg);
@@ -2698,6 +2699,7 @@ export class SfxUploader extends LitElement {
         apiBase: this._apiBase,
         authHeaders: this._authHeaders,
         tusConfig: this._normalizeTusConfig(),
+        companionUrl: cfg.connectors?.companionUrl,
         resolveUploadParams: this._buildUploadParamsResolver(),
       });
       this._preloadMetadataSchema(cfg);
@@ -2741,7 +2743,23 @@ export class SfxUploader extends LitElement {
 
   private _normalizeTusConfig(): TusConfig | undefined {
     const raw = this.config?.tusConfig;
-    return raw === true ? {} : raw || undefined;
+    const base: TusConfig | undefined =
+      raw === true ? {} : raw || undefined;
+    if (!base) return undefined;
+
+    // Derive tus endpoint and JSON base from the configured Companion host
+    // so region-optimal connector routing (e.g. Hub's "fastest connector"
+    // logic) flows through to tus uploads. Without this the new Uploader
+    // would always hit the hard-coded eu-on-24001 host even when a closer
+    // connector is configured. Explicit `endpoint`/`jsonBase` still win.
+    const companion = this.config?.connectors?.companionUrl;
+    if (!companion) return base;
+    const trimmed = companion.replace(/\/+$/, '');
+    return {
+      ...base,
+      endpoint: base.endpoint ?? `${trimmed}/files`,
+      jsonBase: base.jsonBase ?? `${trimmed}/json`,
+    };
   }
 
   /**
@@ -2795,6 +2813,7 @@ export class SfxUploader extends LitElement {
         apiBase: this._apiBase,
         authHeaders: this._authHeaders,
         tusConfig: this._normalizeTusConfig(),
+        companionUrl: this.config?.connectors?.companionUrl,
         resolveUploadParams: this._buildUploadParamsResolver(),
         transformPreviewUrl: (url) =>
           this._transformRemoteThumbnail(url, { source: 'cdn-complete' }),
@@ -3090,7 +3109,9 @@ export class SfxUploader extends LitElement {
     this._cachedSourcesConfig = connectors;
 
     if (!connectors) {
-      this._cachedSources = CORE_SOURCES;
+      // No connectors configured at all → URL import has no Companion to
+      // talk to, so hide that pill (other core sources are unaffected).
+      this._cachedSources = CORE_SOURCES.filter((s) => s.id !== 'url');
       return this._cachedSources;
     }
 
@@ -3104,9 +3125,14 @@ export class SfxUploader extends LitElement {
     const coreAllow = connectors.coreSources
       ? new Set<string>(connectors.coreSources)
       : null;
-    const coreSources = coreAllow
+    const baseCore = coreAllow
       ? CORE_SOURCES.filter((s) => coreAllow.has(s.id))
       : CORE_SOURCES;
+    // URL import routes through Companion's `url` provider; without a
+    // companionUrl the source has nothing to talk to, so hide the pill.
+    const coreSources = connectors.companionUrl
+      ? baseCore
+      : baseCore.filter((s) => s.id !== 'url');
 
     // Order: device, url → providers → remaining core (camera, screen-cast) → custom
     const priorityCore = coreSources.filter(

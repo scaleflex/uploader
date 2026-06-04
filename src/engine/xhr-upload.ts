@@ -88,12 +88,6 @@ export function xhrUploadFile(
     }
   });
 
-  xhr.addEventListener('timeout', () => {
-    if (!aborted) {
-      opts.onError(new Error('Upload timed out'));
-    }
-  });
-
   // Build FormData — matches Scaleflex multipart format:
   //   info[files[]] = JSON with {name, type}
   //   meta[files[]] = JSON with metadata values (optional)
@@ -117,82 +111,7 @@ export function xhrUploadFile(
     formData.append('files[]', uploadFile.file, uploadFile.name);
   }
 
-  xhr.timeout = 60_000;
   xhr.send(formData);
-
-  return {
-    abort() {
-      aborted = true;
-      xhr.abort();
-    },
-  };
-}
-
-/**
- * Upload a remote URL to Scaleflex /v4/files (with `?folder=` query string,
- * same endpoint as direct file upload — server distinguishes by Content-Type
- * and `files_urls` body shape).
- */
-export function xhrUploadUrl(
-  uploadFile: UploadFile,
-  opts: Omit<XhrUploadOptions, 'onProgress'> & { onProgress?: never },
-): XhrUploadHandle {
-  if (!uploadFile.remoteUrl) {
-    opts.onError(new Error('Remote URL is required for URL upload'));
-    return { abort() {} };
-  }
-
-  const xhr = new XMLHttpRequest();
-  let aborted = false;
-
-  const url = buildUploadUrl(opts.apiBase, opts.folder, opts.extraParams);
-
-  xhr.open('POST', url);
-  for (const [key, value] of Object.entries(opts.authHeaders)) {
-    xhr.setRequestHeader(key, value);
-  }
-  xhr.setRequestHeader('Content-Type', 'application/json');
-
-  xhr.addEventListener('load', () => {
-    if (aborted) return;
-
-    let body: UploadResponse;
-    try {
-      body = JSON.parse(xhr.responseText);
-    } catch {
-      opts.onError(new Error(`Invalid JSON response (HTTP ${xhr.status})`));
-      return;
-    }
-
-    if (xhr.status >= 200 && xhr.status < 300 && body.status === 'success') {
-      opts.onComplete(body);
-    } else if (isSameAssetExists(body)) {
-      // Identical content already exists in the target directory — not a real
-      // failure. Treat as a successful upload of the pre-existing asset.
-      opts.onComplete(buildSameAssetResponse(body, uploadFile));
-    } else {
-      opts.onError(new Error(body.hint || body.msg || `Upload failed (HTTP ${xhr.status})`));
-    }
-  });
-
-  xhr.addEventListener('error', () => {
-    if (!aborted) {
-      opts.onError(new Error('Network error — check your connection'));
-    }
-  });
-
-  xhr.addEventListener('timeout', () => {
-    if (!aborted) {
-      opts.onError(new Error('Upload timed out'));
-    }
-  });
-
-  const payload = {
-    files_urls: [{ url: uploadFile.remoteUrl, name: uploadFile.name }],
-  };
-
-  xhr.timeout = 60_000;
-  xhr.send(JSON.stringify(payload));
 
   return {
     abort() {
