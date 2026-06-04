@@ -67,7 +67,7 @@ export class SfxFileList extends LitElement {
       align-items: center;
       gap: 12px;
       margin: 0 var(--sfx-grid-pad-r, 8px) 12px var(--sfx-grid-pad-l, 16px);
-      padding: 10px 14px;
+      padding: 8px 16px;
       border-radius: 10px;
       background: var(--sfx-up-primary-bg, #eff6ff);
       border: 1px solid var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.18));
@@ -90,12 +90,14 @@ export class SfxFileList extends LitElement {
     .similar-banner-txt { flex: 1; min-width: 0; }
     .similar-banner-txt b {
       display: block;
-      font-size: 13px;
-      color: var(--sfx-up-text, #1e293b);
+      font-size: 14px;
+      font-weight: 500;
+      color: #37414b;
     }
     .similar-banner-txt span {
-      font-size: 11.5px;
-      color: var(--sfx-up-text-secondary, #475569);
+      font-size: 12px;
+      font-weight: 400;
+      color: #5b6e82;
     }
 
     .similar-select-all {
@@ -103,7 +105,7 @@ export class SfxFileList extends LitElement {
       align-items: center;
       gap: 7px;
       flex: 0 0 auto;
-      font-size: 12.5px;
+      font-size: 14px;
       font-weight: 500;
       color: var(--sfx-up-primary, #2563eb);
       cursor: pointer;
@@ -112,10 +114,37 @@ export class SfxFileList extends LitElement {
     }
 
     .similar-select-all input {
-      width: 16px;
-      height: 16px;
-      accent-color: var(--sfx-up-primary, #2563eb);
+      appearance: none;
+      -webkit-appearance: none;
+      box-sizing: border-box;
+      width: 22px;
+      height: 22px;
+      margin: 0;
+      border: none;
+      border-radius: 6px;
+      background: var(--sfx-up-bg, #fff);
+      box-shadow: inset 0 0 0 1.5px #ccd6de;
       cursor: pointer;
+      position: relative;
+      top: 1px;
+      transition: all 0.15s ease;
+    }
+
+    .similar-select-all input:checked {
+      background: var(--sfx-up-primary, #2563eb);
+      box-shadow: inset 0 0 0 1.5px var(--sfx-up-primary, #2563eb);
+    }
+
+    .similar-select-all input:checked::after {
+      content: '';
+      position: absolute;
+      left: 7px;
+      top: 3.5px;
+      width: 5px;
+      height: 9px;
+      border: solid #fff;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
     }
 
     /* Mobile: 2 cols at <=768, 1 col at <=440. Use viewport @media not
