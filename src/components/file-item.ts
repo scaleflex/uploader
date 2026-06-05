@@ -2,7 +2,7 @@ import { LitElement, html, css, nothing } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { cspStyle } from '../utils/csp-style';
 import type { UploadFile, TFunction } from '../store/store.types';
-import { formatFileSize, getFileCategory, getFileExtension, getFileTypeIconUrl, getDefaultFileTypeIconUrl } from '../utils/file-utils';
+import { formatFileSize, getFileCategory, getFileExtension, getFileTypeIconUrl, getDefaultFileTypeIconUrl, isBrowserUnrenderableImage } from '../utils/file-utils';
 
 export class SfxFileItem extends LitElement {
   static styles = css`
@@ -255,13 +255,13 @@ export class SfxFileItem extends LitElement {
       align-items: center;
       justify-content: center;
       gap: 5px;
-      padding: 6px 16px;
+      padding: 8px 16px;
       /* Consistent width so Details matches Check similar in both modes. */
       min-width: 150px;
       border-radius: 6px;
       cursor: pointer;
       font-family: inherit;
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 600;
       white-space: nowrap;
       transition: all 0.15s ease;
@@ -794,7 +794,9 @@ export class SfxFileItem extends LitElement {
     const isRejected = f.status === 'rejected';
     const isReview = this.mode === 'review';
     const ext = getFileExtension(f.name);
-    const isImage = category === 'image';
+    // HEIC/HEIF are images by MIME but browsers can't render them — they can't
+    // be sent as a w=300 preview, so the similarity feature must skip them.
+    const isImage = category === 'image' && !isBrowserUnrenderableImage(f.type);
     // Similar-image selection applies only to selectable images (upload mode).
     const inSelectMode = this.selectMode && isImage && !isReview;
     // Centered hover actions (Details + optional Check similar) show only on a
