@@ -210,6 +210,26 @@ describe('UploadEngine', () => {
       expect(store.getState().isUploading).toBe(false);
     });
 
+    it('backfills size from response.file.size on completion', () => {
+      // Unsplash (and other search providers) return `size: 0` in their list
+      // responses — without this backfill the success card renders `0 B`.
+      const file = makeUploadFile({ id: 'f1', status: 'queued', size: 0 });
+      const { store, engine } = createEngine({
+        files: new Map([['f1', file]]),
+        isUploading: true,
+      });
+
+      (xhrUploadFile as ReturnType<typeof vi.fn>).mockImplementation((_f: any, opts: any) => {
+        setTimeout(() => opts.onComplete(mockResponse), 0);
+        return { abort: vi.fn() };
+      });
+
+      engine.start();
+      vi.runAllTimers();
+
+      expect(store.getState().files.get('f1')!.size).toBe(mockResponse.file.size);
+    });
+
     it('swaps a non-blob (URL/connector) preview to the CDN URL for image files', () => {
       // A remote http preview (third-party origin) must be replaced with a
       // CSP-safe server URL once the file is on Filerobot.
