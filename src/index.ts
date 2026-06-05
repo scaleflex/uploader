@@ -36,3 +36,12 @@ export { SfxActionsBar, type UploadButtonState } from './components/actions-bar'
 
 // Metadata (types only — actual code is lazy-loaded)
 export type { MetadataConfig, MetadataSchema, MetadataField, MetadataGroup } from './metadata/schema/schema.types';
+
+// Product fields (admin v5 parity — auto-enabled when the Hub project sets
+// `airstore.ui.products_enabled === true`)
+export type { Product, ProductFieldKey } from './product/product.types';
+export {
+  validateProductRef,
+  validateProductPosition,
+  PRODUCT_REF_INVALID_CHARS,
+} from './product/product.constants';

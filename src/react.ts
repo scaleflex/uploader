@@ -9,6 +9,7 @@ import {
 } from 'react';
 import type { SfxUploader as SfxUploaderElement, UploaderConfig, UploaderPhase } from './sfx-uploader';
 import type { UploadFile, UploadResponse } from './store/store.types';
+import type { Product } from './product/product.types';
 
 // Conditionally import define for SSR safety
 if (typeof customElements !== 'undefined') {
@@ -27,6 +28,8 @@ export interface UploaderRef {
   getFile(fileId: string): UploadFile | undefined;
   updateFileMeta(fileId: string, meta?: Record<string, unknown>, tags?: string[]): void;
   updateFilesMeta(updates: Array<{ fileId: string; meta?: Record<string, unknown>; tags?: string[] }>): void;
+  updateFileProduct(fileId: string, product: Partial<Product>): void;
+  updateFilesProduct(updates: Array<{ fileId: string; product: Partial<Product> }>): void;
   getStatus(): UploaderPhase;
   dismissPanel(): void;
 }
@@ -147,6 +150,8 @@ export const Uploader = forwardRef<UploaderRef, UploaderProps>(
       getFile(fileId: string) { return elRef.current?.getFile(fileId); },
       updateFileMeta(fileId: string, meta?: Record<string, unknown>, tags?: string[]) { elRef.current?.updateFileMeta(fileId, meta, tags); },
       updateFilesMeta(updates: Array<{ fileId: string; meta?: Record<string, unknown>; tags?: string[] }>) { elRef.current?.updateFilesMeta(updates); },
+      updateFileProduct(fileId: string, product: Partial<Product>) { elRef.current?.updateFileProduct(fileId, product); },
+      updateFilesProduct(updates: Array<{ fileId: string; product: Partial<Product> }>) { elRef.current?.updateFilesProduct(updates); },
       getStatus(): UploaderPhase { return elRef.current?.getStatus() ?? 'empty'; },
       dismissPanel() { elRef.current?.dismissPanel(); },
     }));

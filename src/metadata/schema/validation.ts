@@ -3,6 +3,13 @@ import type {
   MetadataConfig,
   MetadataField,
 } from './schema.types';
+import {
+  PRODUCT_POSITION_FIELD_KEY,
+  PRODUCT_REF_FIELD_KEY,
+} from '../../product/product.fields';
+import {
+  PRODUCT_REF_INVALID_CHARS,
+} from '../../product/product.constants';
 
 export function validateField(
   field: MetadataField,
@@ -20,6 +27,23 @@ export function validateField(
 
   // Skip further validation if empty and not required
   if (isEmpty(value)) return null;
+
+  // Synthetic product fields use the same alphanumeric rule as admin v5.
+  // Kept inline (rather than dispatching to validateProductRef/Position) so
+  // the message is the user-facing English text the bulk modal already shows.
+  if (field.key === PRODUCT_REF_FIELD_KEY) {
+    if (typeof value !== 'string' || PRODUCT_REF_INVALID_CHARS.test(value)) {
+      return 'Reference contains invalid characters';
+    }
+    return null;
+  }
+  if (field.key === PRODUCT_POSITION_FIELD_KEY) {
+    const n = Number(value);
+    if (!Number.isFinite(n) || !Number.isInteger(n)) {
+      return 'Position must be an integer';
+    }
+    return null;
+  }
 
   // Per-type validation
   switch (field.type) {

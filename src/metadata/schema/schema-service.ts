@@ -24,7 +24,11 @@ export async function fetchMetadataSchema(
 
   // If raw metadata was provided (e.g. from airbox/sharebox API), skip the fetch
   if (config?.rawMetadata) {
-    const schema = parseMetadataSchema(config.rawMetadata, config);
+    const schema = parseMetadataSchema(
+      config.rawMetadata,
+      config,
+      config.productsEnabled === true,
+    );
     _cache.set(projectUuid, schema);
     return schema;
   }
@@ -73,7 +77,13 @@ async function _doFetch(
     throw new Error('No metadata in project response');
   }
 
-  return parseMetadataSchema(projectData.metadata, config);
+  // Auto-detect product fields support from the Hub project config.
+  // Explicit `config.productsEnabled` overrides the Hub flag.
+  const productsEnabled =
+    config?.productsEnabled ??
+    projectData?.airstore?.ui?.products_enabled === true;
+
+  return parseMetadataSchema(projectData.metadata, config, productsEnabled);
 }
 
 export function clearSchemaCache(projectUuid?: string): void {

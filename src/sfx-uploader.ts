@@ -55,6 +55,15 @@ import {
   firstMissingRequiredFieldKey,
   isFieldRequired,
 } from "./metadata/schema/required-fields";
+import type { Product } from "./product/product.types";
+import { mergeProductPatch } from "./product/product.constants";
+import {
+  injectProductGroup,
+  isProductFieldKey,
+  productKeyOf,
+  PRODUCT_REF_FIELD_KEY,
+  PRODUCT_POSITION_FIELD_KEY,
+} from "./product/product.fields";
 import type { SfxToast } from "./components/toast";
 
 /** Providers that use search instead of OAuth file browsing. */
@@ -2599,6 +2608,47 @@ export class SfxUploader extends LitElement {
     if (changed) this._store.setState({ files: next });
   }
 
+  /**
+   * Update product fields (ref + position) for a single file. The patch is
+   * merged onto the existing `product` object. Passing `undefined` for a key
+   * clears it. Only files in modifiable statuses are affected.
+   */
+  updateFileProduct(fileId: string, product: Partial<Product>): void {
+    const current = this._store.getState().files;
+    const existing = current.get(fileId);
+    if (!existing || !SfxUploader._MODIFIABLE_STATUSES.has(existing.status))
+      return;
+
+    const next = new Map(current);
+    next.set(fileId, {
+      ...existing,
+      product: mergeProductPatch(existing.product, product),
+    });
+    this._store.setState({ files: next });
+  }
+
+  /** Batch-update product fields for multiple files. */
+  updateFilesProduct(
+    updates: Array<{ fileId: string; product: Partial<Product> }>,
+  ): void {
+    const current = this._store.getState().files;
+    const next = new Map(current);
+    let changed = false;
+
+    for (const { fileId, product } of updates) {
+      const existing = current.get(fileId);
+      if (!existing || !SfxUploader._MODIFIABLE_STATUSES.has(existing.status))
+        continue;
+      next.set(fileId, {
+        ...existing,
+        product: mergeProductPatch(existing.product, product),
+      });
+      changed = true;
+    }
+
+    if (changed) this._store.setState({ files: next });
+  }
+
   // --- Lifecycle ---
 
   updated(changed: Map<string, unknown>) {
@@ -3050,12 +3100,19 @@ export class SfxUploader extends LitElement {
       const { fetchMetadataSchema, createTagsAutocomplete } = await import(
         "./metadata"
       );
-      this._metadataSchema = await fetchMetadataSchema(
+      const baseSchema = await fetchMetadataSchema(
         this._apiBase,
         this._authHeaders,
         mc.projectUuid,
         mc,
       );
+      // When products are enabled, splice the synthetic "Product" group into
+      // the schema right after the last root group. The metadata-form (used in
+      // both the preview sidebar and the bulk-edit sidebar) then renders the
+      // product fields in their proper slot without any consumer changes.
+      this._metadataSchema = baseSchema.productsEnabled
+        ? injectProductGroup(baseSchema, this._storeCtrl.state.t)
+        : baseSchema;
       this._metadataAutocomplete = createTagsAutocomplete(
         this._apiBase,
         this._authHeaders,
@@ -3090,19 +3147,51 @@ export class SfxUploader extends LitElement {
     this._store.setState({ files: next });
   }
 
-  /** Handle field-blur from inline metadata form in the preview sidebar. */
+  /**
+   * Handle field-blur from inline metadata form in the preview sidebar.
+   * Routes synthetic product keys (`product.ref` / `product.position`) into
+   * `file.product` via `updateFileProduct`; everything else lands in `meta`.
+   */
   private _onPreviewMetadataBlur = (
     e: CustomEvent<{ key: string; value: unknown }>,
   ) => {
     const fileId = this._previewFileId;
     if (!fileId) return;
     const { key, value } = e.detail;
+
+    if (isProductFieldKey(key)) {
+      const pk = productKeyOf(key);
+      if (!pk) return;
+      // Empty string from the form means "clear" → drop the key.
+      const cleared = value === '' || value == null;
+      const patch: Partial<Product> =
+        pk === 'position'
+          ? { position: cleared ? undefined : Number(value) }
+          : { ref: cleared ? undefined : String(value) };
+      this.updateFileProduct(fileId, patch);
+      return;
+    }
+
     const existing = this._store.getState().files.get(fileId);
     if (!existing) return;
     const next = new Map(this._store.getState().files);
     next.set(fileId, { ...existing, meta: { ...existing.meta, [key]: value } });
     this._store.setState({ files: next });
   };
+
+  /**
+   * Build the meta-like dict the preview's `<sfx-metadata-form>` consumes,
+   * merging product values under their synthetic keys so the same component
+   * can render both metadata and product inputs.
+   */
+  private _previewMeta(file: UploadFile): Record<string, unknown> {
+    if (!this._metadataSchema?.productsEnabled) return file.meta;
+    return {
+      ...file.meta,
+      [PRODUCT_REF_FIELD_KEY]: file.product.ref,
+      [PRODUCT_POSITION_FIELD_KEY]: file.product.position,
+    };
+  }
 
   private get _metadataEnforcing(): boolean {
     const mc = this.config?.metadataConfig;
@@ -3506,6 +3595,7 @@ export class SfxUploader extends LitElement {
           addedAt: Date.now(),
           meta: {},
           tags: [],
+          product: {},
           remoteInfo: null,
           ...TUS_DEFAULTS,
         };
@@ -3559,6 +3649,7 @@ export class SfxUploader extends LitElement {
         addedAt: Date.now(),
         meta: {},
         tags: [],
+        product: {},
         remoteInfo: null,
         ...TUS_DEFAULTS,
       };
@@ -3732,6 +3823,7 @@ export class SfxUploader extends LitElement {
         addedAt: Date.now(),
         meta: {},
         tags: [],
+        product: {},
         remoteInfo: null,
         ...TUS_DEFAULTS,
       };
@@ -3765,6 +3857,7 @@ export class SfxUploader extends LitElement {
       addedAt: Date.now(),
       meta: {},
       tags: [],
+      product: {},
       remoteInfo: null,
       ...TUS_DEFAULTS,
     };
@@ -3881,6 +3974,15 @@ export class SfxUploader extends LitElement {
     this.config?.callbacks?.onFillMetadata?.(files);
   };
 
+  private _onRequireMetadata = () => {
+    const t = this._storeCtrl.state.t;
+    this._showToast(
+      t('fillRequiredFieldsFirst', 'Please fill required fields first.'),
+      'warning',
+    );
+    this._onFillMetadata();
+  };
+
   private _onFileLocate = (e: CustomEvent<{ fileId: string; file: UploadFile }>) => {
     const file = e.detail.file;
     if (!file) return;
@@ -3924,6 +4026,16 @@ export class SfxUploader extends LitElement {
       next.set(fileId, { ...existing, meta: { ...existing.meta, ...meta } });
     }
     this._store.setState({ files: next });
+  };
+
+  private _onBulkProductSaveBatch = (
+    e: CustomEvent<{
+      changes: Array<{ fileId: string; product: Partial<Product> }>;
+    }>,
+  ) => {
+    const { changes } = e.detail;
+    if (!changes.length) return;
+    this.updateFilesProduct(changes);
   };
 
   private _onBulkMetadataClose = () => {
@@ -4108,6 +4220,7 @@ export class SfxUploader extends LitElement {
           addedAt: Date.now(),
           meta: {},
           tags: [],
+          product: {},
           remoteInfo: info,
           ...TUS_DEFAULTS,
         };
@@ -4139,6 +4252,7 @@ export class SfxUploader extends LitElement {
         addedAt: Date.now(),
         meta: {},
         tags: [],
+        product: {},
         remoteInfo: info,
         ...TUS_DEFAULTS,
       };
@@ -5411,7 +5525,7 @@ export class SfxUploader extends LitElement {
                 >
                   <sfx-metadata-form
                     .schema=${this._metadataSchema}
-                    .meta=${previewFile.meta}
+                    .meta=${this._previewMeta(previewFile)}
                     .config=${this.config.metadataConfig}
                     .autocomplete=${this._metadataAutocomplete}
                   ></sfx-metadata-form>
@@ -5523,7 +5637,7 @@ export class SfxUploader extends LitElement {
         @file-resume=${this._onFileResume}
         @file-rename=${this._onFileRename}
         @fill-metadata=${this._onFillMetadata}
-        @require-metadata=${this._onFillMetadata}
+        @require-metadata=${this._onRequireMetadata}
         @retry-all=${this._onRetryAll}
         @clear-all=${this._onClearAll}
         @add-more=${this._onAddMore}
@@ -5727,6 +5841,7 @@ export class SfxUploader extends LitElement {
                 .autocomplete=${this._metadataAutocomplete}
                 .initialFieldKey=${this._bulkMetadataInitialFieldKey}
                 @metadata-save-batch=${this._onBulkMetadataSaveBatch}
+                @product-save-batch=${this._onBulkProductSaveBatch}
                 @metadata-close=${this._onBulkMetadataClose}
               ></sfx-bulk-metadata-modal>
             `

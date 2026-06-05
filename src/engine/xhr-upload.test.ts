@@ -188,5 +188,43 @@ describe('xhrUploadFile', () => {
     expect(sentFormData.get('meta[files[]]')).toBeNull();
     expect(sentFormData.get('tags[files[]]')).toBeNull();
   });
+
+  it('sends product[files[]] when product fields are set', () => {
+    const file = makeUploadFile({
+      file: new File(['data'], 'test.png', { type: 'image/png' }),
+      product: { ref: 'SKU123', position: 4 },
+    });
+    const opts = freshOpts();
+    xhrUploadFile(file, opts);
+
+    const sentFormData = mockXhr.send.mock.calls[0][0] as FormData;
+    const product = JSON.parse(sentFormData.get('product[files[]]') as string);
+    expect(product).toEqual({ ref: 'SKU123', position: 4 });
+  });
+
+  it('omits product[files[]] when product is empty', () => {
+    const file = makeUploadFile({
+      file: new File(['data'], 'test.png', { type: 'image/png' }),
+      product: {},
+    });
+    const opts = freshOpts();
+    xhrUploadFile(file, opts);
+
+    const sentFormData = mockXhr.send.mock.calls[0][0] as FormData;
+    expect(sentFormData.get('product[files[]]')).toBeNull();
+  });
+
+  it('preserves position 0 in product[files[]]', () => {
+    const file = makeUploadFile({
+      file: new File(['data'], 'test.png', { type: 'image/png' }),
+      product: { position: 0 },
+    });
+    const opts = freshOpts();
+    xhrUploadFile(file, opts);
+
+    const sentFormData = mockXhr.send.mock.calls[0][0] as FormData;
+    const product = JSON.parse(sentFormData.get('product[files[]]') as string);
+    expect(product).toEqual({ position: 0 });
+  });
 });
 

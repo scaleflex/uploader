@@ -1,4 +1,5 @@
 import type { RemoteFileInfo } from '../connectors/connector.types';
+import type { Product } from '../product/product.types';
 
 // --- File lifecycle states (spec §5.1) ---
 
@@ -52,6 +53,10 @@ export interface UploadFile {
   // Per-file metadata for the upload request
   meta: Record<string, unknown>;
   tags: string[];
+
+  // Per-file product fields (admin v5 parity). Sent on upload when the project
+  // has `products_enabled`. Always present; empty object when nothing is set.
+  product: Product;
 
   // Companion connector metadata (set for files from cloud providers)
   remoteInfo: RemoteFileInfo | null;

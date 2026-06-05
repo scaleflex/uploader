@@ -2,6 +2,7 @@ import { Upload, DetailedError } from 'tus-js-client';
 import type { UploadFile, UploadResponse } from '../store/store.types';
 import type { AuthHeaders } from '../auth/auth.types';
 import { isSameAssetExists, buildSameAssetResponse } from './same-asset';
+import { compactProduct, hasProductData } from '../product/product.constants';
 
 export interface TusConfig {
   /** Files larger than this (bytes) use tus. Default: 10 MB. Set to 0 to always use tus. */
@@ -105,6 +106,12 @@ export function tusUploadFile(
     type: uploadFile.type,
     'filerobot-folder': opts.folder,
   };
+
+  // Product fields (admin v5 parity): JSON-stringified `product` entry on the
+  // tus metadata header. Omitted when empty so we don't pollute the header.
+  if (hasProductData(uploadFile.product)) {
+    metadata.product = JSON.stringify(compactProduct(uploadFile.product));
+  }
 
   // --- Custom fingerprint (matches v5's getFingerprint.js) ---
   // Uses file ID + endpoint to avoid collisions between:

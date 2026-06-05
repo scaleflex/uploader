@@ -20,6 +20,7 @@ export function makeUploadFile(overrides: Partial<UploadFile> = {}): UploadFile 
     addedAt: Date.now(),
     meta: {},
     tags: [],
+    product: {},
     remoteInfo: null,
     isTus: false,
     tusUploadUrl: null,

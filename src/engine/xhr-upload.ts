@@ -1,6 +1,7 @@
 import type { UploadFile, UploadResponse } from '../store/store.types';
 import type { AuthHeaders } from '../auth/auth.types';
 import { isSameAssetExists, buildSameAssetResponse } from './same-asset';
+import { compactProduct, hasProductData } from '../product/product.constants';
 
 export interface XhrUploadOptions {
   apiBase: string;          // e.g. "https://api.filerobot.com/mycontainer"
@@ -107,6 +108,14 @@ export function xhrUploadFile(
     }
     if (uploadFile.tags.length > 0) {
       formData.append('tags[files[]]', JSON.stringify(uploadFile.tags));
+    }
+    // Product fields (admin v5 parity): `product[files[]]` with JSON-stringified
+    // product. Omitted when there are no defined values.
+    if (hasProductData(uploadFile.product)) {
+      formData.append(
+        'product[files[]]',
+        JSON.stringify(compactProduct(uploadFile.product)),
+      );
     }
     formData.append('files[]', uploadFile.file, uploadFile.name);
   }
