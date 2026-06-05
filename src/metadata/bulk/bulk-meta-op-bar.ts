@@ -1,7 +1,7 @@
 import { LitElement, html, nothing } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import type { MetadataField, MetadataConfig, MetadataFieldType } from '../schema/schema.types';
-import { isUnsupportedFieldType } from '../schema/schema.types';
+import { isUnsupportedField } from '../schema/schema.types';
 import { UNSUPPORTED_FIELD_MESSAGE, unsupportedLockIcon } from '../fields/unsupported-field';
 import { isEmpty } from '../schema/validation';
 import {
@@ -202,7 +202,7 @@ export class SfxBulkMetaOpBar extends LitElement {
   render() {
     if (!this.field) return nothing;
 
-    if (isUnsupportedFieldType(this.field.type)) {
+    if (isUnsupportedField(this.field)) {
       return html`
         <div class="op-bar">
           <div class="op-unsupported" role="note" aria-label="${this.field.title}: ${UNSUPPORTED_FIELD_MESSAGE}">

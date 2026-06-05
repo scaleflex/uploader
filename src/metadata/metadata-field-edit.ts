@@ -1,7 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { property } from 'lit/decorators.js';
 import type { MetadataField } from './schema/schema.types';
-import { isUnsupportedFieldType } from './schema/schema.types';
+import { isUnsupportedField } from './schema/schema.types';
 
 /**
  * Thin dispatcher that renders the correct field editor based on field.type.
@@ -23,7 +23,7 @@ export class SfxMetadataFieldEdit extends LitElement {
     const v = this.value;
     const d = this.disabled;
 
-    if (isUnsupportedFieldType(f.type)) {
+    if (isUnsupportedField(f)) {
       return html`<sfx-meta-unsupported-field></sfx-meta-unsupported-field>`;
     }
 

@@ -1,7 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { property } from 'lit/decorators.js';
 import type { MetadataField, GeoPoint, TagOption } from './schema/schema.types';
-import { isUnsupportedFieldType } from './schema/schema.types';
+import { isUnsupportedField } from './schema/schema.types';
 import { UNSUPPORTED_FIELD_MESSAGE } from './fields/unsupported-field';
 
 export class SfxMetadataFieldView extends LitElement {
@@ -126,7 +126,7 @@ export class SfxMetadataFieldView extends LitElement {
   }
 
   render() {
-    if (this.field && isUnsupportedFieldType(this.field.type)) {
+    if (this.field && isUnsupportedField(this.field)) {
       return html`
         <div class="value empty" title=${UNSUPPORTED_FIELD_MESSAGE}>
           Not editable during upload

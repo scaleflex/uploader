@@ -6,10 +6,10 @@ import './index';
 
 import { UNSUPPORTED_FIELD_MESSAGE } from './fields/unsupported-field';
 
-function makeField(type: MetadataFieldType): MetadataField {
+function makeField(type: MetadataFieldType, ckey = 'ck'): MetadataField {
   return {
     key: 'k',
-    ckey: 'ck',
+    ckey,
     uuid: 'u',
     title: 'My Field',
     type,
@@ -42,6 +42,11 @@ const unsupportedTypes: MetadataFieldType[] = [
   'taxonomy-node',
 ];
 
+const unsupportedCkeyCases: Array<[MetadataFieldType, string]> = [
+  ['integer-list', 'face_matcher'],
+  ['text', 'attachments-assets'],
+];
+
 describe('sfx-metadata-field-edit (single-asset dispatcher)', () => {
   it.each(unsupportedTypes)(
     'renders <sfx-meta-unsupported-field> placeholder for %s',
@@ -51,6 +56,16 @@ describe('sfx-metadata-field-edit (single-asset dispatcher)', () => {
       });
       const placeholder = el.shadowRoot!.querySelector('sfx-meta-unsupported-field');
       expect(placeholder).not.toBeNull();
+    },
+  );
+
+  it.each(unsupportedCkeyCases)(
+    'renders placeholder for %s with backend-managed ckey %s',
+    async (type, ckey) => {
+      const el = await mount('sfx-metadata-field-edit', (e: HTMLElement) => {
+        (e as unknown as { field: MetadataField }).field = makeField(type, ckey);
+      });
+      expect(el.shadowRoot!.querySelector('sfx-meta-unsupported-field')).not.toBeNull();
     },
   );
 
@@ -69,6 +84,16 @@ describe('sfx-metadata-field (form-row dispatcher)', () => {
     async (type) => {
       const el = await mount('sfx-metadata-field', (e: HTMLElement) => {
         (e as unknown as { field: MetadataField }).field = makeField(type);
+      });
+      expect(el.shadowRoot!.querySelector('sfx-meta-unsupported-field')).not.toBeNull();
+    },
+  );
+
+  it.each(unsupportedCkeyCases)(
+    'renders the placeholder for %s with backend-managed ckey %s',
+    async (type, ckey) => {
+      const el = await mount('sfx-metadata-field', (e: HTMLElement) => {
+        (e as unknown as { field: MetadataField }).field = makeField(type, ckey);
       });
       expect(el.shadowRoot!.querySelector('sfx-meta-unsupported-field')).not.toBeNull();
     },
@@ -120,6 +145,17 @@ describe('sfx-bulk-meta-op-bar', () => {
       expect(notice?.textContent).toContain(UNSUPPORTED_FIELD_MESSAGE);
       // Operation dropdown / Apply button must be absent.
       expect(el.shadowRoot!.querySelector('.op-trigger')).toBeNull();
+      expect(el.shadowRoot!.querySelector('.btn-apply')).toBeNull();
+    },
+  );
+
+  it.each(unsupportedCkeyCases)(
+    'renders the notice for %s with backend-managed ckey %s',
+    async (type, ckey) => {
+      const el = await mount('sfx-bulk-meta-op-bar', (e: HTMLElement) => {
+        (e as unknown as { field: MetadataField }).field = makeField(type, ckey);
+      });
+      expect(el.shadowRoot!.querySelector('.op-unsupported')).not.toBeNull();
       expect(el.shadowRoot!.querySelector('.btn-apply')).toBeNull();
     },
   );
