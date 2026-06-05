@@ -2181,6 +2181,8 @@ export class SfxUploader extends LitElement {
   @state() private _similarReviewId: string | null = null;
   /** Pending timers for the simulated search progression (demo only). */
   private _similarSimTimers: number[] = [];
+  /** Counter to vary the mock similar count across ad-hoc single checks. */
+  private _simMockCounter = 0;
   @state() private _previewFileId: string | null = null;
   @state() private _previewDims: string = "—";
   @state() private _fileInfoOpen: boolean = true;
@@ -3674,8 +3676,33 @@ export class SfxUploader extends LitElement {
   ) => {
     const file = e.detail.file;
     if (!file) return;
-    this._runSimilarityCheck([file]);
+    this._checkSimilarSingleFile(file);
   };
+
+  /**
+   * Single (per-tile) check: processes one image independently and
+   * accumulatively — clicking several tiles spins them all, no click cancels
+   * another, and there is no batch progress banner (that's only for the
+   * select-all-and-Check batch).
+   *
+   * TODO(dev): replace the simulated timeout with the real per-image API call
+   * (render w=300 → POST embedding). Multiple of these may run concurrently;
+   * add a sensible concurrency limit if needed.
+   */
+  private _checkSimilarSingleFile(file: UploadFile) {
+    if (this._similarActiveIds.has(file.id)) return; // already in progress
+    this._similarActiveIds = new Set(this._similarActiveIds).add(file.id);
+    const idx = this._simMockCounter++;
+    const t = window.setTimeout(() => {
+      const active = new Set(this._similarActiveIds);
+      active.delete(file.id);
+      this._similarActiveIds = active;
+      const results = new Map(this._similarResults);
+      results.set(file.id, this._mockSimilarAssets(file, idx));
+      this._similarResults = results;
+    }, 1100);
+    this._similarSimTimers.push(t);
+  }
 
   /**
    * Runs the similarity check for the given images and drives the loading UI

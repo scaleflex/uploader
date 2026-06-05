@@ -28,7 +28,14 @@ export class SfxSimilarResults extends LitElement {
     buttonStyles,
     focusStyles,
     css`
-      :host { font-family: var(--sfx-up-font, 'Inter', system-ui, sans-serif); }
+      :host {
+        font-family: var(--sfx-up-font, 'Inter', system-ui, sans-serif);
+        /* Design-system text colors (dark / muted) for the whole modal. */
+        --sfx-up-text: #37414b;
+        --sfx-up-text-muted: #5b6e82;
+        --sfx-up-text-secondary: #5b6e82;
+        color: var(--sfx-up-text);
+      }
       .backdrop {
         position: fixed;
         inset: 0;
@@ -68,7 +75,7 @@ export class SfxSimilarResults extends LitElement {
       .split { display: flex; min-height: 0; flex: 1; }
       .left {
         flex: 0 0 56%; min-width: 0; padding: 16px; overflow-y: auto;
-        border-right: 1px solid var(--sfx-up-border, #e8edf5); background: var(--sfx-up-surface, #f8fafc);
+        border-right: 1px solid var(--sfx-up-border, #e8edf5); background: var(--sfx-up-bg, #fff);
       }
       .left-head { font-size: 12px; color: var(--sfx-up-text-secondary, #475569); margin: 0 4px 12px; }
       .grid {
@@ -85,7 +92,7 @@ export class SfxSimilarResults extends LitElement {
       .tile .preview { position: relative; aspect-ratio: 16/10; overflow: hidden; background: var(--sfx-up-surface, #eef); }
       .tile .preview img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
       .tile .info { padding: 6px 9px; }
-      .tile .name { font-size: 12px; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .tile .name { font-size: 12px; color: var(--sfx-up-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
       .badge {
         position: absolute; top: 7px; left: 7px; z-index: 2;
         display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 8px;
@@ -130,10 +137,10 @@ export class SfxSimilarResults extends LitElement {
       .empty b { color: var(--sfx-up-text-secondary, #475569); font-size: 14px; }
       .empty span { font-size: 12px; }
 
-      .p-foot { padding: 12px 16px; border-top: 1px solid var(--sfx-up-border-light, #f1f5f9); background: var(--sfx-up-surface, #f8fafc); }
+      .p-foot { padding: 12px 16px; border-top: 1px solid var(--sfx-up-border-light, #f1f5f9); background: var(--sfx-up-bg, #fff); }
       .discard {
-        width: 100%; height: 38px; border-radius: 8px; border: 1.5px solid #fecaca; background: #fff;
-        color: var(--sfx-up-error, #dc2626); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+        width: 100%; height: 38px; border-radius: 6px; border: 1.5px solid #fecaca; background: #fff;
+        color: var(--sfx-up-error, #dc2626); font-family: inherit; font-size: 14px; line-height: 24px; font-weight: 500; cursor: pointer;
         display: inline-flex; align-items: center; justify-content: center; gap: 8px;
       }
       .discard:hover { background: #fef2f2; }
@@ -264,7 +271,7 @@ export class SfxSimilarResults extends LitElement {
                     </div>
                     <div class="p-foot">
                       <button class="discard" @click=${() => this._emit('similar-results-discard', { fileId: cur.id })}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
                         ${this.t('discardFromUpload', 'Discard from upload')}
                       </button>
                     </div>
