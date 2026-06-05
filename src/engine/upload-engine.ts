@@ -394,6 +394,12 @@ export class UploadEngine {
     if (file && previewUrl && file.type.startsWith('image/') && !hasLocalBlobPreview) {
       update.previewUrl = previewUrl;
     }
+    // Backfill the authoritative byte count from the server. Search providers
+    // (Unsplash) ship `size: 0` in their list responses, so without this the
+    // success card and final file list render `0 B`.
+    if (response.file?.size != null) {
+      update.size = response.file.size;
+    }
     updateFile(this.store, fileId, update);
 
     this.updateTotalProgress();
