@@ -3316,6 +3316,12 @@ export class SfxUploader extends LitElement {
         const failed = allFiles.filter(
           (f) => f.status === "failed" || f.status === "error",
         );
+        // The `hasCancelled` guard above checks the current store, but the
+        // per-file remove flow deletes cancelled files from it — so removing
+        // the last in-flight file slips past the guard and flips isUploading
+        // here with an empty surviving set. Treat that as a cancel, not a
+        // natural completion: nothing meaningful to announce.
+        if (successful.length === 0 && failed.length === 0) return;
 
         // Persist this batch to sessionStorage so the success-card "Review
         // files" button can later re-load it (e.g. after closing and
@@ -3828,6 +3834,10 @@ export class SfxUploader extends LitElement {
       this._engine?.cancelFile(fileId);
     }
     removeFile(this._store, fileId);
+    // Recompute aggregate totals + completion now that the file set changed.
+    // Without this, totalProgress stays stuck (e.g. at 11%) and isUploading
+    // never flips after the last in-flight file is removed mid-upload.
+    this._engine?.recompute();
     // Clear dimension cache
     this._dimCache.delete(fileId);
     // Clear rejected timer if pending

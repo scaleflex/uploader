@@ -182,6 +182,17 @@ export class UploadEngine {
   }
 
   /**
+   * Recompute aggregate totals and re-check completion. Call after the host
+   * mutates the file set outside the engine (e.g. removing a file mid-upload),
+   * since neither cancel nor a store-level delete on its own triggers a
+   * recalc — leaving totalProgress/isUploading stale against the new set.
+   */
+  recompute(): void {
+    this.updateTotalProgress();
+    this.checkAllComplete();
+  }
+
+  /**
    * Update auth config (e.g. after SASS key renewal).
    */
   updateConfig(patch: Partial<UploadEngineConfig>): void {
