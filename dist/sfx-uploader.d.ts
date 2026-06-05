@@ -89,9 +89,9 @@ export interface UploaderConfig {
      * Host-supplied builder for the "Locate" button URL. Receives the
      * completed file and returns the URL Locate should open. Return
      * `null` / `undefined` to fall back to the `adminUrl`-based default
-     * (see `adminUrl`). When both are absent, Locate just fires the
-     * `sfx-file-locate` event / `onFileLocate` callback and does nothing
-     * else — the host is expected to handle navigation itself.
+     * (see `adminUrl`), which itself defaults to `window.location.origin`
+     * when not set — so in practice Locate will navigate as long as the
+     * uploader is running in a browser and the file has a UUID.
      *
      * To suppress the auto-navigation even when a URL would be resolved
      * (e.g. open it via the host's client-side router instead of a new
@@ -114,18 +114,21 @@ export interface UploaderConfig {
      * same deep-link the admin uses internally to scroll to and select a
      * file in its library tree. Trailing slashes are ignored.
      *
-     * No default — embedding hosts know their own admin deployment URL
-     * (it differs per environment / whitelabel). When omitted and
-     * `getLocateUrl` is also omitted, the Locate button fires its event
-     * and callback but performs no navigation.
+     * Defaults to `window.location.origin`, which is correct when the
+     * uploader is embedded inside the admin itself (the common case).
+     * Set explicitly for cross-origin embeds, custom domains, or
+     * whitelabel deployments where the admin lives on a different host.
      */
     adminUrl?: string;
     /**
-     * Show the "Locate" button on completed file tiles in the review screen.
+     * Show the "Locate" button on completed files. Renders in two places:
+     *   - As a full-width labelled button on the review-screen tile.
+     *   - As a compact icon in the floating-panel per-file row, next to
+     *     the success checkmark.
      * When clicked, fires the `sfx-file-locate` event and the `onFileLocate`
      * callback, then opens the resolved Locate URL (see `getLocateUrl` /
      * `adminUrl`) in a new tab unless the event's default is prevented or
-     * neither config resolves to a URL.
+     * the file has no UUID to deep-link to.
      * Default: false (hidden).
      */
     showLocateButton?: boolean;
@@ -479,6 +482,7 @@ export declare class SfxUploader extends LitElement {
     private _onFilePreview;
     private _onFillMetadata;
     private _onRequireMetadata;
+    private _locateFile;
     private _onFileLocate;
     private _onFileCopyCdn;
     private _onBulkMetadataSaveBatch;

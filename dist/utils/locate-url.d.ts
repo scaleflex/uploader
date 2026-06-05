@@ -11,14 +11,19 @@ export interface LocateUrlConfig {
  * Resolution order:
  *   1. `config.getLocateUrl(file)` — host-supplied builder; wins if it
  *      returns a non-empty string.
- *   2. `${config.adminUrl}/library?lf=<base64(uuid)>` — canonical
- *      Filerobot admin DAM deep-link. The admin reads `?lf=…` on load
- *      and scrolls to / selects the asset.
+ *   2. `${config.adminUrl ?? window.location.origin}/library?lf=<base64(uuid)>`
+ *      — canonical Filerobot admin DAM deep-link. The admin reads
+ *      `?lf=…` on load and scrolls to / selects the asset. When the
+ *      uploader is embedded inside the admin itself (the common case),
+ *      `window.location.origin` already points at the right deployment,
+ *      so explicit `adminUrl` is only needed for cross-origin embeds or
+ *      custom domains.
  *
- * Returns `null` when neither path can produce a URL — i.e. no custom
- * builder, no `adminUrl` configured, or the file has no UUID (e.g. an
- * already-existed response that didn't include `existing_file_uuid`).
- * Callers should treat `null` as "do nothing".
+ * Returns `null` when no URL can be produced — i.e. the file has no
+ * UUID (e.g. an already-existed response that didn't include
+ * `existing_file_uuid`), or we're running outside a browser (SSR) with
+ * no explicit `adminUrl` / `getLocateUrl`. Callers should treat `null`
+ * as "do nothing".
  *
  * The base64 is URL-encoded since standard `btoa` output can contain
  * `+`, `/`, `=` which are reserved in query strings (`+` decodes to

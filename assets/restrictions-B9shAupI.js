@@ -1,4 +1,4 @@
-import{b as c}from"./index-BaQdlWDE.js";import{r as d}from"./code-block-Bk3NnwHF.js";import{i as r}from"./custom-select-CZ_fVHDR.js";let l=5,i=5*1024*1024,e=["image/*"];function s(){const a=document.getElementById("code-container");if(!a)return;a.innerHTML="";const n=[];l!=null&&n.push(`    maxNumberOfFiles: ${l},`),i!=null&&n.push(`    maxFileSize: ${i}, // ${i/1024/1024} MB`),e!=null&&e.length&&n.push(`    allowedFileTypes: [${e.map(t=>`'${t}'`).join(", ")}],`),d("#code-container",[{label:"JavaScript",lang:"javascript",code:`
+import{b as c}from"./index-rEuopbMG.js";import{r as d}from"./code-block-Bk3NnwHF.js";import{i as r}from"./custom-select-CZ_fVHDR.js";let l=5,i=5*1024*1024,e=["image/*"];function s(){const a=document.getElementById("code-container");if(!a)return;a.innerHTML="";const n=[];l!=null&&n.push(`    maxNumberOfFiles: ${l},`),i!=null&&n.push(`    maxFileSize: ${i}, // ${i/1024/1024} MB`),e!=null&&e.length&&n.push(`    allowedFileTypes: [${e.map(t=>`'${t}'`).join(", ")}],`),d("#code-container",[{label:"JavaScript",lang:"javascript",code:`
 uploader.config = {
   auth: { /* ... */ },
   restrictions: {

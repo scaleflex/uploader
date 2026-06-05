@@ -44,19 +44,19 @@ export interface MetadataField {
     icon?: string;
     hide?: boolean;
 }
-export type MetadataFieldType = 'text' | 'textarea' | 'select-one' | 'multi-select' | 'boolean' | 'date' | 'numeric' | 'decimal2' | 'geopoint' | 'integer-list' | 'tags' | 'attachment-uri' | 'asset-attachments' | 'ultratags' | 'taxonomy-node';
+export type MetadataFieldType = 'text' | 'textarea' | 'select-one' | 'multi-select' | 'boolean' | 'date' | 'numeric' | 'decimal2' | 'geopoint' | 'integer-list' | 'tags' | 'attachment-uri' | 'asset-attachments' | 'attachments-assets' | 'ultratags' | 'taxonomy-node';
 /**
  * Field types whose editor cannot run inside the uploader (they depend on
  * the asset already existing on the backend — file attachments need an asset
- * id, ultratags / taxonomy nodes need server-driven autocomplete trees).
+ * id, sibling-asset references need the new asset to exist first, ultratags /
+ * taxonomy nodes need server-driven autocomplete trees).
  * Rendered read-only with a tooltip; excluded from bulk operations.
  */
 export declare const UNSUPPORTED_FIELD_TYPES: ReadonlySet<MetadataFieldType>;
 /**
  * Specific field ckeys (slugs) that depend on backend processing of the
  * uploaded asset (e.g. `face_matcher` is populated by a face-recognition
- * pipeline after ingest; `attachments-assets` references sibling assets that
- * don't exist yet). Disabled in the same way as unsupported types.
+ * pipeline after ingest). Disabled in the same way as unsupported types.
  */
 export declare const UNSUPPORTED_FIELD_CKEYS: ReadonlySet<string>;
 export declare function isUnsupportedFieldType(type: MetadataFieldType): boolean;

@@ -63,7 +63,7 @@ uploader.addEventListener('sfx-all-complete', (e) => {
             <tr><td><code>sfx-file-preview</code></td><td><code>{ file: UploadFile }</code></td><td>User opened a file preview</td></tr>
             <tr><td><code>sfx-fill-metadata</code></td><td><code>{ files: UploadFile[] }</code></td><td>User clicked "Fill Metadata"</td></tr>
             <tr><td><code>sfx-complete-action</code></td><td><code>{}</code></td><td>User clicked the primary action on the completion screen (e.g. "Done")</td></tr>
-            <tr><td><code>sfx-file-locate</code></td><td><code>{ file: UploadFile }</code></td><td>User clicked "Locate" on a completed file tile (requires <code>showLocateButton: true</code>). Cancelable — call <code>event.preventDefault()</code> to suppress the default open of <code>\${adminUrl}/library?lf=…</code>.</td></tr>
+            <tr><td><code>sfx-file-locate</code></td><td><code>{ file: UploadFile }</code></td><td>User clicked "Locate" on a completed file — either on the review-screen tile or the floating-panel icon (requires <code>showLocateButton: true</code>). Cancelable — call <code>event.preventDefault()</code> to suppress the default open of <code>\${adminUrl}/library?lf=…</code>.</td></tr>
             <tr><td><code>sfx-file-copy-cdn</code></td><td><code>{ file, cdnUrl }</code></td><td>User clicked "Copy CDN" and the URL was copied to clipboard (requires <code>showCopyCdnButton: true</code>)</td></tr>
           </tbody>
         </table>

@@ -375,13 +375,13 @@ class kt extends Ut {
         usedNS: d,
         usedParams: this.getUsedParamsDetails(o)
       } : a;
-    const y = this.resolve(e, o);
-    let v = y == null ? void 0 : y.res;
-    const _ = (y == null ? void 0 : y.usedKey) || a, P = (y == null ? void 0 : y.exactUsedKey) || a, F = ["[object Number]", "[object Function]", "[object RegExp]"], w = o.joinArrays !== void 0 ? o.joinArrays : this.options.joinArrays, k = !this.i18nFormat || this.i18nFormat.handleAsObject, x = o.count !== void 0 && !D(o.count), b = kt.hasDefaultValue(o), R = x ? this.pluralResolver.getSuffix(p, o.count, o) : "", O = o.ordinal && x ? this.pluralResolver.getSuffix(p, o.count, {
+    const v = this.resolve(e, o);
+    let b = v == null ? void 0 : v.res;
+    const _ = (v == null ? void 0 : v.usedKey) || a, P = (v == null ? void 0 : v.exactUsedKey) || a, F = ["[object Number]", "[object Function]", "[object RegExp]"], w = o.joinArrays !== void 0 ? o.joinArrays : this.options.joinArrays, k = !this.i18nFormat || this.i18nFormat.handleAsObject, x = o.count !== void 0 && !D(o.count), y = kt.hasDefaultValue(o), R = x ? this.pluralResolver.getSuffix(p, o.count, o) : "", O = o.ordinal && x ? this.pluralResolver.getSuffix(p, o.count, {
       ordinal: !1
     }) : "", j = x && !o.ordinal && o.count === 0, L = j && o[`defaultValue${this.options.pluralSeparator}zero`] || o[`defaultValue${R}`] || o[`defaultValue${O}`] || o.defaultValue;
-    let N = v;
-    k && !v && b && (N = L);
+    let N = b;
+    k && !b && y && (N = L);
     const ne = Ft(N), ge = Object.prototype.toString.apply(N);
     if (k && N && ne && !F.includes(ge) && !(D(w) && Array.isArray(N))) {
       if (!o.returnObjects && !this.options.returnObjects) {
@@ -390,14 +390,14 @@ class kt extends Ut {
           ...o,
           ns: l
         }) : `key '${a} (${this.language})' returned an object instead of string.`;
-        return n ? (y.res = U, y.usedParams = this.getUsedParamsDetails(o), y) : U;
+        return n ? (v.res = U, v.usedParams = this.getUsedParamsDetails(o), v) : U;
       }
       if (s) {
         const U = Array.isArray(N), H = U ? [] : {}, de = U ? P : _;
         for (const m in N)
           if (Object.prototype.hasOwnProperty.call(N, m)) {
             const u = `${de}${s}${m}`;
-            b && !v ? H[m] = this.translate(u, {
+            y && !b ? H[m] = this.translate(u, {
               ...o,
               defaultValue: Ft(L) ? L[m] : void 0,
               joinArrays: !1,
@@ -408,16 +408,16 @@ class kt extends Ut {
               ns: l
             }), H[m] === u && (H[m] = N[m]);
           }
-        v = H;
+        b = H;
       }
-    } else if (k && D(w) && Array.isArray(v))
-      v = v.join(w), v && (v = this.extendTranslation(v, e, o, i));
+    } else if (k && D(w) && Array.isArray(b))
+      b = b.join(w), b && (b = this.extendTranslation(b, e, o, i));
     else {
       let U = !1, H = !1;
-      !this.isValidLookup(v) && b && (U = !0, v = L), this.isValidLookup(v) || (H = !0, v = a);
-      const m = (o.missingKeyNoValueFallbackToKey || this.options.missingKeyNoValueFallbackToKey) && H ? void 0 : v, u = b && L !== v && this.options.updateMissing;
+      !this.isValidLookup(b) && y && (U = !0, b = L), this.isValidLookup(b) || (H = !0, b = a);
+      const m = (o.missingKeyNoValueFallbackToKey || this.options.missingKeyNoValueFallbackToKey) && H ? void 0 : b, u = y && L !== b && this.options.updateMissing;
       if (H || U || u) {
-        if (this.logger.log(u ? "updateKey" : "missingKey", p, d, x && !u ? `${a}${this.pluralResolver.getSuffix(p, o.count, o)}` : a, u ? L : v), s) {
+        if (this.logger.log(u ? "updateKey" : "missingKey", p, d, x && !u ? `${a}${this.pluralResolver.getSuffix(p, o.count, o)}` : a, u ? L : b), s) {
           const S = this.resolve(a, {
             ...o,
             keySeparator: !1
@@ -432,8 +432,8 @@ class kt extends Ut {
         else this.options.saveMissingTo === "all" ? h = this.languageUtils.toResolveHierarchy(o.lng || this.language) : h.push(o.lng || this.language);
         const $ = (S, z, M) => {
           var W;
-          const B = b && M !== v ? M : m;
-          this.options.missingKeyHandler ? this.options.missingKeyHandler(S, d, z, B, u, o) : (W = this.backendConnector) != null && W.saveMissing && this.backendConnector.saveMissing(S, d, z, B, u, o), this.emit("missingKey", S, d, z, v);
+          const B = y && M !== b ? M : m;
+          this.options.missingKeyHandler ? this.options.missingKeyHandler(S, d, z, B, u, o) : (W = this.backendConnector) != null && W.saveMissing && this.backendConnector.saveMissing(S, d, z, B, u, o), this.emit("missingKey", S, d, z, b);
         };
         this.options.saveMissing && (this.options.saveMissingPlurals && x ? h.forEach((S) => {
           const z = this.pluralResolver.getSuffixes(S, o);
@@ -442,9 +442,9 @@ class kt extends Ut {
           });
         }) : $(h, a, L));
       }
-      v = this.extendTranslation(v, e, o, y, i), H && v === a && this.options.appendNamespaceToMissingKey && (v = `${d}${c}${a}`), (H || U) && this.options.parseMissingKeyHandler && (v = this.options.parseMissingKeyHandler(this.options.appendNamespaceToMissingKey ? `${d}${c}${a}` : a, U ? v : void 0, o));
+      b = this.extendTranslation(b, e, o, v, i), H && b === a && this.options.appendNamespaceToMissingKey && (b = `${d}${c}${a}`), (H || U) && this.options.parseMissingKeyHandler && (b = this.options.parseMissingKeyHandler(this.options.appendNamespaceToMissingKey ? `${d}${c}${a}` : a, U ? b : void 0, o));
     }
-    return n ? (y.res = v, y.usedParams = this.getUsedParamsDetails(o), y) : v;
+    return n ? (v.res = b, v.usedParams = this.getUsedParamsDetails(o), v) : b;
   }
   extendTranslation(e, t, i, o, n) {
     var l, d;
@@ -466,18 +466,18 @@ class kt extends Ut {
       const c = D(e) && (((d = i == null ? void 0 : i.interpolation) == null ? void 0 : d.skipOnVariables) !== void 0 ? i.interpolation.skipOnVariables : this.options.interpolation.skipOnVariables);
       let p;
       if (c) {
-        const y = e.match(this.interpolator.nestingRegexp);
-        p = y && y.length;
+        const v = e.match(this.interpolator.nestingRegexp);
+        p = v && v.length;
       }
       let f = i.replace && !D(i.replace) ? i.replace : i;
       if (this.options.interpolation.defaultVariables && (f = {
         ...this.options.interpolation.defaultVariables,
         ...f
       }), e = this.interpolator.interpolate(e, f, i.lng || this.language || o.usedLng, i), c) {
-        const y = e.match(this.interpolator.nestingRegexp), v = y && y.length;
-        p < v && (i.nest = !1);
+        const v = e.match(this.interpolator.nestingRegexp), b = v && v.length;
+        p < b && (i.nest = !1);
       }
-      !i.lng && o && o.res && (i.lng = this.language || o.usedLng), i.nest !== !1 && (e = this.interpolator.nest(e, (...y) => (n == null ? void 0 : n[0]) === y[0] && !i.context ? (this.logger.warn(`It seems you are nesting recursively key: ${y[0]} in key: ${t[0]}`), null) : this.translate(...y, t), i)), i.interpolation && this.interpolator.reset();
+      !i.lng && o && o.res && (i.lng = this.language || o.usedLng), i.nest !== !1 && (e = this.interpolator.nest(e, (...v) => (n == null ? void 0 : n[0]) === v[0] && !i.context ? (this.logger.warn(`It seems you are nesting recursively key: ${v[0]} in key: ${t[0]}`), null) : this.translate(...v, t), i)), i.interpolation && this.interpolator.reset();
     }
     const s = i.postProcess || this.options.postProcess, a = D(s) ? [s] : s;
     return e != null && (a != null && a.length) && i.applyPostProcessor !== !1 && (e = Er.handle(a, e, t, this.options && this.options.postProcessPassResolved ? {
@@ -499,7 +499,7 @@ class kt extends Ut {
       o = c;
       let p = d.namespaces;
       this.options.fallbackNS && (p = p.concat(this.options.fallbackNS));
-      const f = t.count !== void 0 && !D(t.count), y = f && !t.ordinal && t.count === 0, v = t.context !== void 0 && (D(t.context) || typeof t.context == "number") && t.context !== "", _ = t.lngs ? t.lngs : this.languageUtils.toResolveHierarchy(t.lng || this.language, t.fallbackLng);
+      const f = t.count !== void 0 && !D(t.count), v = f && !t.ordinal && t.count === 0, b = t.context !== void 0 && (D(t.context) || typeof t.context == "number") && t.context !== "", _ = t.lngs ? t.lngs : this.languageUtils.toResolveHierarchy(t.lng || this.language, t.fallbackLng);
       p.forEach((P) => {
         var F, w;
         this.isValidLookup(i) || (a = P, !this.checkedLoadedFor[`${_[0]}-${P}`] && ((F = this.utils) != null && F.hasLoadedNamespace) && !((w = this.utils) != null && w.hasLoadedNamespace(a)) && (this.checkedLoadedFor[`${_[0]}-${P}`] = !0, this.logger.warn(`key "${o}" for languages "${_.join(", ")}" won't get resolved as namespace "${a}" was not yet loaded`, "This means something IS WRONG in your setup. You access the t function before i18next.init / i18next.loadNamespace / i18next.changeLanguage was done. Wait for the callback or Promise to resolve before accessing it!!!")), _.forEach((k) => {
@@ -513,14 +513,14 @@ class kt extends Ut {
             let O;
             f && (O = this.pluralResolver.getSuffix(k, t.count, t));
             const j = `${this.options.pluralSeparator}zero`, L = `${this.options.pluralSeparator}ordinal${this.options.pluralSeparator}`;
-            if (f && (t.ordinal && O.startsWith(L) && x.push(c + O.replace(L, this.options.pluralSeparator)), x.push(c + O), y && x.push(c + j)), v) {
+            if (f && (t.ordinal && O.startsWith(L) && x.push(c + O.replace(L, this.options.pluralSeparator)), x.push(c + O), v && x.push(c + j)), b) {
               const N = `${c}${this.options.contextSeparator || "_"}${t.context}`;
-              x.push(N), f && (t.ordinal && O.startsWith(L) && x.push(N + O.replace(L, this.options.pluralSeparator)), x.push(N + O), y && x.push(N + j));
+              x.push(N), f && (t.ordinal && O.startsWith(L) && x.push(N + O.replace(L, this.options.pluralSeparator)), x.push(N + O), v && x.push(N + j));
             }
           }
-          let b;
-          for (; b = x.pop(); )
-            this.isValidLookup(i) || (n = b, i = this.getResource(k, P, b, t));
+          let y;
+          for (; y = x.pop(); )
+            this.isValidLookup(i) || (n = y, i = this.getResource(k, P, y, t));
         }));
       });
     }), {
@@ -703,14 +703,14 @@ class Mi {
       unescapeSuffix: c,
       unescapePrefix: p,
       nestingPrefix: f,
-      nestingPrefixEscaped: y,
-      nestingSuffix: v,
+      nestingPrefixEscaped: v,
+      nestingSuffix: b,
       nestingSuffixEscaped: _,
       nestingOptionsSeparator: P,
       maxReplaces: F,
       alwaysFormat: w
     } = e.interpolation;
-    this.escape = t !== void 0 ? t : Uo, this.escapeValue = i !== void 0 ? i : !0, this.useRawValueToEscape = o !== void 0 ? o : !1, this.prefix = n ? pe(n) : s || "{{", this.suffix = a ? pe(a) : l || "}}", this.formatSeparator = d || ",", this.unescapePrefix = c ? "" : p ? pe(p) : "-", this.unescapeSuffix = this.unescapePrefix ? "" : c ? pe(c) : "", this.nestingPrefix = f ? pe(f) : y || pe("$t("), this.nestingSuffix = v ? pe(v) : _ || pe(")"), this.nestingOptionsSeparator = P || ",", this.maxReplaces = F || 1e3, this.alwaysFormat = w !== void 0 ? w : !1, this.resetRegExp();
+    this.escape = t !== void 0 ? t : Uo, this.escapeValue = i !== void 0 ? i : !0, this.useRawValueToEscape = o !== void 0 ? o : !1, this.prefix = n ? pe(n) : s || "{{", this.suffix = a ? pe(a) : l || "}}", this.formatSeparator = d || ",", this.unescapePrefix = c ? "" : p ? pe(p) : "-", this.unescapeSuffix = this.unescapePrefix ? "" : c ? pe(c) : "", this.nestingPrefix = f ? pe(f) : v || pe("$t("), this.nestingSuffix = b ? pe(b) : _ || pe(")"), this.nestingOptionsSeparator = P || ",", this.maxReplaces = F || 1e3, this.alwaysFormat = w !== void 0 ? w : !1, this.resetRegExp();
   }
   reset() {
     this.options && this.init(this.options);
@@ -720,18 +720,18 @@ class Mi {
     this.regexp = e(this.regexp, `${this.prefix}(.+?)${this.suffix}`), this.regexpUnescape = e(this.regexpUnescape, `${this.prefix}${this.unescapePrefix}(.+?)${this.unescapeSuffix}${this.suffix}`), this.nestingRegexp = e(this.nestingRegexp, `${this.nestingPrefix}((?:[^()"']+|"[^"]*"|'[^']*'|\\((?:[^()]|"[^"]*"|'[^']*')*\\))*?)${this.nestingSuffix}`);
   }
   interpolate(e, t, i, o) {
-    var y;
+    var v;
     let n, s, a;
-    const l = this.options && this.options.interpolation && this.options.interpolation.defaultVariables || {}, d = (v) => {
-      if (!v.includes(this.formatSeparator)) {
-        const w = Ii(t, l, v, this.options.keySeparator, this.options.ignoreJSONStructure);
+    const l = this.options && this.options.interpolation && this.options.interpolation.defaultVariables || {}, d = (b) => {
+      if (!b.includes(this.formatSeparator)) {
+        const w = Ii(t, l, b, this.options.keySeparator, this.options.ignoreJSONStructure);
         return this.alwaysFormat ? this.format(w, void 0, i, {
           ...o,
           ...t,
-          interpolationkey: v
+          interpolationkey: b
         }) : w;
       }
-      const _ = v.split(this.formatSeparator), P = _.shift().trim(), F = _.join(this.formatSeparator).trim();
+      const _ = b.split(this.formatSeparator), P = _.shift().trim(), F = _.join(this.formatSeparator).trim();
       return this.format(Ii(t, l, P, this.options.keySeparator, this.options.ignoreJSONStructure), F, i, {
         ...o,
         ...t,
@@ -739,15 +739,15 @@ class Mi {
       });
     };
     this.resetRegExp(), !this.escapeValue && typeof e == "string" && /\$t\([^)]*\{[^}]*\{\{/.test(e) && this.logger.warn("nesting options string contains interpolated variables with escapeValue: false — if any of those values are attacker-controlled they can inject additional nesting options (e.g. redirect lng/ns). Sanitise untrusted input before passing it to t(), or keep escapeValue: true.");
-    const c = (o == null ? void 0 : o.missingInterpolationHandler) || this.options.missingInterpolationHandler, p = ((y = o == null ? void 0 : o.interpolation) == null ? void 0 : y.skipOnVariables) !== void 0 ? o.interpolation.skipOnVariables : this.options.interpolation.skipOnVariables;
+    const c = (o == null ? void 0 : o.missingInterpolationHandler) || this.options.missingInterpolationHandler, p = ((v = o == null ? void 0 : o.interpolation) == null ? void 0 : v.skipOnVariables) !== void 0 ? o.interpolation.skipOnVariables : this.options.interpolation.skipOnVariables;
     return [{
       regex: this.regexpUnescape,
-      safeValue: (v) => zt(v)
+      safeValue: (b) => zt(b)
     }, {
       regex: this.regexp,
-      safeValue: (v) => this.escapeValue ? zt(this.escape(v)) : zt(v)
-    }].forEach((v) => {
-      for (a = 0; n = v.regex.exec(e); ) {
+      safeValue: (b) => this.escapeValue ? zt(this.escape(b)) : zt(b)
+    }].forEach((b) => {
+      for (a = 0; n = b.regex.exec(e); ) {
         const _ = n[1].trim();
         if (s = d(_), s === void 0)
           if (typeof c == "function") {
@@ -761,8 +761,8 @@ class Mi {
           } else
             this.logger.warn(`missed to pass in variable ${_} for interpolating ${e}`), s = "";
         else !D(s) && !this.useRawValueToEscape && (s = Ri(s));
-        const P = v.safeValue(s);
-        if (e = e.replace(n[0], P), p ? (v.regex.lastIndex += s.length, v.regex.lastIndex -= n[0].length) : v.regex.lastIndex = 0, a++, a >= this.maxReplaces)
+        const P = b.safeValue(s);
+        if (e = e.replace(n[0], P), p ? (b.regex.lastIndex += s.length, b.regex.lastIndex -= n[0].length) : b.regex.lastIndex = 0, a++, a >= this.maxReplaces)
           break;
       }
     }), e;
@@ -775,8 +775,8 @@ class Mi {
       const p = l.split(new RegExp(`${pe(c)}[ ]*{`));
       let f = `{${p[1]}`;
       l = p[0], f = this.interpolate(f, s);
-      const y = f.match(/'/g), v = f.match(/"/g);
-      (((y == null ? void 0 : y.length) ?? 0) % 2 === 0 && !v || ((v == null ? void 0 : v.length) ?? 0) % 2 !== 0) && (f = f.replace(/'/g, '"'));
+      const v = f.match(/'/g), b = f.match(/"/g);
+      (((v == null ? void 0 : v.length) ?? 0) % 2 === 0 && !b || ((b == null ? void 0 : b.length) ?? 0) % 2 !== 0) && (f = f.replace(/'/g, '"'));
       try {
         s = JSON.parse(f), d && (s = {
           ...d,
@@ -898,14 +898,14 @@ class Io {
       if (this.formats[d]) {
         let f = a;
         try {
-          const y = ((p = o == null ? void 0 : o.formatParams) == null ? void 0 : p[o.interpolationkey]) || {}, v = y.locale || y.lng || o.locale || o.lng || i;
-          f = this.formats[d](a, v, {
+          const v = ((p = o == null ? void 0 : o.formatParams) == null ? void 0 : p[o.interpolationkey]) || {}, b = v.locale || v.lng || o.locale || o.lng || i;
+          f = this.formats[d](a, b, {
             ...c,
             ...o,
-            ...y
+            ...v
           });
-        } catch (y) {
-          this.logger.warn(y);
+        } catch (v) {
+          this.logger.warn(v);
         }
         return f;
       } else
@@ -1031,19 +1031,19 @@ class Bo extends Ut {
     }
     if (!(i == null || i === "")) {
       if ((f = this.backend) != null && f.create) {
-        const y = {
+        const v = {
           ...s,
           isUpdate: n
-        }, v = this.backend.create.bind(this.backend);
-        if (v.length < 6)
+        }, b = this.backend.create.bind(this.backend);
+        if (b.length < 6)
           try {
             let _;
-            v.length === 5 ? _ = v(e, t, i, o, y) : _ = v(e, t, i, o), _ && typeof _.then == "function" ? _.then((P) => a(null, P)).catch(a) : a(null, _);
+            b.length === 5 ? _ = b(e, t, i, o, v) : _ = b(e, t, i, o), _ && typeof _.then == "function" ? _.then((P) => a(null, P)).catch(a) : a(null, _);
           } catch (_) {
             a(_);
           }
         else
-          v(e, t, i, o, a, y);
+          b(e, t, i, o, a, v);
       }
       !e || !e[0] || this.store.addResource(e[0], t, i, o);
     }
@@ -1146,10 +1146,10 @@ class Qe extends Ut {
         prepend: this.options.pluralSeparator
       }), d && (p.formatter = o(d), p.formatter.init && p.formatter.init(p, this.options), this.options.interpolation.format = p.formatter.format.bind(p.formatter)), p.interpolator = new Mi(this.options), p.utils = {
         hasLoadedNamespace: this.hasLoadedNamespace.bind(this)
-      }, p.backendConnector = new Bo(o(this.modules.backend), p.resourceStore, p, this.options), p.backendConnector.on("*", (f, ...y) => {
-        this.emit(f, ...y);
-      }), this.modules.languageDetector && (p.languageDetector = o(this.modules.languageDetector), p.languageDetector.init && p.languageDetector.init(p, this.options.detection, this.options)), this.modules.i18nFormat && (p.i18nFormat = o(this.modules.i18nFormat), p.i18nFormat.init && p.i18nFormat.init(this)), this.translator = new kt(this.services, this.options), this.translator.on("*", (f, ...y) => {
-        this.emit(f, ...y);
+      }, p.backendConnector = new Bo(o(this.modules.backend), p.resourceStore, p, this.options), p.backendConnector.on("*", (f, ...v) => {
+        this.emit(f, ...v);
+      }), this.modules.languageDetector && (p.languageDetector = o(this.modules.languageDetector), p.languageDetector.init && p.languageDetector.init(p, this.options.detection, this.options)), this.modules.i18nFormat && (p.i18nFormat = o(this.modules.i18nFormat), p.i18nFormat.init && p.i18nFormat.init(this)), this.translator = new kt(this.services, this.options), this.translator.on("*", (f, ...v) => {
+        this.emit(f, ...v);
       }), this.modules.external.forEach((f) => {
         f.init && f.init(this);
       });
@@ -1244,9 +1244,9 @@ class Qe extends Ut {
         ...c
       };
       Array.isArray(n) && !p && (f.ns = n), typeof c.keyPrefix == "function" && (c.keyPrefix = De(c.keyPrefix, f));
-      const y = this.options.keySeparator || ".";
-      let v;
-      return c.keyPrefix && Array.isArray(a) ? v = a.map((_) => (typeof _ == "function" && (_ = De(_, f)), `${c.keyPrefix}${y}${_}`)) : (typeof a == "function" && (a = De(a, f)), v = c.keyPrefix ? `${c.keyPrefix}${y}${a}` : a), this.t(v, c);
+      const v = this.options.keySeparator || ".";
+      let b;
+      return c.keyPrefix && Array.isArray(a) ? b = a.map((_) => (typeof _ == "function" && (_ = De(_, f)), `${c.keyPrefix}${v}${_}`)) : (typeof a == "function" && (a = De(a, f)), b = c.keyPrefix ? `${c.keyPrefix}${v}${a}` : a), this.t(b, c);
     };
     return D(e) ? s.lng = e : s.lngs = e, s.ns = t, s.keyPrefix = i, s;
   }
@@ -1576,7 +1576,7 @@ var Tr = class {
           "fetch",
           "network",
           "load"
-        ].find((y) => f.indexOf(y) > -1)) return e("failed loading " + a + ": " + gt(l.message), !0);
+        ].find((v) => f.indexOf(v) > -1)) return e("failed loading " + a + ": " + gt(l.message), !0);
       }
       if (l) return e(l, !1);
       let c, p;
@@ -1606,8 +1606,8 @@ var Tr = class {
         s += 1, o && s === r.length && o(a, l);
         return;
       }
-      this.options.request(this.options, p, n, (f, y) => {
-        s += 1, a.push(f), l.push(y), s === r.length && typeof o == "function" && o(a, l);
+      this.options.request(this.options, p, n, (f, v) => {
+        s += 1, a.push(f), l.push(v), s === r.length && typeof o == "function" && o(a, l);
       });
     });
   }
@@ -1706,7 +1706,7 @@ function ln(r, e) {
   var s, a, l;
   const t = (s = e == null ? void 0 : e.getLocateUrl) == null ? void 0 : s.call(e, r);
   if (t) return t;
-  const i = e == null ? void 0 : e.adminUrl;
+  const i = (e == null ? void 0 : e.adminUrl) ?? (typeof window < "u" ? window.location.origin : void 0);
   if (!i) return null;
   const o = (l = (a = r.response) == null ? void 0 : a.file) == null ? void 0 : l.uuid;
   return o ? `${i.replace(/\/+$/, "")}/library?lf=${encodeURIComponent(btoa(o))}` : null;
@@ -2094,8 +2094,8 @@ function Nr(r) {
         const c = JSON.parse(s.data);
         switch (c.action) {
           case "progress": {
-            const p = c.payload, f = p.bytesUploaded ?? 0, y = p.bytesTotal ?? (r.expectedSize || 1);
-            r.onProgress(f, y);
+            const p = c.payload, f = p.bytesUploaded ?? 0, v = p.bytesTotal ?? (r.expectedSize || 1);
+            r.onProgress(f, v);
             break;
           }
           case "success": {
@@ -2124,8 +2124,8 @@ function Nr(r) {
             let f = ((l = p.error) == null ? void 0 : l.message) || "Upload failed";
             if ((d = p.response) != null && d.responseText)
               try {
-                const y = JSON.parse(p.response.responseText);
-                f = y.hint || y.msg || y.message || f;
+                const v = JSON.parse(p.response.responseText);
+                f = v.hint || v.msg || v.message || f;
               } catch {
               }
             r.onError(new Error(f));
@@ -2584,99 +2584,99 @@ function Xn() {
     typeof window < "u" ? k = window : typeof Qi < "u" ? k = Qi : typeof self < "u" ? k = self : k = {};
     var x = k.location || {};
     w = w || x;
-    var b = {}, R = typeof w, O;
+    var y = {}, R = typeof w, O;
     if (w.protocol === "blob:")
-      b = new _(unescape(w.pathname), {});
+      y = new _(unescape(w.pathname), {});
     else if (R === "string") {
-      b = new _(w, {});
-      for (O in c) delete b[O];
+      y = new _(w, {});
+      for (O in c) delete y[O];
     } else if (R === "object") {
       for (O in w)
-        O in c || (b[O] = w[O]);
-      b.slashes === void 0 && (b.slashes = o.test(w.href));
+        O in c || (y[O] = w[O]);
+      y.slashes === void 0 && (y.slashes = o.test(w.href));
     }
-    return b;
+    return y;
   }
   function f(w) {
     return w === "file:" || w === "ftp:" || w === "http:" || w === "https:" || w === "ws:" || w === "wss:";
   }
-  function y(w, k) {
+  function v(w, k) {
     w = l(w), w = w.replace(i, ""), k = k || {};
-    var x = s.exec(w), b = x[1] ? x[1].toLowerCase() : "", R = !!x[2], O = !!x[3], j = 0, L;
-    return R ? O ? (L = x[2] + x[3] + x[4], j = x[2].length + x[3].length) : (L = x[2] + x[4], j = x[2].length) : O ? (L = x[3] + x[4], j = x[3].length) : L = x[4], b === "file:" ? j >= 2 && (L = L.slice(2)) : f(b) ? L = x[4] : b ? R && (L = L.slice(2)) : j >= 2 && f(k.protocol) && (L = x[4]), {
-      protocol: b,
-      slashes: R || f(b),
+    var x = s.exec(w), y = x[1] ? x[1].toLowerCase() : "", R = !!x[2], O = !!x[3], j = 0, L;
+    return R ? O ? (L = x[2] + x[3] + x[4], j = x[2].length + x[3].length) : (L = x[2] + x[4], j = x[2].length) : O ? (L = x[3] + x[4], j = x[3].length) : L = x[4], y === "file:" ? j >= 2 && (L = L.slice(2)) : f(y) ? L = x[4] : y ? R && (L = L.slice(2)) : j >= 2 && f(k.protocol) && (L = x[4]), {
+      protocol: y,
+      slashes: R || f(y),
       slashesCount: j,
       rest: L
     };
   }
-  function v(w, k) {
+  function b(w, k) {
     if (w === "") return k;
-    for (var x = (k || "/").split("/").slice(0, -1).concat(w.split("/")), b = x.length, R = x[b - 1], O = !1, j = 0; b--; )
-      x[b] === "." ? x.splice(b, 1) : x[b] === ".." ? (x.splice(b, 1), j++) : j && (b === 0 && (O = !0), x.splice(b, 1), j--);
+    for (var x = (k || "/").split("/").slice(0, -1).concat(w.split("/")), y = x.length, R = x[y - 1], O = !1, j = 0; y--; )
+      x[y] === "." ? x.splice(y, 1) : x[y] === ".." ? (x.splice(y, 1), j++) : j && (y === 0 && (O = !0), x.splice(y, 1), j--);
     return O && x.unshift(""), (R === "." || R === "..") && x.push(""), x.join("/");
   }
   function _(w, k, x) {
     if (w = l(w), w = w.replace(i, ""), !(this instanceof _))
       return new _(w, k, x);
-    var b, R, O, j, L, N, ne = d.slice(), ge = typeof k, U = this, H = 0;
-    for (ge !== "object" && ge !== "string" && (x = k, k = null), x && typeof x != "function" && (x = e.parse), k = p(k), R = y(w || "", k), b = !R.protocol && !R.slashes, U.slashes = R.slashes || b && k.slashes, U.protocol = R.protocol || k.protocol || "", w = R.rest, (R.protocol === "file:" && (R.slashesCount !== 2 || a.test(w)) || !R.slashes && (R.protocol || R.slashesCount < 2 || !f(U.protocol))) && (ne[3] = [/(.*)/, "pathname"]); H < ne.length; H++) {
+    var y, R, O, j, L, N, ne = d.slice(), ge = typeof k, U = this, H = 0;
+    for (ge !== "object" && ge !== "string" && (x = k, k = null), x && typeof x != "function" && (x = e.parse), k = p(k), R = v(w || "", k), y = !R.protocol && !R.slashes, U.slashes = R.slashes || y && k.slashes, U.protocol = R.protocol || k.protocol || "", w = R.rest, (R.protocol === "file:" && (R.slashesCount !== 2 || a.test(w)) || !R.slashes && (R.protocol || R.slashesCount < 2 || !f(U.protocol))) && (ne[3] = [/(.*)/, "pathname"]); H < ne.length; H++) {
       if (j = ne[H], typeof j == "function") {
         w = j(w, U);
         continue;
       }
-      O = j[0], N = j[1], O !== O ? U[N] = w : typeof O == "string" ? (L = O === "@" ? w.lastIndexOf(O) : w.indexOf(O), ~L && (typeof j[2] == "number" ? (U[N] = w.slice(0, L), w = w.slice(L + j[2])) : (U[N] = w.slice(L), w = w.slice(0, L)))) : (L = O.exec(w)) && (U[N] = L[1], w = w.slice(0, L.index)), U[N] = U[N] || b && j[3] && k[N] || "", j[4] && (U[N] = U[N].toLowerCase());
+      O = j[0], N = j[1], O !== O ? U[N] = w : typeof O == "string" ? (L = O === "@" ? w.lastIndexOf(O) : w.indexOf(O), ~L && (typeof j[2] == "number" ? (U[N] = w.slice(0, L), w = w.slice(L + j[2])) : (U[N] = w.slice(L), w = w.slice(0, L)))) : (L = O.exec(w)) && (U[N] = L[1], w = w.slice(0, L.index)), U[N] = U[N] || y && j[3] && k[N] || "", j[4] && (U[N] = U[N].toLowerCase());
     }
-    x && (U.query = x(U.query)), b && k.slashes && U.pathname.charAt(0) !== "/" && (U.pathname !== "" || k.pathname !== "") && (U.pathname = v(U.pathname, k.pathname)), U.pathname.charAt(0) !== "/" && f(U.protocol) && (U.pathname = "/" + U.pathname), r(U.port, U.protocol) || (U.host = U.hostname, U.port = ""), U.username = U.password = "", U.auth && (L = U.auth.indexOf(":"), ~L ? (U.username = U.auth.slice(0, L), U.username = encodeURIComponent(decodeURIComponent(U.username)), U.password = U.auth.slice(L + 1), U.password = encodeURIComponent(decodeURIComponent(U.password))) : U.username = encodeURIComponent(decodeURIComponent(U.auth)), U.auth = U.password ? U.username + ":" + U.password : U.username), U.origin = U.protocol !== "file:" && f(U.protocol) && U.host ? U.protocol + "//" + U.host : "null", U.href = U.toString();
+    x && (U.query = x(U.query)), y && k.slashes && U.pathname.charAt(0) !== "/" && (U.pathname !== "" || k.pathname !== "") && (U.pathname = b(U.pathname, k.pathname)), U.pathname.charAt(0) !== "/" && f(U.protocol) && (U.pathname = "/" + U.pathname), r(U.port, U.protocol) || (U.host = U.hostname, U.port = ""), U.username = U.password = "", U.auth && (L = U.auth.indexOf(":"), ~L ? (U.username = U.auth.slice(0, L), U.username = encodeURIComponent(decodeURIComponent(U.username)), U.password = U.auth.slice(L + 1), U.password = encodeURIComponent(decodeURIComponent(U.password))) : U.username = encodeURIComponent(decodeURIComponent(U.auth)), U.auth = U.password ? U.username + ":" + U.password : U.username), U.origin = U.protocol !== "file:" && f(U.protocol) && U.host ? U.protocol + "//" + U.host : "null", U.href = U.toString();
   }
   function P(w, k, x) {
-    var b = this;
+    var y = this;
     switch (w) {
       case "query":
-        typeof k == "string" && k.length && (k = (x || e.parse)(k)), b[w] = k;
+        typeof k == "string" && k.length && (k = (x || e.parse)(k)), y[w] = k;
         break;
       case "port":
-        b[w] = k, r(k, b.protocol) ? k && (b.host = b.hostname + ":" + k) : (b.host = b.hostname, b[w] = "");
+        y[w] = k, r(k, y.protocol) ? k && (y.host = y.hostname + ":" + k) : (y.host = y.hostname, y[w] = "");
         break;
       case "hostname":
-        b[w] = k, b.port && (k += ":" + b.port), b.host = k;
+        y[w] = k, y.port && (k += ":" + y.port), y.host = k;
         break;
       case "host":
-        b[w] = k, n.test(k) ? (k = k.split(":"), b.port = k.pop(), b.hostname = k.join(":")) : (b.hostname = k, b.port = "");
+        y[w] = k, n.test(k) ? (k = k.split(":"), y.port = k.pop(), y.hostname = k.join(":")) : (y.hostname = k, y.port = "");
         break;
       case "protocol":
-        b.protocol = k.toLowerCase(), b.slashes = !x;
+        y.protocol = k.toLowerCase(), y.slashes = !x;
         break;
       case "pathname":
       case "hash":
         if (k) {
           var R = w === "pathname" ? "/" : "#";
-          b[w] = k.charAt(0) !== R ? R + k : k;
+          y[w] = k.charAt(0) !== R ? R + k : k;
         } else
-          b[w] = k;
+          y[w] = k;
         break;
       case "username":
       case "password":
-        b[w] = encodeURIComponent(k);
+        y[w] = encodeURIComponent(k);
         break;
       case "auth":
         var O = k.indexOf(":");
-        ~O ? (b.username = k.slice(0, O), b.username = encodeURIComponent(decodeURIComponent(b.username)), b.password = k.slice(O + 1), b.password = encodeURIComponent(decodeURIComponent(b.password))) : b.username = encodeURIComponent(decodeURIComponent(k));
+        ~O ? (y.username = k.slice(0, O), y.username = encodeURIComponent(decodeURIComponent(y.username)), y.password = k.slice(O + 1), y.password = encodeURIComponent(decodeURIComponent(y.password))) : y.username = encodeURIComponent(decodeURIComponent(k));
     }
     for (var j = 0; j < d.length; j++) {
       var L = d[j];
-      L[4] && (b[L[1]] = b[L[1]].toLowerCase());
+      L[4] && (y[L[1]] = y[L[1]].toLowerCase());
     }
-    return b.auth = b.password ? b.username + ":" + b.password : b.username, b.origin = b.protocol !== "file:" && f(b.protocol) && b.host ? b.protocol + "//" + b.host : "null", b.href = b.toString(), b;
+    return y.auth = y.password ? y.username + ":" + y.password : y.username, y.origin = y.protocol !== "file:" && f(y.protocol) && y.host ? y.protocol + "//" + y.host : "null", y.href = y.toString(), y;
   }
   function F(w) {
     (!w || typeof w != "function") && (w = e.stringify);
-    var k, x = this, b = x.host, R = x.protocol;
+    var k, x = this, y = x.host, R = x.protocol;
     R && R.charAt(R.length - 1) !== ":" && (R += ":");
     var O = R + (x.protocol && x.slashes || f(x.protocol) ? "//" : "");
-    return x.username ? (O += x.username, x.password && (O += ":" + x.password), O += "@") : x.password ? (O += ":" + x.password, O += "@") : x.protocol !== "file:" && f(x.protocol) && !b && x.pathname !== "/" && (O += "@"), (b[b.length - 1] === ":" || n.test(x.hostname) && !x.port) && (b += ":"), O += b + x.pathname, k = typeof x.query == "object" ? w(x.query) : x.query, k && (O += k.charAt(0) !== "?" ? "?" + k : k), x.hash && (O += x.hash), O;
+    return x.username ? (O += x.username, x.password && (O += ":" + x.password), O += "@") : x.password ? (O += ":" + x.password, O += "@") : x.protocol !== "file:" && f(x.protocol) && !y && x.pathname !== "/" && (O += "@"), (y[y.length - 1] === ":" || n.test(x.hostname) && !x.port) && (y += ":"), O += y + x.pathname, k = typeof x.query == "object" ? w(x.query) : x.query, k && (O += k.charAt(0) !== "?" ? "?" + k : k), x.hash && (O += x.hash), O;
   }
-  return _.prototype = { set: P, toString: F }, _.extractProtocol = y, _.location = p, _.trimLeft = l, _.qs = e, At = _, At;
+  return _.prototype = { set: P, toString: F }, _.extractProtocol = v, _.location = p, _.trimLeft = l, _.qs = e, At = _, At;
 }
 var Jn = Xn();
 const Zn = /* @__PURE__ */ Yn(Jn);
@@ -2716,7 +2716,7 @@ function Gt() {
     }
   }
   e.wrap = c;
-  var f = "suspendedStart", y = "suspendedYield", v = "executing", _ = "completed", P = {};
+  var f = "suspendedStart", v = "suspendedYield", b = "executing", _ = "completed", P = {};
   function F() {
   }
   function w() {
@@ -2727,7 +2727,7 @@ function Gt() {
   d(x, s, function() {
     return this;
   });
-  var b = Object.getPrototypeOf, R = b && b(b(de([])));
+  var y = Object.getPrototypeOf, R = y && y(y(de([])));
   R && R !== t && i.call(R, s) && (x = R);
   var O = k.prototype = F.prototype = Object.create(x);
   function j(m) {
@@ -2767,7 +2767,7 @@ function Gt() {
   function N(m, u, h) {
     var C = f;
     return function($, S) {
-      if (C === v) throw Error("Generator is already running");
+      if (C === b) throw Error("Generator is already running");
       if (C === _) {
         if ($ === "throw") throw S;
         return { value: r, done: !0 };
@@ -2786,10 +2786,10 @@ function Gt() {
           if (C === f) throw C = _, h.arg;
           h.dispatchException(h.arg);
         } else h.method === "return" && h.abrupt("return", h.arg);
-        C = v;
+        C = b;
         var B = p(m, u, h);
         if (B.type === "normal") {
-          if (C = h.done ? _ : y, B.arg === P) continue;
+          if (C = h.done ? _ : v, B.arg === P) continue;
           return { value: B.arg, done: h.done };
         }
         B.type === "throw" && (C = _, h.method = "throw", h.arg = B.arg);
@@ -3202,8 +3202,8 @@ var bt = "tus-v1", yt = "ietf-draft-03", Xe = "ietf-draft-05", ds = {
       }), this._parallelUploadUrls = new Array(a.length);
       var l = a.map(function(c, p) {
         var f = 0;
-        return i._source.slice(c.start, c.end).then(function(y) {
-          var v = y.value;
+        return i._source.slice(c.start, c.end).then(function(v) {
+          var b = v.value;
           return new Promise(function(_, P) {
             var F = Le(Le({}, i.options), {}, {
               // If available, the partial upload should be resumed from a previous URL.
@@ -3236,7 +3236,7 @@ var bt = "tus-v1", yt = "ietf-draft-03", Xe = "ietf-draft-05", ds = {
                   return !!x;
                 }).length === a.length && i._saveUploadInUrlStorage();
               }
-            }), w = new r(v, F);
+            }), w = new r(b, F);
             w.start(), i._parallelUploads.push(w);
           });
         });
@@ -3895,7 +3895,7 @@ function Jt() {
     }
   }
   e.wrap = c;
-  var f = "suspendedStart", y = "suspendedYield", v = "executing", _ = "completed", P = {};
+  var f = "suspendedStart", v = "suspendedYield", b = "executing", _ = "completed", P = {};
   function F() {
   }
   function w() {
@@ -3906,7 +3906,7 @@ function Jt() {
   d(x, s, function() {
     return this;
   });
-  var b = Object.getPrototypeOf, R = b && b(b(de([])));
+  var y = Object.getPrototypeOf, R = y && y(y(de([])));
   R && R !== t && i.call(R, s) && (x = R);
   var O = k.prototype = F.prototype = Object.create(x);
   function j(m) {
@@ -3946,7 +3946,7 @@ function Jt() {
   function N(m, u, h) {
     var C = f;
     return function($, S) {
-      if (C === v) throw Error("Generator is already running");
+      if (C === b) throw Error("Generator is already running");
       if (C === _) {
         if ($ === "throw") throw S;
         return { value: r, done: !0 };
@@ -3965,10 +3965,10 @@ function Jt() {
           if (C === f) throw C = _, h.arg;
           h.dispatchException(h.arg);
         } else h.method === "return" && h.abrupt("return", h.arg);
-        C = v;
+        C = b;
         var B = p(m, u, h);
         if (B.type === "normal") {
-          if (C = h.done ? _ : y, B.arg === P) continue;
+          if (C = h.done ? _ : v, B.arg === P) continue;
           return { value: B.arg, done: h.done };
         }
         B.type === "throw" && (C = _, h.method = "throw", h.arg = B.arg);
@@ -4569,13 +4569,13 @@ function ca(r, e) {
 }
 function pa(r, e) {
   const { tusConfig: t } = e, i = e.apiBase.replace(/\/+$/, ""), o = t.endpoint || la, n = t.jsonBase || da, s = t.chunkSize ?? aa, a = t.resumable !== !1, l = t.parallelChunks ?? 1, d = t.retryDelays ?? [0, 1e3, 3e3, 5e3], c = i.split("/").pop() || "";
-  let p = !1, f = !1, y = !1;
-  const v = {
+  let p = !1, f = !1, v = !1;
+  const b = {
     name: r.name,
     type: r.type,
     "filerobot-folder": e.folder
   };
-  Ar(r.product) && (v.product = JSON.stringify(Ir(r.product)));
+  Ar(r.product) && (b.product = JSON.stringify(Ir(r.product)));
   const _ = async () => `tus-${r.id}-${o}`, P = new na(r.file, {
     endpoint: o,
     chunkSize: s,
@@ -4584,30 +4584,30 @@ function pa(r, e) {
     storeFingerprintForResuming: a,
     removeFingerprintOnSuccess: !0,
     headers: {},
-    metadata: v,
+    metadata: b,
     fingerprint: _,
     // --- Dynamic auth headers (v5 pattern: onBeforeRequest) ---
     // Single source of auth headers for every tus request.
     // Uses getAuthHeaders() for latest SASS key, falls back to initial headers.
-    onBeforeRequest(b) {
+    onBeforeRequest(y) {
       const R = e.getAuthHeaders ? e.getAuthHeaders() : e.authHeaders;
       for (const [O, j] of Object.entries(R))
-        b.setHeader(O, j);
-      b.setHeader("X-Filerobot-Token", c);
+        y.setHeader(O, j);
+      y.setHeader("X-Filerobot-Token", c);
     },
     // --- Store upload URL for cross-session resume (v5's onReceiveUploadUrl) ---
     // Only notify once to avoid redundant store updates (v5 checks uploadUrl !== existing).
     onUploadUrlAvailable() {
-      P.url && e.onUploadUrlAvailable && !y && (y = !0, e.onUploadUrlAvailable(P.url));
+      P.url && e.onUploadUrlAvailable && !v && (v = !0, e.onUploadUrlAvailable(P.url));
     },
-    onProgress(b, R) {
-      !f && !p && e.onProgress(b, R);
+    onProgress(y, R) {
+      !f && !p && e.onProgress(y, R);
     },
     onSuccess() {
       var O;
       if (f) return;
       k();
-      const b = P.url || "", R = (O = b.match(/files\/([^/?]+)/)) == null ? void 0 : O[1];
+      const y = P.url || "", R = (O = y.match(/files\/([^/?]+)/)) == null ? void 0 : O[1];
       R ? fa(n, R, r.size).then((j) => {
         f || e.onComplete(
           lt(j) ? si(j, r) : j
@@ -4622,7 +4622,7 @@ function pa(r, e) {
           extension: r.name.split(".").pop() || "",
           type: r.type,
           size: r.size,
-          url: { public: b, cdn: b },
+          url: { public: y, cdn: y },
           meta: r.meta,
           tags: r.tags,
           info: {},
@@ -4631,37 +4631,37 @@ function pa(r, e) {
         }
       });
     },
-    onError(b) {
-      f || (k(), ua(b) ? e.onError(new Error(
+    onError(y) {
+      f || (k(), ua(y) ? e.onError(new Error(
         "Network error during upload — check your connection or firewall settings"
-      )) : e.onError(b instanceof Error ? b : new Error(String(b))));
+      )) : e.onError(y instanceof Error ? y : new Error(String(y))));
     },
     // --- 429 rate-limit and retry handling (matches v5's defaultOnShouldRetry) ---
-    onShouldRetry(b, R, O) {
+    onShouldRetry(y, R, O) {
       var L;
-      const j = (L = b.originalResponse) == null ? void 0 : L.getStatus();
+      const j = (L = y.originalResponse) == null ? void 0 : L.getStatus();
       return j === 429 ? !0 : !(j && j > 400 && j < 500 && j !== 409);
     }
   });
   let F = null, w = null;
   typeof window < "u" && (F = () => {
-    var b;
-    !p && !f && (p = !0, P.abort(!1), (b = e.onPause) == null || b.call(e));
+    var y;
+    !p && !f && (p = !0, P.abort(!1), (y = e.onPause) == null || y.call(e));
   }, w = () => {
-    var b;
-    p && !f && (p = !1, P.start(), (b = e.onResume) == null || b.call(e));
+    var y;
+    p && !f && (p = !1, P.start(), (y = e.onResume) == null || y.call(e));
   }, window.addEventListener("offline", F), window.addEventListener("online", w));
   const k = () => {
     F && window.removeEventListener("offline", F), w && window.removeEventListener("online", w);
   }, x = () => {
     try {
       P.start();
-    } catch (b) {
-      k(), e.onError(b instanceof Error ? b : new Error(String(b)));
+    } catch (y) {
+      k(), e.onError(y instanceof Error ? y : new Error(String(y)));
     }
   };
-  return a ? P.findPreviousUploads().then((b) => {
-    b.length > 0 && !f && P.resumeFromPreviousUpload(b[0]), f || x();
+  return a ? P.findPreviousUploads().then((y) => {
+    y.length > 0 && !f && P.resumeFromPreviousUpload(y[0]), f || x();
   }) : x(), {
     abort() {
       f = !0, p = !1, k(), P.abort(!0);
@@ -4836,17 +4836,17 @@ class ha {
       authHeaders: this.config.authHeaders,
       folder: this.store.getState().targetFolder,
       extraParams: i ? t : void 0,
-      onComplete: (y) => this.handleComplete(e.id, y),
-      onError: (y) => this.handleError(e.id, y)
-    }, d = (y, v) => {
+      onComplete: (v) => this.handleComplete(e.id, v),
+      onError: (v) => this.handleError(e.id, v)
+    }, d = (v, b) => {
       const _ = Date.now(), P = (_ - s) / 1e3;
       if (P > 0) {
-        const w = (y - n) / P;
+        const w = (v - n) / P;
         a = a === 0 ? w : 0.3 * w + 0.7 * a;
       }
-      n = y, s = _;
-      const F = v > 0 ? Math.min(y / v * 100, 100) : 0;
-      Y(this.store, e.id, { progress: F, bytesUploaded: y, speed: a }), this.updateTotalProgress();
+      n = v, s = _;
+      const F = b > 0 ? Math.min(v / b * 100, 100) : 0;
+      Y(this.store, e.id, { progress: F, bytesUploaded: v, speed: a }), this.updateTotalProgress();
     };
     let c;
     if (e.remoteInfo)
@@ -4863,42 +4863,42 @@ class ha {
         ...l,
         onProgress: d,
         companionUrl: this.config.companionUrl,
-        onMeta: (y) => {
+        onMeta: (v) => {
           Y(this.store, e.id, {
-            size: y.size,
+            size: v.size,
             // Trust Companion's resolved MIME over our extension guess
-            type: y.type || e.type
+            type: v.type || e.type
           });
         }
       });
     } else if (o) {
-      const y = pa(e, {
+      const v = pa(e, {
         ...l,
         onProgress: d,
         tusConfig: this.config.tusConfig,
         // Supply a getter so tus picks up renewed SASS keys mid-upload
         getAuthHeaders: () => this.config.authHeaders,
         // Store the tus upload URL on file state for cross-session resume
-        onUploadUrlAvailable: (v) => {
-          Y(this.store, e.id, { tusUploadUrl: v });
+        onUploadUrlAvailable: (b) => {
+          Y(this.store, e.id, { tusUploadUrl: b });
         },
         // Sync UI state when tus pauses/resumes internally (e.g. network offline/online)
         onPause: () => {
-          this.activeUploads.delete(e.id), this.pausedUploads.set(e.id, y), Y(this.store, e.id, { status: "paused" }), this.processQueue();
+          this.activeUploads.delete(e.id), this.pausedUploads.set(e.id, v), Y(this.store, e.id, { status: "paused" }), this.processQueue();
         },
         onResume: () => {
-          this.pausedUploads.delete(e.id), this.activeUploads.set(e.id, y), Y(this.store, e.id, { status: "uploading" });
+          this.pausedUploads.delete(e.id), this.activeUploads.set(e.id, v), Y(this.store, e.id, { status: "uploading" });
         }
       });
-      c = y;
+      c = v;
     } else
       c = hn(e, { ...l, onProgress: d });
     this.activeUploads.set(e.id, c);
   }
   handleComplete(e, t) {
-    var c, p, f, y, v, _, P, F, w, k;
+    var c, p, f, v, b, _, P, F, w, k;
     this.activeUploads.delete(e);
-    const i = this.store.getState().files.get(e), o = ((c = i == null ? void 0 : i.previewUrl) == null ? void 0 : c.startsWith("blob:")) ?? !1, n = ((f = (p = t.file) == null ? void 0 : p.url) == null ? void 0 : f.cdn) ?? ((v = (y = t.file) == null ? void 0 : y.url) == null ? void 0 : v.cdn_permalink) ?? ((P = (_ = t.file) == null ? void 0 : _.url) == null ? void 0 : P.permalink) ?? null, s = n ? ((w = (F = this.config).transformPreviewUrl) == null ? void 0 : w.call(F, n)) ?? n : null, a = {
+    const i = this.store.getState().files.get(e), o = ((c = i == null ? void 0 : i.previewUrl) == null ? void 0 : c.startsWith("blob:")) ?? !1, n = ((f = (p = t.file) == null ? void 0 : p.url) == null ? void 0 : f.cdn) ?? ((b = (v = t.file) == null ? void 0 : v.url) == null ? void 0 : b.cdn_permalink) ?? ((P = (_ = t.file) == null ? void 0 : _.url) == null ? void 0 : P.permalink) ?? null, s = n ? ((w = (F = this.config).transformPreviewUrl) == null ? void 0 : w.call(F, n)) ?? n : null, a = {
       status: "complete",
       progress: 100,
       response: t,
@@ -5008,10 +5008,10 @@ async function ma(r) {
 }
 const Pt = "sfx-uploader:last-upload:", po = 1;
 function xa(r) {
-  var n, s, a, l, d, c, p, f, y;
+  var n, s, a, l, d, c, p, f, v;
   const { file: e, previewUrl: t, ...i } = r;
   let o = null;
-  return r.status === "complete" && (r.previewUrl && !r.previewUrl.startsWith("blob:") ? o = r.previewUrl : o = ((a = (s = (n = r.response) == null ? void 0 : n.file) == null ? void 0 : s.url) == null ? void 0 : a.permalink) ?? ((c = (d = (l = r.response) == null ? void 0 : l.file) == null ? void 0 : d.url) == null ? void 0 : c.cdn_permalink) ?? ((y = (f = (p = r.response) == null ? void 0 : p.file) == null ? void 0 : f.url) == null ? void 0 : y.cdn) ?? null), { ...i, previewUrl: o };
+  return r.status === "complete" && (r.previewUrl && !r.previewUrl.startsWith("blob:") ? o = r.previewUrl : o = ((a = (s = (n = r.response) == null ? void 0 : n.file) == null ? void 0 : s.url) == null ? void 0 : a.permalink) ?? ((c = (d = (l = r.response) == null ? void 0 : l.file) == null ? void 0 : d.url) == null ? void 0 : c.cdn_permalink) ?? ((v = (f = (p = r.response) == null ? void 0 : p.file) == null ? void 0 : f.url) == null ? void 0 : v.cdn) ?? null), { ...i, previewUrl: o };
 }
 function va(r) {
   try {
@@ -5508,10 +5508,10 @@ mo([
 ], Et.prototype, "sources");
 const xo = /* @__PURE__ */ new Set([
   "asset-attachments",
+  "attachments-assets",
   "ultratags",
   "taxonomy-node"
 ]), Ra = /* @__PURE__ */ new Set([
-  "attachments-assets",
   "face_matcher"
 ]);
 function gl(r) {
@@ -7740,9 +7740,9 @@ const _i = class _i extends re {
                     class="type-icon-img"
                     src=${ho(d)}
                     alt="${d ? `${d} file` : "File"}"
-                    @error=${(y) => {
-      const v = y.target, _ = go();
-      !v.dataset.fallback && v.src !== _ && (v.dataset.fallback = "1", v.src = _);
+                    @error=${(v) => {
+      const b = v.target, _ = go();
+      !b.dataset.fallback && b.src !== _ && (b.dataset.fallback = "1", b.src = _);
     }}
                   />
                 </div>
@@ -7871,7 +7871,7 @@ const _i = class _i extends re {
           <input class="name-input" type="text" .value=${e.name} title=${e.name}
             aria-label=${this.t("fileName", "File name")}
             ?readonly=${l}
-            @change=${l ? E : this._rename} @click=${(y) => y.stopPropagation()} />
+            @change=${l ? E : this._rename} @click=${(v) => v.stopPropagation()} />
           <div class="meta">${d || ""}${e.size ? ` · ${_e(e.size)}` : ""}${this._dims ? ` · ${this._dims}` : ""}</div>
         </div>
       </div>
@@ -10668,24 +10668,24 @@ const q = (K = class extends re {
       if ((((n = (o = this.config) == null ? void 0 : o.connectors) == null ? void 0 : n.providers) ?? []).includes(e)) {
         if (Cr.has(e)) {
           if (!customElements.get("sfx-search-provider-browser")) {
-            const { SfxSearchProviderBrowser: a } = await import("./search-provider-browser-CNPjAtJi.js");
+            const { SfxSearchProviderBrowser: a } = await import("./search-provider-browser-C_9Uj0gF.js");
             customElements.define(
               "sfx-search-provider-browser",
               a
             );
           }
         } else if (!customElements.get("sfx-provider-browser")) {
-          const { SfxProviderBrowser: a } = await import("./provider-browser-CYnGE7s1.js");
+          const { SfxProviderBrowser: a } = await import("./provider-browser-CPoDGyBr.js");
           customElements.define("sfx-provider-browser", a);
         }
         this._activeConnector = e;
       }
     }, this._onUrlSubmit = (e) => {
-      var p, f, y;
+      var p, f, v;
       this._showUrlDialog = !1;
       const { url: t, name: i } = e.detail, o = (p = this.config) == null ? void 0 : p.callbacks, n = vr(i), s = n.startsWith("image/"), a = this._store.getState();
       if ([...a.files.values()].some(
-        (v) => v.name === i && v.status !== "rejected" && v.status !== "cancelled"
+        (b) => b.name === i && b.status !== "rejected" && b.status !== "cancelled"
       )) return;
       const d = Bt(
         { name: i, size: 0, type: n },
@@ -10693,7 +10693,7 @@ const q = (K = class extends re {
         a.files
       );
       if (d) {
-        const v = {
+        const b = {
           id: Fe(),
           status: "rejected",
           file: null,
@@ -10716,10 +10716,10 @@ const q = (K = class extends re {
           remoteInfo: null,
           ...ze
         };
-        Re(this._store, v), this._dispatchPublic(I.FILE_REJECTED, {
-          file: v,
+        Re(this._store, b), this._dispatchPublic(I.FILE_REJECTED, {
+          file: b,
           reason: d
-        }), (f = o == null ? void 0 : o.onFileRejected) == null || f.call(o, v, d);
+        }), (f = o == null ? void 0 : o.onFileRejected) == null || f.call(o, b, d);
         return;
       }
       const c = {
@@ -10745,7 +10745,7 @@ const q = (K = class extends re {
         remoteInfo: null,
         ...ze
       };
-      Re(this._store, c), this._dispatchPublic(I.FILE_ADDED, { file: c }), (y = o == null ? void 0 : o.onFileAdded) == null || y.call(o, c), this._store.getState().queueConfig.autoProceed && this.upload();
+      Re(this._store, c), this._dispatchPublic(I.FILE_ADDED, { file: c }), (v = o == null ? void 0 : o.onFileAdded) == null || v.call(o, c), this._store.getState().queueConfig.autoProceed && this.upload();
     }, this._onUrlCancel = () => {
       this._showUrlDialog = !1;
     }, this._onCameraCapture = (e) => {
@@ -10775,20 +10775,7 @@ const q = (K = class extends re {
         "warning"
       ), this._onFillMetadata();
     }, this._onFileLocate = (e) => {
-      var n, s, a;
-      const t = e.detail.file;
-      if (!t) return;
-      const i = this.dispatchEvent(
-        new CustomEvent(I.FILE_LOCATE, {
-          bubbles: !0,
-          composed: !0,
-          cancelable: !0,
-          detail: { file: t }
-        })
-      );
-      if ((a = (s = (n = this.config) == null ? void 0 : n.callbacks) == null ? void 0 : s.onFileLocate) == null || a.call(s, t), !i) return;
-      const o = ln(t, this.config ?? void 0);
-      o && window.open(o, "_blank", "noopener,noreferrer");
+      this._locateFile(e.detail.file);
     }, this._onFileCopyCdn = (e) => {
       var o, n, s;
       const t = e.detail.file, i = e.detail.cdnUrl;
@@ -11105,13 +11092,13 @@ const q = (K = class extends re {
   }
   /** Start uploading all queued files. */
   upload() {
-    var o, n, s, a, l, d, c, p, f, y;
+    var o, n, s, a, l, d, c, p, f, v;
     if (this._ensureEngine(), !this._engine) {
       console.warn("[sfx-uploader] Cannot upload: auth not resolved yet");
       return;
     }
     const e = [...this._store.getState().files.values()].filter(
-      (v) => v.status === "idle" || v.status === "queued"
+      (b) => b.status === "idle" || b.status === "queued"
     );
     if ((n = (o = this.config) == null ? void 0 : o.callbacks) != null && n.onBeforeUpload && this.config.callbacks.onBeforeUpload(e) === !1)
       return;
@@ -11121,7 +11108,7 @@ const q = (K = class extends re {
       cancelable: !0,
       detail: { files: e }
     });
-    this.dispatchEvent(t) && (this._dispatchPublic(I.UPLOAD_STARTED, { files: e }), (l = (a = (s = this.config) == null ? void 0 : s.callbacks) == null ? void 0 : a.onUploadStarted) == null || l.call(a, e), this._engine.uploadAll(), (d = this.config) != null && d.minimizeOnUpload && ((c = this.config) == null ? void 0 : c.mode) !== "inline" && !this._isMinimized && (this._isMinimized = !0, this._isPillExpanded = !0, (y = (f = (p = this.config) == null ? void 0 : p.callbacks) == null ? void 0 : f.onMinimize) == null || y.call(f), this._dispatchFloatGeometryEvent(I.MINIMIZE), this.requestUpdate()));
+    this.dispatchEvent(t) && (this._dispatchPublic(I.UPLOAD_STARTED, { files: e }), (l = (a = (s = this.config) == null ? void 0 : s.callbacks) == null ? void 0 : a.onUploadStarted) == null || l.call(a, e), this._engine.uploadAll(), (d = this.config) != null && d.minimizeOnUpload && ((c = this.config) == null ? void 0 : c.mode) !== "inline" && !this._isMinimized && (this._isMinimized = !0, this._isPillExpanded = !0, (v = (f = (p = this.config) == null ? void 0 : p.callbacks) == null ? void 0 : f.onMinimize) == null || v.call(f), this._dispatchFloatGeometryEvent(I.MINIMIZE), this.requestUpdate()));
   }
   /** Programmatically add files. */
   addFiles(e) {
@@ -11298,6 +11285,8 @@ const q = (K = class extends re {
       [data-sfx-upload-float] .float-item-act.del:hover { color:#ef4444; }
       [data-sfx-upload-float] .float-item-act.paused { color:#d97706; }
       [data-sfx-upload-float] .float-item-act.paused:hover { color:#d97706; background:#fef3c7; }
+      [data-sfx-upload-float] .float-item-act.locate { color:#2563eb; }
+      [data-sfx-upload-float] .float-item-act.locate:hover { color:#1d4ed8; background:#eff6ff; }
       [data-sfx-upload-float] .float-collapsed { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; width:470px; border-radius:12px; }
       [data-sfx-upload-float] .float-collapsed-left { display:flex; align-items:center; gap:8px; }
       [data-sfx-upload-float] .float-collapsed-spinner { width:18px; height:18px; border:2.5px solid #e8edf5; border-top-color:#2563eb; border-radius:50%; animation:sfxSpin .8s linear infinite; flex-shrink:0; }
@@ -11481,7 +11470,7 @@ const q = (K = class extends re {
     const t = e.metadataConfig;
     if (!(!t || !this._apiBase || !this._authHeaders))
       try {
-        const { fetchMetadataSchema: i, createTagsAutocomplete: o } = await import("./index-Cy7hgVJo.js"), n = await i(
+        const { fetchMetadataSchema: i, createTagsAutocomplete: o } = await import("./index-CYIIARFy.js"), n = await i(
           this._apiBase,
           this._authHeaders,
           t.projectUuid,
@@ -11573,13 +11562,13 @@ const q = (K = class extends re {
    * for file status transitions.
    */
   _onStoreChange() {
-    var o, n, s, a, l, d, c, p, f, y;
+    var o, n, s, a, l, d, c, p, f, v;
     const e = this._store.getState(), t = this._prevStoreState;
     if (this._prevStoreState = e, !t) return;
     e.isUploading && !t.isUploading && (this._lastEta = 0);
     const i = (o = this.config) == null ? void 0 : o.callbacks;
-    for (const [v, _] of e.files) {
-      const P = t.files.get(v);
+    for (const [b, _] of e.files) {
+      const P = t.files.get(b);
       if (P) {
         if (P.status !== _.status)
           switch (_.status) {
@@ -11619,17 +11608,17 @@ const q = (K = class extends re {
       }
     }
     if (e.totalProgress !== t.totalProgress || e.totalSpeed !== t.totalSpeed) {
-      const v = e.totalSpeed > 0 ? (e.totalBytes - e.totalBytesUploaded) / e.totalSpeed : e.isUploading ? this._lastEta : 0;
-      e.totalSpeed > 0 && (this._lastEta = v), this._dispatchPublic(I.TOTAL_PROGRESS, {
+      const b = e.totalSpeed > 0 ? (e.totalBytes - e.totalBytesUploaded) / e.totalSpeed : e.isUploading ? this._lastEta : 0;
+      e.totalSpeed > 0 && (this._lastEta = b), this._dispatchPublic(I.TOTAL_PROGRESS, {
         percentage: e.totalProgress,
         speed: e.totalSpeed,
-        eta: v
-      }), (p = i == null ? void 0 : i.onTotalProgress) == null || p.call(i, e.totalProgress, e.totalSpeed, v);
+        eta: b
+      }), (p = i == null ? void 0 : i.onTotalProgress) == null || p.call(i, e.totalProgress, e.totalSpeed, b);
     }
     if (t.isUploading && !e.isUploading) {
-      const v = [...e.files.values()];
-      if (!v.some((P) => P.status === "cancelled")) {
-        const P = v.filter((x) => x.status === "complete"), F = v.filter(
+      const b = [...e.files.values()];
+      if (!b.some((P) => P.status === "cancelled")) {
+        const P = b.filter((x) => x.status === "complete"), F = b.filter(
           (x) => x.status === "failed" || x.status === "error"
         );
         if (P.length === 0 && F.length === 0) return;
@@ -11639,12 +11628,12 @@ const q = (K = class extends re {
           Ye.save(w, x), this._hasStoredReview = x.length > 0;
         }
         this._dispatchPublic(I.ALL_COMPLETE, { successful: P, failed: F }), (f = i == null ? void 0 : i.onAllComplete) == null || f.call(i, P, F);
-        const k = (y = this.config) == null ? void 0 : y.closeOnComplete;
+        const k = (v = this.config) == null ? void 0 : v.closeOnComplete;
         if (k) {
           const x = typeof k == "number" ? k : 1500;
           this._closeOnCompleteTimer = setTimeout(() => {
-            var b, R, O;
-            this._closeOnCompleteTimer = null, this._phase === "complete" && (this._dispatchPublic(I.COMPLETE_ACTION, {}), (O = (R = (b = this.config) == null ? void 0 : b.callbacks) == null ? void 0 : R.onCompleteAction) == null || O.call(R), this.close());
+            var y, R, O;
+            this._closeOnCompleteTimer = null, this._phase === "complete" && (this._dispatchPublic(I.COMPLETE_ACTION, {}), (O = (R = (y = this.config) == null ? void 0 : y.callbacks) == null ? void 0 : R.onCompleteAction) == null || O.call(R), this.close());
           }, x);
         }
       }
@@ -11694,7 +11683,7 @@ const q = (K = class extends re {
     for (const a of e) {
       const l = this._store.getState();
       if ([...l.files.values()].some(
-        (v) => v.name === a.name && v.size === a.size && v.status !== "rejected" && v.status !== "cancelled"
+        (b) => b.name === a.name && b.size === a.size && b.status !== "rejected" && b.status !== "cancelled"
       )) continue;
       const c = a.type || vr(a.name), p = Bt(
         { name: a.name, size: a.size, type: c },
@@ -11702,7 +11691,7 @@ const q = (K = class extends re {
         l.files
       );
       if (p) {
-        const v = c.startsWith("image/") && !br(c) ? URL.createObjectURL(a) : null, _ = {
+        const b = c.startsWith("image/") && !br(c) ? URL.createObjectURL(a) : null, _ = {
           id: Fe(),
           status: "rejected",
           file: a,
@@ -11710,7 +11699,7 @@ const q = (K = class extends re {
           name: a.name,
           size: a.size,
           type: c,
-          previewUrl: v,
+          previewUrl: b,
           duration: null,
           progress: 0,
           speed: 0,
@@ -11742,7 +11731,7 @@ const q = (K = class extends re {
       }
       let f = null;
       c.startsWith("image/") && !br(c) && (f = URL.createObjectURL(a));
-      const y = {
+      const v = {
         id: Fe(),
         status: "idle",
         file: a,
@@ -11765,26 +11754,26 @@ const q = (K = class extends re {
         remoteInfo: null,
         ...ze
       };
-      if (Re(this._store, y), this._dispatchPublic(I.FILE_ADDED, { file: y }), (s = t == null ? void 0 : t.onFileAdded) == null || s.call(t, y), a.type.startsWith("video/")) {
+      if (Re(this._store, v), this._dispatchPublic(I.FILE_ADDED, { file: v }), (s = t == null ? void 0 : t.onFileAdded) == null || s.call(t, v), a.type.startsWith("video/")) {
         Sa(a).then((_) => {
           if (!_) return;
-          const P = this._store.getState(), F = P.files.get(y.id);
+          const P = this._store.getState(), F = P.files.get(v.id);
           if (F) {
             const w = new Map(P.files);
-            w.set(y.id, { ...F, previewUrl: _ }), this._store.setState({ files: w });
+            w.set(v.id, { ...F, previewUrl: _ }), this._store.setState({ files: w });
           } else
             URL.revokeObjectURL(_);
         });
-        const v = document.createElement("video");
-        v.preload = "metadata", v.src = URL.createObjectURL(a), v.onerror = () => {
-          URL.revokeObjectURL(v.src);
-        }, v.onloadedmetadata = () => {
-          const _ = v.duration;
-          if (URL.revokeObjectURL(v.src), !isFinite(_)) return;
-          const P = this._store.getState(), F = P.files.get(y.id);
+        const b = document.createElement("video");
+        b.preload = "metadata", b.src = URL.createObjectURL(a), b.onerror = () => {
+          URL.revokeObjectURL(b.src);
+        }, b.onloadedmetadata = () => {
+          const _ = b.duration;
+          if (URL.revokeObjectURL(b.src), !isFinite(_)) return;
+          const P = this._store.getState(), F = P.files.get(v.id);
           if (F) {
             const w = new Map(P.files);
-            w.set(y.id, { ...F, duration: _ }), this._store.setState({ files: w });
+            w.set(v.id, { ...F, duration: _ }), this._store.setState({ files: w });
           }
         };
       }
@@ -11807,6 +11796,21 @@ const q = (K = class extends re {
       this._previewFileId = c.length > 0 ? c[0].id : null;
     }
     this._dispatchPublic(I.FILE_REMOVED, { file: i }), (d = (l = (a = this.config) == null ? void 0 : a.callbacks) == null ? void 0 : l.onFileRemoved) == null || d.call(l, i);
+  }
+  _locateFile(e) {
+    var o, n, s;
+    if (!e) return;
+    const t = this.dispatchEvent(
+      new CustomEvent(I.FILE_LOCATE, {
+        bubbles: !0,
+        composed: !0,
+        cancelable: !0,
+        detail: { file: e }
+      })
+    );
+    if ((s = (n = (o = this.config) == null ? void 0 : o.callbacks) == null ? void 0 : n.onFileLocate) == null || s.call(n, e), !t) return;
+    const i = ln(e, this.config ?? void 0);
+    i && window.open(i, "_blank", "noopener,noreferrer");
   }
   // --- Render ---
   render() {
@@ -11897,7 +11901,7 @@ const q = (K = class extends re {
     if (this._phase === "complete") return E;
     const e = this._storeCtrl.state.t, t = ((a = this.config) == null ? void 0 : a.mode) ?? "modal";
     if (this._phase === "uploading") {
-      const f = [...this._storeCtrl.state.files.values()].filter((_) => _.status !== "rejected" && _.status !== "cancelled"), y = f.length, v = f.filter((_) => _.status === "complete").length;
+      const f = [...this._storeCtrl.state.files.values()].filter((_) => _.status !== "rejected" && _.status !== "cancelled"), v = f.length, b = f.filter((_) => _.status === "complete").length;
       return g`
         <div class="header upload-header">
           <div class="float-header-left">
@@ -11916,10 +11920,10 @@ const q = (K = class extends re {
             </div>
             <div>
               <div class="float-title">
-                ${e("uploadingFiles", { count: y, defaultValue_one: "Uploading {{count}} file", defaultValue_other: "Uploading {{count}} files" })}
+                ${e("uploadingFiles", { count: v, defaultValue_one: "Uploading {{count}} file", defaultValue_other: "Uploading {{count}} files" })}
               </div>
               <div class="float-subtitle">
-                ${e("nOfNComplete", "{{completed}} of {{total}} complete", { completed: v, total: y })}${this._lastEta > 0 ? ` · ${e("etaLeft", "~{{eta}} left", { eta: Mt(this._lastEta) })}` : ""}
+                ${e("nOfNComplete", "{{completed}} of {{total}} complete", { completed: b, total: v })}${this._lastEta > 0 ? ` · ${e("etaLeft", "~{{eta}} left", { eta: Mt(this._lastEta) })}` : ""}
               </div>
             </div>
           </div>
@@ -12304,6 +12308,7 @@ const q = (K = class extends re {
         </div>
         <div class="float-items">
           ${e.map((l) => {
+      var c, p, f;
       const d = l.status === "failed" || l.status === "error";
       return g`
               <div class="float-item">
@@ -12327,7 +12332,21 @@ const q = (K = class extends re {
                   <div class="float-item-size">${_e(l.size)}</div>
                 </div>
                 <div class="float-item-status">
-                  ${l.status === "complete" ? g`<div class="float-item-done">
+                  ${l.status === "complete" ? g`${(c = this.config) != null && c.showLocateButton && ((f = (p = l.response) == null ? void 0 : p.file) != null && f.uuid) ? g`<button
+                              class="float-item-act locate"
+                              title=${i("locate", "Locate")}
+                              aria-label=${i("locate", "Locate")}
+                              @click=${() => this._locateFile(l)}
+                            >
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="2" y1="12" x2="5" y2="12" />
+                                <line x1="19" y1="12" x2="22" y2="12" />
+                                <line x1="12" y1="2" x2="12" y2="5" />
+                                <line x1="12" y1="19" x2="12" y2="22" />
+                                <circle cx="12" cy="12" r="7" />
+                              </svg>
+                            </button>` : E}
+                        <div class="float-item-done">
                         <svg
                           viewBox="0 0 24 24"
                           fill="none"
@@ -12358,8 +12377,8 @@ const q = (K = class extends re {
                         <button
                           class="float-item-retry"
                           @click=${() => {
-        var c;
-        this._ensureEngine(), (c = this._engine) == null || c.retryFile(l.id);
+        var v;
+        this._ensureEngine(), (v = this._engine) == null || v.retryFile(l.id);
       }}
                         >
                           <svg
@@ -12381,8 +12400,8 @@ const q = (K = class extends re {
                           title=${i("resume", "Resume")}
                           aria-label=${i("resumeUpload", "Resume upload")}
                           @click=${() => {
-        var c;
-        return (c = this._engine) == null ? void 0 : c.resumeFile(l.id);
+        var v;
+        return (v = this._engine) == null ? void 0 : v.resumeFile(l.id);
       }}
                         >
                           <svg viewBox="0 0 24 24" fill="currentColor">
@@ -12409,8 +12428,8 @@ const q = (K = class extends re {
                               title=${i("pause", "Pause")}
                               aria-label=${i("pauseUpload", "Pause upload")}
                               @click=${() => {
-        var c;
-        return (c = this._engine) == null ? void 0 : c.pauseFile(l.id);
+        var v;
+        return (v = this._engine) == null ? void 0 : v.pauseFile(l.id);
       }}
                             >
                               <svg viewBox="0 0 24 24" fill="currentColor">
@@ -12635,8 +12654,8 @@ const q = (K = class extends re {
                       src=${ho(o)}
                       alt="${o ? `${o} file` : "File"}"
                       @error=${(p) => {
-      const f = p.target, y = go();
-      !f.dataset.fallback && f.src !== y && (f.dataset.fallback = "1", f.src = y);
+      const f = p.target, v = go();
+      !f.dataset.fallback && f.src !== v && (f.dataset.fallback = "1", f.src = v);
     }}
                     />
                   </div>
@@ -12755,7 +12774,7 @@ const q = (K = class extends re {
     }
   }
   _renderBody() {
-    var l, d, c, p, f, y, v, _, P, F, w, k;
+    var l, d, c, p, f, v, b, _, P, F, w, k;
     const e = this._storeCtrl.state, t = e.t, i = [...e.files.values()], o = i.filter(
       (x) => x.status === "idle" || x.status === "queued" || x.status === "error" || x.status === "failed"
     ), n = this._phase, s = yr(e.restrictions), a = i.length > 0;
@@ -12811,7 +12830,7 @@ const q = (K = class extends re {
                   .t=${t}
                   .primaryLabel=${t("done", "Done")}
                   .fileCount=${i.filter((x) => x.status === "complete").length}
-                  .totalSize=${i.filter((x) => x.status === "complete" && !x.alreadyExisted).reduce((x, b) => x + (b.size || 0), 0)}
+                  .totalSize=${i.filter((x) => x.status === "complete" && !x.alreadyExisted).reduce((x, y) => x + (y.size || 0), 0)}
                   .thumbnails=${i.filter((x) => x.status === "complete" && x.previewUrl).map((x) => x.previewUrl)}
                   .failedFiles=${i.filter((x) => x.status === "failed").map((x) => ({
       id: x.id,
@@ -12821,7 +12840,7 @@ const q = (K = class extends re {
                   .alreadyExistedCount=${i.filter(
       (x) => x.status === "complete" && x.alreadyExisted
     ).length}
-                  .showMinimize=${!!((f = this.config) != null && f.minimizeOnUpload) && ((y = this.config) == null ? void 0 : y.mode) !== "inline"}
+                  .showMinimize=${!!((f = this.config) != null && f.minimizeOnUpload) && ((v = this.config) == null ? void 0 : v.mode) !== "inline"}
                   @close-uploader=${this._onSuccessCardClose}
                   @minimize-uploader=${this._onMinimize}
                   @file-retry=${this._onFileRetry}
@@ -12835,7 +12854,7 @@ const q = (K = class extends re {
                         .externalDragOver=${this._bodyDragOver}
                         .accept=${s}
                         .sources=${this._mergedSources}
-                        .sourcesLayout=${((v = this.config) == null ? void 0 : v.sourcesLayout) ?? "pills"}
+                        .sourcesLayout=${((b = this.config) == null ? void 0 : b.sourcesLayout) ?? "pills"}
                         .mode=${((_ = this.config) == null ? void 0 : _.mode) ?? "modal"}
                         .multi=${this._allowMulti}
                       ></sfx-drop-zone>
@@ -12855,7 +12874,7 @@ const q = (K = class extends re {
                           ${i.length}
                           ${i.length === 1 ? "file" : "files"} ·
                           ${_e(
-      i.reduce((x, b) => x + (b.size || 0), 0)
+      i.reduce((x, y) => x + (y.size || 0), 0)
     )}
                         </div>
                         <sfx-file-list
@@ -12877,7 +12896,7 @@ const q = (K = class extends re {
                 .t=${t}
                 .uploadState=${"idle"}
                 .fileCount=${o.length}
-                .totalSize=${o.reduce((x, b) => x + (b.size || 0), 0)}
+                .totalSize=${o.reduce((x, y) => x + (y.size || 0), 0)}
                 .failedCount=${i.filter(
       (x) => x.status === "failed" || x.status === "error"
     ).length}

@@ -1,5 +1,5 @@
-import { D as Me, E as Ye, F as ee, G as it, H as B, I as Pe, J as st, K as rt, L as ot, M as Ke, N as nt, O as at, Q as lt } from "./sfx-uploader-Cp2gsWQK.js";
-import { R as Qt, T as Zt, V as ei } from "./sfx-uploader-Cp2gsWQK.js";
+import { D as Ve, E as Ye, F as ee, G as it, H as B, I as Pe, J as st, K as rt, L as ot, M as Ke, N as nt, O as at, Q as lt } from "./sfx-uploader-UxBgBt31.js";
+import { R as Qt, T as Zt, V as ei } from "./sfx-uploader-UxBgBt31.js";
 import { LitElement as w, css as g, nothing as x, html as a, svg as v } from "lit";
 import { property as p, state as h } from "lit/decorators.js";
 import { classMap as He } from "lit/directives/class-map.js";
@@ -196,7 +196,7 @@ function Gt(n, e) {
     }
   };
 }
-var ut = Object.defineProperty, M = (n, e, t, i) => {
+var ut = Object.defineProperty, V = (n, e, t, i) => {
   for (var s = void 0, o = n.length - 1, r; o >= 0; o--)
     (r = n[o]) && (s = r(e, t, s) || s);
   return s && ut(e, t, s), s;
@@ -298,22 +298,22 @@ ge.styles = g`
     }
   `;
 let A = ge;
-M([
+V([
   p({ attribute: !1 })
 ], A.prototype, "schema");
-M([
+V([
   p({ attribute: !1 })
 ], A.prototype, "meta");
-M([
+V([
   p({ attribute: !1 })
 ], A.prototype, "config");
-M([
+V([
   p({ attribute: !1 })
 ], A.prototype, "autocomplete");
-M([
+V([
   p({ type: Boolean })
 ], A.prototype, "disabled");
-M([
+V([
   h()
 ], A.prototype, "_collapsed");
 customElements.define("sfx-metadata-form", A);
@@ -740,7 +740,7 @@ const ve = class ve extends w {
     };
   }
   get _isRequired() {
-    return Me(this.field, this.config ?? void 0);
+    return Ve(this.field, this.config ?? void 0);
   }
   _onFieldBlur(e) {
     var r;
@@ -1315,17 +1315,17 @@ ke.styles = [
       }
     `
 ];
-let V = ke;
+let M = ke;
 me([
   h()
-], V.prototype, "_open");
+], M.prototype, "_open");
 me([
   h()
-], V.prototype, "_search");
+], M.prototype, "_search");
 me([
   h()
-], V.prototype, "_activeIndex");
-customElements.define("sfx-meta-multi-select-field", V);
+], M.prototype, "_activeIndex");
+customElements.define("sfx-meta-multi-select-field", M);
 function T(n, e) {
   var t, i;
   return ((t = n.label) == null ? void 0 : t.trim().toLowerCase()) === ((i = e.label) == null ? void 0 : i.trim().toLowerCase());
@@ -3694,6 +3694,10 @@ const Le = {
   "asset-attachments": a`<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
     ${v`<path d="M13.5 7.5L7.8 13.2a3.2 3.2 0 0 1-4.53-4.53l6-6a2.13 2.13 0 0 1 3.02 3.02l-6 6a1.07 1.07 0 0 1-1.51-1.51l5.3-5.3"/>`}
   </svg>`,
+  // Sibling-asset references — same paperclip as asset-attachments
+  "attachments-assets": a`<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    ${v`<path d="M13.5 7.5L7.8 13.2a3.2 3.2 0 0 1-4.53-4.53l6-6a2.13 2.13 0 0 1 3.02 3.02l-6 6a1.07 1.07 0 0 1-1.51-1.51l5.3-5.3"/>`}
+  </svg>`,
   // Ultratags — Lucide "tag" + sparkle (AI/auto-tags)
   ultratags: a`<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
     ${v`<path d="M8.5 1.5H3a1.5 1.5 0 0 0-1.5 1.5v5.5a1 1 0 0 0 .29.71l5.5 5.5a1 1 0 0 0 1.42 0l5.5-5.5a1 1 0 0 0 0-1.42L8.71 1.79A1 1 0 0 0 8 1.5z"/><circle cx="5" cy="5" r="0.75" fill="currentColor" stroke="none"/><path d="M12.5 1.5l0.5 1.5L14.5 3.5l-1.5 0.5L12.5 5.5l-0.5-1.5L10.5 3.5l1.5-0.5z" fill="currentColor" stroke="none"/>`}
@@ -3728,7 +3732,7 @@ const Te = class Te extends w {
     super.disconnectedCallback(), window.removeEventListener("resize", this._onResize), this._resizeTimer && (clearTimeout(this._resizeTimer), this._resizeTimer = null);
   }
   _isRequired(e) {
-    return Me(e, this.config ?? void 0);
+    return Ve(e, this.config ?? void 0);
   }
   _toggleGroup(e) {
     const t = new Set(this._collapsed);
@@ -3855,6 +3859,7 @@ const z = (E = class extends w {
       case "geopoint":
         return { latitude: "", longitude: "" };
       case "asset-attachments":
+      case "attachments-assets":
       case "ultratags":
       case "taxonomy-node":
         return null;
@@ -4229,7 +4234,7 @@ function ue(n, e) {
   );
   return (t == null ? void 0 : t.label) ?? String(e);
 }
-function Ve(n, e) {
+function Me(n, e) {
   if (e == null || e === "") return "";
   switch (n.type) {
     case "boolean":
@@ -4302,8 +4307,8 @@ function jt(n, e, t, i) {
   }
   return {
     kind: "scalar",
-    oldDisplay: Ve(n, o),
-    newDisplay: Ve(n, r),
+    oldDisplay: Me(n, o),
+    newDisplay: Me(n, r),
     oldEmpty: Ne(o),
     newEmpty: Ne(r)
   };
