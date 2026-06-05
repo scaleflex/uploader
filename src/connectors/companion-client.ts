@@ -185,6 +185,91 @@ export async function uploadRemoteFile(
   return res.json();
 }
 
+/** Metadata returned by Companion `/url/meta` for a remote URL. */
+export interface UrlMeta {
+  url: string;
+  name: string;
+  type: string;
+  size: number;
+}
+
+/**
+ * Ask Companion to HEAD/GET the remote URL and return basic metadata.
+ * Used before the actual upload so we can validate size against restrictions
+ * and show a real progress total.
+ *
+ * Companion's `url` provider has no OAuth token — public endpoint.
+ */
+export async function fetchUrlMeta(
+  companionUrl: string,
+  url: string,
+  signal?: AbortSignal,
+): Promise<UrlMeta> {
+  const base = stripSlash(companionUrl);
+  const res = await fetch(`${base}/url/meta`, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    credentials: 'same-origin',
+    body: JSON.stringify({ url }),
+    signal,
+  });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.message || `Could not fetch URL metadata (HTTP ${res.status})`);
+  }
+
+  return res.json();
+}
+
+/**
+ * Tell Companion to download the remote URL and upload it to the Scaleflex
+ * endpoint. Returns a socket token for WebSocket progress.
+ *
+ * Mirrors {@link uploadRemoteFile} but uses the `url` pseudo-provider —
+ * no auth token, no requestPath, and `url` is included in the body.
+ */
+export async function uploadFromUrl(
+  companionUrl: string,
+  url: string,
+  body: {
+    fileId: string;
+    endpoint: string;
+    headers: Record<string, string>;
+    size?: number;
+    metadata?: Record<string, unknown>;
+  },
+  signal?: AbortSignal,
+): Promise<{ token: string }> {
+  const base = stripSlash(companionUrl);
+  const res = await fetch(`${base}/url/get`, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    credentials: 'same-origin',
+    body: JSON.stringify({
+      url,
+      ...body,
+      httpMethod: 'POST',
+      useFormData: true,
+      fieldname: 'files[]',
+    }),
+    signal,
+  });
+
+  if (!res.ok) {
+    const errBody = await res.json().catch(() => null);
+    throw new Error(errBody?.message || `Companion URL upload failed (HTTP ${res.status})`);
+  }
+
+  return res.json();
+}
+
 /**
  * Revoke the provider's OAuth token on Companion.
  * Caller should also call removeToken() to clear local storage.

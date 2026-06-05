@@ -1,9 +1,13 @@
 import { parseMetadataSchema } from './schema-parser';
+import type { RawMetadata } from './schema.types';
 
+// The `type` parameter is widened to `string` for test ergonomics — the
+// factory's return is cast to RawMetadata so we don't need every test fixture
+// to use the exact MetadataFieldType union.
 const makeRawMetadata = (
   fields: Array<{ key: string; ckey: string; hide?: boolean; type?: string }> = [],
   groupName = 'General',
-) => ({
+): RawMetadata => ({
   model: [
     {
       applies_to: 'FILES' as const,
@@ -25,7 +29,7 @@ const makeRawMetadata = (
         },
       ],
     },
-  ],
+  ] as RawMetadata['model'],
   store: {
     force_filling_metadata_on_upload: false,
     regional_variants_groups: [],
@@ -172,6 +176,24 @@ describe('parseMetadataSchema', () => {
     };
     const schema = parseMetadataSchema(raw);
     expect(schema.fields).toHaveLength(0);
+  });
+
+  describe('productsEnabled', () => {
+    it('defaults to false when not provided', () => {
+      const schema = parseMetadataSchema(
+        makeRawMetadata([{ key: 't', ckey: 't' }]),
+      );
+      expect(schema.productsEnabled).toBe(false);
+    });
+
+    it('reflects the flag passed by the service', () => {
+      const schema = parseMetadataSchema(
+        makeRawMetadata([{ key: 't', ckey: 't' }]),
+        undefined,
+        true,
+      );
+      expect(schema.productsEnabled).toBe(true);
+    });
   });
 
   it('reads regional variants groups from store', () => {

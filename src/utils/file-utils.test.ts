@@ -1,4 +1,4 @@
-import { generateFileId, formatFileSize, getFileCategory, getFileExtension, guessMimeType } from './file-utils';
+import { generateFileId, formatFileSize, formatEta, getFileCategory, getFileExtension, guessMimeType } from './file-utils';
 
 describe('generateFileId', () => {
   it('returns unique IDs', () => {
@@ -35,6 +35,45 @@ describe('formatFileSize', () => {
 
   it('formats fractional sizes', () => {
     expect(formatFileSize(1536)).toBe('1.5 KB');
+  });
+
+  it('falls back to "0 B" for non-finite / missing input', () => {
+    expect(formatFileSize(NaN)).toBe('0 B');
+    expect(formatFileSize(Infinity)).toBe('0 B');
+    expect(formatFileSize(-1)).toBe('0 B');
+    expect(formatFileSize(undefined as unknown as number)).toBe('0 B');
+    expect(formatFileSize(null as unknown as number)).toBe('0 B');
+  });
+});
+
+describe('formatEta', () => {
+  it('returns "0s" for non-positive or non-finite input', () => {
+    expect(formatEta(0)).toBe('0s');
+    expect(formatEta(-5)).toBe('0s');
+    expect(formatEta(NaN)).toBe('0s');
+    expect(formatEta(Infinity)).toBe('0s');
+  });
+
+  it('formats seconds only when under a minute', () => {
+    expect(formatEta(45)).toBe('45s');
+    expect(formatEta(59)).toBe('59s');
+  });
+
+  it('formats minutes and seconds for sub-hour values', () => {
+    expect(formatEta(60)).toBe('1m');
+    expect(formatEta(90)).toBe('1m 30s');
+    expect(formatEta(99 * 60)).toBe('99m');
+  });
+
+  it('rolls up to hours once minutes exceed 99', () => {
+    expect(formatEta(100 * 60)).toBe('1h 40m');
+    expect(formatEta(336 * 60)).toBe('5h 36m');
+    expect(formatEta(6 * 3600)).toBe('6h');
+  });
+
+  it('drops seconds at hour scale', () => {
+    // 100m + 30s — seconds are intentionally dropped at hour scale
+    expect(formatEta(100 * 60 + 30)).toBe('1h 40m');
   });
 });
 

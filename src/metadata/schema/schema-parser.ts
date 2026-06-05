@@ -9,6 +9,7 @@ import type {
 export function parseMetadataSchema(
   metadata: RawMetadata,
   config?: MetadataConfig,
+  productsEnabled = false,
 ): MetadataSchema {
   const language = config?.language ?? 'en';
   const model = metadata.model ?? [];
@@ -54,5 +55,6 @@ export function parseMetadataSchema(
     forceFillingOnUpload,
     regionalVariantsGroups,
     language,
+    productsEnabled,
   };
 }

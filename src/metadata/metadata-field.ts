@@ -1,6 +1,7 @@
 import { LitElement, html, css, nothing } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import type { MetadataField, MetadataConfig } from './schema/schema.types';
+import { isUnsupportedField } from './schema/schema.types';
 import { validateField } from './schema/validation';
 import { isFieldRequired } from './schema/required-fields';
 import { mapValueToBackend, mapValueFromBackend } from './schema/value-transforms';
@@ -67,6 +68,9 @@ export class SfxMetadataFieldEl extends LitElement {
   /** Render the correct field editor based on field.type. */
   private _renderField(f: MetadataField, v: unknown) {
     const d = this.disabled;
+    if (isUnsupportedField(f)) {
+      return html`<sfx-meta-unsupported-field></sfx-meta-unsupported-field>`;
+    }
     switch (f.type) {
       case 'text':
       case 'attachment-uri':

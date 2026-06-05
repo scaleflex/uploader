@@ -1,4 +1,5 @@
 import type { MetadataField, MetadataFieldType } from '../schema/schema.types';
+import { isUnsupportedFieldType } from '../schema/schema.types';
 import type { UploadFile } from '../../store/store.types';
 import { mapValueToBackend } from '../schema/value-transforms';
 
@@ -23,13 +24,15 @@ export interface PendingOp {
 // Field-type → available operations
 // ---------------------------------------------------------------------------
 
-const ARRAY_TYPES: Set<MetadataFieldType> = new Set([
+/** Multi-value field types — bulk ops merge/dedup arrays. */
+export const ARRAY_TYPES: ReadonlySet<MetadataFieldType> = new Set([
   'multi-select',
   'tags',
   'integer-list',
 ]);
 
-const TEXT_TYPES: Set<MetadataFieldType> = new Set([
+/** Text-like field types — bulk ops concatenate / substring-remove strings. */
+export const TEXT_TYPES: ReadonlySet<MetadataFieldType> = new Set([
   'text',
   'textarea',
   'attachment-uri',
@@ -42,6 +45,7 @@ const TEXT_TYPES: Set<MetadataFieldType> = new Set([
 export function getAvailableOperations(
   fieldType: MetadataFieldType,
 ): BulkOperationDef[] {
+  if (isUnsupportedFieldType(fieldType)) return [];
   if (ARRAY_TYPES.has(fieldType)) {
     return [
       { key: 'SET', label: 'Set' },

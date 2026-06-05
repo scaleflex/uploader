@@ -1,12 +1,21 @@
-import { LitElement, html, nothing } from 'lit';
+import { LitElement, html, nothing, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
+import { classMap } from 'lit/directives/class-map.js';
 import type {
   MetadataSchema,
   MetadataField,
   MetadataConfig,
 } from '../schema/schema.types';
 import type { UploadFile } from '../../store/store.types';
+import type { Product } from '../../product/product.types';
+import {
+  PRODUCT_POSITION_FIELD_KEY,
+  PRODUCT_REF_FIELD_KEY,
+  isProductFieldKey,
+  productKeyOf,
+} from '../../product/product.fields';
 import { isEmpty } from '../schema/validation';
+import { missingRequiredFieldKeysInStaged } from '../schema/required-fields';
 import { computeBulkResult, isValueRequiredForPreview, type BulkOperation, type PendingOp } from './bulk-operations';
 import { bulkModalStyles } from './bulk-metadata.styles';
 
@@ -27,11 +36,25 @@ export class SfxBulkMetadataModal extends LitElement {
 
   // --- Internal state ---
   @state() private _activeFieldKey = '';
+  /**
+   * Per-file staged values. Product fields are stored alongside metadata under
+   * synthetic keys (`product.ref` / `product.position`) so the existing
+   * sidebar / op-bar / table flow can drive them without modification.
+   * Split back into meta vs product changes on Save.
+   */
   @state() private _staged: Map<string, Map<string, unknown>> = new Map();
   @state() private _selected: Set<string> = new Set();
   @state() private _sortAsc = true;
   @state() private _pendingOp: PendingOp | null = null;
   @state() private _confirmVisible = false;
+  /**
+   * Derived from `_staged` / `schema` / `config` in `willUpdate`. Held as state
+   * (rather than computed getters) so the Set identity is preserved when the
+   * contents don't change — that prevents the sidebar from re-rendering on every
+   * unrelated state change and keeps `render()` from doing the iteration twice.
+   */
+  @state() private _missingRequiredFieldKey: string | null = null;
+  @state() private _missingRequiredKeys: Set<string> = new Set();
   private _confirmResolve: ((ok: boolean) => void) | null = null;
 
   // Snapshot of original files for diff on save
@@ -81,6 +104,7 @@ export class SfxBulkMetadataModal extends LitElement {
     const staged = new Map<string, Map<string, unknown>>();
     const selected = new Set<string>();
     const originals = new Map<string, UploadFile>();
+    const productsEnabled = this.schema?.productsEnabled === true;
 
     for (const file of this.files) {
       const fileMap = new Map<string, unknown>();
@@ -88,6 +112,13 @@ export class SfxBulkMetadataModal extends LitElement {
         for (const [k, v] of Object.entries(file.meta)) {
           fileMap.set(k, v);
         }
+      }
+      // Seed product values into the unified staging map under synthetic keys
+      // so the sidebar / op-bar / table all drive them through the same flow.
+      if (productsEnabled) {
+        const p = file.product;
+        if (p.ref !== undefined) fileMap.set(PRODUCT_REF_FIELD_KEY, p.ref);
+        if (p.position !== undefined) fileMap.set(PRODUCT_POSITION_FIELD_KEY, p.position);
       }
       staged.set(file.id, fileMap);
       selected.add(file.id);
@@ -98,11 +129,11 @@ export class SfxBulkMetadataModal extends LitElement {
     this._selected = selected;
     this._originalFiles = originals;
 
-    // Set active field — prefer caller-supplied initial field, else first available
+    // Set active field — prefer caller-supplied initial field, else first available.
     const initial = this.initialFieldKey;
-    if (initial && this.schema?.fieldsByKey?.has(initial)) {
+    if (initial && this.schema?.fieldsByKey.has(initial)) {
       this._activeFieldKey = initial;
-    } else if (this.schema?.fields?.length > 0) {
+    } else if (this.schema && this.schema.fields.length > 0) {
       this._activeFieldKey = this.schema.fields[0].key;
     }
   }
@@ -137,13 +168,68 @@ export class SfxBulkMetadataModal extends LitElement {
     return this.schema?.fieldsByKey?.get(this._activeFieldKey);
   }
 
+  /**
+   * Reads the original value for diff/fallback. For real metadata fields this
+   * is `file.meta[key]`; for synthetic product fields it's `file.product[pk]`.
+   */
+  private _originalValue(fileId: string, fieldKey: string): unknown {
+    const file = this._originalFiles.get(fileId);
+    if (!file) return undefined;
+    if (isProductFieldKey(fieldKey)) {
+      const pk = productKeyOf(fieldKey);
+      return pk ? file.product?.[pk] : undefined;
+    }
+    return file.meta?.[fieldKey];
+  }
+
+  /**
+   * Recomputes `_missingRequiredFieldKey` + `_missingRequiredKeys` from the
+   * current staged map. Called from `willUpdate` when one of the inputs
+   * (schema / config / staged) changes. Preserves Set identity when the
+   * contents are unchanged so the sidebar re-renders only when its inputs
+   * actually move.
+   */
+  private _refreshMissingRequired(): void {
+    const nextKeys = this.schema
+      ? missingRequiredFieldKeysInStaged(
+          this._staged,
+          this._originalFiles,
+          this.schema,
+          this.config ?? undefined,
+        )
+      : new Set<string>();
+
+    // Derive the "first" key in schema iteration order so the footer label is
+    // stable. Cheap O(fields) walk over an O(1) Set check.
+    let nextFirst: string | null = null;
+    if (this.schema && nextKeys.size > 0) {
+      for (const field of this.schema.fields) {
+        if (nextKeys.has(field.key)) { nextFirst = field.key; break; }
+      }
+    }
+
+    if (nextFirst !== this._missingRequiredFieldKey) {
+      this._missingRequiredFieldKey = nextFirst;
+    }
+
+    // Set identity preservation: only swap the reference when contents differ.
+    const prev = this._missingRequiredKeys;
+    let changed = prev.size !== nextKeys.size;
+    if (!changed) {
+      for (const k of nextKeys) {
+        if (!prev.has(k)) { changed = true; break; }
+      }
+    }
+    if (changed) this._missingRequiredKeys = nextKeys;
+  }
+
   /** Fields where ANY file has a non-empty staged value that differs from original. */
   private get _filledFields(): Set<string> {
     const filled = new Set<string>();
     for (const field of this.schema?.fields ?? []) {
       for (const [fileId, fileMap] of this._staged) {
         const stagedVal = fileMap.get(field.key);
-        const origVal = this._originalFiles.get(fileId)?.meta[field.key];
+        const origVal = this._originalValue(fileId, field.key);
         if (
           stagedVal !== undefined &&
           !isEmpty(stagedVal) &&
@@ -205,6 +291,21 @@ export class SfxBulkMetadataModal extends LitElement {
     }
   };
 
+  willUpdate(changed: PropertyValues) {
+    // Refresh the required-field gate whenever its inputs change. `_staged`
+    // covers user edits; `schema` / `config` cover prop changes from the
+    // parent (e.g. switching projects). `_originalFiles` is captured once in
+    // `_initStaged`, and that assignment lands in the same tick as the initial
+    // `_staged` set — so depending on `_staged` is sufficient.
+    if (
+      changed.has('_staged') ||
+      changed.has('schema') ||
+      changed.has('config')
+    ) {
+      this._refreshMissingRequired();
+    }
+  }
+
   updated(changed: Map<string, unknown>) {
     super.updated?.(changed);
     // Auto-focus the Cancel button when confirm dialog appears
@@ -234,6 +335,19 @@ export class SfxBulkMetadataModal extends LitElement {
     this._activeFieldKey = e.detail.fieldKey;
   };
 
+  private _onJumpToNextRequired = async () => {
+    const key = this._missingRequiredFieldKey;
+    if (!key) return;
+    // Defense-in-depth: the footer button is rendered as disabled "Save" when
+    // the user is already viewing the missing field (see `blockedAtField` in
+    // render()), so this branch is unreachable via the UI. Kept to guard
+    // programmatic callers and skip the no-op discard-pending prompt.
+    if (this._activeFieldKey === key) return;
+    if (!(await this._confirmDiscardPending())) return;
+    this._pendingOp = null;
+    this._activeFieldKey = key;
+  };
+
   private _onBulkApply = (
     e: CustomEvent<{ operation: BulkOperation; value: unknown }>,
   ) => {
@@ -247,10 +361,11 @@ export class SfxBulkMetadataModal extends LitElement {
     for (const fileId of this._selected) {
       const fileStaged = this._staged.get(fileId);
 
-      // Use staged value if available, otherwise fall back to original file meta
+      // Use staged value if available; otherwise fall back to the original
+      // value (meta or product, depending on the field key).
       const currentStaged = fileStaged?.has(field.key)
         ? fileStaged.get(field.key)
-        : this._originalFiles.get(fileId)?.meta?.[field.key] ?? null;
+        : this._originalValue(fileId, field.key) ?? null;
 
       const result = computeBulkResult(
         field,
@@ -301,36 +416,67 @@ export class SfxBulkMetadataModal extends LitElement {
   // -----------------------------------------------------------------------
 
   private _onSave = async () => {
+    // Belt-and-braces: the footer's primary button is swapped out when there
+    // are missing required fields, but defend the save path itself in case
+    // any code path bypasses the visual gate.
+    if (this._missingRequiredFieldKey != null) return;
     if (!(await this._confirmDiscardPending())) return;
 
-    const changes: Array<{ fileId: string; meta: Record<string, unknown> }> = [];
+    const metaChanges: Array<{ fileId: string; meta: Record<string, unknown> }> = [];
+    const productChanges: Array<{ fileId: string; product: Partial<Product> }> = [];
 
     for (const [fileId, fileStagedMap] of this._staged) {
       const originalFile = this._originalFiles.get(fileId);
       if (!originalFile) continue;
 
       const changedMeta: Record<string, unknown> = {};
+      const changedProduct: Partial<Product> = {};
+
       for (const [fieldKey, stagedVal] of fileStagedMap) {
-        if (
-          JSON.stringify(stagedVal) !==
-          JSON.stringify(originalFile.meta[fieldKey])
-        ) {
+        const origVal = this._originalValue(fileId, fieldKey);
+        if (JSON.stringify(stagedVal) === JSON.stringify(origVal)) continue;
+
+        if (isProductFieldKey(fieldKey)) {
+          const pk = productKeyOf(fieldKey);
+          if (!pk) continue;
+          // Empty string / null on a product key means "clear" — represented as
+          // `undefined` so the merge helper drops the field.
+          const isEmptyClear = stagedVal === '' || stagedVal == null;
+          if (pk === 'position') {
+            changedProduct.position = isEmptyClear ? undefined : Number(stagedVal);
+          } else {
+            changedProduct.ref = isEmptyClear ? undefined : String(stagedVal);
+          }
+        } else {
           changedMeta[fieldKey] = stagedVal;
         }
       }
 
       if (Object.keys(changedMeta).length > 0) {
-        changes.push({ fileId, meta: changedMeta });
+        metaChanges.push({ fileId, meta: changedMeta });
+      }
+      if (Object.keys(changedProduct).length > 0) {
+        productChanges.push({ fileId, product: changedProduct });
       }
     }
 
     this.dispatchEvent(
       new CustomEvent('metadata-save-batch', {
-        detail: { changes },
+        detail: { changes: metaChanges },
         bubbles: true,
         composed: true,
       }),
     );
+
+    if (productChanges.length > 0) {
+      this.dispatchEvent(
+        new CustomEvent('product-save-batch', {
+          detail: { changes: productChanges },
+          bubbles: true,
+          composed: true,
+        }),
+      );
+    }
 
     this._emitClose();
   };
@@ -394,6 +540,22 @@ export class SfxBulkMetadataModal extends LitElement {
     const sortedFiles = this._sortedFiles;
     const allSelected = this._selected.size === this.files.length && this.files.length > 0;
     const someSelected = this._selected.size > 0 && !allSelected;
+    const missingKey = this._missingRequiredFieldKey;
+    // Fall back to the field key when the schema title is empty (malformed
+    // schemas), so the label never reads "Next required:  →" with a missing
+    // word.
+    const missingTitle = missingKey
+      ? this.schema.fieldsByKey.get(missingKey)?.title || missingKey
+      : '';
+    // When the user is already viewing the field that's blocking save, the
+    // "Next required" label would be misleading (they're already here) — and
+    // the disabled-button tooltip explaining "why" is invisible in Firefox /
+    // Safari. Render disabled "Save" instead: it communicates the goal
+    // ("you can't save yet") and lets the sidebar's bold red asterisk on the
+    // active field carry the "where" explanation.
+    const blockedAtField =
+      missingKey != null && this._activeFieldKey === missingKey;
+    const showNextRequiredCta = missingKey != null && !blockedAtField;
 
     return html`
       <div class="fm-overlay" @click=${this._onClose}>
@@ -415,6 +577,7 @@ export class SfxBulkMetadataModal extends LitElement {
               .schema=${this.schema}
               .activeFieldKey=${this._activeFieldKey}
               .filledFields=${this._filledFields}
+              .missingRequiredKeys=${this._missingRequiredKeys}
               .config=${this.config}
               @field-select=${this._onFieldSelect}
             ></sfx-bulk-meta-sidebar>
@@ -482,7 +645,27 @@ export class SfxBulkMetadataModal extends LitElement {
             </button>
             <div class="spacer"></div>
             <button class="btn-ghost" @click=${this._onCancel}>Cancel</button>
-            <button class="btn-primary" @click=${this._onSave}>Save</button>
+            <!-- Single primary button so transitions between Save and "Next
+                 required" don't recreate the DOM node (preserves focus + the
+                 hover/active animation). Class, handler, content, and disabled
+                 state all swap together.
+                 Three states:
+                   1. No required field missing      → "Save" (enabled)
+                   2. Missing field is NOT active    → "Next required: X →"
+                   3. Missing field IS active        → "Save" (disabled) -->
+            <button
+              class=${classMap({
+                'btn-primary': true,
+                'btn-primary--next': showNextRequiredCta,
+              })}
+              @click=${showNextRequiredCta ? this._onJumpToNextRequired : this._onSave}
+              ?disabled=${blockedAtField}
+              title=${showNextRequiredCta ? `Jump to ${missingTitle}` : ''}
+            >
+              ${showNextRequiredCta
+                ? html`<span class="btn-primary-label">Next required: ${missingTitle}</span><span class="btn-primary-arrow" aria-hidden="true">→</span>`
+                : 'Save'}
+            </button>
           </div>
 
           ${this._confirmVisible ? html`

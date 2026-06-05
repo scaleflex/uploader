@@ -22,7 +22,13 @@ export class SfxMetaNumberField extends MetadataFieldBase {
   }
 
   private _onKeydown(e: KeyboardEvent) {
-    if (e.key === 'Escape') this._emit('field-escape');
+    if (e.key === 'Escape') {
+      this._emit('field-escape');
+      return;
+    }
+    if ((e.key === 'e' || e.key === 'E') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      e.preventDefault();
+    }
   }
 
   render() {

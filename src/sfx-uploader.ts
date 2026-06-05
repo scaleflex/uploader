@@ -2,16 +2,19 @@ import { LitElement, html, css, nothing, render as litRender } from "lit";
 import { initI18n, missingKeysHelper } from "./i18n";
 import { property, state } from "lit/decorators.js";
 import { cspStyle } from "./utils/csp-style";
+import { resolveLocateUrl } from "./utils/locate-url";
 import { createStore, Store } from "./store";
 import { addFile, removeFile } from "./store/helpers";
 import { StoreController } from "./controllers/store.controller";
 import {
   UploadEngine,
+  isActive,
   type UploadEngineConfig,
   type TusConfig,
 } from "./engine";
 import type { SfxDropZone } from "./components/drop-zone";
 import type {
+  TFunction,
   UploaderState,
   UploadFile,
   UploadRestrictions,
@@ -52,6 +55,15 @@ import {
   firstMissingRequiredFieldKey,
   isFieldRequired,
 } from "./metadata/schema/required-fields";
+import type { Product } from "./product/product.types";
+import { mergeProductPatch } from "./product/product.constants";
+import {
+  injectProductGroup,
+  isProductFieldKey,
+  productKeyOf,
+  PRODUCT_REF_FIELD_KEY,
+  PRODUCT_POSITION_FIELD_KEY,
+} from "./product/product.fields";
 import type { SfxToast } from "./components/toast";
 
 /** Providers that use search instead of OAuth file browsing. */
@@ -94,6 +106,10 @@ export interface UploaderCallbacks {
   onOpen?: () => void;
   onClose?: () => void;
   onCancel?: () => void;
+  /** Fires when the uploader is collapsed to the floating pill (auto on upload start, manual via the minimize button). */
+  onMinimize?: () => void;
+  /** Fires when the uploader is restored from the floating pill back to the modal. */
+  onRestore?: () => void;
   onFilePreview?: (file: UploadFile) => void;
   onFillMetadata?: (files: UploadFile[]) => void;
   onCompleteAction?: () => void;
@@ -184,22 +200,49 @@ export interface UploaderConfig {
   /** Layout for the import-from sources section: horizontal pills (default) or cards grid. */
   sourcesLayout?: "pills" | "cards";
   /**
-   * Override the URL opened by the "Locate" button in the last-upload review
-   * screen. Receives the completed file and should return the URL the host
-   * wants Locate to open (typically a dashboard / file-manager URL pointing
-   * at the file's containing folder). Return `null` / `undefined` to fall
-   * back to the file's own public URL (default behaviour).
+   * Host-supplied builder for the "Locate" button URL. Receives the
+   * completed file and returns the URL Locate should open. Return
+   * `null` / `undefined` to fall back to the `adminUrl`-based default
+   * (see `adminUrl`), which itself defaults to `window.location.origin`
+   * when not set — so in practice Locate will navigate as long as the
+   * uploader is running in a browser and the file has a UUID.
+   *
+   * To suppress the auto-navigation even when a URL would be resolved
+   * (e.g. open it via the host's client-side router instead of a new
+   * tab), call `event.preventDefault()` on the `sfx-file-locate` public
+   * event.
+   *
+   * Pairs with `showLocateButton: true`.
    *
    * Example:
    * ```ts
    * getLocateUrl: (file) =>
-   *   `https://app.scaleflex.com/projects/${PROJECT_ID}/files?id=${file.response?.file?.uuid}`
+   *   `https://app.example.com/dam?asset=${file.response?.file?.uuid}`
    * ```
    */
   getLocateUrl?: (file: UploadFile) => string | null | undefined;
   /**
-   * Show the "Locate" button on completed file tiles in the review screen.
-   * When clicked, fires the `sfx-file-locate` event and the `onFileLocate` callback.
+   * Base URL of the Filerobot admin / DAM app — used to build the
+   * default Locate target when `getLocateUrl` is not provided. The
+   * uploader navigates to `${adminUrl}/library?lf=<base64(uuid)>`, the
+   * same deep-link the admin uses internally to scroll to and select a
+   * file in its library tree. Trailing slashes are ignored.
+   *
+   * Defaults to `window.location.origin`, which is correct when the
+   * uploader is embedded inside the admin itself (the common case).
+   * Set explicitly for cross-origin embeds, custom domains, or
+   * whitelabel deployments where the admin lives on a different host.
+   */
+  adminUrl?: string;
+  /**
+   * Show the "Locate" button on completed files. Renders in two places:
+   *   - As a full-width labelled button on the review-screen tile.
+   *   - As a compact icon in the floating-panel per-file row, next to
+   *     the success checkmark.
+   * When clicked, fires the `sfx-file-locate` event and the `onFileLocate`
+   * callback, then opens the resolved Locate URL (see `getLocateUrl` /
+   * `adminUrl`) in a new tab unless the event's default is prevented or
+   * the file has no UUID to deep-link to.
    * Default: false (hidden).
    */
   showLocateButton?: boolean;
@@ -342,7 +385,7 @@ export interface UploaderConfig {
 /** Default tus-related fields for new UploadFile objects. */
 const TUS_DEFAULTS = { isTus: false, tusUploadUrl: null } as const;
 
-type UploaderPhase = "empty" | "ready" | "uploading" | "complete";
+export type UploaderPhase = "empty" | "ready" | "uploading" | "complete";
 
 export class SfxUploader extends LitElement {
   static styles = css`
@@ -378,6 +421,9 @@ export class SfxUploader extends LitElement {
       --sfx-up-backdrop: rgba(0, 0, 0, 0.45);
       --sfx-up-ring: var(--ring, oklch(0.578 0.198 268.129 / 0.7));
       --sfx-up-max-height: 88vh;
+      --sfx-up-modal-max-width: 1100px;
+      --sfx-up-bulk-modal-width: 980px;
+      --sfx-up-bulk-modal-height: 82vh;
       --sfx-up-checker-bg: #fff;
       --sfx-up-checker-tile: #f0f0f0;
       /* Fullscreen overlay z-index stack — single source of truth so
@@ -407,7 +453,7 @@ export class SfxUploader extends LitElement {
         0 28px 80px rgba(0, 0, 0, 0.2),
         0 4px 16px rgba(0, 0, 0, 0.06);
       width: 100%;
-      max-width: 1100px;
+      max-width: var(--sfx-up-modal-max-width, 1100px);
       height: var(--sfx-up-max-height, 88vh);
       display: flex;
       flex-direction: column;
@@ -1371,6 +1417,120 @@ export class SfxUploader extends LitElement {
       color: var(--sfx-up-error, #dc2626);
     }
 
+    /* --- Per-file controls inside the overlay --- */
+    .upload-overlay-files {
+      width: 100%;
+      max-width: 520px;
+      max-height: 240px;
+      overflow-y: auto;
+      margin: 0 0 16px;
+      border: 1px solid var(--sfx-up-border, #e2e8f0);
+      border-radius: 8px;
+      background: var(--sfx-up-bg, #fff);
+    }
+
+    .upload-overlay-file {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--sfx-up-border, #e2e8f0);
+    }
+
+    .upload-overlay-file:last-child {
+      border-bottom: none;
+    }
+
+    .upload-overlay-file-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .upload-overlay-file-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--sfx-up-text, #1e293b);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .upload-overlay-file-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .upload-overlay-file-bar {
+      flex: 1;
+      height: 3px;
+      background: var(--sfx-up-border, #e2e8f0);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .upload-overlay-file-bar-fill {
+      height: 100%;
+      background: var(--sfx-up-primary, #2563eb);
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+
+    .upload-overlay-file-bar-fill.muted {
+      background: var(--sfx-up-text-muted, #94a3b8);
+    }
+
+    .upload-overlay-file-pct {
+      font-size: 11px;
+      color: var(--sfx-up-text-muted, #94a3b8);
+      min-width: 32px;
+      text-align: right;
+    }
+
+    .upload-overlay-file-actions {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .upload-overlay-file-btn {
+      width: 26px;
+      height: 26px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--sfx-up-text-muted, #94a3b8);
+      padding: 0;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .upload-overlay-file-btn:hover {
+      background: var(--sfx-up-hover, #f1f5f9);
+      color: var(--sfx-up-text, #1e293b);
+    }
+
+    .upload-overlay-file-btn.del:hover {
+      color: var(--sfx-up-error, #dc2626);
+    }
+
+    .upload-overlay-file-btn.paused {
+      color: var(--sfx-up-warning, #d97706);
+    }
+
+    .upload-overlay-file-btn.paused:hover {
+      color: var(--sfx-up-warning, #d97706);
+    }
+
+    .upload-overlay-file-btn svg {
+      width: 14px;
+      height: 14px;
+    }
+
     .upload-header {
       justify-content: space-between;
     }
@@ -1419,8 +1579,8 @@ export class SfxUploader extends LitElement {
     /* --- Floating upload card (Variant 3 style) --- */
     .upload-float {
       position: fixed;
-      bottom: 24px;
-      right: 24px;
+      bottom: calc(24px + var(--sfx-up-float-offset-y, 0px));
+      right: calc(24px + var(--sfx-up-float-offset-x, 0px));
       z-index: 10000;
       width: 470px;
       border-radius: 12px;
@@ -1431,6 +1591,7 @@ export class SfxUploader extends LitElement {
       overflow: hidden;
       font-family: inherit;
       animation: floatSlideIn 0.3s ease both;
+      transition: bottom 0.25s ease, right 0.25s ease;
     }
 
     .float-header {
@@ -2277,14 +2438,26 @@ export class SfxUploader extends LitElement {
 
   /** Open the uploader (modal mode). */
   open() {
+    const wasMinimized = this._isMinimized;
     if (this._isMinimized) {
       this._isMinimized = false;
       this._isPillExpanded = false;
     }
-    if (this._isOpen) return;
+    if (this._isOpen) {
+      if (wasMinimized) {
+        this.config?.callbacks?.onRestore?.();
+        this._dispatchPublic(PublicEvents.RESTORE, { mode: 'modal' });
+        this.requestUpdate();
+      }
+      return;
+    }
     this._isOpen = true;
     this.config?.callbacks?.onOpen?.();
     this._dispatchPublic(PublicEvents.OPEN, {});
+    if (wasMinimized) {
+      this.config?.callbacks?.onRestore?.();
+      this._dispatchPublic(PublicEvents.RESTORE, { mode: 'modal' });
+    }
     this.requestUpdate();
   }
 
@@ -2292,7 +2465,33 @@ export class SfxUploader extends LitElement {
   close() {
     if (!this._isOpen) return;
     this._isOpen = false;
-    // Cancel any pending closeOnComplete timer so it doesn't fire after manual close
+    this._runCloseCleanup();
+  }
+
+  /** Current upload phase: 'empty' | 'ready' | 'uploading' | 'complete'.
+   *  Use to decide whether it's safe to call dismissPanel() without cancelling uploads. */
+  getStatus(): UploaderPhase {
+    return this._phase;
+  }
+
+  /** Hide the panel in any state (modal, floating card, or minimized pill).
+   *  If uploads are in progress they are cancelled and `sfx-cancel` fires before `sfx-close`.
+   *  Check getStatus() first if you only want to dismiss after completion. */
+  dismissPanel() {
+    if (this._phase === "uploading") {
+      this._engine?.cancelAll();
+      this.config?.callbacks?.onCancel?.();
+      this._dispatchPublic(PublicEvents.CANCEL, {});
+    }
+    this._isMinimized = false;
+    this._isPillExpanded = false;
+    this._isOpen = false;
+    this._runCloseCleanup();
+  }
+
+  /** Shared cleanup for `close()` and `dismissPanel()` — clears the auto-close
+   *  timer, honors `clearOnClose`, resets preview state, fires `sfx-close`. */
+  private _runCloseCleanup() {
     if (this._closeOnCompleteTimer) {
       clearTimeout(this._closeOnCompleteTimer);
       this._closeOnCompleteTimer = null;
@@ -2339,9 +2538,15 @@ export class SfxUploader extends LitElement {
 
     this._engine.uploadAll();
 
-    if (this.config?.minimizeOnUpload && this.config?.mode !== "inline") {
+    if (
+      this.config?.minimizeOnUpload &&
+      this.config?.mode !== "inline" &&
+      !this._isMinimized
+    ) {
       this._isMinimized = true;
       this._isPillExpanded = true;
+      this.config?.callbacks?.onMinimize?.();
+      this._dispatchFloatGeometryEvent(PublicEvents.MINIMIZE);
       this.requestUpdate();
     }
   }
@@ -2450,6 +2655,47 @@ export class SfxUploader extends LitElement {
     if (changed) this._store.setState({ files: next });
   }
 
+  /**
+   * Update product fields (ref + position) for a single file. The patch is
+   * merged onto the existing `product` object. Passing `undefined` for a key
+   * clears it. Only files in modifiable statuses are affected.
+   */
+  updateFileProduct(fileId: string, product: Partial<Product>): void {
+    const current = this._store.getState().files;
+    const existing = current.get(fileId);
+    if (!existing || !SfxUploader._MODIFIABLE_STATUSES.has(existing.status))
+      return;
+
+    const next = new Map(current);
+    next.set(fileId, {
+      ...existing,
+      product: mergeProductPatch(existing.product, product),
+    });
+    this._store.setState({ files: next });
+  }
+
+  /** Batch-update product fields for multiple files. */
+  updateFilesProduct(
+    updates: Array<{ fileId: string; product: Partial<Product> }>,
+  ): void {
+    const current = this._store.getState().files;
+    const next = new Map(current);
+    let changed = false;
+
+    for (const { fileId, product } of updates) {
+      const existing = current.get(fileId);
+      if (!existing || !SfxUploader._MODIFIABLE_STATUSES.has(existing.status))
+        continue;
+      next.set(fileId, {
+        ...existing,
+        product: mergeProductPatch(existing.product, product),
+      });
+      changed = true;
+    }
+
+    if (changed) this._store.setState({ files: next });
+  }
+
   // --- Lifecycle ---
 
   updated(changed: Map<string, unknown>) {
@@ -2501,7 +2747,7 @@ export class SfxUploader extends LitElement {
     const style = document.createElement("style");
     style.setAttribute("data-sfx-upload-float-styles", "");
     style.textContent = `
-      [data-sfx-upload-float] .upload-float { position:fixed; bottom:24px; right:24px; z-index:10000; width:470px; border-radius:12px; background:#fff; box-shadow:0 8px 32px rgba(0,0,0,0.12),0 2px 8px rgba(0,0,0,0.06); overflow:hidden; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; animation:sfxFloatIn .3s ease both; }
+      [data-sfx-upload-float] .upload-float { position:fixed; bottom:calc(24px + var(--sfx-up-float-offset-y, 0px)); right:calc(24px + var(--sfx-up-float-offset-x, 0px)); z-index:10000; width:470px; border-radius:12px; background:#fff; box-shadow:0 8px 32px rgba(0,0,0,0.12),0 2px 8px rgba(0,0,0,0.06); overflow:hidden; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; animation:sfxFloatIn .3s ease both; transition:bottom .25s ease, right .25s ease; }
       [data-sfx-upload-float] .float-header { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-bottom:1px solid #e8edf5; }
       [data-sfx-upload-float] .float-header-left { display:flex; align-items:center; gap:8px; }
       [data-sfx-upload-float] .float-icon { width:28px; height:28px; border-radius:6px; background:#eff6ff; color:#2563eb; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
@@ -2546,6 +2792,14 @@ export class SfxUploader extends LitElement {
       [data-sfx-upload-float] .float-item-retry { width:24px; height:24px; border:none; background:none; color:#2563eb; cursor:pointer; padding:4px; flex-shrink:0; display:flex; align-items:center; justify-content:center; border-radius:4px; }
       [data-sfx-upload-float] .float-item-retry svg { width:14px; height:14px; }
       [data-sfx-upload-float] .float-item-retry:hover { background:#f1f5f9; color:#1d4ed8; }
+      [data-sfx-upload-float] .float-item-act { width:24px; height:24px; border:none; background:none; color:#64748b; cursor:pointer; padding:4px; flex-shrink:0; display:flex; align-items:center; justify-content:center; border-radius:4px; }
+      [data-sfx-upload-float] .float-item-act svg { width:14px; height:14px; }
+      [data-sfx-upload-float] .float-item-act:hover { background:#f1f5f9; color:#1e293b; }
+      [data-sfx-upload-float] .float-item-act.del:hover { color:#ef4444; }
+      [data-sfx-upload-float] .float-item-act.paused { color:#d97706; }
+      [data-sfx-upload-float] .float-item-act.paused:hover { color:#d97706; background:#fef3c7; }
+      [data-sfx-upload-float] .float-item-act.locate { color:#2563eb; }
+      [data-sfx-upload-float] .float-item-act.locate:hover { color:#1d4ed8; background:#eff6ff; }
       [data-sfx-upload-float] .float-collapsed { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; width:470px; border-radius:12px; }
       [data-sfx-upload-float] .float-collapsed-left { display:flex; align-items:center; gap:8px; }
       [data-sfx-upload-float] .float-collapsed-spinner { width:18px; height:18px; border:2.5px solid #e8edf5; border-top-color:#2563eb; border-radius:50%; animation:sfxSpin .8s linear infinite; flex-shrink:0; }
@@ -2570,20 +2824,30 @@ export class SfxUploader extends LitElement {
     const files = [...this._storeCtrl.state.files.values()];
     if (this._isMinimized && files.length > 0) {
       this._injectFloatStyles();
+      const justCreated = !this._portalContainer;
       if (!this._portalContainer) {
         this._portalContainer = document.createElement("div");
         this._portalContainer.setAttribute("data-sfx-upload-float", "");
         document.body.appendChild(this._portalContainer);
       }
+      this._syncPortalOffsetVars();
       litRender(this._renderFloatingPill(files), this._portalContainer);
+      if (justCreated && !this._floatShownDispatched) {
+        this._floatShownDispatched = true;
+        requestAnimationFrame(() => {
+          this._dispatchPublic(PublicEvents.PANEL_SHOWN, this._measureFloatGeometry());
+        });
+      }
     } else if (this._portalContainer) {
       litRender(nothing, this._portalContainer);
       this._portalContainer.remove();
       this._portalContainer = null;
+      this._floatShownDispatched = false;
     }
   }
 
   private _portalContainer: HTMLDivElement | null = null;
+  private _hostStyleObserver: MutationObserver | null = null;
 
   connectedCallback() {
     super.connectedCallback();
@@ -2597,6 +2861,13 @@ export class SfxUploader extends LitElement {
     this._hasStoredReview = id != null && lastUploadStore.exists(id);
     // Initialise i18n (fire-and-forget — failure is non-fatal)
     void this._initI18n(typeof navigator !== 'undefined' ? navigator.language : undefined);
+    // Observe inline-style changes on the host so float-offset CSS vars set
+    // via `el.style.setProperty('--sfx-up-float-offset-x', ...)` reach the
+    // portalled pill (which lives in document.body, outside the host's subtree).
+    if (typeof MutationObserver !== 'undefined') {
+      this._hostStyleObserver = new MutationObserver(() => this._syncPortalOffsetVars());
+      this._hostStyleObserver.observe(this, { attributes: true, attributeFilter: ['style'] });
+    }
   }
 
   private async _initI18n(locale?: string) {
@@ -2637,6 +2908,8 @@ export class SfxUploader extends LitElement {
   disconnectedCallback() {
     super.disconnectedCallback();
     document.removeEventListener("keydown", this._onKeyDown);
+    this._hostStyleObserver?.disconnect();
+    this._hostStyleObserver = null;
     this._unsubStoreEvents?.();
     this._unsubStoreEvents = null;
     this._prevStoreState = null;
@@ -2723,6 +2996,7 @@ export class SfxUploader extends LitElement {
         apiBase: this._apiBase,
         authHeaders: this._authHeaders,
         tusConfig: this._normalizeTusConfig(),
+        companionUrl: cfg.connectors?.companionUrl,
         resolveUploadParams: this._buildUploadParamsResolver(),
       });
       this._preloadMetadataSchema(cfg);
@@ -2742,6 +3016,7 @@ export class SfxUploader extends LitElement {
         apiBase: this._apiBase,
         authHeaders: this._authHeaders,
         tusConfig: this._normalizeTusConfig(),
+        companionUrl: cfg.connectors?.companionUrl,
         resolveUploadParams: this._buildUploadParamsResolver(),
       });
       this._preloadMetadataSchema(cfg);
@@ -2785,7 +3060,23 @@ export class SfxUploader extends LitElement {
 
   private _normalizeTusConfig(): TusConfig | undefined {
     const raw = this.config?.tusConfig;
-    return raw === true ? {} : raw || undefined;
+    const base: TusConfig | undefined =
+      raw === true ? {} : raw || undefined;
+    if (!base) return undefined;
+
+    // Derive tus endpoint and JSON base from the configured Companion host
+    // so region-optimal connector routing (e.g. Hub's "fastest connector"
+    // logic) flows through to tus uploads. Without this the new Uploader
+    // would always hit the hard-coded eu-on-24001 host even when a closer
+    // connector is configured. Explicit `endpoint`/`jsonBase` still win.
+    const companion = this.config?.connectors?.companionUrl;
+    if (!companion) return base;
+    const trimmed = companion.replace(/\/+$/, '');
+    return {
+      ...base,
+      endpoint: base.endpoint ?? `${trimmed}/files`,
+      jsonBase: base.jsonBase ?? `${trimmed}/json`,
+    };
   }
 
   /**
@@ -2839,6 +3130,7 @@ export class SfxUploader extends LitElement {
         apiBase: this._apiBase,
         authHeaders: this._authHeaders,
         tusConfig: this._normalizeTusConfig(),
+        companionUrl: this.config?.connectors?.companionUrl,
         resolveUploadParams: this._buildUploadParamsResolver(),
         transformPreviewUrl: (url) =>
           this._transformRemoteThumbnail(url, { source: 'cdn-complete' }),
@@ -2857,12 +3149,19 @@ export class SfxUploader extends LitElement {
       const { fetchMetadataSchema, createTagsAutocomplete } = await import(
         "./metadata"
       );
-      this._metadataSchema = await fetchMetadataSchema(
+      const baseSchema = await fetchMetadataSchema(
         this._apiBase,
         this._authHeaders,
         mc.projectUuid,
         mc,
       );
+      // When products are enabled, splice the synthetic "Product" group into
+      // the schema right after the last root group. The metadata-form (used in
+      // both the preview sidebar and the bulk-edit sidebar) then renders the
+      // product fields in their proper slot without any consumer changes.
+      this._metadataSchema = baseSchema.productsEnabled
+        ? injectProductGroup(baseSchema, this._storeCtrl.state.t)
+        : baseSchema;
       this._metadataAutocomplete = createTagsAutocomplete(
         this._apiBase,
         this._authHeaders,
@@ -2897,19 +3196,51 @@ export class SfxUploader extends LitElement {
     this._store.setState({ files: next });
   }
 
-  /** Handle field-blur from inline metadata form in the preview sidebar. */
+  /**
+   * Handle field-blur from inline metadata form in the preview sidebar.
+   * Routes synthetic product keys (`product.ref` / `product.position`) into
+   * `file.product` via `updateFileProduct`; everything else lands in `meta`.
+   */
   private _onPreviewMetadataBlur = (
     e: CustomEvent<{ key: string; value: unknown }>,
   ) => {
     const fileId = this._previewFileId;
     if (!fileId) return;
     const { key, value } = e.detail;
+
+    if (isProductFieldKey(key)) {
+      const pk = productKeyOf(key);
+      if (!pk) return;
+      // Empty string from the form means "clear" → drop the key.
+      const cleared = value === '' || value == null;
+      const patch: Partial<Product> =
+        pk === 'position'
+          ? { position: cleared ? undefined : Number(value) }
+          : { ref: cleared ? undefined : String(value) };
+      this.updateFileProduct(fileId, patch);
+      return;
+    }
+
     const existing = this._store.getState().files.get(fileId);
     if (!existing) return;
     const next = new Map(this._store.getState().files);
     next.set(fileId, { ...existing, meta: { ...existing.meta, [key]: value } });
     this._store.setState({ files: next });
   };
+
+  /**
+   * Build the meta-like dict the preview's `<sfx-metadata-form>` consumes,
+   * merging product values under their synthetic keys so the same component
+   * can render both metadata and product inputs.
+   */
+  private _previewMeta(file: UploadFile): Record<string, unknown> {
+    if (!this._metadataSchema?.productsEnabled) return file.meta;
+    return {
+      ...file.meta,
+      [PRODUCT_REF_FIELD_KEY]: file.product.ref,
+      [PRODUCT_POSITION_FIELD_KEY]: file.product.position,
+    };
+  }
 
   private get _metadataEnforcing(): boolean {
     const mc = this.config?.metadataConfig;
@@ -2944,6 +3275,45 @@ export class SfxUploader extends LitElement {
     this.dispatchEvent(
       new CustomEvent(eventName, { bubbles: true, composed: true, detail }),
     );
+  }
+
+  /** True once `PANEL_SHOWN` has fired for the current minimize session. */
+  private _floatShownDispatched = false;
+
+  /** Read width/height of the rendered floating panel, and the current mode. */
+  private _measureFloatGeometry(): {
+    width: number;
+    height: number;
+    mode: 'pill' | 'card';
+  } {
+    const mode: 'pill' | 'card' = this._isPillExpanded ? 'card' : 'pill';
+    const el = this._portalContainer?.querySelector<HTMLElement>('.upload-float');
+    if (!el) return { width: 0, height: 0, mode };
+    const r = el.getBoundingClientRect();
+    return { width: r.width, height: r.height, mode };
+  }
+
+  /** Dispatch a panel-lifecycle event with geometry after the next paint. */
+  private _dispatchFloatGeometryEvent(eventName: PublicEventName) {
+    this.updateComplete.then(() => {
+      requestAnimationFrame(() => {
+        this._dispatchPublic(eventName, this._measureFloatGeometry());
+      });
+    });
+  }
+
+  /** Mirror `--sfx-up-float-offset-x/y` from the host onto the portal container.
+   *  The portalled pill lives in `document.body` and doesn't inherit CSS variables
+   *  set on `<sfx-uploader>`, so we copy them whenever they change. */
+  private _syncPortalOffsetVars() {
+    if (!this._portalContainer) return;
+    const cs = getComputedStyle(this);
+    const offX = cs.getPropertyValue("--sfx-up-float-offset-x").trim();
+    const offY = cs.getPropertyValue("--sfx-up-float-offset-y").trim();
+    if (offX) this._portalContainer.style.setProperty("--sfx-up-float-offset-x", offX);
+    else this._portalContainer.style.removeProperty("--sfx-up-float-offset-x");
+    if (offY) this._portalContainer.style.setProperty("--sfx-up-float-offset-y", offY);
+    else this._portalContainer.style.removeProperty("--sfx-up-float-offset-y");
   }
 
   /**
@@ -3084,6 +3454,12 @@ export class SfxUploader extends LitElement {
         const failed = allFiles.filter(
           (f) => f.status === "failed" || f.status === "error",
         );
+        // The `hasCancelled` guard above checks the current store, but the
+        // per-file remove flow deletes cancelled files from it — so removing
+        // the last in-flight file slips past the guard and flips isUploading
+        // here with an empty surviving set. Treat that as a cancel, not a
+        // natural completion: nothing meaningful to announce.
+        if (successful.length === 0 && failed.length === 0) return;
 
         // Persist this batch to sessionStorage so the success-card "Review
         // files" button can later re-load it (e.g. after closing and
@@ -3134,7 +3510,9 @@ export class SfxUploader extends LitElement {
     this._cachedSourcesConfig = connectors;
 
     if (!connectors) {
-      this._cachedSources = CORE_SOURCES;
+      // No connectors configured at all → URL import has no Companion to
+      // talk to, so hide that pill (other core sources are unaffected).
+      this._cachedSources = CORE_SOURCES.filter((s) => s.id !== 'url');
       return this._cachedSources;
     }
 
@@ -3148,9 +3526,14 @@ export class SfxUploader extends LitElement {
     const coreAllow = connectors.coreSources
       ? new Set<string>(connectors.coreSources)
       : null;
-    const coreSources = coreAllow
+    const baseCore = coreAllow
       ? CORE_SOURCES.filter((s) => coreAllow.has(s.id))
       : CORE_SOURCES;
+    // URL import routes through Companion's `url` provider; without a
+    // companionUrl the source has nothing to talk to, so hide the pill.
+    const coreSources = connectors.companionUrl
+      ? baseCore
+      : baseCore.filter((s) => s.id !== 'url');
 
     // Order: device, url → providers → remaining core (camera, screen-cast) → custom
     const priorityCore = coreSources.filter(
@@ -3261,6 +3644,7 @@ export class SfxUploader extends LitElement {
           addedAt: Date.now(),
           meta: {},
           tags: [],
+          product: {},
           remoteInfo: null,
           ...TUS_DEFAULTS,
         };
@@ -3314,6 +3698,7 @@ export class SfxUploader extends LitElement {
         addedAt: Date.now(),
         meta: {},
         tags: [],
+        product: {},
         remoteInfo: null,
         ...TUS_DEFAULTS,
       };
@@ -3487,6 +3872,7 @@ export class SfxUploader extends LitElement {
         addedAt: Date.now(),
         meta: {},
         tags: [],
+        product: {},
         remoteInfo: null,
         ...TUS_DEFAULTS,
       };
@@ -3520,6 +3906,7 @@ export class SfxUploader extends LitElement {
       addedAt: Date.now(),
       meta: {},
       tags: [],
+      product: {},
       remoteInfo: null,
       ...TUS_DEFAULTS,
     };
@@ -3589,6 +3976,10 @@ export class SfxUploader extends LitElement {
       this._engine?.cancelFile(fileId);
     }
     removeFile(this._store, fileId);
+    // Recompute aggregate totals + completion now that the file set changed.
+    // Without this, totalProgress stays stuck (e.g. at 11%) and isUploading
+    // never flips after the last in-flight file is removed mid-upload.
+    this._engine?.recompute();
     // Clear dimension cache
     this._dimCache.delete(fileId);
     // Clear rejected timer if pending
@@ -3863,11 +4254,37 @@ export class SfxUploader extends LitElement {
     this._similarReviewId = null;
   };
 
-  private _onFileLocate = (e: CustomEvent<{ fileId: string; file: UploadFile }>) => {
-    const file = e.detail.file;
+  private _onRequireMetadata = () => {
+    const t = this._storeCtrl.state.t;
+    this._showToast(
+      t('fillRequiredFieldsFirst', 'Please fill required fields first.'),
+      'warning',
+    );
+    this._onFillMetadata();
+  };
+
+  private _locateFile(file: UploadFile) {
     if (!file) return;
-    this._dispatchPublic(PublicEvents.FILE_LOCATE, { file });
+    // Cancelable so hosts can suppress the auto-navigation via
+    // event.preventDefault() and handle Locate themselves (e.g. via their
+    // own client-side router). `dispatchEvent` returns `false` when default
+    // is prevented — matches the `sfx-before-upload` pattern above.
+    const allowed = this.dispatchEvent(
+      new CustomEvent(PublicEvents.FILE_LOCATE, {
+        bubbles: true,
+        composed: true,
+        cancelable: true,
+        detail: { file },
+      }),
+    );
     this.config?.callbacks?.onFileLocate?.(file);
+    if (!allowed) return;
+    const url = resolveLocateUrl(file, this.config ?? undefined);
+    if (url) window.open(url, '_blank', 'noopener,noreferrer');
+  }
+
+  private _onFileLocate = (e: CustomEvent<{ fileId: string; file: UploadFile }>) => {
+    this._locateFile(e.detail.file);
   };
 
   private _onFileCopyCdn = (e: CustomEvent<{ fileId: string; file: UploadFile; cdnUrl: string }>) => {
@@ -3892,6 +4309,16 @@ export class SfxUploader extends LitElement {
       next.set(fileId, { ...existing, meta: { ...existing.meta, ...meta } });
     }
     this._store.setState({ files: next });
+  };
+
+  private _onBulkProductSaveBatch = (
+    e: CustomEvent<{
+      changes: Array<{ fileId: string; product: Partial<Product> }>;
+    }>,
+  ) => {
+    const { changes } = e.detail;
+    if (!changes.length) return;
+    this.updateFilesProduct(changes);
   };
 
   private _onBulkMetadataClose = () => {
@@ -4083,6 +4510,7 @@ export class SfxUploader extends LitElement {
           addedAt: Date.now(),
           meta: {},
           tags: [],
+          product: {},
           remoteInfo: info,
           ...TUS_DEFAULTS,
         };
@@ -4114,6 +4542,7 @@ export class SfxUploader extends LitElement {
         addedAt: Date.now(),
         meta: {},
         tags: [],
+        product: {},
         remoteInfo: info,
         ...TUS_DEFAULTS,
       };
@@ -4143,8 +4572,10 @@ export class SfxUploader extends LitElement {
     // Dispatch public event so consumers can handle "Done"/"View in DAM"/etc.
     this._dispatchPublic(PublicEvents.COMPLETE_ACTION, {});
     this.config?.callbacks?.onCompleteAction?.();
-    // In modal mode, close the uploader; otherwise optionally reset to initial state
-    if (this.config?.mode === "modal") {
+    // In modal mode (default when mode is unset), close the uploader;
+    // in inline mode, optionally reset to initial state.
+    const mode = this.config?.mode ?? "modal";
+    if (mode === "modal") {
       this.close();
     } else if (this.config?.clearOnComplete !== false) {
       this._onClearAll();
@@ -4188,8 +4619,11 @@ export class SfxUploader extends LitElement {
   };
 
   private _onMinimize = () => {
+    if (this._isMinimized) return;
     this._isMinimized = true;
     this._isPillExpanded = true;
+    this.config?.callbacks?.onMinimize?.();
+    this._dispatchFloatGeometryEvent(PublicEvents.MINIMIZE);
     this.requestUpdate();
   };
 
@@ -4199,9 +4633,12 @@ export class SfxUploader extends LitElement {
   };
 
   private _onPillExpand = () => {
+    if (!this._isMinimized) return;
     this._isMinimized = false;
     this._isPillExpanded = false;
     this._isOpen = true;
+    this.config?.callbacks?.onRestore?.();
+    this._dispatchPublic(PublicEvents.RESTORE, { mode: 'modal' });
     this.requestUpdate();
   };
 
@@ -4210,9 +4647,9 @@ export class SfxUploader extends LitElement {
     this._isPillExpanded = false;
     if (this._phase === "uploading") {
       this._engine?.cancelAll();
+      this.config?.callbacks?.onCancel?.();
+      this._dispatchPublic(PublicEvents.CANCEL, {});
     }
-    this.config?.callbacks?.onCancel?.();
-    this._dispatchPublic(PublicEvents.CANCEL, {});
     this.close();
   };
 
@@ -4275,6 +4712,9 @@ export class SfxUploader extends LitElement {
         this._onFsClose();
         return;
       }
+      // When minimized, the modal is hidden behind the floating pill — ESC
+      // shouldn't fire a phantom dismiss against an invisible target.
+      if (this._isMinimized) return;
       const mode = this.config?.mode ?? "modal";
       const header = this.config?.header ?? (mode === "modal" ? "close" : true);
       if (header === "close" || header === "back") {
@@ -4529,6 +4969,11 @@ export class SfxUploader extends LitElement {
     const activeFiles = files.filter((f) => f.status !== "rejected" && f.status !== "cancelled");
     const total = activeFiles.length;
     const completed = activeFiles.filter((f) => f.status === "complete").length;
+    // Files still in flight (or pausable) get per-file controls
+    const inFlight = activeFiles.filter((f) => isActive(f.status));
+    const subtitleParts: string[] = [];
+    if (total > 1) subtitleParts.push(t('nOfNComplete', '{{completed}} of {{total}} complete', { completed, total }));
+    if (this._lastEta > 0) subtitleParts.push(t('etaLeft', '~{{eta}} left', { eta: formatEta(this._lastEta) }));
 
     return html`
       <div class="upload-overlay">
@@ -4537,12 +4982,15 @@ export class SfxUploader extends LitElement {
         <div class="upload-overlay-title">
           ${t('uploadingFiles', { count: total, defaultValue_one: 'Uploading {{count}} file', defaultValue_other: 'Uploading {{count}} files' })}
         </div>
-        <div class="upload-overlay-subtitle">
-          ${t('nOfNComplete', '{{completed}} of {{total}} complete', { completed, total })}${this._lastEta > 0 ? html` · ${t('etaLeft', '~{{eta}} left', { eta: formatEta(this._lastEta) })}` : nothing}
-        </div>
-        <div class="upload-overlay-bar">
-          <div class="upload-overlay-bar-fill" ${cspStyle({ width: `${pct}%` })}></div>
-        </div>
+        ${subtitleParts.length > 0
+          ? html`<div class="upload-overlay-subtitle">${subtitleParts.join(' · ')}</div>`
+          : nothing}
+        ${total > 1
+          ? html`<div class="upload-overlay-bar">
+              <div class="upload-overlay-bar-fill" ${cspStyle({ width: `${pct}%` })}></div>
+            </div>`
+          : nothing}
+        ${inFlight.length > 0 ? this._renderOverlayFiles(inFlight, t) : nothing}
         <div class="upload-overlay-actions">
           <button
             class="upload-overlay-cancel"
@@ -4559,6 +5007,85 @@ export class SfxUploader extends LitElement {
               </button>`
             : nothing}
         </div>
+      </div>
+    `;
+  }
+
+  private _renderOverlayFiles(files: UploadFile[], t: TFunction) {
+    return html`
+      <div class="upload-overlay-files">
+        ${files.map((f) => {
+          const isPaused = f.status === "paused";
+          const isUploading = f.status === "uploading";
+          const isQueued = f.status === "queued";
+          const pct = Math.round(f.progress ?? 0);
+          const stateLabel = isPaused
+            ? t("paused", "Paused")
+            : isQueued
+            ? t("queued", "Queued")
+            : `${pct}%`;
+          return html`
+            <div class="upload-overlay-file">
+              <div class="upload-overlay-file-info">
+                <div class="upload-overlay-file-name" title=${f.name}>${f.name}</div>
+                <div class="upload-overlay-file-meta">
+                  <div class="upload-overlay-file-bar">
+                    <div
+                      class="upload-overlay-file-bar-fill ${isPaused || isQueued ? "muted" : ""}"
+                      ${cspStyle({ width: `${pct}%` })}
+                    ></div>
+                  </div>
+                  <div class="upload-overlay-file-pct">${stateLabel}</div>
+                </div>
+              </div>
+              <div class="upload-overlay-file-actions">
+                ${isUploading && f.isTus
+                  ? html`
+                      <button
+                        class="upload-overlay-file-btn"
+                        title=${t("pause", "Pause")}
+                        aria-label=${t("pauseUpload", "Pause upload")}
+                        @click=${() => this._engine?.pauseFile(f.id)}
+                      >
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                          <rect x="6" y="4" width="4" height="16" rx="1" />
+                          <rect x="14" y="4" width="4" height="16" rx="1" />
+                        </svg>
+                      </button>
+                    `
+                  : nothing}
+                ${isPaused
+                  ? html`
+                      <button
+                        class="upload-overlay-file-btn paused"
+                        title=${t("resume", "Resume")}
+                        aria-label=${t("resumeUpload", "Resume upload")}
+                        @click=${() => this._engine?.resumeFile(f.id)}
+                      >
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                          <polygon points="5,3 19,12 5,21" />
+                        </svg>
+                      </button>
+                    `
+                  : nothing}
+                <button
+                  class="upload-overlay-file-btn del"
+                  title=${t("remove", "Remove")}
+                  aria-label=${t("removeFile", "Remove file")}
+                  @click=${() => this._removeFile(f.id)}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                    <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    <line x1="10" y1="11" x2="10" y2="17" />
+                    <line x1="14" y1="11" x2="14" y2="17" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          `;
+        })}
       </div>
     `;
   }
@@ -4855,7 +5382,23 @@ export class SfxUploader extends LitElement {
                 </div>
                 <div class="float-item-status">
                   ${f.status === "complete"
-                    ? html`<div class="float-item-done">
+                    ? html`${this.config?.showLocateButton && f.response?.file?.uuid
+                          ? html`<button
+                              class="float-item-act locate"
+                              title=${t('locate', 'Locate')}
+                              aria-label=${t('locate', 'Locate')}
+                              @click=${() => this._locateFile(f)}
+                            >
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="2" y1="12" x2="5" y2="12" />
+                                <line x1="19" y1="12" x2="22" y2="12" />
+                                <line x1="12" y1="2" x2="12" y2="5" />
+                                <line x1="12" y1="19" x2="12" y2="22" />
+                                <circle cx="12" cy="12" r="7" />
+                              </svg>
+                            </button>`
+                          : nothing}
+                        <div class="float-item-done">
                         <svg
                           viewBox="0 0 24 24"
                           fill="none"
@@ -4907,32 +5450,63 @@ export class SfxUploader extends LitElement {
                           </svg>
                         </button>`
                     : f.status === "paused"
-                    ? html`<svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="#d97706"
-                        stroke-width="2"
-                        width="16"
-                        height="16"
-                      >
-                        <rect
-                          x="6"
-                          y="4"
-                          width="4"
-                          height="16"
-                          rx="1"
-                          fill="#d97706"
-                        />
-                        <rect
-                          x="14"
-                          y="4"
-                          width="4"
-                          height="16"
-                          rx="1"
-                          fill="#d97706"
-                        />
-                      </svg>`
-                    : html`<div class="float-item-spinner"></div>`}
+                    ? html`
+                        <button
+                          class="float-item-act paused"
+                          title=${t('resume', 'Resume')}
+                          aria-label=${t('resumeUpload', 'Resume upload')}
+                          @click=${() => this._engine?.resumeFile(f.id)}
+                        >
+                          <svg viewBox="0 0 24 24" fill="currentColor">
+                            <polygon points="5,3 19,12 5,21" />
+                          </svg>
+                        </button>
+                        <button
+                          class="float-item-act del"
+                          title=${t('remove', 'Remove')}
+                          aria-label=${t('removeFile', 'Remove file')}
+                          @click=${() => this._removeFile(f.id)}
+                        >
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6" />
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            <line x1="10" y1="11" x2="10" y2="17" />
+                            <line x1="14" y1="11" x2="14" y2="17" />
+                          </svg>
+                        </button>`
+                    : html`
+                        <div class="float-item-spinner"></div>
+                        ${f.status === "uploading" && f.isTus
+                          ? html`<button
+                              class="float-item-act"
+                              title=${t('pause', 'Pause')}
+                              aria-label=${t('pauseUpload', 'Pause upload')}
+                              @click=${() => this._engine?.pauseFile(f.id)}
+                            >
+                              <svg viewBox="0 0 24 24" fill="currentColor">
+                                <rect x="6" y="4" width="4" height="16" rx="1" />
+                                <rect x="14" y="4" width="4" height="16" rx="1" />
+                              </svg>
+                            </button>`
+                          : nothing}
+                        ${f.status === "uploading" || f.status === "queued" || f.status === "retrying"
+                          ? html`<button
+                              class="float-item-act del"
+                              title=${t('remove', 'Remove')}
+                              aria-label=${t('removeFile', 'Remove file')}
+                              @click=${() => this._removeFile(f.id)}
+                            >
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6" />
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                                <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                <line x1="10" y1="11" x2="10" y2="17" />
+                                <line x1="14" y1="11" x2="14" y2="17" />
+                              </svg>
+                            </button>`
+                          : nothing}
+                      `}
                 </div>
               </div>
             `;
@@ -5275,7 +5849,7 @@ export class SfxUploader extends LitElement {
                 >
                   <sfx-metadata-form
                     .schema=${this._metadataSchema}
-                    .meta=${previewFile.meta}
+                    .meta=${this._previewMeta(previewFile)}
                     .config=${this.config.metadataConfig}
                     .autocomplete=${this._metadataAutocomplete}
                   ></sfx-metadata-form>
@@ -5395,7 +5969,7 @@ export class SfxUploader extends LitElement {
         @file-resume=${this._onFileResume}
         @file-rename=${this._onFileRename}
         @fill-metadata=${this._onFillMetadata}
-        @require-metadata=${this._onFillMetadata}
+        @require-metadata=${this._onRequireMetadata}
         @retry-all=${this._onRetryAll}
         @clear-all=${this._onClearAll}
         @add-more=${this._onAddMore}
@@ -5445,7 +6019,6 @@ export class SfxUploader extends LitElement {
                 <sfx-last-upload-review
                   .t=${t}
                   .files=${this._reviewFiles}
-                  .getLocateUrl=${this.config?.getLocateUrl}
                   .showLocateButton=${this.config?.showLocateButton ?? false}
                   .showCopyCdnButton=${this.config?.showCopyCdnButton ?? false}
                   @back=${this._onExitReview}
@@ -5460,7 +6033,7 @@ export class SfxUploader extends LitElement {
                   .fileCount=${files.filter((f) => f.status === "complete")
                     .length}
                   .totalSize=${files
-                    .filter((f) => f.status === "complete")
+                    .filter((f) => f.status === "complete" && !f.alreadyExisted)
                     .reduce((sum, f) => sum + (f.size || 0), 0)}
                   .thumbnails=${files
                     .filter((f) => f.status === "complete" && f.previewUrl)
@@ -5475,7 +6048,10 @@ export class SfxUploader extends LitElement {
                   .alreadyExistedCount=${files.filter(
                     (f) => f.status === "complete" && f.alreadyExisted,
                   ).length}
+                  .showMinimize=${!!this.config?.minimizeOnUpload &&
+                  this.config?.mode !== "inline"}
                   @close-uploader=${this._onSuccessCardClose}
+                  @minimize-uploader=${this._onMinimize}
                   @file-retry=${this._onFileRetry}
                   @retry-all=${this._onRetryAll}
                   @review-files=${this._onEnterReview}
@@ -5626,6 +6202,7 @@ export class SfxUploader extends LitElement {
                 .autocomplete=${this._metadataAutocomplete}
                 .initialFieldKey=${this._bulkMetadataInitialFieldKey}
                 @metadata-save-batch=${this._onBulkMetadataSaveBatch}
+                @product-save-batch=${this._onBulkProductSaveBatch}
                 @metadata-close=${this._onBulkMetadataClose}
               ></sfx-bulk-metadata-modal>
             `

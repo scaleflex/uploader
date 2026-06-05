@@ -935,9 +935,20 @@ if (file.meta) formData.append('meta', JSON.stringify(file.meta))
 'sfx-open'                → {}
 'sfx-close'               → {}
 'sfx-cancel'              → {}
+'sfx-minimize'            → { width: number, height: number, mode: 'pill' | 'card' }
+'sfx-restore'             → { mode: 'modal' }
+'sfx-panel-shown'         → { width: number, height: number, mode: 'pill' | 'card' }
 'sfx-source-change'       → { source: string }
 'sfx-folder-change'       → { folder: string }
 ```
+
+**Panel-coexistence hooks** (for hosts that show their own floating progress panel beside the uploader's float card / pill):
+
+- `sfx-panel-shown` fires once on first mount of the floating panel — measure its width to position your own neighbour panel.
+- `sfx-minimize` fires every time the float panel appears (manual or `minimizeOnUpload`). Payload mirrors `sfx-panel-shown`.
+- `sfx-restore` fires when the float panel is torn down and the modal returns.
+- Shift the float panel horizontally / vertically with the `--sfx-up-float-offset-x` and `--sfx-up-float-offset-y` CSS custom properties on `<sfx-uploader>`. Positive values move the panel *inward* from its bottom-right anchor (offset-x adds to `right`, so positive = leftward; offset-y adds to `bottom`, so positive = upward). Setting them via `el.style.setProperty(...)` is mirrored onto the portalled pill automatically. The slide is animated.
+- Use `el.getStatus()` to check the current phase (`'empty' | 'ready' | 'uploading' | 'complete'`) before calling `el.dismissPanel()` if you only want to dismiss after completion. `dismissPanel()` closes the panel from *any* state (modal, floating card, pill); mid-upload it cancels the engine and fires `sfx-cancel` before `sfx-close`.
 
 ### 13.2 `sfx-before-upload` Event & Imperative API
 

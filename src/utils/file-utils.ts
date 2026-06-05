@@ -7,7 +7,9 @@ export function generateFileId(): string {
 
 /** Format bytes into human-readable string. */
 export function formatFileSize(bytes: number): string {
-  if (bytes <= 0) return '0 B';
+  // Non-finite guard — without it, NaN flows through `Math.log` and indexes
+  // `units[NaN]` (undefined), rendering literally as "NaN undefined".
+  if (!Number.isFinite(bytes) || bytes <= 0) return '0 B';
   const units = ['B', 'KB', 'MB', 'GB'];
   const i = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
   const value = bytes / Math.pow(1024, i);
@@ -20,6 +22,12 @@ export function formatEta(seconds: number): string {
   const total = Math.round(seconds);
   if (total < 60) return `${total}s`;
   const m = Math.floor(total / 60);
+  // Roll up to hours once minutes would otherwise exceed two digits.
+  if (m > 99) {
+    const h = Math.floor(m / 60);
+    const mm = m % 60;
+    return mm > 0 ? `${h}h ${mm}m` : `${h}h`;
+  }
   const s = total % 60;
   return s > 0 ? `${m}m ${s}s` : `${m}m`;
 }

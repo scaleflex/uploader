@@ -1,4 +1,4 @@
-export { SfxUploader, type UploaderConfig, type UploaderCallbacks, type InlineHeaderConfig, type RemoteThumbnailContext } from './sfx-uploader';
+export { SfxUploader, type UploaderConfig, type UploaderCallbacks, type InlineHeaderConfig, type RemoteThumbnailContext, type UploaderPhase, type UploaderPhase as UploaderStatus } from './sfx-uploader';
 export { createStore, Store } from './store';
 export { UploadEngine, type UploadEngineConfig, type TusConfig } from './engine';
 export { PublicEvents } from './events/public-events';
@@ -36,3 +36,12 @@ export { SfxActionsBar, type UploadButtonState } from './components/actions-bar'
 
 // Metadata (types only — actual code is lazy-loaded)
 export type { MetadataConfig, MetadataSchema, MetadataField, MetadataGroup } from './metadata/schema/schema.types';
+
+// Product fields (admin v5 parity — auto-enabled when the Hub project sets
+// `airstore.ui.products_enabled === true`)
+export type { Product, ProductFieldKey } from './product/product.types';
+export {
+  validateProductRef,
+  validateProductPosition,
+  PRODUCT_REF_INVALID_CHARS,
+} from './product/product.constants';

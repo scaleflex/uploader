@@ -1,4 +1,4 @@
-import { xhrUploadFile, xhrUploadUrl } from './xhr-upload';
+import { xhrUploadFile } from './xhr-upload';
 import { makeUploadFile } from '../test-utils';
 
 // Mock XMLHttpRequest as a proper constructor
@@ -91,9 +91,9 @@ describe('xhrUploadFile', () => {
     expect(mockXhr.send).toHaveBeenCalledWith(expect.any(FormData));
   });
 
-  it('sets 60s timeout', () => {
+  it('does not set a timeout — large uploads need to run as long as needed', () => {
     xhrUploadFile(makeUploadFile(), freshOpts());
-    expect(mockXhr.timeout).toBe(60000);
+    expect(mockXhr.timeout).toBe(0);
   });
 
   it('calls onComplete on successful response', () => {
@@ -131,14 +131,6 @@ describe('xhrUploadFile', () => {
 
     mockXhr._triggerError();
     expect(opts.onError).toHaveBeenCalledWith(expect.objectContaining({ message: expect.stringContaining('Network error') }));
-  });
-
-  it('calls onError on timeout', () => {
-    const opts = freshOpts();
-    xhrUploadFile(makeUploadFile(), opts);
-
-    mockXhr._triggerTimeout();
-    expect(opts.onError).toHaveBeenCalledWith(expect.objectContaining({ message: expect.stringContaining('timed out') }));
   });
 
   it('reports progress', () => {
@@ -196,98 +188,43 @@ describe('xhrUploadFile', () => {
     expect(sentFormData.get('meta[files[]]')).toBeNull();
     expect(sentFormData.get('tags[files[]]')).toBeNull();
   });
-});
 
-function freshUrlOpts() {
-  const { onProgress: _, ...opts } = freshOpts();
-  return opts;
-}
-
-describe('xhrUploadUrl', () => {
-  it('opens POST to /v4/files with folder query string', () => {
-    xhrUploadUrl(makeUploadFile({ remoteUrl: 'https://example.com/img.jpg' }), freshUrlOpts());
-
-    expect(mockXhr.open).toHaveBeenCalledWith(
-      'POST',
-      'https://api.filerobot.com/test/v4/files?folder=%2Fuploads',
-    );
-  });
-
-  it('sets Content-Type to application/json', () => {
-    xhrUploadUrl(makeUploadFile({ remoteUrl: 'https://example.com/img.jpg' }), freshUrlOpts());
-    expect(mockXhr.setRequestHeader).toHaveBeenCalledWith('Content-Type', 'application/json');
-  });
-
-  it('sends JSON payload with files_urls', () => {
-    const file = makeUploadFile({ remoteUrl: 'https://example.com/img.jpg', name: 'img.jpg' });
-    xhrUploadUrl(file, freshUrlOpts());
-
-    const sent = JSON.parse(mockXhr.send.mock.calls[0][0]);
-    expect(sent).toEqual({
-      files_urls: [{ url: 'https://example.com/img.jpg', name: 'img.jpg' }],
+  it('sends product[files[]] when product fields are set', () => {
+    const file = makeUploadFile({
+      file: new File(['data'], 'test.png', { type: 'image/png' }),
+      product: { ref: 'SKU123', position: 4 },
     });
+    const opts = freshOpts();
+    xhrUploadFile(file, opts);
+
+    const sentFormData = mockXhr.send.mock.calls[0][0] as FormData;
+    const product = JSON.parse(sentFormData.get('product[files[]]') as string);
+    expect(product).toEqual({ ref: 'SKU123', position: 4 });
   });
 
-  it('calls onError when remoteUrl is null', () => {
-    const opts = freshUrlOpts();
-    xhrUploadUrl(makeUploadFile({ remoteUrl: null }), opts);
-    expect(opts.onError).toHaveBeenCalledWith(expect.objectContaining({ message: expect.stringContaining('Remote URL') }));
-    expect(mockXhr.open).not.toHaveBeenCalled();
+  it('omits product[files[]] when product is empty', () => {
+    const file = makeUploadFile({
+      file: new File(['data'], 'test.png', { type: 'image/png' }),
+      product: {},
+    });
+    const opts = freshOpts();
+    xhrUploadFile(file, opts);
+
+    const sentFormData = mockXhr.send.mock.calls[0][0] as FormData;
+    expect(sentFormData.get('product[files[]]')).toBeNull();
   });
 
-  it('calls onComplete on success', () => {
-    const opts = freshUrlOpts();
-    xhrUploadUrl(makeUploadFile({ remoteUrl: 'https://example.com/img.jpg' }), opts);
+  it('preserves position 0 in product[files[]]', () => {
+    const file = makeUploadFile({
+      file: new File(['data'], 'test.png', { type: 'image/png' }),
+      product: { position: 0 },
+    });
+    const opts = freshOpts();
+    xhrUploadFile(file, opts);
 
-    const response = { status: 'success', file: { uuid: '456' } };
-    mockXhr._triggerLoad(200, response);
-    expect(opts.onComplete).toHaveBeenCalledWith(response);
-  });
-
-  it('calls onError on HTTP error status', () => {
-    const opts = freshUrlOpts();
-    xhrUploadUrl(makeUploadFile({ remoteUrl: 'https://example.com/img.jpg' }), opts);
-
-    mockXhr._triggerLoad(500, { status: 'error', msg: 'Server error' });
-    expect(opts.onError).toHaveBeenCalledWith(expect.objectContaining({ message: 'Server error' }));
-  });
-
-  it('calls onError on invalid JSON', () => {
-    const opts = freshUrlOpts();
-    xhrUploadUrl(makeUploadFile({ remoteUrl: 'https://example.com/img.jpg' }), opts);
-
-    mockXhr.status = 200;
-    mockXhr.responseText = 'not json';
-    mockXhr._listeners['load']?.();
-
-    expect(opts.onError).toHaveBeenCalledWith(expect.objectContaining({ message: expect.stringContaining('Invalid JSON') }));
-  });
-
-  it('calls onError on network error', () => {
-    const opts = freshUrlOpts();
-    xhrUploadUrl(makeUploadFile({ remoteUrl: 'https://example.com/img.jpg' }), opts);
-
-    mockXhr._triggerError();
-    expect(opts.onError).toHaveBeenCalledWith(expect.objectContaining({ message: expect.stringContaining('Network error') }));
-  });
-
-  it('calls onError on timeout', () => {
-    const opts = freshUrlOpts();
-    xhrUploadUrl(makeUploadFile({ remoteUrl: 'https://example.com/img.jpg' }), opts);
-
-    mockXhr._triggerTimeout();
-    expect(opts.onError).toHaveBeenCalledWith(expect.objectContaining({ message: expect.stringContaining('timed out') }));
-  });
-
-  it('abort stops triggering callbacks', () => {
-    const opts = freshUrlOpts();
-    const handle = xhrUploadUrl(makeUploadFile({ remoteUrl: 'https://example.com/img.jpg' }), opts);
-
-    handle.abort();
-    mockXhr._triggerLoad(200, { status: 'success', file: {} });
-    mockXhr._triggerError();
-
-    expect(opts.onComplete).not.toHaveBeenCalled();
-    expect(mockXhr.abort).toHaveBeenCalled();
+    const sentFormData = mockXhr.send.mock.calls[0][0] as FormData;
+    const product = JSON.parse(sentFormData.get('product[files[]]') as string);
+    expect(product).toEqual({ position: 0 });
   });
 });
+

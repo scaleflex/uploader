@@ -1,5 +1,6 @@
 import type { UploadFile } from '../../store/store.types';
 import type { MetadataConfig, MetadataSchema, MetadataField } from './schema.types';
+import { isUnsupportedField } from './schema.types';
 import { isEmpty } from './validation';
 
 /** File statuses where metadata can still be edited before upload. */
@@ -25,6 +26,10 @@ export function isFieldRequired(
   field: MetadataField,
   config?: MetadataConfig,
 ): boolean {
+  // Unsupported fields (by type or by backend-managed ckey) can't be edited
+  // during upload, so they cannot be required — otherwise uploads would be
+  // impossible to start.
+  if (isUnsupportedField(field)) return false;
   if (config?.requiredFields?.includes(field.ckey)) return true;
   return Boolean(field.required);
 }
@@ -87,6 +92,73 @@ export function firstMissingRequiredFieldKey(
     if (someMissing) return field.key;
   }
   return null;
+}
+
+/**
+ * Reads the "effective" value of a field for a file from the bulk modal's
+ * staged map, falling back to file.meta when no staged entry exists. Used by
+ * required-field validation in the bulk modal, where the user's pending edits
+ * live in `staged` but haven't been written back to file.meta yet.
+ */
+function effectiveStagedValue(
+  staged: Map<string, Map<string, unknown>>,
+  file: UploadFile,
+  fieldKey: string,
+): unknown {
+  const fileStaged = staged.get(file.id);
+  if (fileStaged && fileStaged.has(fieldKey)) {
+    return fileStaged.get(fieldKey);
+  }
+  return file.meta?.[fieldKey];
+}
+
+/**
+ * Bulk-modal variant of `firstMissingRequiredFieldKey`. Reads from the modal's
+ * `staged` map (per-file, per-field pending edits) so the validation reflects
+ * the user's unsaved changes, not the original `file.meta`. Only considers
+ * files in modifiable statuses.
+ */
+export function firstMissingRequiredFieldKeyInStaged(
+  staged: Map<string, Map<string, unknown>>,
+  originalFiles: Map<string, UploadFile>,
+  schema: MetadataSchema,
+  config?: MetadataConfig,
+): string | null {
+  const modifiableFiles = getModifiableFiles(originalFiles);
+  if (modifiableFiles.length === 0) return null;
+
+  for (const field of getRequiredFields(schema, config)) {
+    const someMissing = modifiableFiles.some(
+      file => !isAssetHasMetadataValue(effectiveStagedValue(staged, file, field.key)),
+    );
+    if (someMissing) return field.key;
+  }
+  return null;
+}
+
+/**
+ * Bulk-modal companion that returns ALL required field keys that have at least
+ * one modifiable file with a missing value. Used by the sidebar to highlight
+ * which required fields still need attention. Same semantics as
+ * `firstMissingRequiredFieldKeyInStaged` but does not short-circuit.
+ */
+export function missingRequiredFieldKeysInStaged(
+  staged: Map<string, Map<string, unknown>>,
+  originalFiles: Map<string, UploadFile>,
+  schema: MetadataSchema,
+  config?: MetadataConfig,
+): Set<string> {
+  const result = new Set<string>();
+  const modifiableFiles = getModifiableFiles(originalFiles);
+  if (modifiableFiles.length === 0) return result;
+
+  for (const field of getRequiredFields(schema, config)) {
+    const someMissing = modifiableFiles.some(
+      file => !isAssetHasMetadataValue(effectiveStagedValue(staged, file, field.key)),
+    );
+    if (someMissing) result.add(field.key);
+  }
+  return result;
 }
 
 /**

@@ -6,11 +6,11 @@ import type { UploaderState, UploadResponse } from '../store/store.types';
 // Mock the upload modules
 vi.mock('./xhr-upload', () => ({
   xhrUploadFile: vi.fn(() => ({ abort: vi.fn() })),
-  xhrUploadUrl: vi.fn(() => ({ abort: vi.fn() })),
 }));
 
 vi.mock('./companion-upload', () => ({
   companionUploadFile: vi.fn(() => ({ abort: vi.fn() })),
+  companionUploadUrl: vi.fn(() => ({ abort: vi.fn() })),
 }));
 
 // Keep `shouldUseTus` real (it's pure logic) but stub `tusUploadFile`
@@ -28,8 +28,8 @@ vi.mock('./tus-upload', async () => {
   };
 });
 
-import { xhrUploadFile, xhrUploadUrl } from './xhr-upload';
-import { companionUploadFile } from './companion-upload';
+import { xhrUploadFile } from './xhr-upload';
+import { companionUploadFile, companionUploadUrl } from './companion-upload';
 import { tusUploadFile } from './tus-upload';
 import type { UploadEngineConfig } from './upload-engine';
 
@@ -125,18 +125,40 @@ describe('UploadEngine', () => {
   });
 
   describe('startUpload routing', () => {
-    it('uses xhrUploadUrl for remote URL files', () => {
+    it('uses companionUploadUrl for remote URL files when companionUrl is configured', () => {
       const file = makeUploadFile({
         id: 'f1',
         status: 'queued',
         file: null,
         remoteUrl: 'https://example.com/img.jpg',
       });
-      const { engine } = createEngine({ files: new Map([['f1', file]]) });
+      const { engine } = createEngine(
+        { files: new Map([['f1', file]]) },
+        { companionUrl: 'https://companion.test' },
+      );
 
       engine.start();
-      expect(xhrUploadUrl).toHaveBeenCalled();
+      expect(companionUploadUrl).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ companionUrl: 'https://companion.test' }),
+      );
       expect(xhrUploadFile).not.toHaveBeenCalled();
+    });
+
+    it('fails the file terminally when remoteUrl is queued without companionUrl', () => {
+      const file = makeUploadFile({
+        id: 'f1',
+        status: 'queued',
+        file: null,
+        remoteUrl: 'https://example.com/img.jpg',
+      });
+      const { store, engine } = createEngine({ files: new Map([['f1', file]]) });
+
+      engine.start();
+      expect(companionUploadUrl).not.toHaveBeenCalled();
+      const updated = store.getState().files.get('f1')!;
+      expect(updated.status).toBe('failed');
+      expect(updated.error).toMatch(/companionUrl/);
     });
 
     it('uses companionUploadFile for remote info files', () => {
@@ -186,6 +208,55 @@ describe('UploadEngine', () => {
       expect(updated.progress).toBe(100);
       expect(updated.response).toEqual(mockResponse);
       expect(store.getState().isUploading).toBe(false);
+    });
+
+    it('backfills size from response.file.size on completion', () => {
+      // Unsplash (and other search providers) return `size: 0` in their list
+      // responses — without this backfill the success card renders `0 B`.
+      const file = makeUploadFile({ id: 'f1', status: 'queued', size: 0 });
+      const { store, engine } = createEngine({
+        files: new Map([['f1', file]]),
+        isUploading: true,
+      });
+
+      (xhrUploadFile as ReturnType<typeof vi.fn>).mockImplementation((_f: any, opts: any) => {
+        setTimeout(() => opts.onComplete(mockResponse), 0);
+        return { abort: vi.fn() };
+      });
+
+      engine.start();
+      vi.runAllTimers();
+
+      expect(store.getState().files.get('f1')!.size).toBe(mockResponse.file.size);
+    });
+
+    it('extracts size.bytes when the server returns the structured shape', () => {
+      // Recent Filerobot v4 responses return `size: { bytes, pretty }` instead
+      // of a plain number. Assigning the object straight through would render
+      // as "0[object Object]" through the reduce and "NaN undefined" downstream.
+      const file = makeUploadFile({ id: 'f1', status: 'queued', size: 0 });
+      const { store, engine } = createEngine({
+        files: new Map([['f1', file]]),
+        isUploading: true,
+      });
+
+      const structuredResponse: UploadResponse = {
+        ...mockResponse,
+        file: {
+          ...mockResponse.file,
+          size: { bytes: 184382, pretty: '180.06 KB' },
+        },
+      };
+
+      (xhrUploadFile as ReturnType<typeof vi.fn>).mockImplementation((_f: any, opts: any) => {
+        setTimeout(() => opts.onComplete(structuredResponse), 0);
+        return { abort: vi.fn() };
+      });
+
+      engine.start();
+      vi.runAllTimers();
+
+      expect(store.getState().files.get('f1')!.size).toBe(184382);
     });
 
     it('swaps a non-blob (URL/connector) preview to the CDN URL for image files', () => {
@@ -607,7 +678,7 @@ describe('UploadEngine', () => {
       );
     });
 
-    it('forwards extraParams to xhrUploadUrl for URL imports', () => {
+    it('forwards extraParams to companionUploadUrl for URL imports', () => {
       const file = makeUploadFile({
         id: 'f1',
         status: 'queued',
@@ -616,12 +687,15 @@ describe('UploadEngine', () => {
       });
       const { engine } = createEngine(
         { files: new Map([['f1', file]]) },
-        { resolveUploadParams: () => ({ opt_force_name: 'fixed' }) },
+        {
+          companionUrl: 'https://companion.test',
+          resolveUploadParams: () => ({ opt_force_name: 'fixed' }),
+        },
       );
 
       engine.start();
 
-      expect(xhrUploadUrl).toHaveBeenCalledWith(
+      expect(companionUploadUrl).toHaveBeenCalledWith(
         expect.anything(),
         expect.objectContaining({
           extraParams: { opt_force_name: 'fixed' },

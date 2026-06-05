@@ -2,7 +2,10 @@ import {
   isAssetHasMetadataValue,
   getFilesWithMissingRequired,
   firstMissingRequiredFieldKey,
+  firstMissingRequiredFieldKeyInStaged,
+  missingRequiredFieldKeysInStaged,
   deepMergeMeta,
+  isFieldRequired,
 } from './required-fields';
 import type { MetadataField, MetadataSchema } from './schema.types';
 import type { UploadFile } from '../../store/store.types';
@@ -42,6 +45,7 @@ function makeFile(id: string, meta: Record<string, unknown> = {}): UploadFile {
     addedAt: Date.now(),
     meta,
     tags: [],
+    product: {},
     remoteInfo: null,
     isTus: false,
     tusUploadUrl: null,
@@ -63,6 +67,34 @@ describe('isAssetHasMetadataValue', () => {
 });
 
 // ---------------------------------------------------------------------------
+// isFieldRequired — unsupported types are never required
+// ---------------------------------------------------------------------------
+
+describe('isFieldRequired', () => {
+  it('returns false for asset-attachments even if schema marks it required', () => {
+    const field = makeField({ type: 'asset-attachments', required: 1 });
+    expect(isFieldRequired(field)).toBe(false);
+  });
+
+  it('returns false for ultratags even if listed in config.requiredFields', () => {
+    const field = makeField({ ckey: 'ut', type: 'ultratags', required: 0 });
+    expect(
+      isFieldRequired(field, { projectUuid: 'p', requiredFields: ['ut'] }),
+    ).toBe(false);
+  });
+
+  it('returns false for taxonomy-node even if required', () => {
+    const field = makeField({ type: 'taxonomy-node', required: true });
+    expect(isFieldRequired(field)).toBe(false);
+  });
+
+  it('still honors required for supported types', () => {
+    expect(isFieldRequired(makeField({ required: 1 }))).toBe(true);
+    expect(isFieldRequired(makeField({ required: 0 }))).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // getFilesWithMissingRequired
 // ---------------------------------------------------------------------------
 
@@ -76,6 +108,7 @@ describe('getFilesWithMissingRequired', () => {
     forceFillingOnUpload: false,
     regionalVariantsGroups: [],
     language: 'en',
+    productsEnabled: false,
   };
 
   it('finds files missing required field values', () => {
@@ -146,6 +179,7 @@ describe('firstMissingRequiredFieldKey', () => {
     forceFillingOnUpload: false,
     regionalVariantsGroups: [],
     language: 'en',
+    productsEnabled: false,
   };
 
   it('returns the first required field with an empty value', () => {
@@ -212,11 +246,159 @@ describe('firstMissingRequiredFieldKey', () => {
       forceFillingOnUpload: false,
       regionalVariantsGroups: [],
       language: 'en',
+      productsEnabled: false,
     };
     const files = new Map<string, UploadFile>([
       ['f1', makeFile('f1', { mandatory: '' })],
     ]);
     expect(firstMissingRequiredFieldKey(files, boolSchema)).toBe('mandatory');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// firstMissingRequiredFieldKeyInStaged / missingRequiredFieldKeysInStaged
+// ---------------------------------------------------------------------------
+
+describe('firstMissingRequiredFieldKeyInStaged', () => {
+  const titleField = makeField({ key: 'title', ckey: 'title', required: 1 });
+  const descField = makeField({ key: 'desc', ckey: 'desc', required: 1 });
+  const tagField = makeField({ key: 'tag', ckey: 'tag', required: 0 });
+  const schema: MetadataSchema = {
+    groups: [
+      {
+        uuid: 'g1',
+        name: 'General',
+        isRoot: true,
+        fields: [titleField, descField, tagField],
+      },
+    ],
+    fields: [titleField, descField, tagField],
+    fieldsByKey: new Map([
+      ['title', titleField],
+      ['desc', descField],
+      ['tag', tagField],
+    ]),
+    forceFillingOnUpload: false,
+    regionalVariantsGroups: [],
+    language: 'en',
+    productsEnabled: false,
+  };
+
+  it('returns the first required field missing across staged files', () => {
+    const f1 = makeFile('f1', { title: 'Has title', desc: '' });
+    const originals = new Map<string, UploadFile>([['f1', f1]]);
+    const staged = new Map<string, Map<string, unknown>>([
+      ['f1', new Map([['title', 'Has title'], ['desc', '']])],
+    ]);
+    expect(firstMissingRequiredFieldKeyInStaged(staged, originals, schema)).toBe('desc');
+  });
+
+  it('prefers staged value over file.meta — staged fill satisfies validation', () => {
+    const f1 = makeFile('f1', { title: '', desc: '' });
+    const originals = new Map<string, UploadFile>([['f1', f1]]);
+    const staged = new Map<string, Map<string, unknown>>([
+      ['f1', new Map([['title', 'Filled in modal'], ['desc', 'And this too']])],
+    ]);
+    expect(firstMissingRequiredFieldKeyInStaged(staged, originals, schema)).toBeNull();
+  });
+
+  it('falls back to file.meta when staged has no entry for the key', () => {
+    const f1 = makeFile('f1', { title: 'From meta', desc: 'From meta too' });
+    const originals = new Map<string, UploadFile>([['f1', f1]]);
+    const staged = new Map<string, Map<string, unknown>>([['f1', new Map()]]);
+    expect(firstMissingRequiredFieldKeyInStaged(staged, originals, schema)).toBeNull();
+  });
+
+  it('treats an explicit empty staged value as missing even if file.meta has a value', () => {
+    const f1 = makeFile('f1', { title: 'Was set', desc: 'Was set too' });
+    const originals = new Map<string, UploadFile>([['f1', f1]]);
+    const staged = new Map<string, Map<string, unknown>>([
+      ['f1', new Map<string, unknown>([['title', '']])],
+    ]);
+    expect(firstMissingRequiredFieldKeyInStaged(staged, originals, schema)).toBe('title');
+  });
+
+  it('skips non-modifiable files', () => {
+    const f1: UploadFile = { ...makeFile('f1', { title: '' }), status: 'uploading' };
+    const originals = new Map<string, UploadFile>([['f1', f1]]);
+    const staged = new Map<string, Map<string, unknown>>([['f1', new Map()]]);
+    expect(firstMissingRequiredFieldKeyInStaged(staged, originals, schema)).toBeNull();
+  });
+
+  it('returns null when there are no required fields', () => {
+    const noReqSchema: MetadataSchema = {
+      ...schema,
+      fields: [tagField],
+      fieldsByKey: new Map([['tag', tagField]]),
+      groups: [{ uuid: 'g1', name: 'G', isRoot: true, fields: [tagField] }],
+    };
+    const f1 = makeFile('f1', { tag: '' });
+    const originals = new Map<string, UploadFile>([['f1', f1]]);
+    const staged = new Map<string, Map<string, unknown>>([['f1', new Map()]]);
+    expect(firstMissingRequiredFieldKeyInStaged(staged, originals, noReqSchema)).toBeNull();
+  });
+
+  it('honors config.requiredFields (ckey-based)', () => {
+    const f1 = makeFile('f1', { title: 'A', desc: 'B', tag: '' });
+    const originals = new Map<string, UploadFile>([['f1', f1]]);
+    const staged = new Map<string, Map<string, unknown>>([['f1', new Map()]]);
+    expect(
+      firstMissingRequiredFieldKeyInStaged(staged, originals, schema, {
+        requiredFields: ['tag'],
+        projectUuid: 'p1',
+      }),
+    ).toBe('tag');
+  });
+
+  it('flags a required field if any single file is missing it', () => {
+    const f1 = makeFile('f1', { title: 'A', desc: 'B' });
+    const f2 = makeFile('f2', { title: 'A', desc: '' });
+    const originals = new Map<string, UploadFile>([['f1', f1], ['f2', f2]]);
+    const staged = new Map<string, Map<string, unknown>>([
+      ['f1', new Map()],
+      ['f2', new Map()],
+    ]);
+    expect(firstMissingRequiredFieldKeyInStaged(staged, originals, schema)).toBe('desc');
+  });
+});
+
+describe('missingRequiredFieldKeysInStaged', () => {
+  const titleField = makeField({ key: 'title', ckey: 'title', required: 1 });
+  const descField = makeField({ key: 'desc', ckey: 'desc', required: 1 });
+  const schema: MetadataSchema = {
+    groups: [
+      { uuid: 'g1', name: 'G', isRoot: true, fields: [titleField, descField] },
+    ],
+    fields: [titleField, descField],
+    fieldsByKey: new Map([['title', titleField], ['desc', descField]]),
+    forceFillingOnUpload: false,
+    regionalVariantsGroups: [],
+    language: 'en',
+    productsEnabled: false,
+  };
+
+  it('returns every required field that has a missing value', () => {
+    const f1 = makeFile('f1', { title: '', desc: '' });
+    const originals = new Map<string, UploadFile>([['f1', f1]]);
+    const staged = new Map<string, Map<string, unknown>>([['f1', new Map()]]);
+    const result = missingRequiredFieldKeysInStaged(staged, originals, schema);
+    expect(result.has('title')).toBe(true);
+    expect(result.has('desc')).toBe(true);
+    expect(result.size).toBe(2);
+  });
+
+  it('returns an empty set when everything is filled', () => {
+    const f1 = makeFile('f1', { title: 'A', desc: 'B' });
+    const originals = new Map<string, UploadFile>([['f1', f1]]);
+    const staged = new Map<string, Map<string, unknown>>([['f1', new Map()]]);
+    expect(missingRequiredFieldKeysInStaged(staged, originals, schema).size).toBe(0);
+  });
+
+  it('returns an empty set when there are no modifiable files', () => {
+    const f1: UploadFile = { ...makeFile('f1', { title: '' }), status: 'complete' };
+    const originals = new Map<string, UploadFile>([['f1', f1]]);
+    const staged = new Map<string, Map<string, unknown>>([['f1', new Map()]]);
+    expect(missingRequiredFieldKeysInStaged(staged, originals, schema).size).toBe(0);
   });
 });
 

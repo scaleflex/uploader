@@ -11,6 +11,13 @@ describe('getAvailableOperations', () => {
   const scalarTypes: MetadataFieldType[] = [
     'numeric', 'decimal2', 'boolean', 'date', 'select-one', 'geopoint',
   ];
+  const unsupportedTypes: MetadataFieldType[] = [
+    'asset-attachments', 'attachments-assets', 'ultratags', 'taxonomy-node',
+  ];
+
+  it.each(unsupportedTypes)('returns [] for unsupported type %s', (type) => {
+    expect(getAvailableOperations(type)).toEqual([]);
+  });
 
   it.each(arrayTypes)('returns [SET, ADD, DELETE] for %s', (type) => {
     const ops = getAvailableOperations(type);

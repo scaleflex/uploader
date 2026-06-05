@@ -1,4 +1,5 @@
 import type { RemoteFileInfo } from '../connectors/connector.types';
+import type { Product } from '../product/product.types';
 
 // --- File lifecycle states (spec §5.1) ---
 
@@ -53,6 +54,10 @@ export interface UploadFile {
   meta: Record<string, unknown>;
   tags: string[];
 
+  // Per-file product fields (admin v5 parity). Sent on upload when the project
+  // has `products_enabled`. Always present; empty object when nothing is set.
+  product: Product;
+
   // Companion connector metadata (set for files from cloud providers)
   remoteInfo: RemoteFileInfo | null;
 
@@ -68,7 +73,11 @@ export interface UploadResponse {
     name: string;
     extension: string;
     type: string;
-    size: number;
+    /**
+     * Filerobot `/v4/files` returns `{ bytes, pretty }` on recent API versions
+     * and a plain number on older endpoints / synthesized same-asset responses.
+     */
+    size: number | { bytes: number; pretty?: string };
     url: { public: string; cdn: string; cdn_permalink?: string; permalink?: string };
     meta: Record<string, unknown>;
     tags: string[];

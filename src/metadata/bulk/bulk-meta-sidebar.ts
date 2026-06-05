@@ -1,5 +1,6 @@
 import { LitElement, html, nothing } from 'lit';
 import { property, state } from 'lit/decorators.js';
+import { classMap } from 'lit/directives/class-map.js';
 import type { MetadataSchema, MetadataConfig, MetadataField } from '../schema/schema.types';
 import { isFieldRequired } from '../schema/required-fields';
 import { fieldTypeIcon } from '../field-type-icons';
@@ -16,6 +17,9 @@ export class SfxBulkMetaSidebar extends LitElement {
   @property({ attribute: false }) schema!: MetadataSchema;
   @property({ attribute: false }) activeFieldKey = '';
   @property({ attribute: false }) filledFields: Set<string> = new Set();
+  /** Required fields with at least one modifiable file missing a value.
+      Drives the stronger-red `.unmet` styling on the asterisk. */
+  @property({ attribute: false }) missingRequiredKeys: Set<string> = new Set();
   @property({ attribute: false }) config: MetadataConfig | null = null;
 
   @state() private _collapsed: Set<string> = new Set();
@@ -115,7 +119,13 @@ export class SfxBulkMetaSidebar extends LitElement {
                       ? html`<span class="field-dot"></span>`
                       : nothing}
                     ${this._isRequired(field)
-                      ? html`<span class="field-required" aria-hidden="true">*</span>`
+                      ? html`<span
+                          class=${classMap({
+                            'field-required': true,
+                            unmet: this.missingRequiredKeys.has(field.key),
+                          })}
+                          aria-hidden="true"
+                        >*</span>`
                       : nothing}
                   </button>
                 `,

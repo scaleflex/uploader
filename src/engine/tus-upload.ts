@@ -2,6 +2,7 @@ import { Upload, DetailedError } from 'tus-js-client';
 import type { UploadFile, UploadResponse } from '../store/store.types';
 import type { AuthHeaders } from '../auth/auth.types';
 import { isSameAssetExists, buildSameAssetResponse } from './same-asset';
+import { compactProduct, hasProductData } from '../product/product.constants';
 
 export interface TusConfig {
   /** Files larger than this (bytes) use tus. Default: 10 MB. Set to 0 to always use tus. */
@@ -9,10 +10,19 @@ export interface TusConfig {
   /** Chunk size in bytes. Default: 5 MB. */
   chunkSize?: number;
   /**
-   * Override the tus endpoint.
-   * Default: Scaleflex Companion (`https://eu-on-24001.connector.filerobot.com/files`).
+   * Override the tus upload endpoint (the `POST .../files` URL).
+   * Defaults are resolved in this priority:
+   *   1. This explicit `endpoint`
+   *   2. `{connectors.companionUrl}/files` (Hub-style region-optimal connector)
+   *   3. `https://eu-on-24001.connector.filerobot.com/files` (last-resort fallback)
    */
   endpoint?: string;
+  /**
+   * Override the post-upload JSON metadata base URL — the host that serves
+   * `/json/{fileId}` after a tus upload completes. Same fallback chain as
+   * `endpoint`, with `/json` instead of `/files`.
+   */
+  jsonBase?: string;
   /** Persist upload fingerprints for cross-session resume. Default: true. */
   resumable?: boolean;
   /** Number of parallel chunk uploads. Default: 1. */
@@ -23,8 +33,11 @@ export interface TusConfig {
 
 const DEFAULT_SIZE_THRESHOLD = 10 * 1024 * 1024; // 10 MB
 const DEFAULT_CHUNK_SIZE = 5 * 1024 * 1024;      // 5 MB
-const COMPANION_ENDPOINT = 'https://eu-on-24001.connector.filerobot.com/files';
-const COMPANION_JSON_BASE = 'https://eu-on-24001.connector.filerobot.com/json';
+// Hard-coded fallbacks for the edge case where neither `tusConfig.endpoint`
+// nor `connectors.companionUrl` is configured. In practice the engine always
+// supplies one of those, so these constants are rarely hit at runtime.
+const FALLBACK_COMPANION_ENDPOINT = 'https://eu-on-24001.connector.filerobot.com/files';
+const FALLBACK_COMPANION_JSON_BASE = 'https://eu-on-24001.connector.filerobot.com/json';
 
 export interface TusUploadOptions {
   apiBase: string;
@@ -70,7 +83,8 @@ export function tusUploadFile(
 ): TusUploadHandle {
   const { tusConfig } = opts;
   const base = opts.apiBase.replace(/\/+$/, '');
-  const endpoint = tusConfig.endpoint || COMPANION_ENDPOINT;
+  const endpoint = tusConfig.endpoint || FALLBACK_COMPANION_ENDPOINT;
+  const jsonBase = tusConfig.jsonBase || FALLBACK_COMPANION_JSON_BASE;
   const chunkSize = tusConfig.chunkSize ?? DEFAULT_CHUNK_SIZE;
   const resumable = tusConfig.resumable !== false;
   const parallelChunks = tusConfig.parallelChunks ?? 1;
@@ -92,6 +106,12 @@ export function tusUploadFile(
     type: uploadFile.type,
     'filerobot-folder': opts.folder,
   };
+
+  // Product fields (admin v5 parity): JSON-stringified `product` entry on the
+  // tus metadata header. Omitted when empty so we don't pollute the header.
+  if (hasProductData(uploadFile.product)) {
+    metadata.product = JSON.stringify(compactProduct(uploadFile.product));
+  }
 
   // --- Custom fingerprint (matches v5's getFingerprint.js) ---
   // Uses file ID + endpoint to avoid collisions between:
@@ -153,7 +173,7 @@ export function tusUploadFile(
         // v5 fetches JSON with no auth headers — Companion identifies
         // the upload by file ID alone. Custom headers trigger a CORS preflight
         // that the /json/ endpoint doesn't support.
-        fetchFileJson(fileId, uploadFile.size)
+        fetchFileJson(jsonBase, fileId, uploadFile.size)
           .then((response) => {
             if (aborted) return;
             // Identical content already exists — treat as a successful upload
@@ -321,10 +341,11 @@ function isNetworkError(error: unknown): boolean {
  * (same pattern as filerobot v5's getFileJson — 13s delay for >100 MB files).
  */
 async function fetchFileJson(
+  jsonBase: string,
   fileId: string,
   fileSize: number,
 ): Promise<UploadResponse> {
-  const url = `${COMPANION_JSON_BASE}/${fileId}`;
+  const url = `${jsonBase.replace(/\/+$/, '')}/${fileId}`;
   // Match v5 delays: 13s for large files (>100 MB), 6s for smaller files
   const baseDelay = fileSize > 100_000_000 ? 13_000 : 6_000;
   const maxRetries = 3;

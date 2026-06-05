@@ -22,7 +22,7 @@
   <a href="https://scaleflex.github.io/uploader/">Live Demo</a> |
   <a href="https://scaleflex.github.io/uploader/#/docs/getting-started">Documentation</a> |
   <a href="https://scaleflex.github.io/uploader/#/examples/basic">Examples</a> |
-  <a href="https://cdn.scaleflex.com/uploader/1.3.3/sfx-uploader.min.js">CDN</a> |
+  <a href="https://cdn.scaleflex.com/uploader/1.3.8/sfx-uploader.min.js">CDN</a> |
   <a href="https://www.npmjs.com/package/@scaleflex/uploader">npm</a> |
   <a href="https://www.scaleflex.com">Scaleflex</a>
 </p>
@@ -52,11 +52,11 @@ npm install @scaleflex/uploader
 Or use the CDN for a no-bundler setup:
 
 ```
-https://cdn.scaleflex.com/uploader/1.3.3/sfx-uploader.min.js
+https://cdn.scaleflex.com/uploader/1.3.8/sfx-uploader.min.js
 ```
 
 ```html
-<script src="https://cdn.scaleflex.com/uploader/1.3.3/sfx-uploader.min.js"></script>
+<script src="https://cdn.scaleflex.com/uploader/1.3.8/sfx-uploader.min.js"></script>
 ```
 
 ## Quick start
@@ -111,6 +111,31 @@ function App() {
   );
 }
 ```
+
+## Sizing
+
+The uploader modal and the bulk metadata editor expose CSS custom properties so hosts can make them larger (or smaller) without forking styles.
+
+| Variable | Default | Affects |
+|---|---|---|
+| `--sfx-up-modal-max-width` | `1100px` | Main uploader modal max width |
+| `--sfx-up-max-height` | `88vh` | Main uploader modal height |
+| `--sfx-up-content-max-width` | `1600px` | Inner content max width |
+| `--sfx-up-bulk-modal-width` | `980px` | Bulk metadata edit modal width |
+| `--sfx-up-bulk-modal-height` | `82vh` | Bulk metadata edit modal height |
+
+Example — enlarge both modals:
+
+```css
+sfx-uploader {
+  --sfx-up-modal-max-width: 1400px;
+  --sfx-up-max-height: 92vh;
+  --sfx-up-bulk-modal-width: 1280px;
+  --sfx-up-bulk-modal-height: 88vh;
+}
+```
+
+The bulk modal still clamps to `calc(100vw - 40px)` / `calc(100vh - 40px)` so it never overflows the viewport.
 
 ## Package exports
 

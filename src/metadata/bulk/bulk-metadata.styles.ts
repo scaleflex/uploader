@@ -106,9 +106,9 @@ export const bulkModalStyles = css`
   }
 
   .fm-modal {
-    width: 980px;
+    width: var(--sfx-up-bulk-modal-width, 980px);
     max-width: calc(100vw - 40px);
-    height: 82vh;
+    height: var(--sfx-up-bulk-modal-height, 82vh);
     max-height: calc(100vh - 40px);
     background: var(--sfx-up-bg, #fff);
     border-radius: 14px;
@@ -278,6 +278,11 @@ export const bulkModalStyles = css`
     box-shadow: 0 2px 10px var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.28));
     position: relative;
     overflow: hidden;
+    /* Anchor the footer's right edge so Cancel doesn't visibly jump when the
+       label flips between "Save" (~60px) and "Next required: <title>" (up to
+       320px). The min-width accommodates short labels comfortably without
+       forcing extra padding when not needed. */
+    min-width: 120px;
   }
   .btn-primary:hover:not(:disabled) {
     background: linear-gradient(135deg, var(--sfx-up-primary-hover, #1d4ed8), var(--sfx-up-primary, #2563eb));
@@ -288,6 +293,23 @@ export const bulkModalStyles = css`
   .btn-primary:disabled {
     opacity: 0.55;
     cursor: not-allowed;
+  }
+  /* "Next required: <field>" variant of the primary button.
+     Cap the label width so a long field title can't push the button beyond the
+     footer; the field title is allowed to ellipsize, while the trailing arrow
+     stays pinned and visible. */
+  .btn-primary--next {
+    max-width: 320px;
+    min-width: 0;
+  }
+  .btn-primary--next .btn-primary-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+  .btn-primary--next .btn-primary-arrow {
+    flex-shrink: 0;
   }
   .btn-back {
     background: none;
@@ -351,6 +373,17 @@ export const bulkModalStyles = css`
     .fm-footer .btn-back {
       padding: 0 12px;
       font-size: 13px;
+    }
+    .fm-footer .btn-primary {
+      /* Tighter anchor on mobile so Save doesn't visually dominate at small
+         viewports. The footer also wraps below ~360px which keeps everything
+         reachable. */
+      min-width: 88px;
+    }
+    .fm-footer .btn-primary--next {
+      /* Squeeze the "Next required" button further on mobile so it still
+         fits beside Cancel + Back when the field title is long. */
+      max-width: 180px;
     }
   }
 
@@ -507,6 +540,17 @@ export const bulkSidebarStyles = css`
     font-size: 13px;
     font-weight: 500;
     flex-shrink: 0;
+  }
+  /* Required field currently has at least one modifiable file missing a value —
+     amplify (rather than mute its peers) so the user can correlate the footer's
+     "Next required: <field>" button with the sidebar entry it points at. */
+  .field-required.unmet {
+    font-weight: 800;
+    font-size: 16px;
+    line-height: 1;
+    /* The bigger asterisk has more visual weight above the baseline; pull it
+       up a hair so the row keeps the same optical center. */
+    margin-top: -1px;
   }
 
   /* ---- Mobile: sidebar becomes a horizontal scrollable tab bar on top,
@@ -705,6 +749,41 @@ export const bulkOpBarStyles = css`
   .btn-apply:disabled {
     opacity: 0.45;
     cursor: not-allowed;
+  }
+
+  /* Unsupported field notice (rendered in place of op-bar controls). */
+  .op-unsupported {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1px dashed var(--sfx-up-border, #e2e8f0);
+    border-radius: 8px;
+    background: var(--sfx-up-surface, #f8fafc);
+    font-size: 13px;
+    line-height: 1.4;
+    flex: 1;
+    min-width: 0;
+  }
+  .op-unsupported svg {
+    width: 16px;
+    height: 16px;
+    margin-top: 1px;
+    flex-shrink: 0;
+    color: var(--sfx-up-text-muted, #94a3b8);
+  }
+  .op-unsupported-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+  .op-unsupported-title {
+    font-weight: 500;
+    color: var(--sfx-up-text, #1e293b);
+  }
+  .op-unsupported-msg {
+    color: var(--sfx-up-text-muted, #94a3b8);
   }
 
   /* ---- Mobile: stack op-field rows vertically so the operation
