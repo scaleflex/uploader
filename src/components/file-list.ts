@@ -592,8 +592,8 @@ export class SfxFileList extends LitElement {
   @property({ attribute: false }) searchRunIds: string[] = [];
   /** Ids currently being searched (spinner). */
   @property({ attribute: false }) searchActiveIds: Set<string> = new Set();
-  /** Ids whose search finished (green check). */
-  @property({ attribute: false }) searchDoneIds: Set<string> = new Set();
+  /** Results per checked image id (presence = checked). Value length = badge count. */
+  @property({ attribute: false }) searchResults: Map<string, unknown[]> = new Map();
 
   @state() private _moreOpen = false;
   @state() private _dropTileMaxVisible = 3;
@@ -844,19 +844,18 @@ export class SfxFileList extends LitElement {
     );
   }
 
-  /** Per-tile similarity-search status from the id sets. */
-  private _statusFor(id: string): '' | 'searching' | 'done' | 'queued' {
+  /** Per-tile similarity-search status (done is shown via the result badge,
+   *  not a status here). */
+  private _statusFor(id: string): '' | 'searching' | 'queued' {
     if (this.searchActiveIds.has(id)) return 'searching';
-    if (this.searchDoneIds.has(id)) return 'done';
-    if (this.searchRunIds.includes(id)) return 'queued';
+    if (this.searchRunIds.includes(id) && !this.searchResults.has(id)) return 'queued';
     return '';
   }
 
   render() {
     const searchTotal = this.searchRunIds.length;
-    // Run-specific progress: how many of THIS run's ids are already checked
-    // (searchDoneIds is the persistent "checked" set across runs).
-    const searchDone = this.searchRunIds.filter((id) => this.searchDoneIds.has(id)).length;
+    // Run-specific progress: how many of THIS run's ids already have results.
+    const searchDone = this.searchRunIds.filter((id) => this.searchResults.has(id)).length;
     const searchPct = searchTotal ? Math.round((searchDone / searchTotal) * 100) : 0;
     const allDone = searchTotal > 0 && searchDone === searchTotal;
     return html`
@@ -906,7 +905,7 @@ export class SfxFileList extends LitElement {
       <div class="grid">
         ${this.showDropTile && this.mode !== 'review' && !this.selectMode ? this._renderDropTile() : nothing}
         ${this.files.map(
-          (f, i) => html`<sfx-file-item .t=${this.t} .file=${f} .mode=${this.mode} .getLocateUrl=${this.getLocateUrl} .showLocateButton=${this.showLocateButton} .showCopyCdnButton=${this.showCopyCdnButton} .showCheckSimilar=${this.showCheckSimilar} .selectMode=${this.selectMode} .isSelected=${this.selectedIds.has(f.id)} .similarStatus=${this._statusFor(f.id)} ${cspStyle({ '--tile-index': String(i) })}></sfx-file-item>`,
+          (f, i) => html`<sfx-file-item .t=${this.t} .file=${f} .mode=${this.mode} .getLocateUrl=${this.getLocateUrl} .showLocateButton=${this.showLocateButton} .showCopyCdnButton=${this.showCopyCdnButton} .showCheckSimilar=${this.showCheckSimilar} .selectMode=${this.selectMode} .isSelected=${this.selectedIds.has(f.id)} .similarStatus=${this._statusFor(f.id)} .similarCount=${this.searchResults.get(f.id)?.length ?? -1} .similarResults=${this.searchResults.get(f.id) ?? []} ${cspStyle({ '--tile-index': String(i) })}></sfx-file-item>`,
         )}
       </div>
     `;

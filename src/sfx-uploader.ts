@@ -131,6 +131,15 @@ export interface RemoteThumbnailContext {
   providerId?: import('./connectors/connector.types').ProviderId;
 }
 
+/** One similar asset returned by the embedding/similarity endpoint. */
+export interface SimilarAsset {
+  uuid: string;
+  /** Similarity score 0..1. */
+  score: number;
+  /** CDN url of the similar asset (preview + open target). */
+  url: string;
+}
+
 export interface UploaderConfig {
   auth: AuthConfig;
   targetFolder?: string;
@@ -2165,9 +2174,11 @@ export class SfxUploader extends LitElement {
   @state() private _similarRunIds: string[] = [];
   /** Similarity search: ids currently being searched (spinner). */
   @state() private _similarActiveIds = new Set<string>();
-  /** Similarity search: ids that have been checked (persistent green check —
-   *  accumulates across runs, NOT reset when a new check starts). */
-  @state() private _similarCheckedIds = new Set<string>();
+  /** Similarity results per checked image id (presence = checked). The badge
+   *  shows the count ("N similar" / "No similar"); accumulates across runs. */
+  @state() private _similarResults = new Map<string, SimilarAsset[]>();
+  /** Id of the image whose similar results are open in the review panel. */
+  @state() private _similarReviewId: string | null = null;
   /** Pending timers for the simulated search progression (demo only). */
   private _similarSimTimers: number[] = [];
   @state() private _previewFileId: string | null = null;
@@ -3579,6 +3590,9 @@ export class SfxUploader extends LitElement {
       const remaining = [...this._store.getState().files.values()];
       this._previewFileId = remaining.length > 0 ? remaining[0].id : null;
     }
+    // Purge any similarity-check state for this id so the progress banner and
+    // selection don't reference a file that no longer exists.
+    this._purgeSimilarState(fileId);
     this._dispatchPublic(PublicEvents.FILE_REMOVED, { file: snapshot });
     this.config?.callbacks?.onFileRemoved?.(snapshot);
   }
@@ -3679,21 +3693,33 @@ export class SfxUploader extends LitElement {
    */
   private _runSimilarityCheck(files: UploadFile[]) {
     this._clearSimilarRun();
+    this._similarReviewId = null;
     if (!files.length) return;
     this._similarRunIds = files.map((f) => f.id);
 
     // --- Simulated progression (demo) — dev replaces with real API calls. ---
     let i = 0;
     const step = () => {
-      if (i >= files.length) return;
-      const id = files[i].id;
+      if (i >= files.length) {
+        // Run finished: auto-dismiss the progress banner after a short pause so
+        // it doesn't linger (and can't get stuck when files are later discarded).
+        // TODO(dev): clear the run (this._clearSimilarRun) when the real batch
+        // of requests completes.
+        const done = window.setTimeout(() => this._clearSimilarRun(), 1500);
+        this._similarSimTimers.push(done);
+        return;
+      }
+      const file = files[i];
+      const id = file.id;
       this._similarActiveIds = new Set(this._similarActiveIds).add(id);
       const t = window.setTimeout(() => {
         const active = new Set(this._similarActiveIds);
         active.delete(id);
         this._similarActiveIds = active;
-        // Mark as checked permanently (badge persists across later checks).
-        this._similarCheckedIds = new Set(this._similarCheckedIds).add(id);
+        // Store results (presence = checked → badge). Reassign Map for Lit.
+        const next = new Map(this._similarResults);
+        next.set(id, this._mockSimilarAssets(file, i));
+        this._similarResults = next;
         i += 1;
         step();
       }, 1100);
@@ -3701,6 +3727,21 @@ export class SfxUploader extends LitElement {
     };
     step();
     // --- end simulated progression ---
+  }
+
+  /**
+   * TODO(dev): remove. Generates fake similar_assets for the demo so the
+   * results UI is visible. Replace with the real `similar_assets` from the
+   * embedding endpoint response.
+   */
+  private _mockSimilarAssets(file: UploadFile, index: number): SimilarAsset[] {
+    // Vary count so all cases show: 0 (none), 1 (few), several, many (+N).
+    const count = [3, 1, 0, 12, 0, 24, 2][index % 7];
+    return Array.from({ length: count }, (_, k) => ({
+      uuid: `${file.id}-sim-${k}`,
+      score: Math.max(0.6, 0.99 - k * 0.04),
+      url: file.previewUrl || "",
+    }));
   }
 
   /** Clears only the current run (timers, run/active ids). Keeps the persistent
@@ -3714,6 +3755,72 @@ export class SfxUploader extends LitElement {
 
   private _onSimilarSearchCancel = () => {
     this._clearSimilarRun();
+  };
+
+  /** Remove all similarity-check references to a file id (on file removal). */
+  private _purgeSimilarState(id: string) {
+    if (this._similarRunIds.includes(id)) {
+      this._similarRunIds = this._similarRunIds.filter((x) => x !== id);
+    }
+    if (this._similarActiveIds.has(id)) {
+      const a = new Set(this._similarActiveIds);
+      a.delete(id);
+      this._similarActiveIds = a;
+    }
+    if (this._similarResults.has(id)) {
+      const r = new Map(this._similarResults);
+      r.delete(id);
+      this._similarResults = r;
+    }
+    if (this._similarSelectedIds.has(id)) {
+      const s = new Set(this._similarSelectedIds);
+      s.delete(id);
+      this._similarSelectedIds = s;
+    }
+  }
+
+  /** Checked images that HAVE similar matches, for the review panel. Images
+   *  with no similar are excluded — there is nothing to review for them. */
+  private _similarReviewImages() {
+    const files = [...this._store.getState().files.values()];
+    return files
+      .filter((f) => (this._similarResults.get(f.id)?.length ?? 0) > 0)
+      .map((f) => ({
+        id: f.id,
+        name: f.name,
+        previewUrl: f.previewUrl,
+        results: this._similarResults.get(f.id) ?? [],
+      }));
+  }
+
+  /** Open the similar-results review panel for an image (from its badge). */
+  private _onSimilarOpenResults = (e: CustomEvent<{ fileId: string }>) => {
+    this._similarReviewId = e.detail.fileId;
+  };
+
+  /** Switch the review panel to another checked image. */
+  private _onSimilarResultsSelect = (e: CustomEvent<{ fileId: string }>) => {
+    this._similarReviewId = e.detail.fileId;
+  };
+
+  /** Open a similar asset in a new window. */
+  private _onSimilarResultsOpen = (e: CustomEvent<{ url: string }>) => {
+    if (e.detail.url) window.open(e.detail.url, "_blank", "noopener,noreferrer");
+  };
+
+  /** Discard the reviewed image from the upload; move to the next checked one. */
+  private _onSimilarResultsDiscard = (e: CustomEvent<{ fileId: string }>) => {
+    const id = e.detail.fileId;
+    const matched = this._similarReviewImages().map((im) => im.id);
+    const idx = matched.indexOf(id);
+    const nextId = matched[idx + 1] ?? matched[idx - 1] ?? null;
+    // _removeFile purges results/run/selection for this id.
+    this._removeFile(id);
+    this._similarReviewId = nextId;
+  };
+
+  private _onSimilarResultsClose = () => {
+    this._similarReviewId = null;
   };
 
   private _onFileLocate = (e: CustomEvent<{ fileId: string; file: UploadFile }>) => {
@@ -3773,9 +3880,10 @@ export class SfxUploader extends LitElement {
   private _onClearAll = () => {
     const callbacks = this.config?.callbacks;
 
-    // Reset similarity-check state (run + persistent "checked" memory).
+    // Reset similarity-check state (run + results + review panel).
     this._clearSimilarRun();
-    this._similarCheckedIds = new Set();
+    this._similarResults = new Map();
+    this._similarReviewId = null;
     this._similarSelectMode = false;
     this._similarSelectedIds = new Set();
 
@@ -4880,7 +4988,7 @@ export class SfxUploader extends LitElement {
             .allSelected=${allSimilarSelected}
             .searchRunIds=${this._similarRunIds}
             .searchActiveIds=${this._similarActiveIds}
-            .searchDoneIds=${this._similarCheckedIds}
+            .searchResults=${this._similarResults}
             ?drag-active=${this._bodyDragOver}
             @source-click=${this._onDropTileSourceClick}
           ></sfx-file-list>
@@ -5258,6 +5366,11 @@ export class SfxUploader extends LitElement {
         @similar-toggle=${this._onSimilarToggle}
         @similar-select-all=${this._onSimilarSelectAll}
         @check-similar-search-cancel=${this._onSimilarSearchCancel}
+        @similar-open-results=${this._onSimilarOpenResults}
+        @similar-results-select=${this._onSimilarResultsSelect}
+        @similar-results-open=${this._onSimilarResultsOpen}
+        @similar-results-discard=${this._onSimilarResultsDiscard}
+        @similar-results-close=${this._onSimilarResultsClose}
         @upload-start=${this._onUploadStart}
         @upload-more=${this._onUploadMore}
         @primary-action=${this._onPrimaryAction}
@@ -5380,7 +5493,7 @@ export class SfxUploader extends LitElement {
                           .allSelected=${allSimilarSelected}
                           .searchRunIds=${this._similarRunIds}
                           .searchActiveIds=${this._similarActiveIds}
-                          .searchDoneIds=${this._similarCheckedIds}
+                          .searchResults=${this._similarResults}
                           ?drag-active=${this._bodyDragOver}
                           @source-click=${this._onDropTileSourceClick}
                         ></sfx-file-list>
@@ -5411,6 +5524,13 @@ export class SfxUploader extends LitElement {
                 .selectedCount=${this._similarSelectedIds.size}
               ></sfx-actions-bar>
             `
+          : nothing}
+        ${this._similarReviewId && this._similarReviewImages().length > 0
+          ? html`<sfx-similar-results
+              .t=${t}
+              .images=${this._similarReviewImages()}
+              .selectedId=${this._similarReviewId}
+            ></sfx-similar-results>`
           : nothing}
         ${this._showUrlDialog
           ? html`<sfx-url-dialog .t=${t}></sfx-url-dialog>`

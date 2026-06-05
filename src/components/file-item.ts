@@ -2,6 +2,7 @@ import { LitElement, html, css, nothing } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { cspStyle } from '../utils/csp-style';
 import type { UploadFile, TFunction } from '../store/store.types';
+import type { SimilarAsset } from '../sfx-uploader';
 import { formatFileSize, getFileCategory, getFileExtension, getFileTypeIconUrl, getDefaultFileTypeIconUrl, isBrowserUnrenderableImage } from '../utils/file-utils';
 
 export class SfxFileItem extends LitElement {
@@ -400,22 +401,74 @@ export class SfxFileItem extends LitElement {
       text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     }
 
-    /* Done: green check badge (top-left). */
-    .sim-done-badge {
+    /* Checked: result badge "N similar" / "No similar" (top-left). Doubles as
+       the "checked" indicator — no separate green check. */
+    .sim-result-badge {
       position: absolute;
       top: 8px;
       left: 8px;
       z-index: 8;
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      background: var(--sfx-up-success, #16a34a);
-      display: flex;
+      display: inline-flex;
       align-items: center;
-      justify-content: center;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+      gap: 5px;
+      height: 24px;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: var(--sfx-up-primary, #2563eb);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      box-shadow: 0 2px 6px var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.22));
+      pointer-events: none;
+      transition: opacity 0.15s ease;
     }
-    .sim-done-badge svg { width: 13px; height: 13px; }
+    .sim-result-badge svg { width: 12px; height: 12px; }
+    .sim-result-badge.none {
+      background: var(--sfx-up-bg, #fff);
+      color: var(--sfx-up-text-muted, #94a3b8);
+      border: 1px solid var(--sfx-up-border, #e2e8f0);
+      box-shadow: none;
+    }
+    /* Hide the resting badge on hover so it doesn't clash with the centered
+       Details / View-similar buttons. */
+    .tile:hover .sim-result-badge { opacity: 0; }
+
+    /* --- Hover preview popover (best match) --- */
+    .sim-popover {
+      position: fixed;
+      width: 240px;
+      background: var(--sfx-up-bg, #fff);
+      border: 1px solid var(--sfx-up-border, #e8edf5);
+      border-radius: 12px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+      z-index: 10000;
+      overflow: hidden;
+      cursor: pointer;
+      animation: simPopIn 0.12s ease;
+    }
+    @keyframes simPopIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+    .sim-popover .pop-hero { position: relative; aspect-ratio: 16 / 10; background: var(--sfx-up-surface, #eef); }
+    .sim-popover .pop-hero img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .sim-popover .pop-best {
+      position: absolute; top: 8px; left: 8px; font-size: 11px; font-weight: 700;
+      padding: 3px 9px; border-radius: 999px; background: rgba(255, 255, 255, 0.95);
+      color: var(--sfx-up-primary, #2563eb); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+    .sim-popover .pop-best.high { color: var(--sfx-up-success, #16a34a); }
+    .sim-popover .pop-body { padding: 11px 13px 8px; }
+    .sim-popover .pop-t { font-size: 12.5px; font-weight: 600; color: var(--sfx-up-text, #1e293b); }
+    .sim-popover .pop-s { font-size: 11.5px; color: var(--sfx-up-text-muted, #94a3b8); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sim-popover .pop-foot { padding: 0 13px 12px; display: flex; align-items: center; justify-content: space-between; }
+    .sim-popover .pop-thumbs { display: inline-flex; }
+    .sim-popover .pop-thumbs img { width: 22px; height: 22px; border-radius: 5px; border: 2px solid #fff; object-fit: cover; margin-left: -8px; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); }
+    .sim-popover .pop-thumbs img:first-child { margin-left: 0; }
+    .sim-popover .pop-more {
+      width: 22px; height: 22px; border-radius: 5px; border: 2px solid #fff; margin-left: -8px;
+      background: var(--sfx-up-primary, #2563eb); color: #fff; font-size: 9.5px; font-weight: 700;
+      display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+    .sim-popover .pop-open { font-size: 11.5px; font-weight: 600; color: var(--sfx-up-primary, #2563eb); display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+    .sim-popover .pop-open svg { width: 12px; height: 12px; }
 
     /* --- Progress bar --- */
     .progress {
@@ -731,9 +784,19 @@ export class SfxFileItem extends LitElement {
   @property({ type: Boolean }) selectMode = false;
   /** Whether this tile is currently picked in selection mode. */
   @property({ type: Boolean }) isSelected = false;
-  /** Similarity-search status for this tile: '' | 'searching' | 'done' | 'queued'. */
-  @property({ type: String }) similarStatus: '' | 'searching' | 'done' | 'queued' = '';
+  /** Similarity-search status for this tile: '' | 'searching' | 'queued'. */
+  @property({ type: String }) similarStatus: '' | 'searching' | 'queued' = '';
+  /** Number of similar assets found once checked (-1 = not checked yet → no badge). */
+  @property({ type: Number }) similarCount = -1;
+  /** The similar assets found for this image (for the hover preview popover). */
+  @property({ attribute: false }) similarResults: SimilarAsset[] = [];
   @state() private _dims = '';
+  /** Hover-preview popover (View similar) state + fixed position. */
+  @state() private _simPopover = false;
+  private _simPopLeft = 0;
+  private _simPopTop = 0;
+  private _simPopTimer: number | null = null;
+  private _simHideTimer: number | null = null;
   /** Brief flash on the Copy CDN button after a successful copy. */
   @state() private _copied = false;
   private _copiedTimer: number | null = null;
@@ -764,6 +827,14 @@ export class SfxFileItem extends LitElement {
     // Clear the Copy CDN flash timer so it doesn't fire on a detached
     // component (avoids a Lit "setState on disconnected element" warning
     // and a tiny memory leak holding the closure reference).
+    if (this._simPopTimer != null) {
+      clearTimeout(this._simPopTimer);
+      this._simPopTimer = null;
+    }
+    if (this._simHideTimer != null) {
+      clearTimeout(this._simHideTimer);
+      this._simHideTimer = null;
+    }
     if (this._copiedTimer != null) {
       clearTimeout(this._copiedTimer);
       this._copiedTimer = null;
@@ -808,6 +879,53 @@ export class SfxFileItem extends LitElement {
     e.stopPropagation();
     this._emit('similar-toggle');
   }
+
+  /** Open the similar-results review panel for this image. */
+  private _openResults(e: Event) {
+    e.stopPropagation();
+    this._simPopoverClose();
+    this._emit('similar-open-results');
+  }
+
+  /** Show the hover preview popover, positioned beside the tile (flips left
+   *  when there isn't room on the right; clamped vertically to the viewport). */
+  private _simPopoverShow = () => {
+    if (!this.similarResults.length) return;
+    this._simCancelHide();
+    if (this._simPopover) return;
+    const rect = this.getBoundingClientRect();
+    const popW = 240;
+    const popH = 280;
+    let left = rect.right + 12;
+    if (left + popW > window.innerWidth - 8) left = rect.left - popW - 12;
+    this._simPopLeft = Math.max(8, left);
+    this._simPopTop = Math.max(8, Math.min(rect.top, window.innerHeight - popH - 8));
+    if (this._simPopTimer) clearTimeout(this._simPopTimer);
+    this._simPopTimer = window.setTimeout(() => {
+      this.style.zIndex = '50';
+      this._simPopover = true;
+    }, 150);
+  };
+
+  /** Cancel a pending hide (mouse entered the button or the popover). */
+  private _simCancelHide = () => {
+    if (this._simHideTimer) { clearTimeout(this._simHideTimer); this._simHideTimer = null; }
+  };
+
+  /** Schedule a hide with a small delay so the mouse can bridge the gap
+   *  between the button and the popover without it closing. */
+  private _simScheduleHide = () => {
+    if (this._simPopTimer) { clearTimeout(this._simPopTimer); this._simPopTimer = null; }
+    if (this._simHideTimer) clearTimeout(this._simHideTimer);
+    this._simHideTimer = window.setTimeout(() => this._simPopoverClose(), 180);
+  };
+
+  private _simPopoverClose = () => {
+    if (this._simPopTimer) { clearTimeout(this._simPopTimer); this._simPopTimer = null; }
+    if (this._simHideTimer) { clearTimeout(this._simHideTimer); this._simHideTimer = null; }
+    if (this._simPopover) this._simPopover = false;
+    this.style.zIndex = '';
+  };
 
   private _locate(e: Event) {
     e.stopPropagation();
@@ -915,15 +1033,20 @@ export class SfxFileItem extends LitElement {
               `
             : nothing}
 
-          <!-- Similarity search: green done badge when this image's check finished -->
-          ${this.similarStatus === 'done'
-            ? html`
-                <div class="sim-done-badge" title=${this.t('similarChecked', 'Checked')}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                </div>
-              `
+          <!-- Similarity result badge once checked: "N similar" (click to open
+               results) or "No similar". Replaces the green check. -->
+          ${!this.similarStatus && this.similarCount >= 0
+            ? this.similarCount > 0
+              ? html`
+                  <span class="sim-result-badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+                      <circle cx="11" cy="11" r="7" />
+                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                    ${this.t('nSimilar', '{{count}} similar', { count: this.similarCount })}
+                  </span>
+                `
+              : html`<span class="sim-result-badge none">${this.t('noSimilar', 'No similar')}</span>`
             : nothing}
 
           <!-- Similar-image selection checkbox (selection mode, images only) -->
@@ -956,17 +1079,27 @@ export class SfxFileItem extends LitElement {
                     </svg>
                     ${this.t('details', 'Details')}
                   </button>
-                  ${this.showCheckSimilar && isImage
+                  ${this.similarCount > 0
                     ? html`
-                        <button class="check-similar-btn" @click=${this._checkSimilarSingle} aria-label=${this.t('checkSimilar', 'Check similar')}>
+                        <button class="check-similar-btn" @click=${this._openResults} @mouseenter=${this._simPopoverShow} @mouseleave=${this._simScheduleHide} aria-label=${this.t('viewSimilar', 'View similar assets')}>
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
                             <circle cx="11" cy="11" r="7"/>
                             <line x1="21" y1="21" x2="16.65" y2="16.65"/>
                           </svg>
-                          ${this.t('checkSimilar', 'Check similar')}
+                          ${this.t('viewNSimilar', 'View {{count}} similar', { count: this.similarCount })}
                         </button>
                       `
-                    : nothing}
+                    : this.showCheckSimilar && isImage
+                      ? html`
+                          <button class="check-similar-btn" @click=${this._checkSimilarSingle} aria-label=${this.t('checkSimilar', 'Check similar')}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                              <circle cx="11" cy="11" r="7"/>
+                              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                            </svg>
+                            ${this.t('checkSimilar', 'Check similar')}
+                          </button>
+                        `
+                      : nothing}
                 </div>
               `
             : nothing}
@@ -1108,6 +1241,51 @@ export class SfxFileItem extends LitElement {
             ?readonly=${isReview}
             @change=${isReview ? nothing : this._rename} @click=${(e: Event) => e.stopPropagation()} />
           <div class="meta">${ext || ''}${f.size ? ` \u00B7 ${formatFileSize(f.size)}` : ''}${this._dims ? ` \u00B7 ${this._dims}` : ''}</div>
+        </div>
+      </div>
+      ${this._renderSimPopover()}
+    `;
+  }
+
+  /** Hover preview popover (variant C: best match large + the rest stacked). */
+  private _renderSimPopover() {
+    if (!this._simPopover || !this.similarResults.length) return nothing;
+    const sorted = [...this.similarResults].sort((a, b) => b.score - a.score);
+    const best = sorted[0];
+    const total = sorted.length;
+    const rest = sorted.slice(1);
+    const thumbs = rest.slice(0, 3);
+    const moreCount = rest.length - thumbs.length;
+    const pct = Math.round(best.score * 100);
+    return html`
+      <div
+        class="sim-popover"
+        @mouseenter=${this._simCancelHide}
+        @mouseleave=${this._simScheduleHide}
+        @click=${this._openResults}
+        ${cspStyle({ left: `${this._simPopLeft}px`, top: `${this._simPopTop}px` })}
+      >
+        <div class="pop-hero">
+          ${best.url ? html`<img src=${best.url} alt="" />` : nothing}
+          <span class="pop-best ${best.score >= 0.9 ? 'high' : ''}">${this.t('bestMatch', '{{pct}}% best match', { pct })}</span>
+        </div>
+        <div class="pop-body">
+          <div class="pop-t">${this.t('closestSimilar', 'Closest similar asset')}</div>
+          <div class="pop-s">${best.uuid}</div>
+        </div>
+        <div class="pop-foot">
+          ${rest.length
+            ? html`<div class="pop-thumbs">
+                ${thumbs.map((r) => html`<img src=${r.url} alt="" />`)}
+                ${moreCount > 0 ? html`<span class="pop-more">+${moreCount}</span>` : nothing}
+              </div>`
+            : html`<span></span>`}
+          <span class="pop-open">
+            ${total === 1
+              ? this.t('open', 'Open')
+              : this.t('openAllN', 'Open all {{count}}', { count: total })}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </span>
         </div>
       </div>
     `;
