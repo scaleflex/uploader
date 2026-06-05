@@ -103,6 +103,16 @@ const page: Page = {
           </div>
         </details>
         <button class="btn-primary" id="open-btn">Open uploader with metadata</button>
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 12px; align-items: flex-start;">
+          <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: #475569; cursor: pointer;">
+            <input type="checkbox" id="main-modal-large" style="width: 16px; height: 16px; cursor: pointer;" />
+            Wider main modal (min(90vw, 1600px) × 92vh)
+          </label>
+          <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: #475569; cursor: pointer;">
+            <input type="checkbox" id="bulk-modal-large" style="width: 16px; height: 16px; cursor: pointer;" />
+            Larger bulk modal (90vw × 90vh)
+          </label>
+        </div>
       </section>
 
       <section class="page-section">
@@ -305,6 +315,28 @@ uploader.config = {
   },
 };`,
       },
+      {
+        label: 'Resize modals',
+        lang: 'css',
+        code: `
+/* Both modals are sized independently. Change either, both, or neither. */
+sfx-uploader {
+  /* Main uploader modal (default: 1100px × 88vh) */
+  --sfx-up-modal-max-width: min(90vw, 1600px);
+  --sfx-up-max-height: 92vh;
+
+  /* Bulk metadata edit modal (default: 980px × 82vh) */
+  --sfx-up-bulk-modal-width: 90vw;
+  --sfx-up-bulk-modal-height: 90vh;
+}
+
+/* Or set inline right before opening: */
+/*
+uploader.style.setProperty('--sfx-up-modal-max-width', 'min(90vw, 1600px)');
+uploader.style.setProperty('--sfx-up-bulk-modal-width', '90vw');
+uploader.open();
+*/`,
+      },
     ]);
 
     // Event listeners for logging
@@ -427,7 +459,25 @@ uploader.config = {
             }
           : undefined;
 
-      log('config', { projectUuid, enforce, hasHubHeaders: !!hubHeaders });
+      const largeMain = (document.getElementById('main-modal-large') as HTMLInputElement | null)?.checked ?? false;
+      if (largeMain) {
+        uploader.style.setProperty('--sfx-up-modal-max-width', 'min(90vw, 1600px)');
+        uploader.style.setProperty('--sfx-up-max-height', '92vh');
+      } else {
+        uploader.style.removeProperty('--sfx-up-modal-max-width');
+        uploader.style.removeProperty('--sfx-up-max-height');
+      }
+
+      const largeBulk = (document.getElementById('bulk-modal-large') as HTMLInputElement | null)?.checked ?? false;
+      if (largeBulk) {
+        uploader.style.setProperty('--sfx-up-bulk-modal-width', '90vw');
+        uploader.style.setProperty('--sfx-up-bulk-modal-height', '90vh');
+      } else {
+        uploader.style.removeProperty('--sfx-up-bulk-modal-width');
+        uploader.style.removeProperty('--sfx-up-bulk-modal-height');
+      }
+
+      log('config', { projectUuid, enforce, hasHubHeaders: !!hubHeaders, largeMain, largeBulk });
 
       uploader.config = buildConfig({
         metadataConfig: {
@@ -445,6 +495,12 @@ uploader.config = {
     const listeners = (page as any)._listeners as Array<[string, EventListener]> | undefined;
     if (uploader && listeners) {
       listeners.forEach(([event, fn]) => uploader.removeEventListener(event, fn));
+    }
+    if (uploader) {
+      uploader.style.removeProperty('--sfx-up-modal-max-width');
+      uploader.style.removeProperty('--sfx-up-max-height');
+      uploader.style.removeProperty('--sfx-up-bulk-modal-width');
+      uploader.style.removeProperty('--sfx-up-bulk-modal-height');
     }
     (page as any)._listeners = undefined;
     logEl = null;
