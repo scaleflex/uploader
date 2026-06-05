@@ -2292,13 +2292,14 @@ export class SfxUploader extends LitElement {
       }
       /* Let the preview image scale down instead of forcing a
          340×240 crop — on a 1920×600 kiosk that hardcoded size
-         looked tiny; relying on max-width/max-height lets the wrap
-         fill whatever vertical space the layout gives it. */
+         looked tiny. Use a definite height so the inner image's
+         max-height: 100% actually resolves; otherwise tall images
+         (e.g. 52×984) render at intrinsic height and escape the
+         panel. */
       .preview-img-wrap {
-        width: auto;
-        height: auto;
-        max-width: min(420px, 60vw);
-        max-height: min(280px, 55vh);
+        width: min(420px, 60vw);
+        height: min(280px, 55vh);
+        max-width: 100%;
       }
     }
   `;
