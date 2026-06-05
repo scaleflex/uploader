@@ -61,8 +61,13 @@ export class SfxFileList extends LitElement {
       padding: 4px var(--sfx-grid-pad-r, 8px) 16px var(--sfx-grid-pad-l, 16px);
     }
 
-    /* Instruction banner shown while picking images for the similarity check */
+    /* Instruction / progress banner. Sticky to the top of the scrolling grid so
+       it stays reachable (Select all / Check / Cancel / progress) when there are
+       many assets and the list is long. */
     .similar-banner {
+      position: sticky;
+      top: 0;
+      z-index: 6;
       display: flex;
       align-items: center;
       gap: 12px;
