@@ -433,6 +433,11 @@ export class SfxFileItem extends LitElement {
        Details / View-similar buttons. */
     .tile:hover .sim-result-badge { opacity: 0; }
 
+    /* Review-pick tile (results modal left list): plain selectable card. */
+    .tile.review-pick { cursor: pointer; }
+    .tile.review-pick:hover .sim-result-badge { opacity: 1; }
+    .tile.review-pick .name-input { pointer-events: none; }
+
     /* --- Hover preview popover (best match) --- */
     .sim-popover {
       position: fixed;
@@ -790,6 +795,10 @@ export class SfxFileItem extends LitElement {
   @property({ type: Number }) similarCount = -1;
   /** The similar assets found for this image (for the hover preview popover). */
   @property({ attribute: false }) similarResults: SimilarAsset[] = [];
+  /** Review-pick mode: render as a plain selectable tile (used in the results
+   *  review modal's left list) — no hover actions, delete, checkbox or popover;
+   *  the result badge stays visible; clicking selects it. */
+  @property({ type: Boolean }) reviewPick = false;
   @state() private _dims = '';
   /** Hover-preview popover (View similar) state + fixed position. */
   @state() private _simPopover = false;
@@ -878,6 +887,11 @@ export class SfxFileItem extends LitElement {
   private _toggleSimilar(e: Event) {
     e.stopPropagation();
     this._emit('similar-toggle');
+  }
+
+  /** Select this image in the results-review modal's left list. */
+  private _reviewSelect() {
+    this._emit('similar-results-select', { fileId: this.file.id });
   }
 
   /** Open the similar-results review panel for this image. */
@@ -974,7 +988,8 @@ export class SfxFileItem extends LitElement {
     // normal, not-yet-uploaded tile and not while picking images.
     const showCenterActions =
       !isReview && !isDone && !isUploading && !isPaused && !isError &&
-      f.status !== 'rejected' && !this.selectMode && !this.similarStatus;
+      f.status !== 'rejected' && !this.selectMode && !this.similarStatus &&
+      !this.reviewPick;
     // Dark hover overlay whenever the centered actions show — for every file
     // type (documents/videos included), so Details always has a backdrop.
     // The Check similar button itself still only appears on images.
@@ -992,13 +1007,15 @@ export class SfxFileItem extends LitElement {
       this.selectMode && !isImage && !isReview ? 'select-dimmed' : '',
       csOverlay ? 'cs-overlay' : '',
       this.similarStatus === 'queued' ? 'sim-queued' : '',
+      this.reviewPick ? 'review-pick' : '',
+      this.reviewPick && this.isSelected ? 'selected' : '',
     ].filter(Boolean).join(' ');
 
     return html`
       <div
         class=${tileClass}
         tabindex="0"
-        @click=${inSelectMode ? this._toggleSimilar : undefined}
+        @click=${this.reviewPick ? this._reviewSelect : inSelectMode ? this._toggleSimilar : undefined}
       >
         <!-- Preview area -->
         <div class="preview">
@@ -1191,7 +1208,7 @@ export class SfxFileItem extends LitElement {
 
         <!-- Action buttons (hidden in review mode and while picking images
              for the similarity check — files are read-only there) -->
-        ${isReview || this.selectMode ? nothing : html`
+        ${isReview || this.selectMode || this.reviewPick ? nothing : html`
         <div class="actions">
           ${isUploading && f.isTus
             ? html`
@@ -1238,8 +1255,8 @@ export class SfxFileItem extends LitElement {
         <div class="info">
           <input class="name-input" type="text" .value=${f.name} title=${f.name}
             aria-label=${this.t('fileName', 'File name')}
-            ?readonly=${isReview}
-            @change=${isReview ? nothing : this._rename} @click=${(e: Event) => e.stopPropagation()} />
+            ?readonly=${isReview || this.reviewPick}
+            @change=${isReview || this.reviewPick ? nothing : this._rename} @click=${(e: Event) => e.stopPropagation()} />
           <div class="meta">${ext || ''}${f.size ? ` \u00B7 ${formatFileSize(f.size)}` : ''}${this._dims ? ` \u00B7 ${this._dims}` : ''}</div>
         </div>
       </div>

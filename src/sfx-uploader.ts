@@ -138,6 +138,16 @@ export interface SimilarAsset {
   score: number;
   /** CDN url of the similar asset (preview + open target). */
   url: string;
+  // TODO(dev): the similarity response only returns uuid/score/url. Populate the
+  // fields below if the backend adds them (or a metadata lookup is done) — the
+  // results card shows size/resolution only when present.
+  /** Display name (defaults to the filename derived from `url`). */
+  name?: string;
+  /** File size in bytes. */
+  size?: number;
+  /** Pixel dimensions. */
+  width?: number;
+  height?: number;
 }
 
 export interface UploaderConfig {
@@ -3816,6 +3826,7 @@ export class SfxUploader extends LitElement {
         id: f.id,
         name: f.name,
         previewUrl: f.previewUrl,
+        file: f,
         results: this._similarResults.get(f.id) ?? [],
       }));
   }

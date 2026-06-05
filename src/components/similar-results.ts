@@ -1,14 +1,17 @@
 import { LitElement, html, css, nothing } from 'lit';
 import { property } from 'lit/decorators.js';
 import { buttonStyles, focusStyles } from './shared-styles';
-import type { TFunction } from '../store/store.types';
+import type { TFunction, UploadFile } from '../store/store.types';
 import type { SimilarAsset } from '../sfx-uploader';
+import { formatFileSize } from '../utils/file-utils';
 
 /** One checked image plus its similar-asset results. */
 export interface SimilarReviewImage {
   id: string;
   name: string;
   previewUrl: string | null;
+  /** The full upload file — rendered with the real <sfx-file-item> tile. */
+  file: UploadFile;
   results: SimilarAsset[];
 }
 
@@ -64,13 +67,17 @@ export class SfxSimilarResults extends LitElement {
         padding: 16px 20px;
         border-bottom: 1px solid var(--sfx-up-border-light, #f1f5f9);
       }
-      .head b { font-size: 16px; }
-      .head .sub { font-size: 12px; color: var(--sfx-up-text-muted, #94a3b8); margin-left: auto; }
+      .head b { font-size: 16px; font-weight: 500; }
+      .head .sub { font-size: 14px; color: var(--sfx-up-text-muted, #94a3b8); margin-left: auto; }
+      /* Close button — same as the product header close (.header-btn). */
       .close-x {
-        width: 32px; height: 32px; border-radius: 8px; border: none; background: none;
-        color: var(--sfx-up-text-muted, #94a3b8); cursor: pointer; font-size: 22px; line-height: 1;
+        width: 30px; height: 30px; border-radius: 8px; border: none;
+        background: var(--sfx-up-surface, #f8fafc); color: var(--sfx-up-text-muted, #94a3b8);
+        cursor: pointer; display: flex; align-items: center; justify-content: center;
+        transition: background 0.15s, color 0.15s; flex-shrink: 0;
       }
-      .close-x:hover { background: var(--sfx-up-border-light, #f1f5f9); }
+      .close-x svg { width: 16px; height: 16px; }
+      .close-x:hover { background: var(--sfx-up-border, #e2e8f0); color: var(--sfx-up-text, #37414b); }
 
       .split { display: flex; min-height: 0; flex: 1; }
       .left {
@@ -105,7 +112,7 @@ export class SfxSimilarResults extends LitElement {
       .p-head { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--sfx-up-border-light, #f1f5f9); }
       .p-head .src { width: 40px; height: 40px; border-radius: 8px; object-fit: cover; flex: 0 0 40px; background: var(--sfx-up-surface, #eef); }
       .p-head .ttl { flex: 1; min-width: 0; }
-      .p-head .ttl b { font-size: 14px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .p-head .ttl b { font-size: 14px; font-weight: 500; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
       .p-head .ttl span { font-size: 12px; color: var(--sfx-up-text-muted, #94a3b8); }
       .nav { display: inline-flex; gap: 6px; }
       .nav button { width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--sfx-up-border, #e2e8f0); background: #fff; color: var(--sfx-up-text-secondary, #475569); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
@@ -129,7 +136,9 @@ export class SfxSimilarResults extends LitElement {
         color: var(--sfx-up-primary, #2563eb); display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
       }
       .card-open svg { width: 13px; height: 13px; }
-      .card .foot { padding: 6px 9px; font-size: 11px; color: var(--sfx-up-text-muted, #94a3b8); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-top: 1px solid var(--sfx-up-border-light, #f1f5f9); }
+      .card .foot { padding: 7px 9px; border-top: 1px solid var(--sfx-up-border-light, #f1f5f9); }
+      .card .foot-name { font-size: 12px; color: var(--sfx-up-text, #37414b); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .card .foot-meta { font-size: 11px; color: var(--sfx-up-text-muted, #5b6e82); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
 
       .empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: var(--sfx-up-text-muted, #94a3b8); padding: 40px; text-align: center; }
       .empty .ic { width: 48px; height: 48px; border-radius: 50%; background: var(--sfx-up-surface, #f8fafc); display: flex; align-items: center; justify-content: center; }
@@ -137,7 +146,7 @@ export class SfxSimilarResults extends LitElement {
       .empty b { color: var(--sfx-up-text-secondary, #475569); font-size: 14px; }
       .empty span { font-size: 12px; }
 
-      .p-foot { padding: 12px 16px; border-top: 1px solid var(--sfx-up-border-light, #f1f5f9); background: var(--sfx-up-bg, #fff); }
+      .p-foot { padding: 14px 24px; border-top: 1px solid var(--sfx-up-border-light, #f1f5f9); background: var(--sfx-up-bg, #fff); }
       .discard {
         width: 100%; height: 38px; border-radius: 6px; border: 1.5px solid #fecaca; background: #fff;
         color: var(--sfx-up-error, #dc2626); font-family: inherit; font-size: 14px; line-height: 24px; font-weight: 500; cursor: pointer;
@@ -187,6 +196,21 @@ export class SfxSimilarResults extends LitElement {
     this.dispatchEvent(new CustomEvent(name, { detail, bubbles: true, composed: true }));
   }
 
+  /** Filename derived from the asset url (when the BE doesn't send a name). */
+  private _assetName(r: SimilarAsset): string {
+    return r.name || r.url?.split('/').pop()?.split('?')[0] || r.uuid;
+  }
+
+  /** Meta line: format · size · resolution. Size/resolution show only when the
+   *  backend provides them (see SimilarAsset TODO(dev)); format comes from name. */
+  private _assetMeta(r: SimilarAsset): string {
+    const ext = this._assetName(r).split('.').pop()?.toUpperCase() ?? '';
+    const parts = [ext];
+    if (r.size) parts.push(formatFileSize(r.size));
+    if (r.width && r.height) parts.push(`${r.width}×${r.height}`);
+    return parts.filter(Boolean).join(' · ');
+  }
+
   private _selected(): SimilarReviewImage | undefined {
     return this.images.find((im) => im.id === this.selectedId) ?? this.images[0];
   }
@@ -211,8 +235,14 @@ export class SfxSimilarResults extends LitElement {
         <div class="modal" role="dialog" aria-modal="true">
           <div class="head">
             <b>${this.t('similarResultsTitle', 'Similar assets review')}</b>
-            <span class="sub">${this.t('similarResultsSummary', '{{count}} images with similar assets', { count: this.images.length })}</span>
-            <button class="close-x" @click=${() => this._emit('similar-results-close')} aria-label=${this.t('close', 'Close')}>×</button>
+            <span class="sub">${this.t('similarResultsSummary', {
+              count: this.images.length,
+              defaultValue_one: '{{count}} image with similar assets',
+              defaultValue_other: '{{count}} images with similar assets',
+            })}</span>
+            <button class="close-x" @click=${() => this._emit('similar-results-close')} aria-label=${this.t('close', 'Close')}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
           </div>
 
           <div class="split">
@@ -220,15 +250,14 @@ export class SfxSimilarResults extends LitElement {
               <div class="left-head">${this.t('pickToReview', 'Pick an image to review its similar assets')}</div>
               <div class="grid">
                 ${this.images.map((im) => html`
-                  <div class="tile ${im.id === cur.id ? 'sel' : ''}" @click=${() => this._emit('similar-results-select', { fileId: im.id })}>
-                    <div class="preview">
-                      ${im.previewUrl ? html`<img src=${im.previewUrl} alt="" />` : nothing}
-                      ${im.results.length > 0
-                        ? html`<span class="badge">${this.t('nSimilar', '{{count}} similar', { count: im.results.length })}</span>`
-                        : html`<span class="badge none">${this.t('noSimilar', 'No similar')}</span>`}
-                    </div>
-                    <div class="info"><div class="name">${im.name}</div></div>
-                  </div>
+                  <sfx-file-item
+                    .t=${this.t}
+                    .file=${im.file}
+                    .similarCount=${im.results.length}
+                    .similarResults=${im.results}
+                    .isSelected=${im.id === cur.id}
+                    reviewPick
+                  ></sfx-file-item>
                 `)}
               </div>
             </div>
@@ -239,7 +268,11 @@ export class SfxSimilarResults extends LitElement {
                 <div class="ttl">
                   <b>${cur.name}</b>
                   <span>${cur.results.length > 0
-                    ? this.t('nSimilarFound', '{{count}} similar assets found', { count: cur.results.length })
+                    ? this.t('nSimilarFound', {
+                        count: cur.results.length,
+                        defaultValue_one: '{{count}} similar asset found',
+                        defaultValue_other: '{{count}} similar assets found',
+                      })
                     : this.t('noSimilarFound', 'No similar assets found')}</span>
                 </div>
                 <div class="nav">
@@ -264,7 +297,10 @@ export class SfxSimilarResults extends LitElement {
                               <button class="card-open" @click=${() => this._emit('similar-results-open', { url: r.url })} title=${this.t('openInNewWindow', 'Open in new window')}>${this._openIcon()}</button>
                               ${r.url ? html`<img src=${r.url} alt="" />` : nothing}
                             </div>
-                            <div class="foot">${r.uuid}</div>
+                            <div class="foot">
+                              <div class="foot-name">${this._assetName(r)}</div>
+                              <div class="foot-meta">${this._assetMeta(r)}</div>
+                            </div>
                           </div>
                         `;
                       })}
