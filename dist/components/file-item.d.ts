@@ -7,10 +7,6 @@ export declare class SfxFileItem extends LitElement {
     /** 'upload' (default): full controls; 'review': read-only post-upload
      *  view with status badges and hover actions (Locate / Copy CDN). */
     mode: 'upload' | 'review';
-    /** Optional host-supplied builder for the Locate button URL. When set,
-     *  takes precedence over the default `response.file.url.public`. Lets
-     *  host apps point Locate at their own dashboard / file manager. */
-    getLocateUrl?: (file: UploadFile) => string | null | undefined;
     /** Whether to show the "Locate" hover action on completed review tiles. */
     showLocateButton: boolean;
     /** Whether to show the "Copy CDN" hover action on completed review tiles. */

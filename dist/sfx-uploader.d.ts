@@ -4,6 +4,7 @@ import { UploadFile, UploadRestrictions, UploadResponse } from './store/store.ty
 import { AuthConfig } from './auth/auth.types';
 import { ConnectorConfig } from './connectors/connector.types';
 import { MetadataConfig } from './metadata/schema/schema.types';
+import { Product } from './product/product.types';
 export interface UploaderCallbacks {
     onFileAdded?: (file: UploadFile) => void;
     onFileRemoved?: (file: UploadFile) => void;
@@ -85,22 +86,46 @@ export interface UploaderConfig {
     /** Layout for the import-from sources section: horizontal pills (default) or cards grid. */
     sourcesLayout?: "pills" | "cards";
     /**
-     * Override the URL opened by the "Locate" button in the last-upload review
-     * screen. Receives the completed file and should return the URL the host
-     * wants Locate to open (typically a dashboard / file-manager URL pointing
-     * at the file's containing folder). Return `null` / `undefined` to fall
-     * back to the file's own public URL (default behaviour).
+     * Host-supplied builder for the "Locate" button URL. Receives the
+     * completed file and returns the URL Locate should open. Return
+     * `null` / `undefined` to fall back to the `adminUrl`-based default
+     * (see `adminUrl`). When both are absent, Locate just fires the
+     * `sfx-file-locate` event / `onFileLocate` callback and does nothing
+     * else — the host is expected to handle navigation itself.
+     *
+     * To suppress the auto-navigation even when a URL would be resolved
+     * (e.g. open it via the host's client-side router instead of a new
+     * tab), call `event.preventDefault()` on the `sfx-file-locate` public
+     * event.
+     *
+     * Pairs with `showLocateButton: true`.
      *
      * Example:
      * ```ts
      * getLocateUrl: (file) =>
-     *   `https://app.scaleflex.com/projects/${PROJECT_ID}/files?id=${file.response?.file?.uuid}`
+     *   `https://app.example.com/dam?asset=${file.response?.file?.uuid}`
      * ```
      */
     getLocateUrl?: (file: UploadFile) => string | null | undefined;
     /**
+     * Base URL of the Filerobot admin / DAM app — used to build the
+     * default Locate target when `getLocateUrl` is not provided. The
+     * uploader navigates to `${adminUrl}/library?lf=<base64(uuid)>`, the
+     * same deep-link the admin uses internally to scroll to and select a
+     * file in its library tree. Trailing slashes are ignored.
+     *
+     * No default — embedding hosts know their own admin deployment URL
+     * (it differs per environment / whitelabel). When omitted and
+     * `getLocateUrl` is also omitted, the Locate button fires its event
+     * and callback but performs no navigation.
+     */
+    adminUrl?: string;
+    /**
      * Show the "Locate" button on completed file tiles in the review screen.
-     * When clicked, fires the `sfx-file-locate` event and the `onFileLocate` callback.
+     * When clicked, fires the `sfx-file-locate` event and the `onFileLocate`
+     * callback, then opens the resolved Locate URL (see `getLocateUrl` /
+     * `adminUrl`) in a new tab unless the event's default is prevented or
+     * neither config resolves to a URL.
      * Default: false (hidden).
      */
     showLocateButton?: boolean;
@@ -343,6 +368,17 @@ export declare class SfxUploader extends LitElement {
         meta?: Record<string, unknown>;
         tags?: string[];
     }>): void;
+    /**
+     * Update product fields (ref + position) for a single file. The patch is
+     * merged onto the existing `product` object. Passing `undefined` for a key
+     * clears it. Only files in modifiable statuses are affected.
+     */
+    updateFileProduct(fileId: string, product: Partial<Product>): void;
+    /** Batch-update product fields for multiple files. */
+    updateFilesProduct(updates: Array<{
+        fileId: string;
+        product: Partial<Product>;
+    }>): void;
     updated(changed: Map<string, unknown>): void;
     /**
      * The preview panel opens at 3/8 (~37.5%) of the modal width by default,
@@ -380,8 +416,18 @@ export declare class SfxUploader extends LitElement {
     private _onFileRename;
     /** Handle file rename from the preview sidebar or thumbnail. */
     private _onPreviewRename;
-    /** Handle field-blur from inline metadata form in the preview sidebar. */
+    /**
+     * Handle field-blur from inline metadata form in the preview sidebar.
+     * Routes synthetic product keys (`product.ref` / `product.position`) into
+     * `file.product` via `updateFileProduct`; everything else lands in `meta`.
+     */
     private _onPreviewMetadataBlur;
+    /**
+     * Build the meta-like dict the preview's `<sfx-metadata-form>` consumes,
+     * merging product values under their synthetic keys so the same component
+     * can render both metadata and product inputs.
+     */
+    private _previewMeta;
     private get _metadataEnforcing();
     private _firstMissingRequiredFieldKey;
     private get _hasUnfilledRequiredMetadata();
@@ -432,9 +478,11 @@ export declare class SfxUploader extends LitElement {
     private _onFileRemove;
     private _onFilePreview;
     private _onFillMetadata;
+    private _onRequireMetadata;
     private _onFileLocate;
     private _onFileCopyCdn;
     private _onBulkMetadataSaveBatch;
+    private _onBulkProductSaveBatch;
     private _onBulkMetadataClose;
     private _onFileRetry;
     private _onFilePause;

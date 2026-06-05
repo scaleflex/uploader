@@ -10,8 +10,6 @@ export declare class SfxLastUploadReview extends LitElement {
     static styles: import('lit').CSSResult;
     t: TFunction;
     files: UploadFile[];
-    /** Forwarded to file-list → file-item for the Locate button URL override. */
-    getLocateUrl?: (file: UploadFile) => string | null | undefined;
     showLocateButton: boolean;
     showCopyCdnButton: boolean;
     private _filter;

@@ -1,8 +1,8 @@
-import { g as f, a as i, d as o, e as r, c as l, b as x, f as t, S as c, n as d, o as S, p as m } from "./sfx-uploader-ui2PpjWO.js";
-const s = (e, a) => {
-  typeof customElements < "u" && !customElements.get(e) && customElements.define(e, a);
+import { h as a, b as i, e as o, f as r, d as l, c as x, g as t, S as c, p as d, q as S, s as m } from "./sfx-uploader-Cp2gsWQK.js";
+const s = (e, f) => {
+  typeof customElements < "u" && !customElements.get(e) && customElements.define(e, f);
 };
-s("sfx-uploader", f);
+s("sfx-uploader", a);
 s("sfx-drop-zone", i);
 s("sfx-import-divider", o);
 s("sfx-source-pills", r);

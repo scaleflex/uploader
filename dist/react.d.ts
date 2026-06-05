@@ -1,6 +1,7 @@
 import { CSSProperties } from 'react';
 import { SfxUploader as SfxUploaderElement, UploaderConfig, UploaderPhase } from './sfx-uploader';
 import { UploadFile, UploadResponse } from './store/store.types';
+import { Product } from './product/product.types';
 export interface UploaderRef {
     element: SfxUploaderElement | null;
     open(): void;
@@ -16,6 +17,11 @@ export interface UploaderRef {
         fileId: string;
         meta?: Record<string, unknown>;
         tags?: string[];
+    }>): void;
+    updateFileProduct(fileId: string, product: Partial<Product>): void;
+    updateFilesProduct(updates: Array<{
+        fileId: string;
+        product: Partial<Product>;
     }>): void;
     getStatus(): UploaderPhase;
     dismissPanel(): void;

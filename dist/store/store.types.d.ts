@@ -1,4 +1,5 @@
 import { RemoteFileInfo } from '../connectors/connector.types';
+import { Product } from '../product/product.types';
 export type FileStatus = 'idle' | 'queued' | 'uploading' | 'paused' | 'complete' | 'error' | 'retrying' | 'failed' | 'rejected' | 'cancelled';
 export interface UploadFile {
     id: string;
@@ -20,6 +21,7 @@ export interface UploadFile {
     addedAt: number;
     meta: Record<string, unknown>;
     tags: string[];
+    product: Product;
     remoteInfo: RemoteFileInfo | null;
     isTus: boolean;
     tusUploadUrl: string | null;
@@ -31,7 +33,14 @@ export interface UploadResponse {
         name: string;
         extension: string;
         type: string;
-        size: number;
+        /**
+         * Filerobot `/v4/files` returns `{ bytes, pretty }` on recent API versions
+         * and a plain number on older endpoints / synthesized same-asset responses.
+         */
+        size: number | {
+            bytes: number;
+            pretty?: string;
+        };
         url: {
             public: string;
             cdn: string;

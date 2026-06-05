@@ -44,7 +44,27 @@ export interface MetadataField {
     icon?: string;
     hide?: boolean;
 }
-export type MetadataFieldType = 'text' | 'textarea' | 'select-one' | 'multi-select' | 'boolean' | 'date' | 'numeric' | 'decimal2' | 'geopoint' | 'integer-list' | 'tags' | 'attachment-uri';
+export type MetadataFieldType = 'text' | 'textarea' | 'select-one' | 'multi-select' | 'boolean' | 'date' | 'numeric' | 'decimal2' | 'geopoint' | 'integer-list' | 'tags' | 'attachment-uri' | 'asset-attachments' | 'ultratags' | 'taxonomy-node';
+/**
+ * Field types whose editor cannot run inside the uploader (they depend on
+ * the asset already existing on the backend — file attachments need an asset
+ * id, ultratags / taxonomy nodes need server-driven autocomplete trees).
+ * Rendered read-only with a tooltip; excluded from bulk operations.
+ */
+export declare const UNSUPPORTED_FIELD_TYPES: ReadonlySet<MetadataFieldType>;
+/**
+ * Specific field ckeys (slugs) that depend on backend processing of the
+ * uploaded asset (e.g. `face_matcher` is populated by a face-recognition
+ * pipeline after ingest; `attachments-assets` references sibling assets that
+ * don't exist yet). Disabled in the same way as unsupported types.
+ */
+export declare const UNSUPPORTED_FIELD_CKEYS: ReadonlySet<string>;
+export declare function isUnsupportedFieldType(type: MetadataFieldType): boolean;
+/**
+ * True when the field cannot be edited during upload — either by type or by
+ * a known backend-managed ckey. Use this anywhere the full field is in hand.
+ */
+export declare function isUnsupportedField(field: MetadataField): boolean;
 export interface PossibleValue {
     api_value: string;
     internal_unique_value: string;
@@ -61,6 +81,13 @@ export interface MetadataSchema {
     forceFillingOnUpload: boolean;
     regionalVariantsGroups: RegionalVariantsGroup[];
     language: string;
+    /**
+     * True when the project has product fields enabled (Hub flag
+     * `airstore.ui.products_enabled`). When true the uploader renders the
+     * hardcoded "Product" section (ref + position) alongside generic metadata.
+     * Mirrors admin v5's product fields feature.
+     */
+    productsEnabled: boolean;
 }
 export interface RegionalVariantsGroup {
     uuid: string;
@@ -132,5 +159,12 @@ export interface MetadataConfig {
     showTags?: boolean;
     language?: string;
     defaults?: Record<string, unknown>;
+    /**
+     * Force-enable the hardcoded "Product" fields section (ref + position).
+     * Normally auto-detected from the Hub project flag `airstore.ui.products_enabled`.
+     * Set explicitly when using `rawMetadata` (which bypasses the Hub fetch) or to
+     * override the auto-detected value.
+     */
+    productsEnabled?: boolean;
 }
 //# sourceMappingURL=schema.types.d.ts.map

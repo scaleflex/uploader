@@ -25,6 +25,20 @@ export declare function getFilesWithMissingRequired(files: Map<string, UploadFil
  */
 export declare function firstMissingRequiredFieldKey(files: Map<string, UploadFile>, schema: MetadataSchema, config?: MetadataConfig): string | null;
 /**
+ * Bulk-modal variant of `firstMissingRequiredFieldKey`. Reads from the modal's
+ * `staged` map (per-file, per-field pending edits) so the validation reflects
+ * the user's unsaved changes, not the original `file.meta`. Only considers
+ * files in modifiable statuses.
+ */
+export declare function firstMissingRequiredFieldKeyInStaged(staged: Map<string, Map<string, unknown>>, originalFiles: Map<string, UploadFile>, schema: MetadataSchema, config?: MetadataConfig): string | null;
+/**
+ * Bulk-modal companion that returns ALL required field keys that have at least
+ * one modifiable file with a missing value. Used by the sidebar to highlight
+ * which required fields still need attention. Same semantics as
+ * `firstMissingRequiredFieldKeyInStaged` but does not short-circuit.
+ */
+export declare function missingRequiredFieldKeysInStaged(staged: Map<string, Map<string, unknown>>, originalFiles: Map<string, UploadFile>, schema: MetadataSchema, config?: MetadataConfig): Set<string>;
+/**
  * Deep-merge incoming metadata into existing metadata.
  *
  * - Skips null / undefined / empty-string incoming values

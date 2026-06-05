@@ -9,6 +9,10 @@ export interface PendingOp {
     operation: BulkOperation;
     value: unknown;
 }
+/** Multi-value field types — bulk ops merge/dedup arrays. */
+export declare const ARRAY_TYPES: ReadonlySet<MetadataFieldType>;
+/** Text-like field types — bulk ops concatenate / substring-remove strings. */
+export declare const TEXT_TYPES: ReadonlySet<MetadataFieldType>;
 /** Operation labels are context-aware: the same key (SET / ADD / DELETE)
  *  reads differently depending on the field type so the UX matches the
  *  actual semantics. Scalars only expose Set + Clear because Append

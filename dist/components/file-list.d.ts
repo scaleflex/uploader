@@ -13,8 +13,6 @@ export declare class SfxFileList extends LitElement {
     /** 'upload' (default): full controls; 'review': read-only post-upload review
      *  with status badges, Open links, and a Local-edit pill on edited files. */
     mode: 'upload' | 'review';
-    /** Forwarded to each file-item for the Locate button URL override. */
-    getLocateUrl?: (file: UploadFile) => string | null | undefined;
     showLocateButton: boolean;
     showCopyCdnButton: boolean;
     private _moreOpen;

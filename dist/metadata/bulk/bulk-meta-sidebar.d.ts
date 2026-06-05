@@ -10,6 +10,9 @@ export declare class SfxBulkMetaSidebar extends LitElement {
     schema: MetadataSchema;
     activeFieldKey: string;
     filledFields: Set<string>;
+    /** Required fields with at least one modifiable file missing a value.
+        Drives the stronger-red `.unmet` styling on the asterisk. */
+    missingRequiredKeys: Set<string>;
     config: MetadataConfig | null;
     private _collapsed;
     /** Tracks the mobile breakpoint so collapsed groups don't hide fields

@@ -1,4 +1,4 @@
-import { LitElement } from 'lit';
+import { LitElement, PropertyValues } from 'lit';
 import { MetadataSchema, MetadataConfig } from '../schema/schema.types';
 import { UploadFile } from '../../store/store.types';
 /**
@@ -14,11 +14,25 @@ export declare class SfxBulkMetadataModal extends LitElement {
     /** When set, the modal opens with this field active instead of the first one. */
     initialFieldKey: string | null;
     private _activeFieldKey;
+    /**
+     * Per-file staged values. Product fields are stored alongside metadata under
+     * synthetic keys (`product.ref` / `product.position`) so the existing
+     * sidebar / op-bar / table flow can drive them without modification.
+     * Split back into meta vs product changes on Save.
+     */
     private _staged;
     private _selected;
     private _sortAsc;
     private _pendingOp;
     private _confirmVisible;
+    /**
+     * Derived from `_staged` / `schema` / `config` in `willUpdate`. Held as state
+     * (rather than computed getters) so the Set identity is preserved when the
+     * contents don't change — that prevents the sidebar from re-rendering on every
+     * unrelated state change and keeps `render()` from doing the iteration twice.
+     */
+    private _missingRequiredFieldKey;
+    private _missingRequiredKeys;
     private _confirmResolve;
     private _originalFiles;
     connectedCallback(): void;
@@ -28,6 +42,19 @@ export declare class SfxBulkMetadataModal extends LitElement {
     private _setStagedValue;
     private _setStagedBulk;
     private get _activeField();
+    /**
+     * Reads the original value for diff/fallback. For real metadata fields this
+     * is `file.meta[key]`; for synthetic product fields it's `file.product[pk]`.
+     */
+    private _originalValue;
+    /**
+     * Recomputes `_missingRequiredFieldKey` + `_missingRequiredKeys` from the
+     * current staged map. Called from `willUpdate` when one of the inputs
+     * (schema / config / staged) changes. Preserves Set identity when the
+     * contents are unchanged so the sidebar re-renders only when its inputs
+     * actually move.
+     */
+    private _refreshMissingRequired;
     /** Fields where ANY file has a non-empty staged value that differs from original. */
     private get _filledFields();
     private get _hasPendingValue();
@@ -37,9 +64,11 @@ export declare class SfxBulkMetadataModal extends LitElement {
     private _onConfirmCancel;
     /** Trap Tab inside the confirm dialog so focus cannot escape behind the overlay. */
     private _onConfirmKeydown;
+    willUpdate(changed: PropertyValues): void;
     updated(changed: Map<string, unknown>): void;
     private _onPendingChange;
     private _onFieldSelect;
+    private _onJumpToNextRequired;
     private _onBulkApply;
     private _onRowFieldChange;
     private _onRowToggle;
