@@ -2457,6 +2457,10 @@ export class SfxUploader extends LitElement {
       this._onClearAll();
     }
     this._previewFileId = null;
+    // Reset any open sub-overlay so reopening the uploader starts clean
+    // instead of resurrecting the bulk-metadata modal on top.
+    this._bulkMetadataOpen = false;
+    this._bulkMetadataInitialFieldKey = null;
     this.config?.callbacks?.onClose?.();
     this._dispatchPublic(PublicEvents.CLOSE, {});
     this.requestUpdate();
@@ -4431,6 +4435,11 @@ export class SfxUploader extends LitElement {
         this._onFsClose();
         return;
       }
+      // Bulk metadata modal sits on top of the main modal and owns its own
+      // ESC handler. Don't also dismiss the underlying uploader, or the user
+      // loses both with one key press (and reopening would resurrect the
+      // bulk modal from stale state).
+      if (this._bulkMetadataOpen) return;
       // When minimized, the modal is hidden behind the floating pill — ESC
       // shouldn't fire a phantom dismiss against an invisible target.
       if (this._isMinimized) return;
