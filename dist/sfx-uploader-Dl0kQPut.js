@@ -10668,14 +10668,14 @@ const q = (K = class extends re {
       if ((((n = (o = this.config) == null ? void 0 : o.connectors) == null ? void 0 : n.providers) ?? []).includes(e)) {
         if (Cr.has(e)) {
           if (!customElements.get("sfx-search-provider-browser")) {
-            const { SfxSearchProviderBrowser: a } = await import("./search-provider-browser-C_9Uj0gF.js");
+            const { SfxSearchProviderBrowser: a } = await import("./search-provider-browser-BNbFaoaA.js");
             customElements.define(
               "sfx-search-provider-browser",
               a
             );
           }
         } else if (!customElements.get("sfx-provider-browser")) {
-          const { SfxProviderBrowser: a } = await import("./provider-browser-CPoDGyBr.js");
+          const { SfxProviderBrowser: a } = await import("./provider-browser-JFGE-Urm.js");
           customElements.define("sfx-provider-browser", a);
         }
         this._activeConnector = e;
@@ -10988,7 +10988,7 @@ const q = (K = class extends re {
           this._onFsClose();
           return;
         }
-        if (this._isMinimized) return;
+        if (this._bulkMetadataOpen || this._isMinimized) return;
         const o = ((t = this.config) == null ? void 0 : t.mode) ?? "modal", n = ((i = this.config) == null ? void 0 : i.header) ?? (o === "modal" ? "close" : !0);
         (n === "close" || n === "back") && (o === "modal" && this._isOpen ? this._onModalDismiss() : o === "inline" && this._onInlineDismiss());
       }
@@ -11088,7 +11088,7 @@ const q = (K = class extends re {
    *  timer, honors `clearOnClose`, resets preview state, fires `sfx-close`. */
   _runCloseCleanup() {
     var e, t, i, o;
-    this._closeOnCompleteTimer && (clearTimeout(this._closeOnCompleteTimer), this._closeOnCompleteTimer = null), ((e = this.config) == null ? void 0 : e.clearOnClose) !== !1 && this._onClearAll(), this._previewFileId = null, (o = (i = (t = this.config) == null ? void 0 : t.callbacks) == null ? void 0 : i.onClose) == null || o.call(i), this._dispatchPublic(I.CLOSE, {}), this.requestUpdate();
+    this._closeOnCompleteTimer && (clearTimeout(this._closeOnCompleteTimer), this._closeOnCompleteTimer = null), ((e = this.config) == null ? void 0 : e.clearOnClose) !== !1 && this._onClearAll(), this._previewFileId = null, this._bulkMetadataOpen = !1, this._bulkMetadataInitialFieldKey = null, (o = (i = (t = this.config) == null ? void 0 : t.callbacks) == null ? void 0 : i.onClose) == null || o.call(i), this._dispatchPublic(I.CLOSE, {}), this.requestUpdate();
   }
   /** Start uploading all queued files. */
   upload() {
@@ -11470,7 +11470,7 @@ const q = (K = class extends re {
     const t = e.metadataConfig;
     if (!(!t || !this._apiBase || !this._authHeaders))
       try {
-        const { fetchMetadataSchema: i, createTagsAutocomplete: o } = await import("./index-CYIIARFy.js"), n = await i(
+        const { fetchMetadataSchema: i, createTagsAutocomplete: o } = await import("./index-reOvewVh.js"), n = await i(
           this._apiBase,
           this._authHeaders,
           t.projectUuid,
@@ -14904,13 +14904,14 @@ const q = (K = class extends re {
       }
       /* Let the preview image scale down instead of forcing a
          340×240 crop — on a 1920×600 kiosk that hardcoded size
-         looked tiny; relying on max-width/max-height lets the wrap
-         fill whatever vertical space the layout gives it. */
+         looked tiny. Use a definite height so the inner image's
+         max-height: 100% actually resolves; otherwise tall images
+         (e.g. 52×984) render at intrinsic height and escape the
+         panel. */
       .preview-img-wrap {
-        width: auto;
-        height: auto;
-        max-width: min(420px, 60vw);
-        max-height: min(280px, 55vh);
+        width: min(420px, 60vw);
+        height: min(280px, 55vh);
+        max-width: 100%;
       }
     }
   `, K._FS_ZOOM_LEVELS = [1, 2, 3, 4], K._MODIFIABLE_STATUSES = /* @__PURE__ */ new Set([
