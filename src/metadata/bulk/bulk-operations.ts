@@ -28,7 +28,6 @@ export interface PendingOp {
 export const ARRAY_TYPES: ReadonlySet<MetadataFieldType> = new Set([
   'multi-select',
   'tags',
-  'integer-list',
 ]);
 
 /** Text-like field types — bulk ops concatenate / substring-remove strings. */

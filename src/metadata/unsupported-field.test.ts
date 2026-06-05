@@ -39,12 +39,13 @@ afterEach(() => {
 const unsupportedTypes: MetadataFieldType[] = [
   'asset-attachments',
   'attachments-assets',
+  'integer-list',
   'ultratags',
   'taxonomy-node',
 ];
 
 const unsupportedCkeyCases: Array<[MetadataFieldType, string]> = [
-  ['integer-list', 'face_matcher'],
+  ['text', 'face_matcher'],
 ];
 
 describe('sfx-metadata-field-edit (single-asset dispatcher)', () => {

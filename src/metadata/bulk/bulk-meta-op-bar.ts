@@ -36,7 +36,6 @@ export class SfxBulkMetaOpBar extends LitElement {
     switch (type) {
       case 'multi-select':
       case 'tags':
-      case 'integer-list':
         return [];
       case 'boolean':
         return 'null';
@@ -44,6 +43,7 @@ export class SfxBulkMetaOpBar extends LitElement {
         return { latitude: '', longitude: '' };
       case 'asset-attachments':
       case 'attachments-assets':
+      case 'integer-list':
       case 'ultratags':
       case 'taxonomy-node':
         // Unsupported types never reach an editor; the value is irrelevant.
