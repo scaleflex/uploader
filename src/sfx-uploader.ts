@@ -5689,7 +5689,7 @@ export class SfxUploader extends LitElement {
                   .fileCount=${files.filter((f) => f.status === "complete")
                     .length}
                   .totalSize=${files
-                    .filter((f) => f.status === "complete")
+                    .filter((f) => f.status === "complete" && !f.alreadyExisted)
                     .reduce((sum, f) => sum + (f.size || 0), 0)}
                   .thumbnails=${files
                     .filter((f) => f.status === "complete" && f.previewUrl)

@@ -56,6 +56,11 @@ export class SfxSuccessCard extends LitElement {
       color: #f59e0b;
     }
 
+    .icon.info {
+      background: var(--sfx-up-info-bg, rgba(0, 144, 228, 0.08));
+      color: var(--sfx-up-info, #0090e4);
+    }
+
     .title {
       font-size: 20px;
       font-weight: 700;
@@ -463,6 +468,11 @@ export class SfxSuccessCard extends LitElement {
     const hasSuccesses = this.fileCount > 0;
     const hasFailed = this.failedFiles.length > 0;
     const allFailed = hasFailed && !hasSuccesses;
+    // Every successful file already existed on the server — nothing new was
+    // uploaded. Present this as an info state instead of a success state.
+    const allAlreadyExisted = hasSuccesses && !hasFailed && this.alreadyExistedCount >= this.fileCount;
+    // Files actually uploaded this session, excluding ones that already existed.
+    const uploadedCount = this.fileCount - this.alreadyExistedCount;
 
     return html`
       ${this.showMinimize
@@ -474,7 +484,7 @@ export class SfxSuccessCard extends LitElement {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
       <div class="card" role="status" aria-live="polite">
-        <div class="icon ${allFailed ? 'error' : hasFailed ? 'warning' : ''}">
+        <div class="icon ${allFailed ? 'error' : hasFailed ? 'warning' : allAlreadyExisted ? 'info' : ''}">
           ${allFailed
             ? html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
@@ -483,16 +493,28 @@ export class SfxSuccessCard extends LitElement {
               ? html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
                 </svg>`
-              : html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>`}
+              : allAlreadyExisted
+                ? html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+                  </svg>`
+                : html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>`}
         </div>
-        <div class="title">${allFailed ? this.t('uploadFailed', 'Upload failed') : hasFailed ? this.t('partiallyUploaded', 'Partially uploaded') : this.t('uploadedSuccessfully', 'Uploaded successfully!')}</div>
+        <div class="title">${allFailed
+          ? this.t('uploadFailed', 'Upload failed')
+          : hasFailed
+            ? this.t('partiallyUploaded', 'Partially uploaded')
+            : allAlreadyExisted
+              ? this.t('alreadyInLibrary', { count: this.alreadyExistedCount, defaultValue_one: '{{count}} file was already in your library', defaultValue_other: '{{count}} files were already in your library' })
+              : this.t('uploadedSuccessfullyCount', { count: uploadedCount, defaultValue_one: '{{count}} file uploaded successfully!', defaultValue_other: '{{count}} files uploaded successfully!' })}</div>
         <div class="subtitle">${allFailed
           ? this.t('filesCouldNotBeUploaded', { count: this.failedFiles.length, defaultValue_one: 'File could not be uploaded', defaultValue_other: 'Files could not be uploaded' })
           : hasFailed
-            ? this.t('partialUploadSummary', '{{uploaded}} uploaded, {{failed}} failed', { uploaded: this.fileCount, failed: this.failedFiles.length })
-            : this.t('allFilesReady', 'All files are ready for use')}</div>
+            ? this.t('partialUploadSummary', '{{uploaded}} uploaded, {{failed}} failed', { uploaded: uploadedCount, failed: this.failedFiles.length })
+            : allAlreadyExisted
+              ? this.t('alreadyInLibrarySubtitle', { count: this.alreadyExistedCount, defaultValue_one: 'It’s ready to use — nothing new to upload', defaultValue_other: 'They’re ready to use — nothing new to upload' })
+              : this.t('allFilesReady', 'All files are ready for use')}</div>
 
         ${visibleThumbs.length > 0
           ? html`
@@ -507,9 +529,9 @@ export class SfxSuccessCard extends LitElement {
             `
           : nothing}
 
-        ${hasSuccesses ? html`<div class="summary">${this.t('uploadSummary', '{{total}} file · {{size}} uploaded', { total: this.fileCount, size: formatFileSize(this.totalSize) })}</div>` : nothing}
+        ${hasSuccesses && !allAlreadyExisted ? html`<div class="summary">${this.t('uploadedSize', '{{size}} uploaded', { size: formatFileSize(this.totalSize) })}</div>` : nothing}
 
-        ${this.alreadyExistedCount > 0
+        ${this.alreadyExistedCount > 0 && !allAlreadyExisted
           ? html`<div class="info-note">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
               <span>${this.t('alreadyInLibrary', { count: this.alreadyExistedCount, defaultValue_one: '{{count}} file was already in your library', defaultValue_other: '{{count}} files were already in your library' })}</span>
