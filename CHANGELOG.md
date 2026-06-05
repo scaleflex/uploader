@@ -41,8 +41,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `scripts/extract-i18n-keys.mjs` — static extractor that generates `up-keys.json` for submission to the Wordplex TMS grid
 
 - Configurable "Locate" and "Copy CDN" buttons on review-screen file tiles — hidden by default, opt-in via `showLocateButton` and `showCopyCdnButton` config options
-  - Locate dispatches `sfx-file-locate` event and `onFileLocate` callback (no longer opens a URL directly — host app controls navigation)
+  - Locate dispatches `sfx-file-locate` event and `onFileLocate` callback, then opens the resolved Locate URL in a new tab when one is configured (via `adminUrl` or `getLocateUrl`). Call `event.preventDefault()` on `sfx-file-locate` to suppress the auto-navigation and handle it yourself.
   - Copy CDN copies the CDN URL to clipboard and dispatches `sfx-file-copy-cdn` event and `onFileCopyCdn` callback
+- `adminUrl` config option — base URL of the Filerobot admin / DAM app used to build the default Locate target. The uploader navigates to `${adminUrl}/library?lf=<base64(uuid)>`, the same deep-link the admin uses internally to scroll to and select a file in its library tree. Works for both freshly-uploaded files and "already in library" duplicates (both expose `response.file.uuid`). No default — embedding hosts know their own admin deployment URL; when omitted (and `getLocateUrl` is also omitted), Locate fires its event and callback without navigating.
 - Bulk metadata editing modal — click "Fill Metadata" to open a full-screen overlay for editing metadata across multiple files at once
   - Sidebar field navigator with schema groups, active highlight, and filled/required indicators
   - Operation bar with SET, ADD, DELETE operations (ADD/DELETE available for array fields: multi-select, tags)

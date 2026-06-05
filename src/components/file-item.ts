@@ -570,10 +570,6 @@ export class SfxFileItem extends LitElement {
   /** 'upload' (default): full controls; 'review': read-only post-upload
    *  view with status badges and hover actions (Locate / Copy CDN). */
   @property({ type: String }) mode: 'upload' | 'review' = 'upload';
-  /** Optional host-supplied builder for the Locate button URL. When set,
-   *  takes precedence over the default `response.file.url.public`. Lets
-   *  host apps point Locate at their own dashboard / file manager. */
-  @property({ attribute: false }) getLocateUrl?: (file: UploadFile) => string | null | undefined;
   /** Whether to show the "Locate" hover action on completed review tiles. */
   @property({ type: Boolean }) showLocateButton = false;
   /** Whether to show the "Copy CDN" hover action on completed review tiles. */
@@ -728,20 +724,23 @@ export class SfxFileItem extends LitElement {
               `
             : nothing}
 
-          <!-- Review-mode hover actions: Locate (open in storage) +
-               Copy CDN (copy CDN URL to clipboard). Both buttons fade
-               in on tile hover, only for completed files (failed files
-               have no response.file.url). -->
-          ${isReview && isDone && f.response?.file?.url && (this.showLocateButton || this.showCopyCdnButton)
+          <!-- Review-mode hover actions: Locate (deep-link to the asset
+               in the admin DAM) + Copy CDN (copy CDN URL to clipboard).
+               Both buttons fade in on tile hover, only for completed
+               files with a response.file. Each inner button has its own
+               gate — Locate needs uuid, Copy CDN needs url.cdn — so an
+               already-existed-but-missing-uuid edge case won't render a
+               dead button. -->
+          ${isReview && isDone && f.response?.file && (this.showLocateButton || this.showCopyCdnButton)
             ? html`
                 <div class="review-actions">
-                  ${this.showLocateButton
+                  ${this.showLocateButton && f.response.file.uuid
                     ? html`<button class="review-action secondary" @click=${this._locate} aria-label=${this.t('locate', 'Locate')}>
                         <svg viewBox="0 0 24 24"><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><circle cx="12" cy="12" r="7"/></svg>
                         ${this.t('locate', 'Locate')}
                       </button>`
                     : nothing}
-                  ${this.showCopyCdnButton && f.response.file.url.cdn
+                  ${this.showCopyCdnButton && f.response.file.url?.cdn
                     ? html`<button class="review-action primary ${this._copied ? 'copied' : ''}" @click=${this._copyCdn} title=${this.t('copyCdn', 'Copy CDN')} aria-label=${this.t('copyCdnLink', 'Copy CDN link to clipboard')}>
                         ${this._copied
                           ? html`<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>`

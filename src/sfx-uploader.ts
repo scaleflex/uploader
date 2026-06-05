@@ -2,6 +2,7 @@ import { LitElement, html, css, nothing, render as litRender } from "lit";
 import { initI18n, missingKeysHelper } from "./i18n";
 import { property, state } from "lit/decorators.js";
 import { cspStyle } from "./utils/csp-style";
+import { resolveLocateUrl } from "./utils/locate-url";
 import { createStore, Store } from "./store";
 import { addFile, removeFile } from "./store/helpers";
 import { StoreController } from "./controllers/store.controller";
@@ -163,22 +164,46 @@ export interface UploaderConfig {
   /** Layout for the import-from sources section: horizontal pills (default) or cards grid. */
   sourcesLayout?: "pills" | "cards";
   /**
-   * Override the URL opened by the "Locate" button in the last-upload review
-   * screen. Receives the completed file and should return the URL the host
-   * wants Locate to open (typically a dashboard / file-manager URL pointing
-   * at the file's containing folder). Return `null` / `undefined` to fall
-   * back to the file's own public URL (default behaviour).
+   * Host-supplied builder for the "Locate" button URL. Receives the
+   * completed file and returns the URL Locate should open. Return
+   * `null` / `undefined` to fall back to the `adminUrl`-based default
+   * (see `adminUrl`). When both are absent, Locate just fires the
+   * `sfx-file-locate` event / `onFileLocate` callback and does nothing
+   * else — the host is expected to handle navigation itself.
+   *
+   * To suppress the auto-navigation even when a URL would be resolved
+   * (e.g. open it via the host's client-side router instead of a new
+   * tab), call `event.preventDefault()` on the `sfx-file-locate` public
+   * event.
+   *
+   * Pairs with `showLocateButton: true`.
    *
    * Example:
    * ```ts
    * getLocateUrl: (file) =>
-   *   `https://app.scaleflex.com/projects/${PROJECT_ID}/files?id=${file.response?.file?.uuid}`
+   *   `https://app.example.com/dam?asset=${file.response?.file?.uuid}`
    * ```
    */
   getLocateUrl?: (file: UploadFile) => string | null | undefined;
   /**
+   * Base URL of the Filerobot admin / DAM app — used to build the
+   * default Locate target when `getLocateUrl` is not provided. The
+   * uploader navigates to `${adminUrl}/library?lf=<base64(uuid)>`, the
+   * same deep-link the admin uses internally to scroll to and select a
+   * file in its library tree. Trailing slashes are ignored.
+   *
+   * No default — embedding hosts know their own admin deployment URL
+   * (it differs per environment / whitelabel). When omitted and
+   * `getLocateUrl` is also omitted, the Locate button fires its event
+   * and callback but performs no navigation.
+   */
+  adminUrl?: string;
+  /**
    * Show the "Locate" button on completed file tiles in the review screen.
-   * When clicked, fires the `sfx-file-locate` event and the `onFileLocate` callback.
+   * When clicked, fires the `sfx-file-locate` event and the `onFileLocate`
+   * callback, then opens the resolved Locate URL (see `getLocateUrl` /
+   * `adminUrl`) in a new tab unless the event's default is prevented or
+   * neither config resolves to a URL.
    * Default: false (hidden).
    */
   showLocateButton?: boolean;
@@ -3849,8 +3874,22 @@ export class SfxUploader extends LitElement {
   private _onFileLocate = (e: CustomEvent<{ fileId: string; file: UploadFile }>) => {
     const file = e.detail.file;
     if (!file) return;
-    this._dispatchPublic(PublicEvents.FILE_LOCATE, { file });
+    // Cancelable so hosts can suppress the auto-navigation via
+    // event.preventDefault() and handle Locate themselves (e.g. via their
+    // own client-side router). `dispatchEvent` returns `false` when default
+    // is prevented — matches the `sfx-before-upload` pattern above.
+    const allowed = this.dispatchEvent(
+      new CustomEvent(PublicEvents.FILE_LOCATE, {
+        bubbles: true,
+        composed: true,
+        cancelable: true,
+        detail: { file },
+      }),
+    );
     this.config?.callbacks?.onFileLocate?.(file);
+    if (!allowed) return;
+    const url = resolveLocateUrl(file, this.config ?? undefined);
+    if (url) window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   private _onFileCopyCdn = (e: CustomEvent<{ fileId: string; file: UploadFile; cdnUrl: string }>) => {
@@ -5507,7 +5546,6 @@ export class SfxUploader extends LitElement {
                 <sfx-last-upload-review
                   .t=${t}
                   .files=${this._reviewFiles}
-                  .getLocateUrl=${this.config?.getLocateUrl}
                   .showLocateButton=${this.config?.showLocateButton ?? false}
                   .showCopyCdnButton=${this.config?.showCopyCdnButton ?? false}
                   @back=${this._onExitReview}

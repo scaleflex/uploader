@@ -434,8 +434,6 @@ export class SfxFileList extends LitElement {
   /** 'upload' (default): full controls; 'review': read-only post-upload review
    *  with status badges, Open links, and a Local-edit pill on edited files. */
   @property({ type: String }) mode: 'upload' | 'review' = 'upload';
-  /** Forwarded to each file-item for the Locate button URL override. */
-  @property({ attribute: false }) getLocateUrl?: (file: UploadFile) => string | null | undefined;
   @property({ type: Boolean }) showLocateButton = false;
   @property({ type: Boolean }) showCopyCdnButton = false;
 
@@ -676,7 +674,7 @@ export class SfxFileList extends LitElement {
       <div class="grid">
         ${this.showDropTile && this.mode !== 'review' ? this._renderDropTile() : nothing}
         ${this.files.map(
-          (f, i) => html`<sfx-file-item .t=${this.t} .file=${f} .mode=${this.mode} .getLocateUrl=${this.getLocateUrl} .showLocateButton=${this.showLocateButton} .showCopyCdnButton=${this.showCopyCdnButton} ${cspStyle({ '--tile-index': String(i) })}></sfx-file-item>`,
+          (f, i) => html`<sfx-file-item .t=${this.t} .file=${f} .mode=${this.mode} .showLocateButton=${this.showLocateButton} .showCopyCdnButton=${this.showCopyCdnButton} ${cspStyle({ '--tile-index': String(i) })}></sfx-file-item>`,
         )}
       </div>
     `;
