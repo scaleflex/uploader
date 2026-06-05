@@ -96,6 +96,10 @@ export interface UploaderCallbacks {
   onOpen?: () => void;
   onClose?: () => void;
   onCancel?: () => void;
+  /** Fires when the uploader is collapsed to the floating pill (auto on upload start, manual via the minimize button). */
+  onMinimize?: () => void;
+  /** Fires when the uploader is restored from the floating pill back to the modal. */
+  onRestore?: () => void;
   onFilePreview?: (file: UploadFile) => void;
   onFillMetadata?: (files: UploadFile[]) => void;
   onCompleteAction?: () => void;
@@ -2349,14 +2353,26 @@ export class SfxUploader extends LitElement {
 
   /** Open the uploader (modal mode). */
   open() {
+    const wasMinimized = this._isMinimized;
     if (this._isMinimized) {
       this._isMinimized = false;
       this._isPillExpanded = false;
     }
-    if (this._isOpen) return;
+    if (this._isOpen) {
+      if (wasMinimized) {
+        this.config?.callbacks?.onRestore?.();
+        this._dispatchPublic(PublicEvents.RESTORE, {});
+        this.requestUpdate();
+      }
+      return;
+    }
     this._isOpen = true;
     this.config?.callbacks?.onOpen?.();
     this._dispatchPublic(PublicEvents.OPEN, {});
+    if (wasMinimized) {
+      this.config?.callbacks?.onRestore?.();
+      this._dispatchPublic(PublicEvents.RESTORE, {});
+    }
     this.requestUpdate();
   }
 
@@ -2411,9 +2427,15 @@ export class SfxUploader extends LitElement {
 
     this._engine.uploadAll();
 
-    if (this.config?.minimizeOnUpload && this.config?.mode !== "inline") {
+    if (
+      this.config?.minimizeOnUpload &&
+      this.config?.mode !== "inline" &&
+      !this._isMinimized
+    ) {
       this._isMinimized = true;
       this._isPillExpanded = true;
+      this.config?.callbacks?.onMinimize?.();
+      this._dispatchPublic(PublicEvents.MINIMIZE, {});
       this.requestUpdate();
     }
   }
@@ -4054,8 +4076,11 @@ export class SfxUploader extends LitElement {
   };
 
   private _onMinimize = () => {
+    if (this._isMinimized) return;
     this._isMinimized = true;
     this._isPillExpanded = true;
+    this.config?.callbacks?.onMinimize?.();
+    this._dispatchPublic(PublicEvents.MINIMIZE, {});
     this.requestUpdate();
   };
 
@@ -4065,9 +4090,12 @@ export class SfxUploader extends LitElement {
   };
 
   private _onPillExpand = () => {
+    if (!this._isMinimized) return;
     this._isMinimized = false;
     this._isPillExpanded = false;
     this._isOpen = true;
+    this.config?.callbacks?.onRestore?.();
+    this._dispatchPublic(PublicEvents.RESTORE, {});
     this.requestUpdate();
   };
 
@@ -4076,9 +4104,9 @@ export class SfxUploader extends LitElement {
     this._isPillExpanded = false;
     if (this._phase === "uploading") {
       this._engine?.cancelAll();
+      this.config?.callbacks?.onCancel?.();
+      this._dispatchPublic(PublicEvents.CANCEL, {});
     }
-    this.config?.callbacks?.onCancel?.();
-    this._dispatchPublic(PublicEvents.CANCEL, {});
     this.close();
   };
 
@@ -4141,6 +4169,9 @@ export class SfxUploader extends LitElement {
         this._onFsClose();
         return;
       }
+      // When minimized, the modal is hidden behind the floating pill — ESC
+      // shouldn't fire a phantom dismiss against an invisible target.
+      if (this._isMinimized) return;
       const mode = this.config?.mode ?? "modal";
       const header = this.config?.header ?? (mode === "modal" ? "close" : true);
       if (header === "close" || header === "back") {
@@ -5418,7 +5449,10 @@ export class SfxUploader extends LitElement {
                   .alreadyExistedCount=${files.filter(
                     (f) => f.status === "complete" && f.alreadyExisted,
                   ).length}
+                  .showMinimize=${!!this.config?.minimizeOnUpload &&
+                  this.config?.mode !== "inline"}
                   @close-uploader=${this._onSuccessCardClose}
+                  @minimize-uploader=${this._onMinimize}
                   @file-retry=${this._onFileRetry}
                   @retry-all=${this._onRetryAll}
                   @review-files=${this._onEnterReview}

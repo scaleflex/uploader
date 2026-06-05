@@ -275,6 +275,27 @@ export class SfxSuccessCard extends LitElement {
 
     .close-btn:hover { background: var(--sfx-up-surface, #f8fafc); color: var(--sfx-up-text, #1e293b); }
 
+    .minimize-btn {
+      position: absolute;
+      top: 12px;
+      right: 56px;
+      width: 28px;
+      height: 28px;
+      border: none;
+      background: none;
+      color: var(--sfx-up-text-muted, #94a3b8);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      padding: 0;
+    }
+
+    .minimize-btn svg { width: 16px; height: 16px; }
+
+    .minimize-btn:hover { background: var(--sfx-up-surface, #f8fafc); color: var(--sfx-up-text, #1e293b); }
+
     .btn-retry-all {
       padding: 8px 18px;
       border-radius: 8px;
@@ -371,6 +392,8 @@ export class SfxSuccessCard extends LitElement {
   @property({ type: Array }) failedFiles: { id: string; name: string; error: string }[] = [];
   /** How many of the successful files already existed (same content) on the server. */
   @property({ type: Number }) alreadyExistedCount = 0;
+  /** Show the minimize-to-pill button next to the close button. */
+  @property({ type: Boolean }) showMinimize = false;
 
   @state() private _maxThumbs = MAX_THUMBS_DESKTOP;
 
@@ -428,6 +451,12 @@ export class SfxSuccessCard extends LitElement {
     );
   }
 
+  private _minimize() {
+    this.dispatchEvent(
+      new CustomEvent('minimize-uploader', { bubbles: true, composed: true }),
+    );
+  }
+
   render() {
     const visibleThumbs = this.thumbnails.slice(0, this._maxThumbs);
     const overflowCount = this.thumbnails.length - this._maxThumbs;
@@ -436,6 +465,11 @@ export class SfxSuccessCard extends LitElement {
     const allFailed = hasFailed && !hasSuccesses;
 
     return html`
+      ${this.showMinimize
+        ? html`<button class="minimize-btn" title=${this.t('minimizeAndContinue', 'Minimize & continue in background')} @click=${this._minimize}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="19" x2="19" y2="19"/></svg>
+          </button>`
+        : nothing}
       <button class="close-btn" title=${this.t('close', 'Close')} @click=${this._close}>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>

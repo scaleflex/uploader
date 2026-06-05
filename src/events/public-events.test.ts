@@ -1,8 +1,8 @@
 import { PublicEvents } from './public-events';
 
 describe('PublicEvents', () => {
-  it('exports 22 event constants', () => {
-    expect(Object.keys(PublicEvents).length).toBe(22);
+  it('exports 24 event constants', () => {
+    expect(Object.keys(PublicEvents).length).toBe(24);
   });
 
   it('all values are prefixed with "sfx-"', () => {
@@ -23,6 +23,8 @@ describe('PublicEvents', () => {
     expect(PublicEvents.OPEN).toBe('sfx-open');
     expect(PublicEvents.CLOSE).toBe('sfx-close');
     expect(PublicEvents.CANCEL).toBe('sfx-cancel');
+    expect(PublicEvents.MINIMIZE).toBe('sfx-minimize');
+    expect(PublicEvents.RESTORE).toBe('sfx-restore');
   });
 
   it('values are unique', () => {
