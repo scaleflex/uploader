@@ -255,9 +255,12 @@ export class SfxFileItem extends LitElement {
       align-items: center;
       justify-content: center;
       gap: 5px;
-      padding: 8px 16px;
+      box-sizing: border-box;
+      /* Fixed height so both buttons match regardless of border width. */
+      height: 32px;
+      padding: 0 16px;
       /* Consistent width so Details matches Check similar in both modes. */
-      min-width: 150px;
+      min-width: 140px;
       border-radius: 6px;
       cursor: pointer;
       font-family: inherit;
@@ -365,6 +368,54 @@ export class SfxFileItem extends LitElement {
     }
 
     .similar-cb.checked svg { opacity: 1; }
+
+    /* --- Similarity search loading states --- */
+    /* Queued (waiting its turn): just dimmed, no badge. */
+    .tile.sim-queued { opacity: 0.55; }
+
+    /* Searching: dark overlay + spinner over the preview. */
+    .sim-search-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 8;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: rgba(15, 23, 42, 0.55);
+      color: #fff;
+    }
+    .sim-search-overlay .sim-spinner {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #fff;
+      animation: spinRing 0.7s linear infinite;
+    }
+    .sim-search-overlay .sim-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Done: green check badge (top-left). */
+    .sim-done-badge {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      z-index: 8;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--sfx-up-success, #16a34a);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+    .sim-done-badge svg { width: 13px; height: 13px; }
 
     /* --- Progress bar --- */
     .progress {
@@ -680,6 +731,8 @@ export class SfxFileItem extends LitElement {
   @property({ type: Boolean }) selectMode = false;
   /** Whether this tile is currently picked in selection mode. */
   @property({ type: Boolean }) isSelected = false;
+  /** Similarity-search status for this tile: '' | 'searching' | 'done' | 'queued'. */
+  @property({ type: String }) similarStatus: '' | 'searching' | 'done' | 'queued' = '';
   @state() private _dims = '';
   /** Brief flash on the Copy CDN button after a successful copy. */
   @state() private _copied = false;
@@ -803,7 +856,7 @@ export class SfxFileItem extends LitElement {
     // normal, not-yet-uploaded tile and not while picking images.
     const showCenterActions =
       !isReview && !isDone && !isUploading && !isPaused && !isError &&
-      f.status !== 'rejected' && !this.selectMode;
+      f.status !== 'rejected' && !this.selectMode && !this.similarStatus;
     // Dark hover overlay whenever the centered actions show — for every file
     // type (documents/videos included), so Details always has a backdrop.
     // The Check similar button itself still only appears on images.
@@ -820,6 +873,7 @@ export class SfxFileItem extends LitElement {
       inSelectMode && this.isSelected ? 'selected' : '',
       this.selectMode && !isImage && !isReview ? 'select-dimmed' : '',
       csOverlay ? 'cs-overlay' : '',
+      this.similarStatus === 'queued' ? 'sim-queued' : '',
     ].filter(Boolean).join(' ');
 
     return html`
@@ -850,6 +904,27 @@ export class SfxFileItem extends LitElement {
                   />
                 </div>
               `}
+
+          <!-- Similarity search: spinner overlay while this image is being checked -->
+          ${this.similarStatus === 'searching'
+            ? html`
+                <div class="sim-search-overlay">
+                  <div class="sim-spinner"></div>
+                  <div class="sim-label">${this.t('searching', 'Searching…')}</div>
+                </div>
+              `
+            : nothing}
+
+          <!-- Similarity search: green done badge when this image's check finished -->
+          ${this.similarStatus === 'done'
+            ? html`
+                <div class="sim-done-badge" title=${this.t('similarChecked', 'Checked')}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </div>
+              `
+            : nothing}
 
           <!-- Similar-image selection checkbox (selection mode, images only) -->
           ${inSelectMode

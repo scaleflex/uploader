@@ -2161,6 +2161,15 @@ export class SfxUploader extends LitElement {
   @state() private _similarSelectMode = false;
   /** "Check similar assets": ids of images picked for the similarity check. */
   @state() private _similarSelectedIds = new Set<string>();
+  /** Similarity search: all ids in the active run (empty = no search running). */
+  @state() private _similarRunIds: string[] = [];
+  /** Similarity search: ids currently being searched (spinner). */
+  @state() private _similarActiveIds = new Set<string>();
+  /** Similarity search: ids that have been checked (persistent green check —
+   *  accumulates across runs, NOT reset when a new check starts). */
+  @state() private _similarCheckedIds = new Set<string>();
+  /** Pending timers for the simulated search progression (demo only). */
+  private _similarSimTimers: number[] = [];
   @state() private _previewFileId: string | null = null;
   @state() private _previewDims: string = "—";
   @state() private _fileInfoOpen: boolean = true;
@@ -3655,26 +3664,57 @@ export class SfxUploader extends LitElement {
   };
 
   /**
-   * Runs the similarity check for the given images.
+   * Runs the similarity check for the given images and drives the loading UI
+   * (per-tile spinner + batch progress banner).
    *
-   * TODO(dev): implement the real request. For each image, send a w=300
-   * version to the embedding endpoint
-   * (https://ai.scaleflex.com/images/embedding/...) with the threshold derived
-   * from `this.config?.similarityCheck?.confidence` (low 0.60 / mid 0.75 /
-   * high 0.90), then surface the returned `similar_assets` in a results panel
-   * with "Open in new window" / "Discard from upload" actions. The UI plumbing
-   * (selection mode, per-tile button, events) is already in place — only the
-   * network call and results rendering remain.
+   * TODO(dev): replace the simulated per-image progression below with the real
+   * request. For each image: render a w=300 version, POST it to the embedding
+   * endpoint (https://ai.scaleflex.com/images/embedding/...) with the threshold
+   * derived from `this.config?.similarityCheck?.confidence` (low 0.60 / mid 0.75
+   * / high 0.90), collect the returned `similar_assets`, and mark the image done.
+   * Then surface the results in a panel (Open in new window / Discard from
+   * upload) — that screen is the next step. The loading UI, selection mode,
+   * per-tile button and events are already wired; only the network call and the
+   * results rendering remain.
    */
   private _runSimilarityCheck(files: UploadFile[]) {
-    const n = files.length;
-    this._showToast(
-      n === 1
-        ? `Checking "${files[0].name}" for similar assets…`
-        : `Checking ${n} images for similar assets…`,
-      "info",
-    );
+    this._clearSimilarRun();
+    if (!files.length) return;
+    this._similarRunIds = files.map((f) => f.id);
+
+    // --- Simulated progression (demo) — dev replaces with real API calls. ---
+    let i = 0;
+    const step = () => {
+      if (i >= files.length) return;
+      const id = files[i].id;
+      this._similarActiveIds = new Set(this._similarActiveIds).add(id);
+      const t = window.setTimeout(() => {
+        const active = new Set(this._similarActiveIds);
+        active.delete(id);
+        this._similarActiveIds = active;
+        // Mark as checked permanently (badge persists across later checks).
+        this._similarCheckedIds = new Set(this._similarCheckedIds).add(id);
+        i += 1;
+        step();
+      }, 1100);
+      this._similarSimTimers.push(t);
+    };
+    step();
+    // --- end simulated progression ---
   }
+
+  /** Clears only the current run (timers, run/active ids). Keeps the persistent
+   *  checked set so finished images stay marked. Used by Cancel / Done. */
+  private _clearSimilarRun() {
+    this._similarSimTimers.forEach((t) => clearTimeout(t));
+    this._similarSimTimers = [];
+    this._similarRunIds = [];
+    this._similarActiveIds = new Set();
+  }
+
+  private _onSimilarSearchCancel = () => {
+    this._clearSimilarRun();
+  };
 
   private _onFileLocate = (e: CustomEvent<{ fileId: string; file: UploadFile }>) => {
     const file = e.detail.file;
@@ -3732,6 +3772,12 @@ export class SfxUploader extends LitElement {
 
   private _onClearAll = () => {
     const callbacks = this.config?.callbacks;
+
+    // Reset similarity-check state (run + persistent "checked" memory).
+    this._clearSimilarRun();
+    this._similarCheckedIds = new Set();
+    this._similarSelectMode = false;
+    this._similarSelectedIds = new Set();
 
     // Clear closeOnComplete timer so a stale auto-close doesn't fire after reset
     if (this._closeOnCompleteTimer) {
@@ -4832,6 +4878,9 @@ export class SfxUploader extends LitElement {
             .selectMode=${this._similarSelectMode}
             .selectedIds=${this._similarSelectedIds}
             .allSelected=${allSimilarSelected}
+            .searchRunIds=${this._similarRunIds}
+            .searchActiveIds=${this._similarActiveIds}
+            .searchDoneIds=${this._similarCheckedIds}
             ?drag-active=${this._bodyDragOver}
             @source-click=${this._onDropTileSourceClick}
           ></sfx-file-list>
@@ -5208,6 +5257,7 @@ export class SfxUploader extends LitElement {
         @check-similar-single=${this._onCheckSimilarSingle}
         @similar-toggle=${this._onSimilarToggle}
         @similar-select-all=${this._onSimilarSelectAll}
+        @check-similar-search-cancel=${this._onSimilarSearchCancel}
         @upload-start=${this._onUploadStart}
         @upload-more=${this._onUploadMore}
         @primary-action=${this._onPrimaryAction}
@@ -5328,6 +5378,9 @@ export class SfxUploader extends LitElement {
                           .selectMode=${this._similarSelectMode}
                           .selectedIds=${this._similarSelectedIds}
                           .allSelected=${allSimilarSelected}
+                          .searchRunIds=${this._similarRunIds}
+                          .searchActiveIds=${this._similarActiveIds}
+                          .searchDoneIds=${this._similarCheckedIds}
                           ?drag-active=${this._bodyDragOver}
                           @source-click=${this._onDropTileSourceClick}
                         ></sfx-file-list>

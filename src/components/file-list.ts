@@ -103,7 +103,7 @@ export class SfxFileList extends LitElement {
     .similar-select-all {
       display: inline-flex;
       align-items: center;
-      gap: 7px;
+      gap: 10px;
       flex: 0 0 auto;
       font-size: 14px;
       font-weight: 500;
@@ -146,6 +146,62 @@ export class SfxFileList extends LitElement {
       border-width: 0 2px 2px 0;
       transform: rotate(45deg);
     }
+
+    /* --- Similarity search progress banner --- */
+    .search-ring {
+      flex: 0 0 22px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2.5px solid var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.18));
+      border-top-color: var(--sfx-up-primary, #2563eb);
+      animation: simBannerSpin 0.7s linear infinite;
+    }
+
+    @keyframes simBannerSpin { to { transform: rotate(360deg); } }
+
+    .search-done-ico {
+      flex: 0 0 22px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--sfx-up-success, #16a34a);
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .search-done-ico svg { width: 14px; height: 14px; }
+
+    .search-bar {
+      height: 6px;
+      border-radius: 3px;
+      background: var(--sfx-up-bg, #fff);
+      overflow: hidden;
+      margin-top: 7px;
+    }
+    .search-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      background: var(--sfx-up-primary, #2563eb);
+      transition: width 0.3s ease;
+    }
+
+    .search-cancel {
+      flex: 0 0 auto;
+      height: 32px;
+      padding: 0 14px;
+      border-radius: 6px;
+      border: 1.5px solid var(--sfx-up-border, #e2e8f0);
+      background: var(--sfx-up-bg, #fff);
+      color: var(--sfx-up-text-secondary, #475569);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .search-cancel:hover { background: var(--sfx-up-border-light, #f1f5f9); }
 
     /* Mobile: 2 cols at <=768, 1 col at <=440. Use viewport @media not
        container queries — container queries fire on local file-list width
@@ -532,6 +588,12 @@ export class SfxFileList extends LitElement {
   @property({ attribute: false }) selectedIds: Set<string> = new Set();
   /** Whether every selectable image is currently picked (for "Select all"). */
   @property({ type: Boolean }) allSelected = false;
+  /** Ids of all images in the active similarity-search run (empty = no search). */
+  @property({ attribute: false }) searchRunIds: string[] = [];
+  /** Ids currently being searched (spinner). */
+  @property({ attribute: false }) searchActiveIds: Set<string> = new Set();
+  /** Ids whose search finished (green check). */
+  @property({ attribute: false }) searchDoneIds: Set<string> = new Set();
 
   @state() private _moreOpen = false;
   @state() private _dropTileMaxVisible = 3;
@@ -776,8 +838,47 @@ export class SfxFileList extends LitElement {
     );
   }
 
+  private _onSearchCancel() {
+    this.dispatchEvent(
+      new CustomEvent('check-similar-search-cancel', { bubbles: true, composed: true }),
+    );
+  }
+
+  /** Per-tile similarity-search status from the id sets. */
+  private _statusFor(id: string): '' | 'searching' | 'done' | 'queued' {
+    if (this.searchActiveIds.has(id)) return 'searching';
+    if (this.searchDoneIds.has(id)) return 'done';
+    if (this.searchRunIds.includes(id)) return 'queued';
+    return '';
+  }
+
   render() {
+    const searchTotal = this.searchRunIds.length;
+    // Run-specific progress: how many of THIS run's ids are already checked
+    // (searchDoneIds is the persistent "checked" set across runs).
+    const searchDone = this.searchRunIds.filter((id) => this.searchDoneIds.has(id)).length;
+    const searchPct = searchTotal ? Math.round((searchDone / searchTotal) * 100) : 0;
+    const allDone = searchTotal > 0 && searchDone === searchTotal;
     return html`
+      ${searchTotal > 1
+        ? html`
+            <div class="similar-banner search">
+              ${allDone
+                ? html`<span class="search-done-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>`
+                : html`<span class="search-ring"></span>`}
+              <div class="similar-banner-txt">
+                <b>${allDone
+                  ? this.t('similarCheckDone', 'Similarity check complete')
+                  : this.t('checkingSimilar', 'Checking for similar assets…')}</b>
+                <span>${this.t('similarProgress', '{{done}} of {{total}} done', { done: searchDone, total: searchTotal })}</span>
+                <div class="search-bar"><div class="search-bar-fill" ${cspStyle({ width: `${searchPct}%` })}></div></div>
+              </div>
+              <button class="search-cancel" @click=${this._onSearchCancel}>
+                ${allDone ? this.t('done', 'Done') : this.t('cancel', 'Cancel')}
+              </button>
+            </div>
+          `
+        : nothing}
       ${this.selectMode
         ? html`
             <div class="similar-banner">
@@ -805,7 +906,7 @@ export class SfxFileList extends LitElement {
       <div class="grid">
         ${this.showDropTile && this.mode !== 'review' && !this.selectMode ? this._renderDropTile() : nothing}
         ${this.files.map(
-          (f, i) => html`<sfx-file-item .t=${this.t} .file=${f} .mode=${this.mode} .getLocateUrl=${this.getLocateUrl} .showLocateButton=${this.showLocateButton} .showCopyCdnButton=${this.showCopyCdnButton} .showCheckSimilar=${this.showCheckSimilar} .selectMode=${this.selectMode} .isSelected=${this.selectedIds.has(f.id)} ${cspStyle({ '--tile-index': String(i) })}></sfx-file-item>`,
+          (f, i) => html`<sfx-file-item .t=${this.t} .file=${f} .mode=${this.mode} .getLocateUrl=${this.getLocateUrl} .showLocateButton=${this.showLocateButton} .showCopyCdnButton=${this.showCopyCdnButton} .showCheckSimilar=${this.showCheckSimilar} .selectMode=${this.selectMode} .isSelected=${this.selectedIds.has(f.id)} .similarStatus=${this._statusFor(f.id)} ${cspStyle({ '--tile-index': String(i) })}></sfx-file-item>`,
         )}
       </div>
     `;
