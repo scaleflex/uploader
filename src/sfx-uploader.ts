@@ -4565,6 +4565,9 @@ export class SfxUploader extends LitElement {
     const completed = activeFiles.filter((f) => f.status === "complete").length;
     // Files still in flight (or pausable) get per-file controls
     const inFlight = activeFiles.filter((f) => isActive(f.status));
+    const subtitleParts: string[] = [];
+    if (total > 1) subtitleParts.push(t('nOfNComplete', '{{completed}} of {{total}} complete', { completed, total }));
+    if (this._lastEta > 0) subtitleParts.push(t('etaLeft', '~{{eta}} left', { eta: formatEta(this._lastEta) }));
 
     return html`
       <div class="upload-overlay">
@@ -4573,12 +4576,14 @@ export class SfxUploader extends LitElement {
         <div class="upload-overlay-title">
           ${t('uploadingFiles', { count: total, defaultValue_one: 'Uploading {{count}} file', defaultValue_other: 'Uploading {{count}} files' })}
         </div>
-        <div class="upload-overlay-subtitle">
-          ${t('nOfNComplete', '{{completed}} of {{total}} complete', { completed, total })}${this._lastEta > 0 ? html` · ${t('etaLeft', '~{{eta}} left', { eta: formatEta(this._lastEta) })}` : nothing}
-        </div>
-        <div class="upload-overlay-bar">
-          <div class="upload-overlay-bar-fill" ${cspStyle({ width: `${pct}%` })}></div>
-        </div>
+        ${subtitleParts.length > 0
+          ? html`<div class="upload-overlay-subtitle">${subtitleParts.join(' · ')}</div>`
+          : nothing}
+        ${total > 1
+          ? html`<div class="upload-overlay-bar">
+              <div class="upload-overlay-bar-fill" ${cspStyle({ width: `${pct}%` })}></div>
+            </div>`
+          : nothing}
         ${inFlight.length > 0 ? this._renderOverlayFiles(inFlight, t) : nothing}
         <div class="upload-overlay-actions">
           <button
