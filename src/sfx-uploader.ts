@@ -176,9 +176,9 @@ export interface UploaderConfig {
    * Host-supplied builder for the "Locate" button URL. Receives the
    * completed file and returns the URL Locate should open. Return
    * `null` / `undefined` to fall back to the `adminUrl`-based default
-   * (see `adminUrl`). When both are absent, Locate just fires the
-   * `sfx-file-locate` event / `onFileLocate` callback and does nothing
-   * else — the host is expected to handle navigation itself.
+   * (see `adminUrl`), which itself defaults to `window.location.origin`
+   * when not set — so in practice Locate will navigate as long as the
+   * uploader is running in a browser and the file has a UUID.
    *
    * To suppress the auto-navigation even when a URL would be resolved
    * (e.g. open it via the host's client-side router instead of a new
@@ -201,10 +201,10 @@ export interface UploaderConfig {
    * same deep-link the admin uses internally to scroll to and select a
    * file in its library tree. Trailing slashes are ignored.
    *
-   * No default — embedding hosts know their own admin deployment URL
-   * (it differs per environment / whitelabel). When omitted and
-   * `getLocateUrl` is also omitted, the Locate button fires its event
-   * and callback but performs no navigation.
+   * Defaults to `window.location.origin`, which is correct when the
+   * uploader is embedded inside the admin itself (the common case).
+   * Set explicitly for cross-origin embeds, custom domains, or
+   * whitelabel deployments where the admin lives on a different host.
    */
   adminUrl?: string;
   /**
@@ -212,7 +212,7 @@ export interface UploaderConfig {
    * When clicked, fires the `sfx-file-locate` event and the `onFileLocate`
    * callback, then opens the resolved Locate URL (see `getLocateUrl` /
    * `adminUrl`) in a new tab unless the event's default is prevented or
-   * neither config resolves to a URL.
+   * the file has no UUID to deep-link to.
    * Default: false (hidden).
    */
   showLocateButton?: boolean;
@@ -2751,6 +2751,8 @@ export class SfxUploader extends LitElement {
       [data-sfx-upload-float] .float-item-act.del:hover { color:#ef4444; }
       [data-sfx-upload-float] .float-item-act.paused { color:#d97706; }
       [data-sfx-upload-float] .float-item-act.paused:hover { color:#d97706; background:#fef3c7; }
+      [data-sfx-upload-float] .float-item-act.locate { color:#2563eb; }
+      [data-sfx-upload-float] .float-item-act.locate:hover { color:#1d4ed8; background:#eff6ff; }
       [data-sfx-upload-float] .float-collapsed { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; width:470px; border-radius:12px; }
       [data-sfx-upload-float] .float-collapsed-left { display:flex; align-items:center; gap:8px; }
       [data-sfx-upload-float] .float-collapsed-spinner { width:18px; height:18px; border:2.5px solid #e8edf5; border-top-color:#2563eb; border-radius:50%; animation:sfxSpin .8s linear infinite; flex-shrink:0; }
@@ -3983,8 +3985,7 @@ export class SfxUploader extends LitElement {
     this._onFillMetadata();
   };
 
-  private _onFileLocate = (e: CustomEvent<{ fileId: string; file: UploadFile }>) => {
-    const file = e.detail.file;
+  private _locateFile(file: UploadFile) {
     if (!file) return;
     // Cancelable so hosts can suppress the auto-navigation via
     // event.preventDefault() and handle Locate themselves (e.g. via their
@@ -4002,6 +4003,10 @@ export class SfxUploader extends LitElement {
     if (!allowed) return;
     const url = resolveLocateUrl(file, this.config ?? undefined);
     if (url) window.open(url, '_blank', 'noopener,noreferrer');
+  }
+
+  private _onFileLocate = (e: CustomEvent<{ fileId: string; file: UploadFile }>) => {
+    this._locateFile(e.detail.file);
   };
 
   private _onFileCopyCdn = (e: CustomEvent<{ fileId: string; file: UploadFile; cdnUrl: string }>) => {
@@ -5092,7 +5097,23 @@ export class SfxUploader extends LitElement {
                 </div>
                 <div class="float-item-status">
                   ${f.status === "complete"
-                    ? html`<div class="float-item-done">
+                    ? html`${this.config?.showLocateButton && f.response?.file?.uuid
+                          ? html`<button
+                              class="float-item-act locate"
+                              title=${t('locate', 'Locate')}
+                              aria-label=${t('locate', 'Locate')}
+                              @click=${() => this._locateFile(f)}
+                            >
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="2" y1="12" x2="5" y2="12" />
+                                <line x1="19" y1="12" x2="22" y2="12" />
+                                <line x1="12" y1="2" x2="12" y2="5" />
+                                <line x1="12" y1="19" x2="12" y2="22" />
+                                <circle cx="12" cy="12" r="7" />
+                              </svg>
+                            </button>`
+                          : nothing}
+                        <div class="float-item-done">
                         <svg
                           viewBox="0 0 24 24"
                           fill="none"

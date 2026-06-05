@@ -13,20 +13,32 @@ function withResponse(uuid: string | undefined): UploadFile {
 describe('resolveLocateUrl', () => {
   const UUID = 'e176a9d7-1234-5678-9abc-def012345678';
 
-  it('returns null when neither getLocateUrl nor adminUrl is set', () => {
-    expect(resolveLocateUrl(withResponse(UUID), undefined)).toBeNull();
-    expect(resolveLocateUrl(withResponse(UUID), {})).toBeNull();
+  it('falls back to window.location.origin when neither getLocateUrl nor adminUrl is set', () => {
+    const origin = window.location.origin;
+    const expected = `${origin}/library?lf=${encodeURIComponent(btoa(UUID))}`;
+    expect(resolveLocateUrl(withResponse(UUID), undefined)).toBe(expected);
+    expect(resolveLocateUrl(withResponse(UUID), {})).toBe(expected);
   });
 
-  it('returns null when adminUrl is set but the file has no uuid', () => {
+  it('returns null when the file has no uuid (regardless of adminUrl)', () => {
+    // Explicit adminUrl path
     expect(resolveLocateUrl(withResponse(''), { adminUrl: 'https://hub.example.com' })).toBeNull();
     expect(resolveLocateUrl(withResponse(undefined), { adminUrl: 'https://hub.example.com' })).toBeNull();
     expect(resolveLocateUrl(makeUploadFile({ response: null }), { adminUrl: 'https://hub.example.com' })).toBeNull();
+    // window.location.origin fallback path
+    expect(resolveLocateUrl(withResponse(''), undefined)).toBeNull();
+    expect(resolveLocateUrl(makeUploadFile({ response: null }), {})).toBeNull();
   });
 
   it('builds the default admin DAM deep-link when adminUrl + uuid are set', () => {
     const url = resolveLocateUrl(withResponse(UUID), { adminUrl: 'https://hub.example.com' });
     expect(url).toBe(`https://hub.example.com/library?lf=${encodeURIComponent(btoa(UUID))}`);
+  });
+
+  it('explicit adminUrl takes precedence over the window.location.origin fallback', () => {
+    const url = resolveLocateUrl(withResponse(UUID), { adminUrl: 'https://hub.example.com' });
+    expect(url).not.toContain(window.location.origin);
+    expect(url).toContain('https://hub.example.com');
   });
 
   it('strips trailing slashes from adminUrl so the path joins cleanly', () => {
