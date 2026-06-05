@@ -407,9 +407,13 @@ export class UploadEngine {
     }
     // Backfill the authoritative byte count from the server. Search providers
     // (Unsplash) ship `size: 0` in their list responses, so without this the
-    // success card and final file list render `0 B`.
-    if (response.file?.size != null) {
-      update.size = response.file.size;
+    // success card and final file list render `0 B`. Filerobot v4 returns
+    // `size` as `{ bytes, pretty }` on recent API versions and a plain number
+    // on older ones — handle both shapes.
+    const rawSize = response.file?.size;
+    const sizeBytes = typeof rawSize === 'number' ? rawSize : rawSize?.bytes;
+    if (typeof sizeBytes === 'number') {
+      update.size = sizeBytes;
     }
     updateFile(this.store, fileId, update);
 

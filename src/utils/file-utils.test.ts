@@ -36,6 +36,14 @@ describe('formatFileSize', () => {
   it('formats fractional sizes', () => {
     expect(formatFileSize(1536)).toBe('1.5 KB');
   });
+
+  it('falls back to "0 B" for non-finite / missing input', () => {
+    expect(formatFileSize(NaN)).toBe('0 B');
+    expect(formatFileSize(Infinity)).toBe('0 B');
+    expect(formatFileSize(-1)).toBe('0 B');
+    expect(formatFileSize(undefined as unknown as number)).toBe('0 B');
+    expect(formatFileSize(null as unknown as number)).toBe('0 B');
+  });
 });
 
 describe('formatEta', () => {

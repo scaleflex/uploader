@@ -230,6 +230,35 @@ describe('UploadEngine', () => {
       expect(store.getState().files.get('f1')!.size).toBe(mockResponse.file.size);
     });
 
+    it('extracts size.bytes when the server returns the structured shape', () => {
+      // Recent Filerobot v4 responses return `size: { bytes, pretty }` instead
+      // of a plain number. Assigning the object straight through would render
+      // as "0[object Object]" through the reduce and "NaN undefined" downstream.
+      const file = makeUploadFile({ id: 'f1', status: 'queued', size: 0 });
+      const { store, engine } = createEngine({
+        files: new Map([['f1', file]]),
+        isUploading: true,
+      });
+
+      const structuredResponse: UploadResponse = {
+        ...mockResponse,
+        file: {
+          ...mockResponse.file,
+          size: { bytes: 184382, pretty: '180.06 KB' },
+        },
+      };
+
+      (xhrUploadFile as ReturnType<typeof vi.fn>).mockImplementation((_f: any, opts: any) => {
+        setTimeout(() => opts.onComplete(structuredResponse), 0);
+        return { abort: vi.fn() };
+      });
+
+      engine.start();
+      vi.runAllTimers();
+
+      expect(store.getState().files.get('f1')!.size).toBe(184382);
+    });
+
     it('swaps a non-blob (URL/connector) preview to the CDN URL for image files', () => {
       // A remote http preview (third-party origin) must be replaced with a
       // CSP-safe server URL once the file is on Filerobot.
