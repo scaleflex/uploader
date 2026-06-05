@@ -467,7 +467,7 @@ export class SfxSuccessCard extends LitElement {
     return html`
       ${this.showMinimize
         ? html`<button class="minimize-btn" title=${this.t('minimizeAndContinue', 'Minimize & continue in background')} @click=${this._minimize}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="5" y1="19" x2="19" y2="19"/></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="12" x2="18" y2="12"/></svg>
           </button>`
         : nothing}
       <button class="close-btn" title=${this.t('close', 'Close')} @click=${this._close}>
