@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Sizing CSS custom properties so hosts can enlarge (or shrink) the modals without forking styles:
+  - `--sfx-up-modal-max-width` — main uploader modal max width (default `1100px`).
+  - `--sfx-up-bulk-modal-width` — bulk metadata edit modal width (default `980px`).
+  - `--sfx-up-bulk-modal-height` — bulk metadata edit modal height (default `82vh`).
+  - Existing `--sfx-up-max-height` (main modal height, default `88vh`) and `--sfx-up-content-max-width` (inner content max width, default `1600px`) are documented in the README alongside these. The bulk modal continues to clamp to `calc(100vw - 40px)` / `calc(100vh - 40px)` so it never overflows the viewport.
 - Coexistence hooks for hosting apps that show their own floating progress panel alongside the uploader's float card / pill:
   - `--sfx-up-float-offset-x` / `--sfx-up-float-offset-y` CSS custom properties — additive offset (in px) applied to the float panel's bottom-right anchor. Positive `offset-x` adds to `right` (so the panel moves *leftward*); positive `offset-y` adds to `bottom` (so the panel moves *upward*). Default `0px`. Setting them via `el.style.setProperty(...)` on `<sfx-uploader>` is mirrored onto the portalled pill via a MutationObserver. The slide is animated (0.25s ease).
   - `sfx-panel-shown` public event — fires once on first mount of the floating panel (pill/card), payload `{ width, height, mode: 'pill' | 'card' }` so the host can measure the neighbour it needs to make room for.

@@ -61,6 +61,8 @@ export const bulkModalStyles = css`
     display: block;
     font-family: var(--sfx-up-font, inherit);
     color: var(--sfx-up-text, #1e293b);
+    --sfx-up-bulk-modal-width: var(--sfx-up-bulk-modal-width, 980px);
+    --sfx-up-bulk-modal-height: var(--sfx-up-bulk-modal-height, 82vh);
   }
 
   .fm-overlay {
@@ -106,9 +108,9 @@ export const bulkModalStyles = css`
   }
 
   .fm-modal {
-    width: 980px;
+    width: var(--sfx-up-bulk-modal-width, 980px);
     max-width: calc(100vw - 40px);
-    height: 82vh;
+    height: var(--sfx-up-bulk-modal-height, 82vh);
     max-height: calc(100vh - 40px);
     background: var(--sfx-up-bg, #fff);
     border-radius: 14px;

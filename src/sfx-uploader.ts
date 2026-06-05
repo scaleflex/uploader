@@ -357,6 +357,9 @@ export class SfxUploader extends LitElement {
       --sfx-up-backdrop: rgba(0, 0, 0, 0.45);
       --sfx-up-ring: var(--ring, oklch(0.578 0.198 268.129 / 0.7));
       --sfx-up-max-height: 88vh;
+      --sfx-up-modal-max-width: 1100px;
+      --sfx-up-bulk-modal-width: 980px;
+      --sfx-up-bulk-modal-height: 82vh;
       --sfx-up-checker-bg: #fff;
       --sfx-up-checker-tile: #f0f0f0;
       /* Fullscreen overlay z-index stack — single source of truth so
@@ -386,7 +389,7 @@ export class SfxUploader extends LitElement {
         0 28px 80px rgba(0, 0, 0, 0.2),
         0 4px 16px rgba(0, 0, 0, 0.06);
       width: 100%;
-      max-width: 1100px;
+      max-width: var(--sfx-up-modal-max-width, 1100px);
       height: var(--sfx-up-max-height, 88vh);
       display: flex;
       flex-direction: column;
