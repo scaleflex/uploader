@@ -709,6 +709,41 @@ export const bulkOpBarStyles = css`
     cursor: not-allowed;
   }
 
+  /* Unsupported field notice (rendered in place of op-bar controls). */
+  .op-unsupported {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1px dashed var(--sfx-up-border, #e2e8f0);
+    border-radius: 8px;
+    background: var(--sfx-up-surface, #f8fafc);
+    font-size: 13px;
+    line-height: 1.4;
+    flex: 1;
+    min-width: 0;
+  }
+  .op-unsupported svg {
+    width: 16px;
+    height: 16px;
+    margin-top: 1px;
+    flex-shrink: 0;
+    color: var(--sfx-up-text-muted, #94a3b8);
+  }
+  .op-unsupported-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+  .op-unsupported-title {
+    font-weight: 500;
+    color: var(--sfx-up-text, #1e293b);
+  }
+  .op-unsupported-msg {
+    color: var(--sfx-up-text-muted, #94a3b8);
+  }
+
   /* ---- Mobile: stack op-field rows vertically so the operation
      dropdown, value input, and Apply button each get full width. ---- */
   @media (max-width: 768px) {

@@ -1,10 +1,14 @@
 import { LitElement, html, nothing } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import type { MetadataField, MetadataConfig, MetadataFieldType } from '../schema/schema.types';
+import { isUnsupportedFieldType } from '../schema/schema.types';
+import { UNSUPPORTED_FIELD_MESSAGE, unsupportedLockIcon } from '../fields/unsupported-field';
 import { isEmpty } from '../schema/validation';
 import {
   getAvailableOperations,
   isValueRequiredForPreview,
+  ARRAY_TYPES,
+  TEXT_TYPES,
   type BulkOperation,
   type BulkOperationDef,
 } from './bulk-operations';
@@ -38,6 +42,11 @@ export class SfxBulkMetaOpBar extends LitElement {
         return 'null';
       case 'geopoint':
         return { latitude: '', longitude: '' };
+      case 'asset-attachments':
+      case 'ultratags':
+      case 'taxonomy-node':
+        // Unsupported types never reach an editor; the value is irrelevant.
+        return null;
       default:
         return '';
     }
@@ -183,10 +192,8 @@ export class SfxBulkMetaOpBar extends LitElement {
     //   - Scalars (number / date / select / boolean / geopoint): allow
     //     empty — Clear simply nulls the value, there is nothing to type.
     if (this._operation === 'DELETE') {
-      const arrayTypes = new Set(['multi-select', 'tags', 'integer-list']);
-      const textTypes = new Set(['text', 'textarea', 'attachment-uri']);
-      if (arrayTypes.has(this.field?.type)) return isEmpty(this._value);
-      if (textTypes.has(this.field?.type)) return isEmpty(this._value);
+      if (ARRAY_TYPES.has(this.field?.type)) return isEmpty(this._value);
+      if (TEXT_TYPES.has(this.field?.type)) return isEmpty(this._value);
       return false;
     }
     return isEmpty(this._value);
@@ -194,6 +201,20 @@ export class SfxBulkMetaOpBar extends LitElement {
 
   render() {
     if (!this.field) return nothing;
+
+    if (isUnsupportedFieldType(this.field.type)) {
+      return html`
+        <div class="op-bar">
+          <div class="op-unsupported" role="note" aria-label="${this.field.title}: ${UNSUPPORTED_FIELD_MESSAGE}">
+            ${unsupportedLockIcon}
+            <div class="op-unsupported-body">
+              <span class="op-unsupported-title">${this.field.title}</span>
+              <span class="op-unsupported-msg">${UNSUPPORTED_FIELD_MESSAGE}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
 
     const showDropdown = this._availableOps.length > 1;
     const currentOp = this._availableOps.find((o) => o.key === this._operation);

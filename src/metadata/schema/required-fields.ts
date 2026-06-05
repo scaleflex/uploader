@@ -1,5 +1,6 @@
 import type { UploadFile } from '../../store/store.types';
 import type { MetadataConfig, MetadataSchema, MetadataField } from './schema.types';
+import { isUnsupportedFieldType } from './schema.types';
 import { isEmpty } from './validation';
 
 /** File statuses where metadata can still be edited before upload. */
@@ -25,6 +26,9 @@ export function isFieldRequired(
   field: MetadataField,
   config?: MetadataConfig,
 ): boolean {
+  // Unsupported field types can't be edited during upload, so they cannot
+  // be required — otherwise uploads would be impossible to start.
+  if (isUnsupportedFieldType(field.type)) return false;
   if (config?.requiredFields?.includes(field.ckey)) return true;
   return Boolean(field.required);
 }

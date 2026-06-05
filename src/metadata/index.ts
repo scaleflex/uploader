@@ -32,6 +32,7 @@ import './fields/boolean-field';
 import './fields/number-field';
 import './fields/date-field';
 import './fields/geo-point-field';
+import './fields/unsupported-field';
 
 // Import dispatcher components (side effect)
 import './metadata-field-edit';

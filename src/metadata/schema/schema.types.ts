@@ -60,7 +60,26 @@ export type MetadataFieldType =
   | 'geopoint'
   | 'integer-list'
   | 'tags'
-  | 'attachment-uri';
+  | 'attachment-uri'
+  | 'asset-attachments'
+  | 'ultratags'
+  | 'taxonomy-node';
+
+/**
+ * Field types whose editor cannot run inside the uploader (they depend on
+ * the asset already existing on the backend — file attachments need an asset
+ * id, ultratags / taxonomy nodes need server-driven autocomplete trees).
+ * Rendered read-only with a tooltip; excluded from bulk operations.
+ */
+export const UNSUPPORTED_FIELD_TYPES: ReadonlySet<MetadataFieldType> = new Set([
+  'asset-attachments',
+  'ultratags',
+  'taxonomy-node',
+]);
+
+export function isUnsupportedFieldType(type: MetadataFieldType): boolean {
+  return UNSUPPORTED_FIELD_TYPES.has(type);
+}
 
 export interface PossibleValue {
   api_value: string;

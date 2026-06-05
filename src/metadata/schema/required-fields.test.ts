@@ -3,6 +3,7 @@ import {
   getFilesWithMissingRequired,
   firstMissingRequiredFieldKey,
   deepMergeMeta,
+  isFieldRequired,
 } from './required-fields';
 import type { MetadataField, MetadataSchema } from './schema.types';
 import type { UploadFile } from '../../store/store.types';
@@ -60,6 +61,34 @@ describe('isAssetHasMetadataValue', () => {
   it('returns true for non-empty string', () => expect(isAssetHasMetadataValue('hello')).toBe(true));
   it('returns true for non-empty array', () => expect(isAssetHasMetadataValue(['a'])).toBe(true));
   it('returns true for number', () => expect(isAssetHasMetadataValue(42)).toBe(true));
+});
+
+// ---------------------------------------------------------------------------
+// isFieldRequired — unsupported types are never required
+// ---------------------------------------------------------------------------
+
+describe('isFieldRequired', () => {
+  it('returns false for asset-attachments even if schema marks it required', () => {
+    const field = makeField({ type: 'asset-attachments', required: 1 });
+    expect(isFieldRequired(field)).toBe(false);
+  });
+
+  it('returns false for ultratags even if listed in config.requiredFields', () => {
+    const field = makeField({ ckey: 'ut', type: 'ultratags', required: 0 });
+    expect(
+      isFieldRequired(field, { projectUuid: 'p', requiredFields: ['ut'] }),
+    ).toBe(false);
+  });
+
+  it('returns false for taxonomy-node even if required', () => {
+    const field = makeField({ type: 'taxonomy-node', required: true });
+    expect(isFieldRequired(field)).toBe(false);
+  });
+
+  it('still honors required for supported types', () => {
+    expect(isFieldRequired(makeField({ required: 1 }))).toBe(true);
+    expect(isFieldRequired(makeField({ required: 0 }))).toBe(false);
+  });
 });
 
 // ---------------------------------------------------------------------------
