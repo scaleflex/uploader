@@ -208,7 +208,10 @@ export interface UploaderConfig {
    */
   adminUrl?: string;
   /**
-   * Show the "Locate" button on completed file tiles in the review screen.
+   * Show the "Locate" button on completed files. Renders in two places:
+   *   - As a full-width labelled button on the review-screen tile.
+   *   - As a compact icon in the floating-panel per-file row, next to
+   *     the success checkmark.
    * When clicked, fires the `sfx-file-locate` event and the `onFileLocate`
    * callback, then opens the resolved Locate URL (see `getLocateUrl` /
    * `adminUrl`) in a new tab unless the event's default is prevented or
