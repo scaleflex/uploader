@@ -43,6 +43,7 @@ export class SfxBulkMetaOpBar extends LitElement {
       case 'geopoint':
         return { latitude: '', longitude: '' };
       case 'asset-attachments':
+      case 'attachments-assets':
       case 'ultratags':
       case 'taxonomy-node':
         // Unsupported types never reach an editor; the value is irrelevant.

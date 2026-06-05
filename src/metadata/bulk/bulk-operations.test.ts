@@ -12,7 +12,7 @@ describe('getAvailableOperations', () => {
     'numeric', 'decimal2', 'boolean', 'date', 'select-one', 'geopoint',
   ];
   const unsupportedTypes: MetadataFieldType[] = [
-    'asset-attachments', 'ultratags', 'taxonomy-node',
+    'asset-attachments', 'attachments-assets', 'ultratags', 'taxonomy-node',
   ];
 
   it.each(unsupportedTypes)('returns [] for unsupported type %s', (type) => {
