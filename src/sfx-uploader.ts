@@ -3700,6 +3700,8 @@ export class SfxUploader extends LitElement {
    * add a sensible concurrency limit if needed.
    */
   private _checkSimilarSingleFile(file: UploadFile) {
+    // TODO(dev): also skip when the id is already queued in a batch run
+    // (this._similarRunIds.includes(file.id)) to avoid double-processing.
     if (this._similarActiveIds.has(file.id)) return; // already in progress
     this._similarActiveIds = new Set(this._similarActiveIds).add(file.id);
     const idx = this._simMockCounter++;

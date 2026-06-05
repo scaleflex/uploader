@@ -132,7 +132,7 @@ export class SfxFileList extends LitElement {
       cursor: pointer;
       position: relative;
       top: 1px;
-      transition: all 0.15s ease;
+      transition: background-color 0.15s ease, box-shadow 0.15s ease;
     }
 
     .similar-select-all input:checked {

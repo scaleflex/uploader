@@ -268,7 +268,7 @@ export class SfxFileItem extends LitElement {
       font-size: 12px;
       font-weight: 600;
       white-space: nowrap;
-      transition: all 0.15s ease;
+      transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
     }
 
     /* Details — white, borderless (transparent border keeps the same box
@@ -358,7 +358,7 @@ export class SfxFileItem extends LitElement {
       justify-content: center;
       cursor: pointer;
       z-index: 11;
-      transition: all 0.15s ease;
+      transition: background-color 0.15s ease, border-color 0.15s ease;
     }
 
     .similar-cb svg { width: 16px; height: 16px; opacity: 0; transition: opacity 0.15s ease; }
@@ -372,7 +372,9 @@ export class SfxFileItem extends LitElement {
 
     /* --- Similarity search loading states --- */
     /* Queued (waiting its turn): just dimmed, no badge. */
-    .tile.sim-queued { opacity: 0.55; }
+    .tile.sim-queued { opacity: 0.55; transition: opacity 0.15s ease; }
+    /* On hover a queued tile un-dims so its Details button is clearly visible. */
+    .tile.sim-queued:hover { opacity: 1; }
 
     /* Searching: dark overlay + spinner over the preview. */
     .sim-search-overlay {
@@ -988,7 +990,7 @@ export class SfxFileItem extends LitElement {
     // normal, not-yet-uploaded tile and not while picking images.
     const showCenterActions =
       !isReview && !isDone && !isUploading && !isPaused && !isError &&
-      f.status !== 'rejected' && !this.selectMode && !this.similarStatus &&
+      f.status !== 'rejected' && !this.selectMode && this.similarStatus !== 'searching' &&
       !this.reviewPick;
     // Dark hover overlay whenever the centered actions show — for every file
     // type (documents/videos included), so Details always has a backdrop.
