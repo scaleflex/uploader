@@ -7,7 +7,7 @@ import {
   createElement,
   type CSSProperties,
 } from 'react';
-import type { SfxUploader as SfxUploaderElement, UploaderConfig } from './sfx-uploader';
+import type { SfxUploader as SfxUploaderElement, UploaderConfig, UploaderPhase } from './sfx-uploader';
 import type { UploadFile, UploadResponse } from './store/store.types';
 
 // Conditionally import define for SSR safety
@@ -27,6 +27,8 @@ export interface UploaderRef {
   getFile(fileId: string): UploadFile | undefined;
   updateFileMeta(fileId: string, meta?: Record<string, unknown>, tags?: string[]): void;
   updateFilesMeta(updates: Array<{ fileId: string; meta?: Record<string, unknown>; tags?: string[] }>): void;
+  getStatus(): UploaderPhase;
+  dismissPanel(): void;
 }
 
 export interface UploaderProps {
@@ -145,6 +147,8 @@ export const Uploader = forwardRef<UploaderRef, UploaderProps>(
       getFile(fileId: string) { return elRef.current?.getFile(fileId); },
       updateFileMeta(fileId: string, meta?: Record<string, unknown>, tags?: string[]) { elRef.current?.updateFileMeta(fileId, meta, tags); },
       updateFilesMeta(updates: Array<{ fileId: string; meta?: Record<string, unknown>; tags?: string[] }>) { elRef.current?.updateFilesMeta(updates); },
+      getStatus(): UploaderPhase { return elRef.current?.getStatus() ?? 'empty'; },
+      dismissPanel() { elRef.current?.dismissPanel(); },
     }));
 
     // Sync config property

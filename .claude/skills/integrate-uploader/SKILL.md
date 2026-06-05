@@ -257,6 +257,9 @@ All events bubble and cross Shadow DOM (`composed: true`):
 | `sfx-open` | `{}` | Uploader opened |
 | `sfx-close` | `{}` | Uploader closed |
 | `sfx-cancel` | `{}` | Upload cancelled |
+| `sfx-minimize` | `{ width, height, mode: 'pill' \| 'card' }` | Float panel appeared (minimize-on-upload or user clicked minimize) |
+| `sfx-restore` | `{ mode: 'modal' }` | Float panel torn down, modal returns |
+| `sfx-panel-shown` | `{ width, height, mode: 'pill' \| 'card' }` | Float panel first mounted — measure to position any neighbouring panel |
 | `sfx-fill-metadata` | `{ files: UploadFile[] }` | "Fill Metadata" button clicked |
 
 ## Public Methods
@@ -273,6 +276,8 @@ All events bubble and cross Shadow DOM (`composed: true`):
 | `getFile(fileId)` | `UploadFile \| undefined` | Get single file by ID |
 | `updateFileMeta(fileId, meta?, tags?)` | `void` | Update metadata on a queued file |
 | `updateFilesMeta(updates)` | `void` | Batch update metadata |
+| `getStatus()` | `'empty' \| 'ready' \| 'uploading' \| 'complete'` | Current upload phase. Use to check whether `dismissPanel()` would cancel in-flight uploads. |
+| `dismissPanel()` | `void` | Close the panel from any state (modal, float card, pill). Mid-upload it cancels and fires `sfx-cancel` then `sfx-close`. |
 
 ## Config Callbacks (Web Component)
 

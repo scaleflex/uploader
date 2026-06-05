@@ -321,7 +321,7 @@ export interface UploaderConfig {
 /** Default tus-related fields for new UploadFile objects. */
 const TUS_DEFAULTS = { isTus: false, tusUploadUrl: null } as const;
 
-type UploaderPhase = "empty" | "ready" | "uploading" | "complete";
+export type UploaderPhase = "empty" | "ready" | "uploading" | "complete";
 
 export class SfxUploader extends LitElement {
   static styles = css`
@@ -1512,8 +1512,8 @@ export class SfxUploader extends LitElement {
     /* --- Floating upload card (Variant 3 style) --- */
     .upload-float {
       position: fixed;
-      bottom: 24px;
-      right: 24px;
+      bottom: calc(24px + var(--sfx-up-float-offset-y, 0px));
+      right: calc(24px + var(--sfx-up-float-offset-x, 0px));
       z-index: 10000;
       width: 470px;
       border-radius: 12px;
@@ -1524,6 +1524,7 @@ export class SfxUploader extends LitElement {
       overflow: hidden;
       font-family: inherit;
       animation: floatSlideIn 0.3s ease both;
+      transition: bottom 0.25s ease, right 0.25s ease;
     }
 
     .float-header {
@@ -2361,7 +2362,7 @@ export class SfxUploader extends LitElement {
     if (this._isOpen) {
       if (wasMinimized) {
         this.config?.callbacks?.onRestore?.();
-        this._dispatchPublic(PublicEvents.RESTORE, {});
+        this._dispatchPublic(PublicEvents.RESTORE, { mode: 'modal' });
         this.requestUpdate();
       }
       return;
@@ -2371,7 +2372,7 @@ export class SfxUploader extends LitElement {
     this._dispatchPublic(PublicEvents.OPEN, {});
     if (wasMinimized) {
       this.config?.callbacks?.onRestore?.();
-      this._dispatchPublic(PublicEvents.RESTORE, {});
+      this._dispatchPublic(PublicEvents.RESTORE, { mode: 'modal' });
     }
     this.requestUpdate();
   }
@@ -2380,7 +2381,33 @@ export class SfxUploader extends LitElement {
   close() {
     if (!this._isOpen) return;
     this._isOpen = false;
-    // Cancel any pending closeOnComplete timer so it doesn't fire after manual close
+    this._runCloseCleanup();
+  }
+
+  /** Current upload phase: 'empty' | 'ready' | 'uploading' | 'complete'.
+   *  Use to decide whether it's safe to call dismissPanel() without cancelling uploads. */
+  getStatus(): UploaderPhase {
+    return this._phase;
+  }
+
+  /** Hide the panel in any state (modal, floating card, or minimized pill).
+   *  If uploads are in progress they are cancelled and `sfx-cancel` fires before `sfx-close`.
+   *  Check getStatus() first if you only want to dismiss after completion. */
+  dismissPanel() {
+    if (this._phase === "uploading") {
+      this._engine?.cancelAll();
+      this.config?.callbacks?.onCancel?.();
+      this._dispatchPublic(PublicEvents.CANCEL, {});
+    }
+    this._isMinimized = false;
+    this._isPillExpanded = false;
+    this._isOpen = false;
+    this._runCloseCleanup();
+  }
+
+  /** Shared cleanup for `close()` and `dismissPanel()` — clears the auto-close
+   *  timer, honors `clearOnClose`, resets preview state, fires `sfx-close`. */
+  private _runCloseCleanup() {
     if (this._closeOnCompleteTimer) {
       clearTimeout(this._closeOnCompleteTimer);
       this._closeOnCompleteTimer = null;
@@ -2435,7 +2462,7 @@ export class SfxUploader extends LitElement {
       this._isMinimized = true;
       this._isPillExpanded = true;
       this.config?.callbacks?.onMinimize?.();
-      this._dispatchPublic(PublicEvents.MINIMIZE, {});
+      this._dispatchFloatGeometryEvent(PublicEvents.MINIMIZE);
       this.requestUpdate();
     }
   }
@@ -2595,7 +2622,7 @@ export class SfxUploader extends LitElement {
     const style = document.createElement("style");
     style.setAttribute("data-sfx-upload-float-styles", "");
     style.textContent = `
-      [data-sfx-upload-float] .upload-float { position:fixed; bottom:24px; right:24px; z-index:10000; width:470px; border-radius:12px; background:#fff; box-shadow:0 8px 32px rgba(0,0,0,0.12),0 2px 8px rgba(0,0,0,0.06); overflow:hidden; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; animation:sfxFloatIn .3s ease both; }
+      [data-sfx-upload-float] .upload-float { position:fixed; bottom:calc(24px + var(--sfx-up-float-offset-y, 0px)); right:calc(24px + var(--sfx-up-float-offset-x, 0px)); z-index:10000; width:470px; border-radius:12px; background:#fff; box-shadow:0 8px 32px rgba(0,0,0,0.12),0 2px 8px rgba(0,0,0,0.06); overflow:hidden; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; animation:sfxFloatIn .3s ease both; transition:bottom .25s ease, right .25s ease; }
       [data-sfx-upload-float] .float-header { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-bottom:1px solid #e8edf5; }
       [data-sfx-upload-float] .float-header-left { display:flex; align-items:center; gap:8px; }
       [data-sfx-upload-float] .float-icon { width:28px; height:28px; border-radius:6px; background:#eff6ff; color:#2563eb; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
@@ -2670,20 +2697,30 @@ export class SfxUploader extends LitElement {
     const files = [...this._storeCtrl.state.files.values()];
     if (this._isMinimized && files.length > 0) {
       this._injectFloatStyles();
+      const justCreated = !this._portalContainer;
       if (!this._portalContainer) {
         this._portalContainer = document.createElement("div");
         this._portalContainer.setAttribute("data-sfx-upload-float", "");
         document.body.appendChild(this._portalContainer);
       }
+      this._syncPortalOffsetVars();
       litRender(this._renderFloatingPill(files), this._portalContainer);
+      if (justCreated && !this._floatShownDispatched) {
+        this._floatShownDispatched = true;
+        requestAnimationFrame(() => {
+          this._dispatchPublic(PublicEvents.PANEL_SHOWN, this._measureFloatGeometry());
+        });
+      }
     } else if (this._portalContainer) {
       litRender(nothing, this._portalContainer);
       this._portalContainer.remove();
       this._portalContainer = null;
+      this._floatShownDispatched = false;
     }
   }
 
   private _portalContainer: HTMLDivElement | null = null;
+  private _hostStyleObserver: MutationObserver | null = null;
 
   connectedCallback() {
     super.connectedCallback();
@@ -2697,6 +2734,13 @@ export class SfxUploader extends LitElement {
     this._hasStoredReview = id != null && lastUploadStore.exists(id);
     // Initialise i18n (fire-and-forget — failure is non-fatal)
     void this._initI18n(typeof navigator !== 'undefined' ? navigator.language : undefined);
+    // Observe inline-style changes on the host so float-offset CSS vars set
+    // via `el.style.setProperty('--sfx-up-float-offset-x', ...)` reach the
+    // portalled pill (which lives in document.body, outside the host's subtree).
+    if (typeof MutationObserver !== 'undefined') {
+      this._hostStyleObserver = new MutationObserver(() => this._syncPortalOffsetVars());
+      this._hostStyleObserver.observe(this, { attributes: true, attributeFilter: ['style'] });
+    }
   }
 
   private async _initI18n(locale?: string) {
@@ -2737,6 +2781,8 @@ export class SfxUploader extends LitElement {
   disconnectedCallback() {
     super.disconnectedCallback();
     document.removeEventListener("keydown", this._onKeyDown);
+    this._hostStyleObserver?.disconnect();
+    this._hostStyleObserver = null;
     this._unsubStoreEvents?.();
     this._unsubStoreEvents = null;
     this._prevStoreState = null;
@@ -3063,6 +3109,45 @@ export class SfxUploader extends LitElement {
     this.dispatchEvent(
       new CustomEvent(eventName, { bubbles: true, composed: true, detail }),
     );
+  }
+
+  /** True once `PANEL_SHOWN` has fired for the current minimize session. */
+  private _floatShownDispatched = false;
+
+  /** Read width/height of the rendered floating panel, and the current mode. */
+  private _measureFloatGeometry(): {
+    width: number;
+    height: number;
+    mode: 'pill' | 'card';
+  } {
+    const mode: 'pill' | 'card' = this._isPillExpanded ? 'card' : 'pill';
+    const el = this._portalContainer?.querySelector<HTMLElement>('.upload-float');
+    if (!el) return { width: 0, height: 0, mode };
+    const r = el.getBoundingClientRect();
+    return { width: r.width, height: r.height, mode };
+  }
+
+  /** Dispatch a panel-lifecycle event with geometry after the next paint. */
+  private _dispatchFloatGeometryEvent(eventName: PublicEventName) {
+    this.updateComplete.then(() => {
+      requestAnimationFrame(() => {
+        this._dispatchPublic(eventName, this._measureFloatGeometry());
+      });
+    });
+  }
+
+  /** Mirror `--sfx-up-float-offset-x/y` from the host onto the portal container.
+   *  The portalled pill lives in `document.body` and doesn't inherit CSS variables
+   *  set on `<sfx-uploader>`, so we copy them whenever they change. */
+  private _syncPortalOffsetVars() {
+    if (!this._portalContainer) return;
+    const cs = getComputedStyle(this);
+    const offX = cs.getPropertyValue("--sfx-up-float-offset-x").trim();
+    const offY = cs.getPropertyValue("--sfx-up-float-offset-y").trim();
+    if (offX) this._portalContainer.style.setProperty("--sfx-up-float-offset-x", offX);
+    else this._portalContainer.style.removeProperty("--sfx-up-float-offset-x");
+    if (offY) this._portalContainer.style.setProperty("--sfx-up-float-offset-y", offY);
+    else this._portalContainer.style.removeProperty("--sfx-up-float-offset-y");
   }
 
   /**
@@ -4080,7 +4165,7 @@ export class SfxUploader extends LitElement {
     this._isMinimized = true;
     this._isPillExpanded = true;
     this.config?.callbacks?.onMinimize?.();
-    this._dispatchPublic(PublicEvents.MINIMIZE, {});
+    this._dispatchFloatGeometryEvent(PublicEvents.MINIMIZE);
     this.requestUpdate();
   };
 
@@ -4095,7 +4180,7 @@ export class SfxUploader extends LitElement {
     this._isPillExpanded = false;
     this._isOpen = true;
     this.config?.callbacks?.onRestore?.();
-    this._dispatchPublic(PublicEvents.RESTORE, {});
+    this._dispatchPublic(PublicEvents.RESTORE, { mode: 'modal' });
     this.requestUpdate();
   };
 

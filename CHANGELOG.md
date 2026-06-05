@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Coexistence hooks for hosting apps that show their own floating progress panel alongside the uploader's float card / pill:
+  - `--sfx-up-float-offset-x` / `--sfx-up-float-offset-y` CSS custom properties — additive offset (in px) applied to the float panel's bottom-right anchor. Positive `offset-x` adds to `right` (so the panel moves *leftward*); positive `offset-y` adds to `bottom` (so the panel moves *upward*). Default `0px`. Setting them via `el.style.setProperty(...)` on `<sfx-uploader>` is mirrored onto the portalled pill via a MutationObserver. The slide is animated (0.25s ease).
+  - `sfx-panel-shown` public event — fires once on first mount of the floating panel (pill/card), payload `{ width, height, mode: 'pill' | 'card' }` so the host can measure the neighbour it needs to make room for.
+  - `sfx-minimize` event now carries `{ width, height, mode }` of the floating panel (was empty `{}`).
+  - `sfx-restore` event now carries `{ mode: 'modal' }` so the host knows the float has been torn down.
+  - `getStatus(): 'empty' | 'ready' | 'uploading' | 'complete'` — read the current upload phase, e.g. to decide whether dismissing the panel would cancel in-flight uploads. Exposed as `UploaderStatus` / `UploaderPhase` type from the package entry and on the React `UploaderRef`.
+  - `dismissPanel()` — close the panel from any visible state (modal, floating card, pill). Cancels in-flight uploads and fires `sfx-cancel` before `sfx-close` if called mid-upload. Honors the `clearOnClose` config the same way `close()` does. Exposed on the React `UploaderRef`.
 - `tusConfig.jsonBase` config option — overrides the host that serves `/json/{fileId}` after a tus upload completes (the post-upload metadata fetch). When omitted, defaults to `{connectors.companionUrl}/json`, then to the hardcoded `eu-on-24001` fallback. Pair with `tusConfig.endpoint` when pinning tus to a non-default connector that uses a different host for the JSON metadata endpoint.
 - "Already uploaded" handling for duplicate content. When the backend reports that
   identical content already exists in the target directory

@@ -1,8 +1,8 @@
 import { PublicEvents } from './public-events';
 
 describe('PublicEvents', () => {
-  it('exports 24 event constants', () => {
-    expect(Object.keys(PublicEvents).length).toBe(24);
+  it('exports 25 event constants', () => {
+    expect(Object.keys(PublicEvents).length).toBe(25);
   });
 
   it('all values are prefixed with "sfx-"', () => {
@@ -25,6 +25,7 @@ describe('PublicEvents', () => {
     expect(PublicEvents.CANCEL).toBe('sfx-cancel');
     expect(PublicEvents.MINIMIZE).toBe('sfx-minimize');
     expect(PublicEvents.RESTORE).toBe('sfx-restore');
+    expect(PublicEvents.PANEL_SHOWN).toBe('sfx-panel-shown');
   });
 
   it('values are unique', () => {

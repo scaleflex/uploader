@@ -18,6 +18,7 @@ export const PublicEvents = {
   CANCEL: 'sfx-cancel',
   MINIMIZE: 'sfx-minimize',
   RESTORE: 'sfx-restore',
+  PANEL_SHOWN: 'sfx-panel-shown',
   COMPLETE_ACTION: 'sfx-complete-action',
   FILE_PREVIEW: 'sfx-file-preview',
   FILL_METADATA: 'sfx-fill-metadata',
