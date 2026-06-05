@@ -506,6 +506,6 @@ export class UploadEngine {
   }
 }
 
-function isActive(status: FileStatus): boolean {
+export function isActive(status: FileStatus): boolean {
   return status === 'queued' || status === 'uploading' || status === 'retrying' || status === 'paused';
 }

@@ -20,6 +20,12 @@ export function formatEta(seconds: number): string {
   const total = Math.round(seconds);
   if (total < 60) return `${total}s`;
   const m = Math.floor(total / 60);
+  // Roll up to hours once minutes would otherwise exceed two digits.
+  if (m > 99) {
+    const h = Math.floor(m / 60);
+    const mm = m % 60;
+    return mm > 0 ? `${h}h ${mm}m` : `${h}h`;
+  }
   const s = total % 60;
   return s > 0 ? `${m}m ${s}s` : `${m}m`;
 }

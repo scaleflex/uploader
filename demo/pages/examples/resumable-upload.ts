@@ -7,26 +7,28 @@ import { initCustomSelects } from '../../lib/custom-select';
 let sizeThreshold = 10;
 let chunkSize = 5;
 let enabled = true;
+let minimizeOnUpload = false;
 
 function updateCode() {
   const container = document.getElementById('code-container');
   if (!container) return;
   container.innerHTML = '';
+  const tusBlock = enabled
+    ? `
+  tusConfig: {
+    sizeThreshold: ${sizeThreshold} * 1024 * 1024, // ${sizeThreshold} MB
+    chunkSize: ${chunkSize} * 1024 * 1024,          // ${chunkSize} MB chunks
+  },`
+    : `
+  // tusConfig not set — all uploads use standard XHR`;
+  const minimizeBlock = minimizeOnUpload ? `
+  minimizeOnUpload: true,  // show "Minimize & continue in background" button` : '';
   renderCodeBlock('#code-container', [
     {
       label: 'JavaScript',
       lang: 'javascript',
-      code: enabled
-        ? `uploader.config = {
-  auth: { /* ... */ },
-  tusConfig: {
-    sizeThreshold: ${sizeThreshold} * 1024 * 1024, // ${sizeThreshold} MB
-    chunkSize: ${chunkSize} * 1024 * 1024,          // ${chunkSize} MB chunks
-  },
-};`
-        : `uploader.config = {
-  auth: { /* ... */ },
-  // tusConfig not set — all uploads use standard XHR
+      code: `uploader.config = {
+  auth: { /* ... */ },${tusBlock}${minimizeBlock}
 };`,
     },
     {
@@ -40,7 +42,8 @@ function updateCode() {
     tusConfig: {
       sizeThreshold: ${sizeThreshold} * 1024 * 1024,
       chunkSize: ${chunkSize} * 1024 * 1024,
-    },` : ''}
+    },` : ''}${minimizeOnUpload ? `
+    minimizeOnUpload: true,` : ''}
   }}
   onUploadPaused={(file) => console.log('Paused:', file.name)}
   onUploadResumed={(file) => console.log('Resumed:', file.name)}
@@ -68,6 +71,12 @@ const page: Page = {
               style="width: 18px; height: 18px; margin: 0; cursor: pointer; accent-color: var(--sf-primary); flex-shrink: 0;" />
             <label for="tus-enabled"
               style="font-size: 14px; font-weight: 500; color: var(--sf-text-primary); cursor: pointer; margin: 0;">Enable resumable upload</label>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <input type="checkbox" id="minimize-on-upload"
+              style="width: 18px; height: 18px; margin: 0; cursor: pointer; accent-color: var(--sf-primary); flex-shrink: 0;" />
+            <label for="minimize-on-upload"
+              style="font-size: 14px; font-weight: 500; color: var(--sf-text-primary); cursor: pointer; margin: 0;">Show "Minimize &amp; continue in background" button</label>
           </div>
           <div style="display: flex; gap: 16px; flex-wrap: wrap;">
             <div class="form-group" id="threshold-group" style="margin-bottom: 0; min-width: 200px;">
@@ -142,10 +151,12 @@ const page: Page = {
     enabled = true;
     sizeThreshold = 10;
     chunkSize = 5;
+    minimizeOnUpload = false;
     updateCode();
     const cleanupSelects = initCustomSelects();
 
     const enabledCheckbox = document.getElementById('tus-enabled') as HTMLInputElement;
+    const minimizeCheckbox = document.getElementById('minimize-on-upload') as HTMLInputElement;
     const thresholdGroup = document.getElementById('threshold-group')!;
     const chunkGroup = document.getElementById('chunk-group')!;
 
@@ -153,6 +164,11 @@ const page: Page = {
       enabled = enabledCheckbox.checked;
       thresholdGroup.style.opacity = enabled ? '1' : '0.4';
       chunkGroup.style.opacity = enabled ? '1' : '0.4';
+      updateCode();
+    });
+
+    minimizeCheckbox.addEventListener('change', () => {
+      minimizeOnUpload = minimizeCheckbox.checked;
       updateCode();
     });
 
@@ -167,16 +183,17 @@ const page: Page = {
     });
 
     document.getElementById('open-btn')!.addEventListener('click', () => {
-      const cfg = buildConfig(
-        enabled
+      const cfg = buildConfig({
+        ...(enabled
           ? {
               tusConfig: {
                 sizeThreshold: sizeThreshold * 1024 * 1024,
                 chunkSize: chunkSize * 1024 * 1024,
               },
             }
-          : {},
-      );
+          : {}),
+        ...(minimizeOnUpload ? { minimizeOnUpload: true } : {}),
+      });
       uploader.config = cfg;
       uploader.open();
     });

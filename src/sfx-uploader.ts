@@ -7,11 +7,13 @@ import { addFile, removeFile } from "./store/helpers";
 import { StoreController } from "./controllers/store.controller";
 import {
   UploadEngine,
+  isActive,
   type UploadEngineConfig,
   type TusConfig,
 } from "./engine";
 import type { SfxDropZone } from "./components/drop-zone";
 import type {
+  TFunction,
   UploaderState,
   UploadFile,
   UploadRestrictions,
@@ -1344,6 +1346,120 @@ export class SfxUploader extends LitElement {
       color: var(--sfx-up-error, #dc2626);
     }
 
+    /* --- Per-file controls inside the overlay --- */
+    .upload-overlay-files {
+      width: 100%;
+      max-width: 520px;
+      max-height: 240px;
+      overflow-y: auto;
+      margin: 0 0 16px;
+      border: 1px solid var(--sfx-up-border, #e2e8f0);
+      border-radius: 8px;
+      background: var(--sfx-up-bg, #fff);
+    }
+
+    .upload-overlay-file {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--sfx-up-border, #e2e8f0);
+    }
+
+    .upload-overlay-file:last-child {
+      border-bottom: none;
+    }
+
+    .upload-overlay-file-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .upload-overlay-file-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--sfx-up-text, #1e293b);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .upload-overlay-file-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .upload-overlay-file-bar {
+      flex: 1;
+      height: 3px;
+      background: var(--sfx-up-border, #e2e8f0);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .upload-overlay-file-bar-fill {
+      height: 100%;
+      background: var(--sfx-up-primary, #2563eb);
+      border-radius: 2px;
+      transition: width 0.3s ease;
+    }
+
+    .upload-overlay-file-bar-fill.muted {
+      background: var(--sfx-up-text-muted, #94a3b8);
+    }
+
+    .upload-overlay-file-pct {
+      font-size: 11px;
+      color: var(--sfx-up-text-muted, #94a3b8);
+      min-width: 32px;
+      text-align: right;
+    }
+
+    .upload-overlay-file-actions {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .upload-overlay-file-btn {
+      width: 26px;
+      height: 26px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--sfx-up-text-muted, #94a3b8);
+      padding: 0;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .upload-overlay-file-btn:hover {
+      background: var(--sfx-up-hover, #f1f5f9);
+      color: var(--sfx-up-text, #1e293b);
+    }
+
+    .upload-overlay-file-btn.del:hover {
+      color: var(--sfx-up-error, #dc2626);
+    }
+
+    .upload-overlay-file-btn.paused {
+      color: var(--sfx-up-warning, #d97706);
+    }
+
+    .upload-overlay-file-btn.paused:hover {
+      color: var(--sfx-up-warning, #d97706);
+    }
+
+    .upload-overlay-file-btn svg {
+      width: 14px;
+      height: 14px;
+    }
+
     .upload-header {
       justify-content: space-between;
     }
@@ -2502,6 +2618,12 @@ export class SfxUploader extends LitElement {
       [data-sfx-upload-float] .float-item-retry { width:24px; height:24px; border:none; background:none; color:#2563eb; cursor:pointer; padding:4px; flex-shrink:0; display:flex; align-items:center; justify-content:center; border-radius:4px; }
       [data-sfx-upload-float] .float-item-retry svg { width:14px; height:14px; }
       [data-sfx-upload-float] .float-item-retry:hover { background:#f1f5f9; color:#1d4ed8; }
+      [data-sfx-upload-float] .float-item-act { width:24px; height:24px; border:none; background:none; color:#64748b; cursor:pointer; padding:4px; flex-shrink:0; display:flex; align-items:center; justify-content:center; border-radius:4px; }
+      [data-sfx-upload-float] .float-item-act svg { width:14px; height:14px; }
+      [data-sfx-upload-float] .float-item-act:hover { background:#f1f5f9; color:#1e293b; }
+      [data-sfx-upload-float] .float-item-act.del:hover { color:#ef4444; }
+      [data-sfx-upload-float] .float-item-act.paused { color:#d97706; }
+      [data-sfx-upload-float] .float-item-act.paused:hover { color:#d97706; background:#fef3c7; }
       [data-sfx-upload-float] .float-collapsed { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; width:470px; border-radius:12px; }
       [data-sfx-upload-float] .float-collapsed-left { display:flex; align-items:center; gap:8px; }
       [data-sfx-upload-float] .float-collapsed-spinner { width:18px; height:18px; border:2.5px solid #e8edf5; border-top-color:#2563eb; border-radius:50%; animation:sfxSpin .8s linear infinite; flex-shrink:0; }
@@ -4273,6 +4395,8 @@ export class SfxUploader extends LitElement {
     const activeFiles = files.filter((f) => f.status !== "rejected" && f.status !== "cancelled");
     const total = activeFiles.length;
     const completed = activeFiles.filter((f) => f.status === "complete").length;
+    // Files still in flight (or pausable) get per-file controls
+    const inFlight = activeFiles.filter((f) => isActive(f.status));
 
     return html`
       <div class="upload-overlay">
@@ -4287,6 +4411,7 @@ export class SfxUploader extends LitElement {
         <div class="upload-overlay-bar">
           <div class="upload-overlay-bar-fill" ${cspStyle({ width: `${pct}%` })}></div>
         </div>
+        ${inFlight.length > 0 ? this._renderOverlayFiles(inFlight, t) : nothing}
         <div class="upload-overlay-actions">
           <button
             class="upload-overlay-cancel"
@@ -4303,6 +4428,85 @@ export class SfxUploader extends LitElement {
               </button>`
             : nothing}
         </div>
+      </div>
+    `;
+  }
+
+  private _renderOverlayFiles(files: UploadFile[], t: TFunction) {
+    return html`
+      <div class="upload-overlay-files">
+        ${files.map((f) => {
+          const isPaused = f.status === "paused";
+          const isUploading = f.status === "uploading";
+          const isQueued = f.status === "queued";
+          const pct = Math.round(f.progress ?? 0);
+          const stateLabel = isPaused
+            ? t("paused", "Paused")
+            : isQueued
+            ? t("queued", "Queued")
+            : `${pct}%`;
+          return html`
+            <div class="upload-overlay-file">
+              <div class="upload-overlay-file-info">
+                <div class="upload-overlay-file-name" title=${f.name}>${f.name}</div>
+                <div class="upload-overlay-file-meta">
+                  <div class="upload-overlay-file-bar">
+                    <div
+                      class="upload-overlay-file-bar-fill ${isPaused || isQueued ? "muted" : ""}"
+                      ${cspStyle({ width: `${pct}%` })}
+                    ></div>
+                  </div>
+                  <div class="upload-overlay-file-pct">${stateLabel}</div>
+                </div>
+              </div>
+              <div class="upload-overlay-file-actions">
+                ${isUploading && f.isTus
+                  ? html`
+                      <button
+                        class="upload-overlay-file-btn"
+                        title=${t("pause", "Pause")}
+                        aria-label=${t("pauseUpload", "Pause upload")}
+                        @click=${() => this._engine?.pauseFile(f.id)}
+                      >
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                          <rect x="6" y="4" width="4" height="16" rx="1" />
+                          <rect x="14" y="4" width="4" height="16" rx="1" />
+                        </svg>
+                      </button>
+                    `
+                  : nothing}
+                ${isPaused
+                  ? html`
+                      <button
+                        class="upload-overlay-file-btn paused"
+                        title=${t("resume", "Resume")}
+                        aria-label=${t("resumeUpload", "Resume upload")}
+                        @click=${() => this._engine?.resumeFile(f.id)}
+                      >
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                          <polygon points="5,3 19,12 5,21" />
+                        </svg>
+                      </button>
+                    `
+                  : nothing}
+                <button
+                  class="upload-overlay-file-btn del"
+                  title=${t("remove", "Remove")}
+                  aria-label=${t("removeFile", "Remove file")}
+                  @click=${() => this._removeFile(f.id)}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                    <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    <line x1="10" y1="11" x2="10" y2="17" />
+                    <line x1="14" y1="11" x2="14" y2="17" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          `;
+        })}
       </div>
     `;
   }
@@ -4651,32 +4855,63 @@ export class SfxUploader extends LitElement {
                           </svg>
                         </button>`
                     : f.status === "paused"
-                    ? html`<svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="#d97706"
-                        stroke-width="2"
-                        width="16"
-                        height="16"
-                      >
-                        <rect
-                          x="6"
-                          y="4"
-                          width="4"
-                          height="16"
-                          rx="1"
-                          fill="#d97706"
-                        />
-                        <rect
-                          x="14"
-                          y="4"
-                          width="4"
-                          height="16"
-                          rx="1"
-                          fill="#d97706"
-                        />
-                      </svg>`
-                    : html`<div class="float-item-spinner"></div>`}
+                    ? html`
+                        <button
+                          class="float-item-act paused"
+                          title=${t('resume', 'Resume')}
+                          aria-label=${t('resumeUpload', 'Resume upload')}
+                          @click=${() => this._engine?.resumeFile(f.id)}
+                        >
+                          <svg viewBox="0 0 24 24" fill="currentColor">
+                            <polygon points="5,3 19,12 5,21" />
+                          </svg>
+                        </button>
+                        <button
+                          class="float-item-act del"
+                          title=${t('remove', 'Remove')}
+                          aria-label=${t('removeFile', 'Remove file')}
+                          @click=${() => this._removeFile(f.id)}
+                        >
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="3 6 5 6 21 6" />
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            <line x1="10" y1="11" x2="10" y2="17" />
+                            <line x1="14" y1="11" x2="14" y2="17" />
+                          </svg>
+                        </button>`
+                    : html`
+                        <div class="float-item-spinner"></div>
+                        ${f.status === "uploading" && f.isTus
+                          ? html`<button
+                              class="float-item-act"
+                              title=${t('pause', 'Pause')}
+                              aria-label=${t('pauseUpload', 'Pause upload')}
+                              @click=${() => this._engine?.pauseFile(f.id)}
+                            >
+                              <svg viewBox="0 0 24 24" fill="currentColor">
+                                <rect x="6" y="4" width="4" height="16" rx="1" />
+                                <rect x="14" y="4" width="4" height="16" rx="1" />
+                              </svg>
+                            </button>`
+                          : nothing}
+                        ${f.status === "uploading" || f.status === "queued" || f.status === "retrying"
+                          ? html`<button
+                              class="float-item-act del"
+                              title=${t('remove', 'Remove')}
+                              aria-label=${t('removeFile', 'Remove file')}
+                              @click=${() => this._removeFile(f.id)}
+                            >
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6" />
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                                <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                <line x1="10" y1="11" x2="10" y2="17" />
+                                <line x1="14" y1="11" x2="14" y2="17" />
+                              </svg>
+                            </button>`
+                          : nothing}
+                      `}
                 </div>
               </div>
             `;
