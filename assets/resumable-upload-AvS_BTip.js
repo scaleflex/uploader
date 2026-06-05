@@ -1,12 +1,11 @@
-import{b as c}from"./index-B64bO1U5.js";import{r as u}from"./code-block-Bk3NnwHF.js";import{i as p}from"./custom-select-CZ_fVHDR.js";let t=10,o=5,e=!0;function n(){const d=document.getElementById("code-container");d&&(d.innerHTML="",u("#code-container",[{label:"JavaScript",lang:"javascript",code:e?`uploader.config = {
-  auth: { /* ... */ },
+import{b as p}from"./index-BCsEt58D.js";import{r as h}from"./code-block-Bk3NnwHF.js";import{i as m}from"./custom-select-CZ_fVHDR.js";let t=10,o=5,e=!0,i=!1;function s(){const d=document.getElementById("code-container");if(!d)return;d.innerHTML="";const l=e?`
   tusConfig: {
     sizeThreshold: ${t} * 1024 * 1024, // ${t} MB
     chunkSize: ${o} * 1024 * 1024,          // ${o} MB chunks
-  },
-};`:`uploader.config = {
-  auth: { /* ... */ },
-  // tusConfig not set — all uploads use standard XHR
+  },`:`
+  // tusConfig not set — all uploads use standard XHR`;h("#code-container",[{label:"JavaScript",lang:"javascript",code:`uploader.config = {
+  auth: { /* ... */ },${l}${i?`
+  minimizeOnUpload: true,  // show "Minimize & continue in background" button`:""}
 };`},{label:"React",lang:"tsx",code:`import { Uploader } from '@scaleflex/uploader/react';
 
 <Uploader
@@ -15,11 +14,12 @@ import{b as c}from"./index-B64bO1U5.js";import{r as u}from"./code-block-Bk3NnwHF
     tusConfig: {
       sizeThreshold: ${t} * 1024 * 1024,
       chunkSize: ${o} * 1024 * 1024,
-    },`:""}
+    },`:""}${i?`
+    minimizeOnUpload: true,`:""}
   }}
   onUploadPaused={(file) => console.log('Paused:', file.name)}
   onUploadResumed={(file) => console.log('Resumed:', file.name)}
-/>`}]))}const h={render(){return`
+/>`}])}const g={render(){return`
       <div class="page-header">
         <h1>Resumable upload (tus)</h1>
         <p>
@@ -36,6 +36,12 @@ import{b as c}from"./index-B64bO1U5.js";import{r as u}from"./code-block-Bk3NnwHF
               style="width: 18px; height: 18px; margin: 0; cursor: pointer; accent-color: var(--sf-primary); flex-shrink: 0;" />
             <label for="tus-enabled"
               style="font-size: 14px; font-weight: 500; color: var(--sf-text-primary); cursor: pointer; margin: 0;">Enable resumable upload</label>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <input type="checkbox" id="minimize-on-upload"
+              style="width: 18px; height: 18px; margin: 0; cursor: pointer; accent-color: var(--sf-primary); flex-shrink: 0;" />
+            <label for="minimize-on-upload"
+              style="font-size: 14px; font-weight: 500; color: var(--sf-text-primary); cursor: pointer; margin: 0;">Show "Minimize &amp; continue in background" button</label>
           </div>
           <div style="display: flex; gap: 16px; flex-wrap: wrap;">
             <div class="form-group" id="threshold-group" style="margin-bottom: 0; min-width: 200px;">
@@ -103,4 +109,4 @@ import{b as c}from"./index-B64bO1U5.js";import{r as u}from"./code-block-Bk3NnwHF
         <h2>Code</h2>
         <div id="code-container"></div>
       </section>
-    `},init(d){e=!0,t=10,o=5,n();const l=p(),a=document.getElementById("tus-enabled"),r=document.getElementById("threshold-group"),i=document.getElementById("chunk-group");a.addEventListener("change",()=>{e=a.checked,r.style.opacity=e?"1":"0.4",i.style.opacity=e?"1":"0.4",n()}),document.getElementById("threshold-select").addEventListener("change",s=>{t=Number(s.target.value),n()}),document.getElementById("chunk-select").addEventListener("change",s=>{o=Number(s.target.value),n()}),document.getElementById("open-btn").addEventListener("click",()=>{const s=c(e?{tusConfig:{sizeThreshold:t*1024*1024,chunkSize:o*1024*1024}}:{});d.config=s,d.open()}),h.destroy=()=>l()}};export{h as default};
+    `},init(d){e=!0,t=10,o=5,i=!1,s();const l=m(),a=document.getElementById("tus-enabled"),r=document.getElementById("minimize-on-upload"),c=document.getElementById("threshold-group"),u=document.getElementById("chunk-group");a.addEventListener("change",()=>{e=a.checked,c.style.opacity=e?"1":"0.4",u.style.opacity=e?"1":"0.4",s()}),r.addEventListener("change",()=>{i=r.checked,s()}),document.getElementById("threshold-select").addEventListener("change",n=>{t=Number(n.target.value),s()}),document.getElementById("chunk-select").addEventListener("change",n=>{o=Number(n.target.value),s()}),document.getElementById("open-btn").addEventListener("click",()=>{const n=p({...e?{tusConfig:{sizeThreshold:t*1024*1024,chunkSize:o*1024*1024}}:{},...i?{minimizeOnUpload:!0}:{}});d.config=n,d.open()}),g.destroy=()=>l()}};export{g as default};

@@ -21,6 +21,10 @@ export interface UploaderCallbacks {
     onOpen?: () => void;
     onClose?: () => void;
     onCancel?: () => void;
+    /** Fires when the uploader is collapsed to the floating pill (auto on upload start, manual via the minimize button). */
+    onMinimize?: () => void;
+    /** Fires when the uploader is restored from the floating pill back to the modal. */
+    onRestore?: () => void;
     onFilePreview?: (file: UploadFile) => void;
     onFillMetadata?: (files: UploadFile[]) => void;
     onCompleteAction?: () => void;
@@ -235,6 +239,7 @@ export interface UploaderConfig {
      */
     locale?: string;
 }
+export type UploaderPhase = "empty" | "ready" | "uploading" | "complete";
 export declare class SfxUploader extends LitElement {
     static styles: import('lit').CSSResult;
     config: UploaderConfig | null;
@@ -302,6 +307,16 @@ export declare class SfxUploader extends LitElement {
     open(): void;
     /** Close the uploader (modal mode). Optionally clears all files (controlled by clearOnClose config). */
     close(): void;
+    /** Current upload phase: 'empty' | 'ready' | 'uploading' | 'complete'.
+     *  Use to decide whether it's safe to call dismissPanel() without cancelling uploads. */
+    getStatus(): UploaderPhase;
+    /** Hide the panel in any state (modal, floating card, or minimized pill).
+     *  If uploads are in progress they are cancelled and `sfx-cancel` fires before `sfx-close`.
+     *  Check getStatus() first if you only want to dismiss after completion. */
+    dismissPanel(): void;
+    /** Shared cleanup for `close()` and `dismissPanel()` — clears the auto-close
+     *  timer, honors `clearOnClose`, resets preview state, fires `sfx-close`. */
+    private _runCloseCleanup;
     /** Start uploading all queued files. */
     upload(): void;
     /** Programmatically add files. */
@@ -339,6 +354,7 @@ export declare class SfxUploader extends LitElement {
     private _injectFloatStyles;
     private _updateFloatingPortal;
     private _portalContainer;
+    private _hostStyleObserver;
     connectedCallback(): void;
     private _initI18n;
     disconnectedCallback(): void;
@@ -370,6 +386,16 @@ export declare class SfxUploader extends LitElement {
     private _firstMissingRequiredFieldKey;
     private get _hasUnfilledRequiredMetadata();
     private _dispatchPublic;
+    /** True once `PANEL_SHOWN` has fired for the current minimize session. */
+    private _floatShownDispatched;
+    /** Read width/height of the rendered floating panel, and the current mode. */
+    private _measureFloatGeometry;
+    /** Dispatch a panel-lifecycle event with geometry after the next paint. */
+    private _dispatchFloatGeometryEvent;
+    /** Mirror `--sfx-up-float-offset-x/y` from the host onto the portal container.
+     *  The portalled pill lives in `document.body` and doesn't inherit CSS variables
+     *  set on `<sfx-uploader>`, so we copy them whenever they change. */
+    private _syncPortalOffsetVars;
     /**
      * Run the host-supplied {@link UploaderConfig.transformRemoteThumbnail}
      * over a third-party thumbnail URL, falling back to the original URL when
@@ -461,6 +487,7 @@ export declare class SfxUploader extends LitElement {
     private _dimCache;
     private _getImageDimensions;
     private _renderUploadOverlay;
+    private _renderOverlayFiles;
     private _renderFloatingPill;
     private _onSplitPointerDown;
     private _onSplitPointerMove;

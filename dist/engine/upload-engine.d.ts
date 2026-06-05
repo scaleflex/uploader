@@ -1,11 +1,18 @@
 import { Store } from '../store/store';
-import { UploaderState, UploadFile } from '../store/store.types';
+import { UploaderState, UploadFile, FileStatus } from '../store/store.types';
 import { AuthHeaders } from '../auth/auth.types';
 import { TusConfig } from './tus-upload';
 export interface UploadEngineConfig {
     apiBase: string;
     authHeaders: AuthHeaders;
     tusConfig?: TusConfig;
+    /**
+     * Companion connector base URL. Required for "Upload from URL" — the URL
+     * import flow routes through Companion's `url` provider (matches the
+     * legacy Hub behavior) so the connector handles remote fetch, redirects,
+     * and streaming into `/v4/files`. When omitted, URL import is disabled.
+     */
+    companionUrl?: string;
     /**
      * Resolve extra query-string parameters (e.g. Filerobot `opt_*` flags)
      * for a given file's upload request. Returning a non-empty object also
@@ -82,4 +89,5 @@ export declare class UploadEngine {
     private updateTotalProgress;
     private checkAllComplete;
 }
+export declare function isActive(status: FileStatus): boolean;
 //# sourceMappingURL=upload-engine.d.ts.map

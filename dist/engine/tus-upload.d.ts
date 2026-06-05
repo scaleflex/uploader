@@ -6,10 +6,19 @@ export interface TusConfig {
     /** Chunk size in bytes. Default: 5 MB. */
     chunkSize?: number;
     /**
-     * Override the tus endpoint.
-     * Default: Scaleflex Companion (`https://eu-on-24001.connector.filerobot.com/files`).
+     * Override the tus upload endpoint (the `POST .../files` URL).
+     * Defaults are resolved in this priority:
+     *   1. This explicit `endpoint`
+     *   2. `{connectors.companionUrl}/files` (Hub-style region-optimal connector)
+     *   3. `https://eu-on-24001.connector.filerobot.com/files` (last-resort fallback)
      */
     endpoint?: string;
+    /**
+     * Override the post-upload JSON metadata base URL — the host that serves
+     * `/json/{fileId}` after a tus upload completes. Same fallback chain as
+     * `endpoint`, with `/json` instead of `/files`.
+     */
+    jsonBase?: string;
     /** Persist upload fingerprints for cross-session resume. Default: true. */
     resumable?: boolean;
     /** Number of parallel chunk uploads. Default: 1. */

@@ -4,6 +4,15 @@ export type ProviderId = 'google-drive' | 'dropbox' | 'onedrive' | 'box' | 'inst
 export type CoreSourceId = 'device' | 'url' | 'camera' | 'screen-cast';
 /** Connector configuration passed via UploaderConfig. */
 export interface ConnectorConfig {
+    /**
+     * Companion connector base URL — used for cloud providers (Google Drive,
+     * Dropbox, etc.), URL imports (via `/url/meta` + `/url/get`), and as the
+     * default host for tus large-file uploads (`{companionUrl}/files` and
+     * `/json` — see `tusConfig.endpoint` / `tusConfig.jsonBase`). When this is
+     * unset, the "URL link" source pill is hidden and cloud connectors won't
+     * function. Hub-style apps usually compute the region-optimal connector
+     * per project and pass it in here. Example: `'https://eu-on-24001.connector.filerobot.com'`.
+     */
     companionUrl: string;
     providers: ProviderId[];
     customSources?: SourceDef[];

@@ -1,5 +1,5 @@
 import { CSSProperties } from 'react';
-import { SfxUploader as SfxUploaderElement, UploaderConfig } from './sfx-uploader';
+import { SfxUploader as SfxUploaderElement, UploaderConfig, UploaderPhase } from './sfx-uploader';
 import { UploadFile, UploadResponse } from './store/store.types';
 export interface UploaderRef {
     element: SfxUploaderElement | null;
@@ -17,6 +17,8 @@ export interface UploaderRef {
         meta?: Record<string, unknown>;
         tags?: string[];
     }>): void;
+    getStatus(): UploaderPhase;
+    dismissPanel(): void;
 }
 export interface UploaderProps {
     config: UploaderConfig;

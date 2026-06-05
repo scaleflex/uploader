@@ -1,4 +1,4 @@
-import{b as d}from"./index-B64bO1U5.js";import{r as l}from"./code-block-Bk3NnwHF.js";let e="/uploads";const r={render(){return`
+import{b as d}from"./index-BCsEt58D.js";import{r as l}from"./code-block-Bk3NnwHF.js";let e="/uploads";const r={render(){return`
       <div class="page-header">
         <h1>Target folder</h1>
         <p>Set <code>targetFolder</code> to specify the destination folder in Scaleflex where uploaded files will be stored.</p>

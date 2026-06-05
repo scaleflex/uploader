@@ -1,5 +1,5 @@
-import { y as Le, z as Be, B as q, D as Je, E as Ue, F as Ge } from "./sfx-uploader-jLxNEMtm.js";
-import { G as Bt, H as qt, I as jt } from "./sfx-uploader-jLxNEMtm.js";
+import { y as Le, z as Be, B as q, D as Je, E as Ue, F as Ge } from "./sfx-uploader-ui2PpjWO.js";
+import { G as Bt, H as qt, I as jt } from "./sfx-uploader-ui2PpjWO.js";
 import { LitElement as k, css as g, nothing as h, html as a, svg as y } from "lit";
 import { property as d, state as x } from "lit/decorators.js";
 function qe(n, e) {
@@ -2211,6 +2211,8 @@ const Ye = g`
     display: block;
     font-family: var(--sfx-up-font, inherit);
     color: var(--sfx-up-text, #1e293b);
+    --sfx-up-bulk-modal-width: var(--sfx-up-bulk-modal-width, 980px);
+    --sfx-up-bulk-modal-height: var(--sfx-up-bulk-modal-height, 82vh);
   }
 
   .fm-overlay {
@@ -2256,9 +2258,9 @@ const Ye = g`
   }
 
   .fm-modal {
-    width: 980px;
+    width: var(--sfx-up-bulk-modal-width, 980px);
     max-width: calc(100vw - 40px);
-    height: 82vh;
+    height: var(--sfx-up-bulk-modal-height, 82vh);
     max-height: calc(100vh - 40px);
     background: var(--sfx-up-bg, #fff);
     border-radius: 14px;

@@ -15,6 +15,9 @@ export declare const PublicEvents: {
     readonly OPEN: "sfx-open";
     readonly CLOSE: "sfx-close";
     readonly CANCEL: "sfx-cancel";
+    readonly MINIMIZE: "sfx-minimize";
+    readonly RESTORE: "sfx-restore";
+    readonly PANEL_SHOWN: "sfx-panel-shown";
     readonly COMPLETE_ACTION: "sfx-complete-action";
     readonly FILE_PREVIEW: "sfx-file-preview";
     readonly FILL_METADATA: "sfx-fill-metadata";

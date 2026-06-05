@@ -38,6 +38,37 @@ export declare function uploadRemoteFile(companionUrl: string, provider: Provide
 isSearchProvider?: boolean): Promise<{
     token: string;
 }>;
+/** Metadata returned by Companion `/url/meta` for a remote URL. */
+export interface UrlMeta {
+    url: string;
+    name: string;
+    type: string;
+    size: number;
+}
+/**
+ * Ask Companion to HEAD/GET the remote URL and return basic metadata.
+ * Used before the actual upload so we can validate size against restrictions
+ * and show a real progress total.
+ *
+ * Companion's `url` provider has no OAuth token — public endpoint.
+ */
+export declare function fetchUrlMeta(companionUrl: string, url: string, signal?: AbortSignal): Promise<UrlMeta>;
+/**
+ * Tell Companion to download the remote URL and upload it to the Scaleflex
+ * endpoint. Returns a socket token for WebSocket progress.
+ *
+ * Mirrors {@link uploadRemoteFile} but uses the `url` pseudo-provider —
+ * no auth token, no requestPath, and `url` is included in the body.
+ */
+export declare function uploadFromUrl(companionUrl: string, url: string, body: {
+    fileId: string;
+    endpoint: string;
+    headers: Record<string, string>;
+    size?: number;
+    metadata?: Record<string, unknown>;
+}, signal?: AbortSignal): Promise<{
+    token: string;
+}>;
 /**
  * Revoke the provider's OAuth token on Companion.
  * Caller should also call removeToken() to clear local storage.

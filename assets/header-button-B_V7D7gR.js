@@ -1,4 +1,4 @@
-import{b as l}from"./index-B64bO1U5.js";import{r as c}from"./code-block-Bk3NnwHF.js";let t="close",n=!0;function s(e){return typeof e=="string"?`'${e}'`:String(e)}function i(){const e=document.getElementById("modal-code-container");if(!e)return;e.innerHTML="";const o=t==="close"?`
+import{b as l}from"./index-BCsEt58D.js";import{r as c}from"./code-block-Bk3NnwHF.js";let t="close",n=!0;function s(e){return typeof e=="string"?`'${e}'`:String(e)}function i(){const e=document.getElementById("modal-code-container");if(!e)return;e.innerHTML="";const o=t==="close"?`
   // header: 'close' — default for modal, can be omitted`:`
   header: ${s(t)},`;c("#modal-code-container",[{label:"HTML",lang:"markup",code:`
 <sfx-uploader id="uploader"></sfx-uploader>

@@ -18,12 +18,4 @@ export interface XhrUploadHandle {
  * Returns a handle with an abort method.
  */
 export declare function xhrUploadFile(uploadFile: UploadFile, opts: XhrUploadOptions): XhrUploadHandle;
-/**
- * Upload a remote URL to Scaleflex /v4/files (with `?folder=` query string,
- * same endpoint as direct file upload — server distinguishes by Content-Type
- * and `files_urls` body shape).
- */
-export declare function xhrUploadUrl(uploadFile: UploadFile, opts: Omit<XhrUploadOptions, 'onProgress'> & {
-    onProgress?: never;
-}): XhrUploadHandle;
 //# sourceMappingURL=xhr-upload.d.ts.map

@@ -1,30 +1,221 @@
-"use strict";Object.defineProperty(exports,Symbol.toStringTag,{value:"Module"});const s=require("lit"),d=require("lit/decorators.js"),c=require("./sfx-uploader-DJY_2MqA.cjs"),g="sfx-uploader-token:";function f(a){try{return localStorage.getItem(`${g}${a}`)}catch{return null}}function v(a,e){try{localStorage.setItem(`${g}${a}`,e)}catch{}}function m(a){try{localStorage.removeItem(`${g}${a}`)}catch{}}function y(a,e){const r=i=>{if(a&&i.source!==a)return;const t=typeof i.data=="string"?k(i.data):i.data;t!=null&&t.token&&e(t.token)};return window.addEventListener("message",r),()=>window.removeEventListener("message",r)}function k(a){try{return JSON.parse(a)}catch{return null}}var _=Object.defineProperty,h=(a,e,r,i)=>{for(var t=void 0,o=a.length-1,l;o>=0;o--)(l=a[o])&&(t=l(e,r,t)||t);return t&&_(e,r,t),t};const b=class b extends s.LitElement{constructor(){super(...arguments),this.t=(e,r)=>typeof r=="string"?r:e,this.provider="google-drive",this.companionUrl="",this.multi=!0,this.maxSelect=null,this.transformThumbnail=e=>e,this._authenticated=!1,this._loading=!1,this._items=[],this._selectedIds=new Set,this._breadcrumbs=[],this._nextPagePath=null,this._error=null,this._loadingMore=!1,this._username=null,this._cleanupAuthListener=null,this._authWindow=null,this._handleConnect=()=>{var r;const e=c.getAuthUrl(this.companionUrl,this.provider);this._authWindow=window.open(e,"_blank","width=600,height=600"),(r=this._cleanupAuthListener)==null||r.call(this),this._cleanupAuthListener=y(this._authWindow,i=>{var t,o;(t=this._authWindow)==null||t.close(),this._authWindow=null,(o=this._cleanupAuthListener)==null||o.call(this),this._cleanupAuthListener=null,v(this.provider,i),this._authenticated=!0,this._loadFolder("")})},this._lastClickedIndex=null,this._toggleSelectAll=()=>{const e=this._items.filter(i=>!i.isFolder);e.every(i=>this._selectedIds.has(i.id))?this._selectedIds=new Set:this._selectedIds=new Set(e.map(i=>i.id))},this._onAddSelected=()=>{const e=f(this.provider);if(!e)return;const i=this._items.filter(t=>!t.isFolder&&this._selectedIds.has(t.id)).map(t=>({companionUrl:this.companionUrl,provider:this.provider,token:e,requestPath:t.requestPath,fileId:t.id,name:t.name,mimeType:t.mimeType,size:t.size,thumbnail:t.thumbnail}));this.dispatchEvent(new CustomEvent("connector-files-selected",{detail:{files:i},bubbles:!0,composed:!0}))},this._onClose=()=>{this.dispatchEvent(new CustomEvent("connector-close",{bubbles:!0,composed:!0}))},this._handleLogout=async()=>{const e=f(this.provider);if(e){try{await c.logout(this.companionUrl,this.provider,e)}catch{}m(this.provider)}this._reset()}}connectedCallback(){super.connectedCallback(),this._checkAuth()}disconnectedCallback(){var e;super.disconnectedCallback(),(e=this._cleanupAuthListener)==null||e.call(this),this._cleanupAuthListener=null}updated(e){e.has("provider")&&(this._reset(),this._checkAuth())}_reset(){this._authenticated=!1,this._loading=!1,this._items=[],this._selectedIds=new Set,this._breadcrumbs=[],this._nextPagePath=null,this._error=null,this._username=null}_checkAuth(){f(this.provider)&&(this._authenticated=!0,this._loadFolder(""))}get _providerDef(){return c.getProviderSources([this.provider])[0]??null}get _providerLabel(){var e;return((e=this._providerDef)==null?void 0:e.label)??this.provider}async _loadFolder(e){const r=f(this.provider);if(!r){this._authenticated=!1;return}this.offsetHeight>0&&(this.style.minHeight=`${this.offsetHeight}px`),this._loading=!0,this._error=null,this._items=[],this._selectedIds=new Set,this._lastClickedIndex=null,this._nextPagePath=null;try{const i=await c.listFiles(this.companionUrl,this.provider,r,e);this._items=i.items,this._nextPagePath=i.nextPagePath,i.username&&(this._username=i.username)}catch(i){i instanceof c.AuthExpiredError?(m(this.provider),this._authenticated=!1):this._error=i instanceof Error?i.message:this.t("failedToLoadFiles","Failed to load files")}finally{this._loading=!1}}_onFolderClick(e){this._breadcrumbs=[...this._breadcrumbs,{name:e.name,path:e.requestPath}],this._loadFolder(e.requestPath)}_onBreadcrumbClick(e){if(e<0)this._breadcrumbs=[],this._loadFolder("");else{const r=this._breadcrumbs[e];this._breadcrumbs=this._breadcrumbs.slice(0,e+1),this._loadFolder(r.path)}}async _onLoadMore(){const e=f(this.provider);if(!(!e||!this._nextPagePath)){this._loadingMore=!0;try{const r=await c.listNextPage(this.companionUrl,e,this._nextPagePath);this._items=[...this._items,...r.items],this._nextPagePath=r.nextPagePath}catch(r){r instanceof c.AuthExpiredError&&(m(this.provider),this._authenticated=!1)}finally{this._loadingMore=!1}}}_toggleSelect(e,r){const i=this._items.filter(l=>!l.isFolder),t=i.findIndex(l=>l.id===e.id);if(!this.multi){this._selectedIds=this._selectedIds.has(e.id)?new Set:new Set([e.id]),t!==-1&&(this._lastClickedIndex=t);return}const o=this.maxSelect!==null&&this._selectedIds.size>=this.maxSelect;if(r!=null&&r.shiftKey&&this._lastClickedIndex!==null&&t!==-1){const l=Math.min(this._lastClickedIndex,t),x=Math.max(this._lastClickedIndex,t),p=new Set(this._selectedIds);for(let u=l;u<=x;u++)!p.has(i[u].id)&&!o&&p.add(i[u].id);this._selectedIds=p}else{const l=new Set(this._selectedIds);l.has(e.id)?l.delete(e.id):o||l.add(e.id),this._selectedIds=l}t!==-1&&(this._lastClickedIndex=t)}render(){return s.html`
+import { LitElement as _, css as w, html as s, nothing as c } from "lit";
+import { property as f, state as p } from "lit/decorators.js";
+import { q as $, t as z, m as S, u as I, A as k, v as C, w as y, x as P } from "./sfx-uploader-ui2PpjWO.js";
+const g = "sfx-uploader-token:";
+function x(n) {
+  try {
+    return localStorage.getItem(`${g}${n}`);
+  } catch {
+    return null;
+  }
+}
+function L(n, e) {
+  try {
+    localStorage.setItem(`${g}${n}`, e);
+  } catch {
+  }
+}
+function m(n) {
+  try {
+    localStorage.removeItem(`${g}${n}`);
+  } catch {
+  }
+}
+function M(n, e) {
+  const r = (i) => {
+    if (n && i.source !== n) return;
+    const t = typeof i.data == "string" ? A(i.data) : i.data;
+    t != null && t.token && e(t.token);
+  };
+  return window.addEventListener("message", r), () => window.removeEventListener("message", r);
+}
+function A(n) {
+  try {
+    return JSON.parse(n);
+  } catch {
+    return null;
+  }
+}
+var B = Object.defineProperty, d = (n, e, r, i) => {
+  for (var t = void 0, o = n.length - 1, l; o >= 0; o--)
+    (l = n[o]) && (t = l(e, r, t) || t);
+  return t && B(e, r, t), t;
+};
+const b = class b extends _ {
+  constructor() {
+    super(...arguments), this.t = (e, r) => typeof r == "string" ? r : e, this.provider = "google-drive", this.companionUrl = "", this.multi = !0, this.maxSelect = null, this.transformThumbnail = (e) => e, this._authenticated = !1, this._loading = !1, this._items = [], this._selectedIds = /* @__PURE__ */ new Set(), this._breadcrumbs = [], this._nextPagePath = null, this._error = null, this._loadingMore = !1, this._username = null, this._cleanupAuthListener = null, this._authWindow = null, this._handleConnect = () => {
+      var r;
+      const e = $(this.companionUrl, this.provider);
+      this._authWindow = window.open(e, "_blank", "width=600,height=600"), (r = this._cleanupAuthListener) == null || r.call(this), this._cleanupAuthListener = M(this._authWindow, (i) => {
+        var t, o;
+        (t = this._authWindow) == null || t.close(), this._authWindow = null, (o = this._cleanupAuthListener) == null || o.call(this), this._cleanupAuthListener = null, L(this.provider, i), this._authenticated = !0, this._loadFolder("");
+      });
+    }, this._lastClickedIndex = null, this._toggleSelectAll = () => {
+      const e = this._items.filter((i) => !i.isFolder);
+      e.every((i) => this._selectedIds.has(i.id)) ? this._selectedIds = /* @__PURE__ */ new Set() : this._selectedIds = new Set(e.map((i) => i.id));
+    }, this._onAddSelected = () => {
+      const e = x(this.provider);
+      if (!e) return;
+      const i = this._items.filter(
+        (t) => !t.isFolder && this._selectedIds.has(t.id)
+      ).map((t) => ({
+        companionUrl: this.companionUrl,
+        provider: this.provider,
+        token: e,
+        requestPath: t.requestPath,
+        fileId: t.id,
+        name: t.name,
+        mimeType: t.mimeType,
+        size: t.size,
+        thumbnail: t.thumbnail
+      }));
+      this.dispatchEvent(
+        new CustomEvent("connector-files-selected", {
+          detail: { files: i },
+          bubbles: !0,
+          composed: !0
+        })
+      );
+    }, this._onClose = () => {
+      this.dispatchEvent(
+        new CustomEvent("connector-close", {
+          bubbles: !0,
+          composed: !0
+        })
+      );
+    }, this._handleLogout = async () => {
+      const e = x(this.provider);
+      if (e) {
+        try {
+          await z(this.companionUrl, this.provider, e);
+        } catch {
+        }
+        m(this.provider);
+      }
+      this._reset();
+    };
+  }
+  connectedCallback() {
+    super.connectedCallback(), this._checkAuth();
+  }
+  disconnectedCallback() {
+    var e;
+    super.disconnectedCallback(), (e = this._cleanupAuthListener) == null || e.call(this), this._cleanupAuthListener = null;
+  }
+  updated(e) {
+    e.has("provider") && (this._reset(), this._checkAuth());
+  }
+  _reset() {
+    this._authenticated = !1, this._loading = !1, this._items = [], this._selectedIds = /* @__PURE__ */ new Set(), this._breadcrumbs = [], this._nextPagePath = null, this._error = null, this._username = null;
+  }
+  _checkAuth() {
+    x(this.provider) && (this._authenticated = !0, this._loadFolder(""));
+  }
+  get _providerDef() {
+    return S([this.provider])[0] ?? null;
+  }
+  get _providerLabel() {
+    var e;
+    return ((e = this._providerDef) == null ? void 0 : e.label) ?? this.provider;
+  }
+  // --- Folder navigation ---
+  async _loadFolder(e) {
+    const r = x(this.provider);
+    if (!r) {
+      this._authenticated = !1;
+      return;
+    }
+    this.offsetHeight > 0 && (this.style.minHeight = `${this.offsetHeight}px`), this._loading = !0, this._error = null, this._items = [], this._selectedIds = /* @__PURE__ */ new Set(), this._lastClickedIndex = null, this._nextPagePath = null;
+    try {
+      const i = await I(this.companionUrl, this.provider, r, e);
+      this._items = i.items, this._nextPagePath = i.nextPagePath, i.username && (this._username = i.username);
+    } catch (i) {
+      i instanceof k ? (m(this.provider), this._authenticated = !1) : this._error = i instanceof Error ? i.message : this.t("failedToLoadFiles", "Failed to load files");
+    } finally {
+      this._loading = !1;
+    }
+  }
+  _onFolderClick(e) {
+    this._breadcrumbs = [...this._breadcrumbs, { name: e.name, path: e.requestPath }], this._loadFolder(e.requestPath);
+  }
+  _onBreadcrumbClick(e) {
+    if (e < 0)
+      this._breadcrumbs = [], this._loadFolder("");
+    else {
+      const r = this._breadcrumbs[e];
+      this._breadcrumbs = this._breadcrumbs.slice(0, e + 1), this._loadFolder(r.path);
+    }
+  }
+  // --- Load more ---
+  async _onLoadMore() {
+    const e = x(this.provider);
+    if (!(!e || !this._nextPagePath)) {
+      this._loadingMore = !0;
+      try {
+        const r = await C(this.companionUrl, e, this._nextPagePath);
+        this._items = [...this._items, ...r.items], this._nextPagePath = r.nextPagePath;
+      } catch (r) {
+        r instanceof k && (m(this.provider), this._authenticated = !1);
+      } finally {
+        this._loadingMore = !1;
+      }
+    }
+  }
+  _toggleSelect(e, r) {
+    const i = this._items.filter((l) => !l.isFolder), t = i.findIndex((l) => l.id === e.id);
+    if (!this.multi) {
+      this._selectedIds = this._selectedIds.has(e.id) ? /* @__PURE__ */ new Set() : /* @__PURE__ */ new Set([e.id]), t !== -1 && (this._lastClickedIndex = t);
+      return;
+    }
+    const o = this.maxSelect !== null && this._selectedIds.size >= this.maxSelect;
+    if (r != null && r.shiftKey && this._lastClickedIndex !== null && t !== -1) {
+      const l = Math.min(this._lastClickedIndex, t), v = Math.max(this._lastClickedIndex, t), h = new Set(this._selectedIds);
+      for (let u = l; u <= v; u++)
+        !h.has(i[u].id) && !o && h.add(i[u].id);
+      this._selectedIds = h;
+    } else {
+      const l = new Set(this._selectedIds);
+      l.has(e.id) ? l.delete(e.id) : o || l.add(e.id), this._selectedIds = l;
+    }
+    t !== -1 && (this._lastClickedIndex = t);
+  }
+  // --- Render ---
+  render() {
+    return s`
       ${this._renderHeader()}
-      ${this._authenticated?this._loading?this._renderLoading():this._error?this._renderError():this._renderBrowser():this._renderAuthView()}
-    `}_renderHeader(){const e=this._providerDef;return s.html`
+      ${this._authenticated ? this._loading ? this._renderLoading() : this._error ? this._renderError() : this._renderBrowser() : this._renderAuthView()}
+    `;
+  }
+  _renderHeader() {
+    const e = this._providerDef;
+    return s`
       <div class="browser-header">
-        <button class="back-btn" @click=${this._onClose} title=${this.t("back","Back")}>
+        <button class="back-btn" @click=${this._onClose} title=${this.t("back", "Back")}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
             <polyline points="15 18 9 12 15 6" />
           </svg>
         </button>
         <div class="header-brand">
-          ${e!=null&&e.brandHtml?s.html`<div class="header-logo">${c.brandIcon(e)}</div>`:s.nothing}
+          ${e != null && e.brandHtml ? s`<div class="header-logo">${y(e)}</div>` : c}
 
           <div class="header-title-group">
             <span class="browser-title">${this._providerLabel}</span>
-            ${this._authenticated&&this._username?s.html`<span class="header-username">${this._username}</span>`:s.nothing}
+            ${this._authenticated && this._username ? s`<span class="header-username">${this._username}</span>` : c}
           </div>
         </div>
-        ${this._authenticated?s.html`<button class="logout-btn" @click=${this._handleLogout}>Sign out</button>`:s.nothing}
+        ${this._authenticated ? s`<button class="logout-btn" @click=${this._handleLogout}>Sign out</button>` : c}
       </div>
-    `}_renderAuthView(){const e=this._providerDef;return s.html`
+    `;
+  }
+  _renderAuthView() {
+    const e = this._providerDef;
+    return s`
       <div class="auth-view">
         <div class="auth-glow"></div>
         <div class="auth-logo-wrap">
           <div class="auth-ring">
             <div class="auth-logo">
-              ${e!=null&&e.brandHtml?s.html`<span ${c.cspStyle({display:"flex","align-items":"center","justify-content":"center",transform:"scale(2.2)"})}>${c.brandIcon(e)}</span>`:s.html`<svg viewBox="0 0 24 24" fill="none" stroke="var(--sfx-up-primary, #2563eb)" stroke-width="1.5"><path d="M12 2a5 5 0 015 5v3h1a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2v-8a2 2 0 012-2h1V7a5 5 0 015-5zm3 8H9v-3a3 3 0 016 0v3z" fill="var(--sfx-up-primary, #2563eb)"/></svg>`}
+              ${e != null && e.brandHtml ? s`<span ${P({ display: "flex", "align-items": "center", "justify-content": "center", transform: "scale(2.2)" })}>${y(e)}</span>` : s`<svg viewBox="0 0 24 24" fill="none" stroke="var(--sfx-up-primary, #2563eb)" stroke-width="1.5"><path d="M12 2a5 5 0 015 5v3h1a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2v-8a2 2 0 012-2h1V7a5 5 0 015-5zm3 8H9v-3a3 3 0 016 0v3z" fill="var(--sfx-up-primary, #2563eb)"/></svg>`}
             </div>
           </div>
         </div>
@@ -41,9 +232,12 @@
           Sign in to ${this._providerLabel}
         </button>
       </div>
-    `}_renderLoading(){const e=[1,2,3,4,5,6,7];return s.html`
+    `;
+  }
+  _renderLoading() {
+    return s`
       <div class="skeleton-list">
-        ${e.map(()=>s.html`
+        ${[1, 2, 3, 4, 5, 6, 7].map(() => s`
           <div class="skeleton-row">
             <div class="skeleton-check"></div>
             <div class="skeleton-thumb"></div>
@@ -54,7 +248,10 @@
           </div>
         `)}
       </div>
-    `}_renderError(){return s.html`
+    `;
+  }
+  _renderError() {
+    return s`
       <div class="error-view">
         <div class="error-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -64,15 +261,22 @@
           </svg>
         </div>
         <div class="error-text">${this._error}</div>
-        <button class="retry-btn" @click=${()=>{const e=this._breadcrumbs[this._breadcrumbs.length-1];this._loadFolder((e==null?void 0:e.path)??"")}}>
+        <button class="retry-btn" @click=${() => {
+      const e = this._breadcrumbs[this._breadcrumbs.length - 1];
+      this._loadFolder((e == null ? void 0 : e.path) ?? "");
+    }}>
           Try again
         </button>
       </div>
-    `}_renderBrowser(){const e=this._items.filter(t=>!t.isFolder),r=this._items.filter(t=>t.isFolder),i=this._selectedIds.size;return s.html`
+    `;
+  }
+  _renderBrowser() {
+    const e = this._items.filter((t) => !t.isFolder), r = this._items.filter((t) => t.isFolder), i = this._selectedIds.size;
+    return s`
       ${this._renderBreadcrumbs()}
 
       <div class="file-list">
-        ${r.length===0&&e.length===0?s.html`
+        ${r.length === 0 && e.length === 0 ? s`
               <div class="empty-state">
                 <div class="empty-icon">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
@@ -82,10 +286,11 @@
                 </div>
                 <div class="empty-text">This folder is empty</div>
               </div>
-            `:s.nothing}
+            ` : c}
 
-        ${r.map(t=>s.html`
-            <div class="file-item" @click=${()=>this._onFolderClick(t)}>
+        ${r.map(
+      (t) => s`
+            <div class="file-item" @click=${() => this._onFolderClick(t)}>
               <div class="file-thumb folder-thumb">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                   <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" />
@@ -98,23 +303,31 @@
                 <polyline points="9 18 15 12 9 6" />
               </svg>
             </div>
-          `)}
+          `
+    )}
 
-        ${(()=>{const t=this.maxSelect!==null&&this._selectedIds.size>=this.maxSelect;return e.map(o=>{const l=this._selectedIds.has(o.id),x=!l&&t;return s.html`
+        ${(() => {
+      const t = this.maxSelect !== null && this._selectedIds.size >= this.maxSelect;
+      return e.map((o) => {
+        const l = this._selectedIds.has(o.id);
+        return s`
             <div
-              class="file-item ${l?"selected":""} ${x?"disabled":""}"
-              @click=${p=>this._toggleSelect(o,p)}
+              class="file-item ${l ? "selected" : ""} ${!l && t ? "disabled" : ""}"
+              @click=${(h) => this._toggleSelect(o, h)}
             >
               <input
                 type="checkbox"
                 .checked=${this._selectedIds.has(o.id)}
-                @click=${p=>p.stopPropagation()}
-                @change=${()=>this._toggleSelect(o)}
+                @click=${(h) => h.stopPropagation()}
+                @change=${() => this._toggleSelect(o)}
               />
               <div class="file-thumb">
-                ${o.thumbnail?s.html`<img src=${this.transformThumbnail(o.thumbnail)} alt="" loading="lazy" referrerpolicy="no-referrer"
-                      @error=${p=>{const u=p.target;u.style.display="none",u.parentElement.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'}}
-                    />`:s.html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                ${o.thumbnail ? s`<img src=${this.transformThumbnail(o.thumbnail)} alt="" loading="lazy" referrerpolicy="no-referrer"
+                      @error=${(h) => {
+          const u = h.target;
+          u.style.display = "none", u.parentElement.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
+        }}
+                    />` : s`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                       <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
                       <polyline points="14 2 14 8 20 8" />
                     </svg>`}
@@ -122,56 +335,66 @@
               <div class="file-info">
                 <div class="file-name">${o.name}</div>
                 <div class="file-meta">
-                  ${o.size?s.html`<span class="file-size">${w(o.size)}</span>`:s.nothing}
+                  ${o.size ? s`<span class="file-size">${F(o.size)}</span>` : c}
                 </div>
               </div>
             </div>
-          `})})()}
+          `;
+      });
+    })()}
 
-        ${this._nextPagePath?s.html`
+        ${this._nextPagePath ? s`
               <button
                 class="load-more-btn"
                 ?disabled=${this._loadingMore}
                 @click=${this._onLoadMore}
               >
-                ${this._loadingMore?this.t("loading","Loading"):this.t("loadMore","Load more")}
+                ${this._loadingMore ? this.t("loading", "Loading") : this.t("loadMore", "Load more")}
               </button>
-            `:s.nothing}
+            ` : c}
       </div>
 
-      ${e.length>0||i>0?s.html`
+      ${e.length > 0 || i > 0 ? s`
             <div class="browser-footer">
               <div class="footer-left">
-                ${this.multi?s.html`<button class="select-all-btn" @click=${this._toggleSelectAll}>
-                  ${e.every(t=>this._selectedIds.has(t.id))?this.t("deselectAll","Deselect all"):this.t("selectAll","Select all")}
-                </button>`:s.nothing}
-                <span class="selected-count ${i>0?"has-selection":""}">
-                  ${i>0?this.t("filesSelected",{count:i,defaultValue_one:"{{count}} file selected",defaultValue_other:"{{count}} files selected"}):this.t("noFilesSelected","No files selected")}
+                ${this.multi ? s`<button class="select-all-btn" @click=${this._toggleSelectAll}>
+                  ${e.every((t) => this._selectedIds.has(t.id)) ? this.t("deselectAll", "Deselect all") : this.t("selectAll", "Select all")}
+                </button>` : c}
+                <span class="selected-count ${i > 0 ? "has-selection" : ""}">
+                  ${i > 0 ? this.t("filesSelected", { count: i, defaultValue_one: "{{count}} file selected", defaultValue_other: "{{count}} files selected" }) : this.t("noFilesSelected", "No files selected")}
                 </span>
               </div>
               <button
                 class="add-btn"
-                ?disabled=${i===0}
+                ?disabled=${i === 0}
                 @click=${this._onAddSelected}
               >
-                Add${i>0?` ${i}`:""} file${i===1?"":"s"}
+                Add${i > 0 ? ` ${i}` : ""} file${i === 1 ? "" : "s"}
               </button>
             </div>
-          `:s.nothing}
-    `}_renderBreadcrumbs(){return this._breadcrumbs.length===0?s.nothing:s.html`
+          ` : c}
+    `;
+  }
+  _renderBreadcrumbs() {
+    return this._breadcrumbs.length === 0 ? c : s`
       <div class="breadcrumbs">
-        <button class="crumb" @click=${()=>this._onBreadcrumbClick(-1)}>
+        <button class="crumb" @click=${() => this._onBreadcrumbClick(-1)}>
           <svg class="crumb-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
           </svg>
           Root
         </button>
-        ${this._breadcrumbs.map((e,r)=>s.html`
+        ${this._breadcrumbs.map(
+      (e, r) => s`
             <span class="crumb-sep">&rsaquo;</span>
-            ${r<this._breadcrumbs.length-1?s.html`<button class="crumb" @click=${()=>this._onBreadcrumbClick(r)}>${e.name}</button>`:s.html`<span class="crumb-current">${e.name}</span>`}
-          `)}
+            ${r < this._breadcrumbs.length - 1 ? s`<button class="crumb" @click=${() => this._onBreadcrumbClick(r)}>${e.name}</button>` : s`<span class="crumb-current">${e.name}</span>`}
+          `
+    )}
       </div>
-    `}};b.styles=s.css`
+    `;
+  }
+};
+b.styles = w`
     :host {
       display: flex;
       flex-direction: column;
@@ -830,4 +1053,58 @@
       .auth-logo { animation: none; }
       .auth-view { animation: none; }
     }
-  `;let n=b;h([d.property({attribute:!1})],n.prototype,"t");h([d.property({type:String})],n.prototype,"provider");h([d.property({type:String})],n.prototype,"companionUrl");h([d.property({type:Boolean})],n.prototype,"multi");h([d.property({type:Number})],n.prototype,"maxSelect");h([d.property({attribute:!1})],n.prototype,"transformThumbnail");h([d.state()],n.prototype,"_authenticated");h([d.state()],n.prototype,"_loading");h([d.state()],n.prototype,"_items");h([d.state()],n.prototype,"_selectedIds");h([d.state()],n.prototype,"_breadcrumbs");h([d.state()],n.prototype,"_nextPagePath");h([d.state()],n.prototype,"_error");h([d.state()],n.prototype,"_loadingMore");h([d.state()],n.prototype,"_username");function w(a){if(a===0)return"0 B";const e=["B","KB","MB","GB"],r=Math.min(Math.floor(Math.log(a)/Math.log(1024)),e.length-1);return`${(a/Math.pow(1024,r)).toFixed(r===0?0:1)} ${e[r]}`}exports.SfxProviderBrowser=n;
+  `;
+let a = b;
+d([
+  f({ attribute: !1 })
+], a.prototype, "t");
+d([
+  f({ type: String })
+], a.prototype, "provider");
+d([
+  f({ type: String })
+], a.prototype, "companionUrl");
+d([
+  f({ type: Boolean })
+], a.prototype, "multi");
+d([
+  f({ type: Number })
+], a.prototype, "maxSelect");
+d([
+  f({ attribute: !1 })
+], a.prototype, "transformThumbnail");
+d([
+  p()
+], a.prototype, "_authenticated");
+d([
+  p()
+], a.prototype, "_loading");
+d([
+  p()
+], a.prototype, "_items");
+d([
+  p()
+], a.prototype, "_selectedIds");
+d([
+  p()
+], a.prototype, "_breadcrumbs");
+d([
+  p()
+], a.prototype, "_nextPagePath");
+d([
+  p()
+], a.prototype, "_error");
+d([
+  p()
+], a.prototype, "_loadingMore");
+d([
+  p()
+], a.prototype, "_username");
+function F(n) {
+  if (n === 0) return "0 B";
+  const e = ["B", "KB", "MB", "GB"], r = Math.min(Math.floor(Math.log(n) / Math.log(1024)), e.length - 1);
+  return `${(n / Math.pow(1024, r)).toFixed(r === 0 ? 0 : 1)} ${e[r]}`;
+}
+export {
+  a as SfxProviderBrowser
+};

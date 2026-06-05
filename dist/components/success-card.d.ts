@@ -14,6 +14,8 @@ export declare class SfxSuccessCard extends LitElement {
     }[];
     /** How many of the successful files already existed (same content) on the server. */
     alreadyExistedCount: number;
+    /** Show the minimize-to-pill button next to the close button. */
+    showMinimize: boolean;
     private _maxThumbs;
     connectedCallback(): void;
     disconnectedCallback(): void;
@@ -26,6 +28,7 @@ export declare class SfxSuccessCard extends LitElement {
     private _retryFile;
     private _retryAll;
     private _close;
+    private _minimize;
     render(): import('lit-html').TemplateResult<1>;
 }
 //# sourceMappingURL=success-card.d.ts.map

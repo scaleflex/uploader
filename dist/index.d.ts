@@ -1,4 +1,4 @@
-export { SfxUploader, type UploaderConfig, type UploaderCallbacks, type InlineHeaderConfig, type RemoteThumbnailContext } from './sfx-uploader';
+export { SfxUploader, type UploaderConfig, type UploaderCallbacks, type InlineHeaderConfig, type RemoteThumbnailContext, type UploaderPhase, type UploaderPhase as UploaderStatus } from './sfx-uploader';
 export { createStore, Store } from './store';
 export { UploadEngine, type UploadEngineConfig, type TusConfig } from './engine';
 export { PublicEvents } from './events/public-events';
