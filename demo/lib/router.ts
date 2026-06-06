@@ -35,6 +35,7 @@ const routes: RouteEntry[] = [
   { pattern: '/examples/full-screen', load: () => import('../pages/examples/full-screen').then((m) => m.default) },
   { pattern: '/examples/last-upload-review', load: () => import('../pages/examples/last-upload-review').then((m) => m.default) },
   { pattern: '/examples/similar-check', load: () => import('../pages/examples/similar-check').then((m) => m.default) },
+  { pattern: '/examples/upload-settings', load: () => import('../pages/examples/upload-settings').then((m) => m.default) },
 ];
 
 let currentPage: Page | null = null;

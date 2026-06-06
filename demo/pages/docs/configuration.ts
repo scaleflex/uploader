@@ -73,6 +73,7 @@ const page: Page = {
             <tr><td><code>getUploadParams</code></td><td><code>(file) =&gt; Record&lt;string, string&gt; | undefined</code></td><td><code>undefined</code></td><td>Append arbitrary query parameters (typically Filerobot <code>opt_*</code> flags) to every upload request. Called per file just before its request is sent and merged into the URL of whichever upload path runs (XHR / URL / tus / Companion). Returning a non-empty object also forces the XHR path. Wins on key collision against <code>forceName</code>.</td></tr>
             <tr><td><code>tusConfig</code></td><td><code>TusConfig | boolean</code></td><td><code>undefined</code></td><td>Enable resumable uploads via the tus protocol for large files. Pass <code>true</code> for defaults (10 MB threshold, 5 MB chunks) or a <code>TusConfig</code> object. See <a href="#/examples/resumable-upload">Resumable upload example</a>.</td></tr>
             <tr><td><code>similarityCheck</code></td><td><code>{ enabled: boolean; confidence?: 'low' | 'mid' | 'high' }</code></td><td><code>undefined</code></td><td>Let users check images against visually similar assets in the library before uploading, to avoid duplicates. Hidden unless <code>enabled</code>. <code>confidence</code> maps to the similarity threshold (low 0.60 / mid 0.75 / high 0.90). See <a href="#/examples/similar-check">Similar asset check example</a>.</td></tr>
+            <tr><td><code>uploadSettings</code></td><td><code>{ defaults?: {…} }</code></td><td><code>undefined</code> (panel always shown)</td><td>The settings panel (gear icon, image resize / video transcode / resumable uploads) is <strong>always available</strong> once files are added — no flag needed. This optional config only seeds the panel's starting values via <code>defaults</code>. See <a href="#/examples/upload-settings">Upload settings example</a>.</td></tr>
           </tbody>
         </table>
 
@@ -321,6 +322,34 @@ uploaderB.config = {
           </tbody>
         </table>
         <p>See the <a href="#/examples/similar-check">Similar asset check example</a> for an interactive demo.</p>
+
+        <h3>Upload settings</h3>
+        <p>The uploader ships with a built-in <strong>settings panel</strong> that is <strong>always available</strong> — a gear icon appears in the header once files are added, opening a panel where users tune <strong>image resizing</strong>, <strong>video transcoding</strong>, and <strong>resumable uploads</strong> before uploading. No config flag is required to enable it.</p>
+        <p>The panel has three sections:</p>
+        <ul>
+          <li><strong>Image settings</strong> — resize images to a maximum width / height (px).</li>
+          <li><strong>Video settings</strong> — shown only when the queue contains a video: transcode to an adaptive format with a chosen resolution (Auto / 1080p / 720p / 480p) and protocol (HLS / DASH).</li>
+          <li><strong>Resume uploads</strong> — enable resumable (tus) uploads. Marked <strong>Beta</strong>.</li>
+        </ul>
+        <p>To change the panel's <strong>starting values</strong>, pass the optional <code>uploadSettings.defaults</code>. Omit it and the panel still appears with built-in defaults.</p>
+        ${code(
+          'typescript',
+          `uploader.config = {
+  auth: { /* ... */ },
+  uploadSettings: {
+    defaults: {
+      resize: true,
+      maxWidth: 2048,
+      maxHeight: 2048,
+      transcode: true,
+      resolution: '1080p', // 'Auto' | '1080p' | '720p' | '480p'
+      protocol: 'HLS',     // 'HLS' | 'DASH'
+      resumable: true,
+    },
+  },
+};`,
+        )}
+        <p>See the <a href="#/examples/upload-settings">Upload settings example</a> for an interactive demo.</p>
 
         <h3>Resizable preview panel</h3>
         <p>When you click a file to preview it, the uploader splits into a <strong>file grid</strong> on the left and a <strong>preview panel</strong> on the right (420 px wide by default). Drag the vertical divider between them to resize — the file grid automatically adapts its column count (e.g. 3 → 4 columns) as you give it more space. The split range is clamped to 25 %–75 %.</p>
