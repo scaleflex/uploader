@@ -8,6 +8,7 @@ import {
 } from '../connectors/companion-client';
 import type { XhrUploadHandle } from './xhr-upload';
 import { isSameAssetExists, buildSameAssetResponse } from './same-asset';
+import { compactProduct, hasProductData } from '../product/product.constants';
 
 export interface CompanionUploadOptions {
   apiBase: string;
@@ -46,16 +47,26 @@ function buildEndpoint(
 
 /** Metadata Companion forwards to Scaleflex on each upload. */
 function buildMetadata(uploadFile: UploadFile, folder: string): Record<string, unknown> {
-  // `filerobot-folder` is the form-field name FR reads on the Companion relay
-  // path — the `?folder=` query string alone is not honored here.
-  const metadata: Record<string, unknown> = {};
+  // Companion serialises this object into FormData fields and POSTs it to
+  // Filerobot's `/v4/files`. `name` and `type` are required — without them
+  // the backend has no original filename and stores the asset under a
+  // generated `filerobot-file-<id>` name. `filerobot-folder` is the form
+  // field FR reads on the Companion relay path (the `?folder=` query
+  // string alone is not honored).
+  const metadata: Record<string, unknown> = {
+    name: uploadFile.name,
+    type: uploadFile.type,
+    'filerobot-folder': folder,
+  };
   if (uploadFile.meta && Object.keys(uploadFile.meta).length > 0) {
-    Object.assign(metadata, uploadFile.meta);
+    metadata.meta = JSON.stringify(uploadFile.meta);
   }
   if (uploadFile.tags && uploadFile.tags.length > 0) {
-    metadata.tags = uploadFile.tags;
+    metadata.tags = JSON.stringify(uploadFile.tags);
   }
-  metadata['filerobot-folder'] = folder;
+  if (hasProductData(uploadFile.product)) {
+    metadata.product = JSON.stringify(compactProduct(uploadFile.product));
+  }
   return metadata;
 }
 
@@ -308,6 +319,12 @@ export function companionUploadUrl(
     .then((meta) => {
       if (aborted) return null;
       opts.onMeta?.({ name: meta.name, type: meta.type, size: meta.size });
+      // Prefer Companion's resolved name/type (Content-Disposition + Content-Type)
+      // over the URL-parsed guesses the closure was created with — they're
+      // strictly more authoritative for opaque URLs.
+      const metadata = buildMetadata(uploadFile, opts.folder);
+      if (meta.name) metadata.name = meta.name;
+      if (meta.type) metadata.type = meta.type;
       return uploadFromUrl(
         opts.companionUrl,
         remoteUrl,
@@ -316,7 +333,7 @@ export function companionUploadUrl(
           endpoint,
           headers: opts.authHeaders,
           size: meta.size,
-          metadata: buildMetadata(uploadFile, opts.folder),
+          metadata,
         },
         fetchCtrl.signal,
       ).then((result) => ({ result, size: meta.size }));
