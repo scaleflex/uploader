@@ -10,8 +10,9 @@ export class SfxSearchProviderBrowser extends LitElement {
     :host {
       display: flex;
       flex-direction: column;
+      flex: 1 1 0;
+      min-height: 0;
       height: 100%;
-      min-height: 300px;
       font-family: var(--sfx-up-font, 'Inter', system-ui, -apple-system, sans-serif);
       color: var(--sfx-up-text, #1e293b);
     }
