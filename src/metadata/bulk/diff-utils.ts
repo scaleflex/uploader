@@ -28,7 +28,7 @@ export type FieldDiff = ScalarDiff | ArrayDiff;
 // Array field types
 // ---------------------------------------------------------------------------
 
-const ARRAY_TYPES = new Set(['multi-select', 'tags', 'integer-list']);
+const ARRAY_TYPES = new Set(['multi-select', 'tags']);
 
 // ---------------------------------------------------------------------------
 // Helpers

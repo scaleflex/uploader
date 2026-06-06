@@ -1,5 +1,6 @@
 import type { RemoteFileInfo } from '../connectors/connector.types';
 import type { Product } from '../product/product.types';
+import type { TaxonodeEntry } from '../metadata/taxonomies/taxonomies.types';
 
 // --- File lifecycle states (spec §5.1) ---
 
@@ -54,12 +55,25 @@ export interface UploadFile {
   meta: Record<string, unknown>;
   tags: string[];
 
+  // Display-side shadow of picked taxonomy-node entries, keyed by field key.
+  // The scalar id sits in `meta[key]`; the entry here carries the human path
+  // so the picker trigger and read-only cell can render the breadcrumb
+  // without re-fetching. Never sent in the upload payload.
+  taxonodes?: Record<string, TaxonodeEntry | null>;
+
   // Per-file product fields (admin v5 parity). Sent on upload when the project
   // has `products_enabled`. Always present; empty object when nothing is set.
   product: Product;
 
   // Companion connector metadata (set for files from cloud providers)
   remoteInfo: RemoteFileInfo | null;
+
+  // Subfolder (relative to `targetFolder`) the file came from when it was
+  // dropped/selected as part of a directory tree. Empty string when the file
+  // was added flat. The upload engine joins this with `targetFolder` so the
+  // backend receives `targetFolder + '/' + relativeFolder`, preserving the
+  // original folder hierarchy on Filerobot.
+  relativeFolder: string;
 
   // tus resumable upload state
   isTus: boolean;

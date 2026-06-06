@@ -13,6 +13,7 @@ import {
   type BulkOperationDef,
 } from './bulk-operations';
 import { bulkOpBarStyles } from './bulk-metadata.styles';
+import type { TaxonodeEntry } from '../taxonomies/taxonomies.types';
 
 /**
  * Operation bar for bulk metadata editing.
@@ -23,11 +24,13 @@ export class SfxBulkMetaOpBar extends LitElement {
 
   @property({ attribute: false }) field!: MetadataField;
   @property({ attribute: false }) autocomplete: unknown;
+  @property({ attribute: false }) taxonomyService: unknown;
   @property({ attribute: false }) config: MetadataConfig | null = null;
   @property({ type: Number }) selectedCount = 0;
 
   @state() private _operation: BulkOperation = 'SET';
   @state() private _value: unknown = undefined;
+  @state() private _pendingTaxonode: TaxonodeEntry | null = null;
   @state() private _opDropdownOpen = false;
 
   private _availableOps: BulkOperationDef[] = [];
@@ -36,7 +39,6 @@ export class SfxBulkMetaOpBar extends LitElement {
     switch (type) {
       case 'multi-select':
       case 'tags':
-      case 'integer-list':
         return [];
       case 'boolean':
         return 'null';
@@ -44,10 +46,12 @@ export class SfxBulkMetaOpBar extends LitElement {
         return { latitude: '', longitude: '' };
       case 'asset-attachments':
       case 'attachments-assets':
+      case 'integer-list':
       case 'ultratags':
-      case 'taxonomy-node':
         // Unsupported types never reach an editor; the value is irrelevant.
         return null;
+      case 'taxonomy-node':
+        return '';
       default:
         return '';
     }
@@ -62,10 +66,18 @@ export class SfxBulkMetaOpBar extends LitElement {
       this._availableOps = getAvailableOperations(this.field.type);
       this._operation = 'SET';
       this._value = undefined;
+      this._pendingTaxonode = null;
       // Emit after reset so modal clears preview
       this._emitPendingChange();
     }
   }
+
+  private _onTaxonomyEntryChange = (
+    e: CustomEvent<{ key: string; entry: TaxonodeEntry | null }>,
+  ) => {
+    e.stopPropagation();
+    this._pendingTaxonode = e.detail.entry;
+  };
 
   private _onOpSelect(op: BulkOperation) {
     this._operation = op;
@@ -170,6 +182,12 @@ export class SfxBulkMetaOpBar extends LitElement {
         detail: {
           operation: this._operation,
           value: this._value,
+          taxonomyEntry:
+            this.field?.type === 'taxonomy-node'
+              ? this._operation === 'DELETE'
+                ? null
+                : this._pendingTaxonode
+              : undefined,
         },
         bubbles: true,
         composed: true,
@@ -178,6 +196,7 @@ export class SfxBulkMetaOpBar extends LitElement {
 
     // Reset value and switch back to Set after Clear
     this._value = undefined;
+    this._pendingTaxonode = null;
     if (this._operation === 'DELETE' && !isValueRequiredForPreview(this._operation, this.field?.type)) {
       this._operation = 'SET';
     }
@@ -270,12 +289,15 @@ export class SfxBulkMetaOpBar extends LitElement {
                   @field-blur=${this._onFieldBlur}
                   @field-change=${this._onFieldChange}
                   @field-escape=${this._onFieldEscape}
+                  @taxonomy-entry-change=${this._onTaxonomyEntryChange}
                   @keydown=${this._onValueKeydown}
                 >
                   <sfx-metadata-field-edit
                     .field=${this.field}
                     .value=${this._effectiveValue}
                     .autocomplete=${this.autocomplete}
+                    .taxonomyService=${this.taxonomyService}
+                    .taxonomyEntry=${this._pendingTaxonode}
                   ></sfx-metadata-field-edit>
                 </div>
               </div>

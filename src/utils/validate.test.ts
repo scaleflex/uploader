@@ -1,4 +1,4 @@
-import { validateFile, buildAcceptString } from './validate';
+import { validateFile, buildAcceptString, isMaxFilesError } from './validate';
 import { makeUploadFile, makeRestrictions } from '../test-utils';
 import type { UploadFile } from '../store/store.types';
 
@@ -127,5 +127,30 @@ describe('buildAcceptString', () => {
   it('joins allowed types with commas', () => {
     const restrictions = makeRestrictions({ allowedFileTypes: ['image/*', '.pdf'] });
     expect(buildAcceptString(restrictions)).toBe('image/*,.pdf');
+  });
+});
+
+describe('isMaxFilesError', () => {
+  it('matches the canonical max-files message', () => {
+    expect(isMaxFilesError('Maximum 5 files allowed')).toBe(true);
+    expect(isMaxFilesError('Maximum 1 files allowed')).toBe(true);
+  });
+  it('rejects null/undefined/non-string', () => {
+    expect(isMaxFilesError(null)).toBe(false);
+    expect(isMaxFilesError(undefined)).toBe(false);
+  });
+  it('rejects other validation errors', () => {
+    expect(isMaxFilesError('File exceeds 5 MB limit')).toBe(false);
+    expect(isMaxFilesError('File type not allowed')).toBe(false);
+    expect(isMaxFilesError('Total file size limit exceeded')).toBe(false);
+  });
+  it('stays in sync with validateFile output (round-trip)', () => {
+    const tinyFile = new File([new Uint8Array(1)], 'x.png', { type: 'image/png' });
+    const restrictions = makeRestrictions({ maxNumberOfFiles: 1 });
+    const existing = new Map<string, UploadFile>([
+      ['e1', makeUploadFile({ id: 'e1', status: 'idle' })],
+    ]);
+    const err = validateFile(tinyFile, restrictions, existing);
+    expect(isMaxFilesError(err)).toBe(true);
   });
 });

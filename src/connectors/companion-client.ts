@@ -1,4 +1,9 @@
-import type { ProviderId, CompanionListResponse, CompanionSearchResponse } from './connector.types';
+import type {
+  ProviderId,
+  CompanionItem,
+  CompanionListResponse,
+  CompanionSearchResponse,
+} from './connector.types';
 
 function buildHeaders(token: string): Record<string, string> {
   return {
@@ -50,6 +55,7 @@ export async function listFiles(
   provider: ProviderId,
   token: string,
   directory = '',
+  signal?: AbortSignal,
 ): Promise<CompanionListResponse> {
   const base = stripSlash(companionUrl);
   const path = directory ? `/${directory}` : '';
@@ -58,6 +64,7 @@ export async function listFiles(
     method: 'GET',
     headers: buildHeaders(token),
     credentials: 'same-origin',
+    signal,
   });
 
   if (res.status === 401) {
@@ -78,12 +85,14 @@ export async function listNextPage(
   companionUrl: string,
   token: string,
   nextPagePath: string,
+  signal?: AbortSignal,
 ): Promise<CompanionListResponse> {
   const base = stripSlash(companionUrl);
   const res = await fetch(`${base}/${nextPagePath}`, {
     method: 'GET',
     headers: buildHeaders(token),
     credentials: 'same-origin',
+    signal,
   });
 
   if (res.status === 401) {
@@ -95,6 +104,54 @@ export async function listNextPage(
   }
 
   return res.json();
+}
+
+/**
+ * Recursively collect all files under a folder by repeatedly calling
+ * {@link listFiles} (and paginating via {@link listNextPage}). Each returned
+ * file is annotated with `relativeFolder` — its path relative to the root
+ * folder the caller started at, so the consumer can preserve hierarchy on
+ * the upload side.
+ *
+ * The root folder's own name is included as the first path segment, so a file
+ * at `myFolder/sub/image.png` ends up with `relativeFolder = "myFolder/sub"`.
+ */
+export async function listFolderRecursive(
+  companionUrl: string,
+  provider: ProviderId,
+  token: string,
+  rootRequestPath: string,
+  rootFolderName: string,
+  signal?: AbortSignal,
+): Promise<Array<CompanionItem & { relativeFolder: string }>> {
+  const out: Array<CompanionItem & { relativeFolder: string }> = [];
+
+  async function walk(path: string, relativeFolder: string): Promise<void> {
+    let nextPagePath: string | null = null;
+    let firstPage = true;
+    do {
+      if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+      const res: CompanionListResponse = firstPage
+        ? await listFiles(companionUrl, provider, token, path, signal)
+        : await listNextPage(companionUrl, token, nextPagePath as string, signal);
+      firstPage = false;
+      nextPagePath = res.nextPagePath;
+      for (const item of res.items) {
+        if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+        if (item.isFolder) {
+          const childFolder = relativeFolder
+            ? `${relativeFolder}/${item.name}`
+            : item.name;
+          await walk(item.requestPath, childFolder);
+        } else {
+          out.push({ ...item, relativeFolder });
+        }
+      }
+    } while (nextPagePath);
+  }
+
+  await walk(rootRequestPath, rootFolderName);
+  return out;
 }
 
 /**

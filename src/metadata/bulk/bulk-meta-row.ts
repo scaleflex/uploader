@@ -7,6 +7,7 @@ import { mapValueToBackend, mapValueFromBackend } from '../schema/value-transfor
 import { formatFileSize, getFileTypeIconUrl, getDefaultFileTypeIconUrl } from '../../utils/file-utils';
 import { computeBulkResult, type PendingOp } from './bulk-operations';
 import { bulkRowStyles } from './bulk-metadata.styles';
+import type { TaxonodeEntry } from '../taxonomies/taxonomies.types';
 
 /**
  * Per-file row in the bulk metadata table.
@@ -22,10 +23,12 @@ export class SfxBulkMetaRow extends LitElement {
   @property({ attribute: false }) file!: UploadFile;
   @property({ attribute: false }) field!: MetadataField;
   @property({ attribute: false }) value: unknown; // backend format (staged)
+  @property({ attribute: false }) taxonomyEntry: TaxonodeEntry | null = null;
   @property({ type: Boolean }) selected = false;
   @property({ attribute: false }) pendingOp: PendingOp | null = null;
   @property({ attribute: false }) config: MetadataConfig | null = null;
   @property({ attribute: false }) autocomplete: unknown;
+  @property({ attribute: false }) taxonomyService: unknown;
 
   @state() private _error: string | null = null;
 
@@ -77,6 +80,19 @@ export class SfxBulkMetaRow extends LitElement {
     this.dispatchEvent(
       new CustomEvent('row-field-change', {
         detail: { fileId: this.file.id, value: backendValue },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  };
+
+  private _onTaxonomyEntryChange = (
+    e: CustomEvent<{ key: string; entry: TaxonodeEntry | null }>,
+  ) => {
+    e.stopPropagation();
+    this.dispatchEvent(
+      new CustomEvent('row-taxonomy-entry', {
+        detail: { fileId: this.file.id, fieldKey: e.detail.key, entry: e.detail.entry },
         bubbles: true,
         composed: true,
       }),
@@ -136,12 +152,15 @@ export class SfxBulkMetaRow extends LitElement {
         <div
           class="row-field"
           @field-blur=${this._onFieldBlur}
+          @taxonomy-entry-change=${this._onTaxonomyEntryChange}
         >
           ${this.pendingOp && this.selected
             ? html`<sfx-bulk-meta-diff-view
                 .field=${this.field}
                 .oldValue=${this.value}
                 .newValue=${this._computePreviewValue()}
+                .oldTaxonomyEntry=${this.file.taxonodes?.[this.field.key] ?? null}
+                .newTaxonomyEntry=${this.taxonomyEntry}
                 .config=${this.config}
               ></sfx-bulk-meta-diff-view>`
             : html`<div class="row-field-edit">
@@ -149,6 +168,8 @@ export class SfxBulkMetaRow extends LitElement {
                   .field=${this.field}
                   .value=${mapValueFromBackend(this.field, this.value, this.config?.language)}
                   .autocomplete=${this.autocomplete}
+                  .taxonomyService=${this.taxonomyService}
+                  .taxonomyEntry=${this.taxonomyEntry}
                 ></sfx-metadata-field-edit>
               </div>
               ${this._error

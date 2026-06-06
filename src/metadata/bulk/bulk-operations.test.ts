@@ -6,13 +6,13 @@ import type { MetadataFieldType } from '../schema/schema.types';
 // ---------------------------------------------------------------------------
 
 describe('getAvailableOperations', () => {
-  const arrayTypes: MetadataFieldType[] = ['multi-select', 'tags', 'integer-list'];
+  const arrayTypes: MetadataFieldType[] = ['multi-select', 'tags'];
   const textTypes: MetadataFieldType[] = ['text', 'textarea', 'attachment-uri'];
   const scalarTypes: MetadataFieldType[] = [
-    'numeric', 'decimal2', 'boolean', 'date', 'select-one', 'geopoint',
+    'numeric', 'decimal2', 'boolean', 'date', 'select-one', 'geopoint', 'taxonomy-node',
   ];
   const unsupportedTypes: MetadataFieldType[] = [
-    'asset-attachments', 'attachments-assets', 'ultratags', 'taxonomy-node',
+    'asset-attachments', 'attachments-assets', 'integer-list', 'ultratags',
   ];
 
   it.each(unsupportedTypes)('returns [] for unsupported type %s', (type) => {
@@ -124,20 +124,6 @@ describe('applyBulkOperation ADD', () => {
     it('works with attachment-uri type', () => {
       expect(applyBulkOperation('ADD', 'https://a.com', 'https://b.com', 'attachment-uri'))
         .toBe('https://a.com https://b.com');
-    });
-  });
-
-  describe('integer-list (array deduplication)', () => {
-    it('appends new values', () => {
-      expect(applyBulkOperation('ADD', [1, 2], [3], 'integer-list')).toEqual([1, 2, 3]);
-    });
-
-    it('deduplicates existing values', () => {
-      expect(applyBulkOperation('ADD', [1, 2], [2, 3], 'integer-list')).toEqual([1, 2, 3]);
-    });
-
-    it('handles null current value', () => {
-      expect(applyBulkOperation('ADD', null, [1], 'integer-list')).toEqual([1]);
     });
   });
 

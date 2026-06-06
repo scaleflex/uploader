@@ -8,6 +8,10 @@ import { svg as svgTag } from "lit";
 import type { SourceDef } from "./source-pills";
 import { getPortalTarget } from "../utils/portal-target";
 import type { TFunction } from "../store/store.types";
+import {
+  attachRelativePath,
+  extractFilesFromDataTransfer,
+} from "../utils/folder-traversal";
 
 /** Number of source pills shown directly; the rest go into "More" dropdown. */
 const VISIBLE_PILLS = 3;
@@ -232,6 +236,29 @@ export class SfxDropZone extends LitElement {
     .title span {
       color: var(--sfx-up-primary, #2563eb);
       cursor: pointer;
+    }
+
+    .folder-pick {
+      font-size: 13px;
+      color: var(--sfx-up-text-muted, #94a3b8);
+      margin-bottom: 8px;
+      transition: opacity 0.15s;
+    }
+    .folder-pick button {
+      background: none;
+      border: none;
+      padding: 0;
+      font: inherit;
+      color: var(--sfx-up-primary, #2563eb);
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .folder-pick button:hover {
+      color: var(--sfx-up-primary-hover, #1d4ed8);
+    }
+    .compact .folder-pick {
+      display: none;
     }
 
     .subtitle {
@@ -953,6 +980,15 @@ export class SfxDropZone extends LitElement {
   @property({ type: String }) accept = "";
   /** Whether the file picker allows multiple selection. Set to false for single-asset slots. */
   @property({ type: Boolean }) multi = true;
+  /**
+   * When true, exposes an additional "or upload a folder" affordance next to
+   * the "browse" link and renders a second hidden input with
+   * `webkitdirectory`, so users can pick a directory tree from the OS file
+   * dialog. Drag-and-drop of folders is recursively walked regardless of this
+   * flag — `directory` only controls the file-picker UI. Implicitly forced to
+   * false when `multi` is false (single-asset slots can't accept a folder).
+   */
+  @property({ type: Boolean }) directory = false;
   @property({ type: Array }) sources: SourceDef[] = [];
   @property({ type: String, attribute: "sources-layout" }) sourcesLayout:
     | "pills"
@@ -973,12 +1009,21 @@ export class SfxDropZone extends LitElement {
   @state() private _visiblePills = VISIBLE_PILLS;
 
   @query(".ripple") private _rippleEl!: HTMLElement;
-  @query('input[type="file"]') fileInput!: HTMLInputElement;
+  @query('input[data-sfx-dz-files]') fileInput!: HTMLInputElement;
+  @query('input[data-sfx-dz-folder]') folderInput?: HTMLInputElement;
 
   private _dragCounter = 0;
 
-  /** Programmatically open file browser. */
-  browse() {
+  /**
+   * Programmatically open the file browser. Defaults to the file picker;
+   * pass `'folder'` (only honored when `directory` is enabled) to open the
+   * directory picker instead.
+   */
+  browse(mode: "files" | "folder" = "files") {
+    if (mode === "folder" && this.directory && this.multi) {
+      this.folderInput?.click();
+      return;
+    }
     this.fileInput?.click();
   }
 
@@ -1011,10 +1056,27 @@ export class SfxDropZone extends LitElement {
     this._dragCounter = 0;
     this._dragOver = false;
 
-    const files = Array.from(e.dataTransfer?.files ?? []);
-    if (files.length > 0) {
-      this._emitFiles(files);
-    }
+    const dataTransfer = e.dataTransfer;
+    if (!dataTransfer) return;
+
+    // Recursively walk any dropped directories so nested files come through
+    // with their relative paths intact. Falls back to the flat file list when
+    // the entries API isn't available or the drop contains no directories.
+    // The util never rejects — per-entry errors are caught internally — so
+    // there's no `.catch` here.
+    extractFilesFromDataTransfer(dataTransfer).then(({ files, hadDirectories }) => {
+      if (files.length > 0) {
+        this._emitFiles(files, hadDirectories);
+      } else if (hadDirectories) {
+        // User dropped a folder that produced zero usable files (empty, or
+        // only hidden/system contents that were filtered out). Surface as a
+        // distinct event so sfx-uploader can show a friendly "folder is
+        // empty" toast.
+        this.dispatchEvent(
+          new CustomEvent('folder-empty', { bubbles: true, composed: true }),
+        );
+      }
+    });
   };
 
   // --- Browse ---
@@ -1044,6 +1106,15 @@ export class SfxDropZone extends LitElement {
   private _onFileChange = (e: Event) => {
     const input = e.target as HTMLInputElement;
     const files = Array.from(input.files ?? []);
+    // Promote each file's browser-provided `webkitRelativePath` (set when the
+    // input has `webkitdirectory`) to our internal `_sfxRelativePath` so the
+    // downstream relative-folder extraction sees a consistent shape across
+    // drag-drop and picker flows.
+    for (const file of files) {
+      const webkit = (file as File & { webkitRelativePath?: string })
+        .webkitRelativePath;
+      if (webkit) attachRelativePath(file, webkit);
+    }
     if (files.length > 0) {
       this._emitFiles(files);
     }
@@ -1083,10 +1154,10 @@ export class SfxDropZone extends LitElement {
     );
   }
 
-  private _emitFiles(files: File[]) {
+  private _emitFiles(files: File[], hadDirectories = false) {
     this.dispatchEvent(
       new CustomEvent("files-selected", {
-        detail: { files },
+        detail: { files, hadDirectories },
         bubbles: true,
         composed: true,
       }),
@@ -1431,6 +1502,17 @@ export class SfxDropZone extends LitElement {
           </div>
 
           <div class="title">${this.t('dragAndDrop', 'Drag & Drop or click to')} <span>${this.t('browse', 'browse')}</span></div>
+          ${!this.compact && this.directory && this.multi
+            ? html`<div class="folder-pick">
+                ${this.t('orUploadFolderPrefix', 'or upload a ')}<button
+                  type="button"
+                  @click=${(e: MouseEvent) => {
+                    e.stopPropagation();
+                    this.browse('folder');
+                  }}
+                >${this.t('uploadFolder', 'folder')}</button>
+              </div>`
+            : nothing}
           ${!this.compact
             ? html`<div class="subtitle">${this.t('dropFilesAnywhere', 'Drop files anywhere on this page')}</div>`
             : nothing}
@@ -1486,11 +1568,21 @@ export class SfxDropZone extends LitElement {
           <div class="ripple"></div>
         </div>
         <input
+          data-sfx-dz-files
           type="file"
           ?multiple=${this.multi}
           accept=${this.accept || nothing}
           @change=${this._onFileChange}
         />
+        ${this.directory && this.multi
+          ? html`<input
+              data-sfx-dz-folder
+              type="file"
+              multiple
+              webkitdirectory
+              @change=${this._onFileChange}
+            />`
+          : nothing}
       </div>
     `;
   }

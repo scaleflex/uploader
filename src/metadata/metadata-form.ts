@@ -1,6 +1,7 @@
 import { LitElement, html, css, nothing } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import type { MetadataSchema, MetadataConfig, MetadataGroup } from './schema/schema.types';
+import type { TaxonodeEntry } from './taxonomies/taxonomies.types';
 
 export class SfxMetadataForm extends LitElement {
   static styles = css`
@@ -60,6 +61,8 @@ export class SfxMetadataForm extends LitElement {
   @property({ attribute: false }) meta: Record<string, unknown> = {};
   @property({ attribute: false }) config: MetadataConfig | null = null;
   @property({ attribute: false }) autocomplete: unknown;
+  @property({ attribute: false }) taxonomyService: unknown;
+  @property({ attribute: false }) taxonodes: Record<string, TaxonodeEntry | null> | null = null;
   @property({ type: Boolean }) disabled = false;
 
   @state() private _collapsed: Set<string> = new Set();
@@ -97,6 +100,8 @@ export class SfxMetadataForm extends LitElement {
                       .value=${this.meta[f.key]}
                       .config=${this.config}
                       .autocomplete=${this.autocomplete}
+                      .taxonomyService=${this.taxonomyService}
+                      .taxonomyEntry=${this.taxonodes?.[f.key] ?? null}
                       ?disabled=${this.disabled}
                     ></sfx-metadata-field>
                   `,

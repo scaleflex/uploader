@@ -6,6 +6,7 @@ import { xhrUploadFile, type XhrUploadHandle } from './xhr-upload';
 import { companionUploadFile, companionUploadUrl } from './companion-upload';
 import { tusUploadFile, shouldUseTus, type TusConfig, type TusUploadHandle } from './tus-upload';
 import { isSameAssetExists } from './same-asset';
+import { joinFolder } from '../utils/folder-traversal';
 
 export interface UploadEngineConfig {
   apiBase: string;
@@ -272,10 +273,20 @@ export class UploadEngine {
     let lastTime = Date.now();
     let smoothedSpeed = 0;
 
+    // Per-file destination folder. When the file was added via a directory
+    // drop/pick its `relativeFolder` carries the path inside the dropped
+    // root — join it onto the configured `targetFolder` so Filerobot
+    // recreates the original hierarchy. Empty `relativeFolder` (flat
+    // uploads, URL imports, connector files) leaves the path unchanged.
+    const fileFolder = joinFolder(
+      this.store.getState().targetFolder,
+      file.relativeFolder,
+    );
+
     const baseOpts = {
       apiBase: this.config.apiBase,
       authHeaders: this.config.authHeaders,
-      folder: this.store.getState().targetFolder,
+      folder: fileFolder,
       extraParams: hasExtraParams ? extraParams : undefined,
       onComplete: (response: import('../store/store.types').UploadResponse) =>
         this.handleComplete(file.id, response),

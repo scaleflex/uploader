@@ -1,5 +1,6 @@
-import { companionUploadUrl } from './companion-upload';
+import { companionUploadFile, companionUploadUrl } from './companion-upload';
 import { makeUploadFile } from '../test-utils';
+import type { RemoteFileInfo } from '../connectors/connector.types';
 
 vi.mock('../connectors/companion-client', () => ({
   fetchUrlMeta: vi.fn(),
@@ -12,7 +13,23 @@ vi.mock('../connectors/companion-client', () => ({
 import {
   fetchUrlMeta,
   uploadFromUrl,
+  uploadRemoteFile,
 } from '../connectors/companion-client';
+
+function makeRemoteInfo(overrides: Partial<RemoteFileInfo> = {}): RemoteFileInfo {
+  return {
+    companionUrl: 'https://eu-on-24001.connector.filerobot.com',
+    provider: 'google-drive',
+    token: 'tok',
+    requestPath: 'drive-file-1',
+    fileId: 'f-rem-1',
+    name: 'drive.png',
+    mimeType: 'image/png',
+    size: 1234,
+    thumbnail: null,
+    ...overrides,
+  };
+}
 
 class MockWebSocket {
   static instances: MockWebSocket[] = [];
@@ -132,7 +149,11 @@ describe('companionUploadUrl', () => {
         endpoint: 'https://api.filerobot.com/test/v4/files?folder=%2Fuploads',
         headers: { 'X-Filerobot-Key': 'k' },
         size: 4242,
-        metadata: expect.objectContaining({ 'filerobot-folder': '/uploads' }),
+        metadata: expect.objectContaining({
+          name: 'x.png',
+          type: 'image/png',
+          'filerobot-folder': '/uploads',
+        }),
       }),
       expect.any(AbortSignal),
     );
@@ -294,6 +315,182 @@ describe('companionUploadUrl', () => {
         endpoint: 'https://api.filerobot.com/test/v4/files?folder=%2Fuploads&opt_force_name=forced',
       }),
       expect.any(AbortSignal),
+    );
+  });
+
+  it('prefers Companion-resolved name/type over the URL-derived closure values', async () => {
+    // Companion follows redirects + reads Content-Disposition/Content-Type, so its
+    // resolved values are strictly more authoritative than the host's URL guess.
+    (fetchUrlMeta as ReturnType<typeof vi.fn>).mockResolvedValue({
+      url: 'https://example.com/share/abc123',
+      name: 'resolved.pdf',
+      type: 'application/pdf',
+      size: 999,
+    });
+    (uploadFromUrl as ReturnType<typeof vi.fn>).mockResolvedValue({ token: 't' });
+
+    const opts = freshOpts();
+    companionUploadUrl(
+      makeUploadFile({
+        remoteUrl: 'https://example.com/share/abc123',
+        name: 'abc123',           // host's URL-parsed guess (no extension)
+        type: 'application/octet-stream',
+      }),
+      opts,
+    );
+
+    await new Promise((r) => setTimeout(r, 0));
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(uploadFromUrl).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.any(String),
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          name: 'resolved.pdf',
+          type: 'application/pdf',
+          'filerobot-folder': '/uploads',
+        }),
+      }),
+      expect.any(AbortSignal),
+    );
+  });
+
+  it('falls back to closure name/type when /url/meta returns empty fields', async () => {
+    (fetchUrlMeta as ReturnType<typeof vi.fn>).mockResolvedValue({
+      url: 'https://example.com/x',
+      name: '',
+      type: '',
+      size: 10,
+    });
+    (uploadFromUrl as ReturnType<typeof vi.fn>).mockResolvedValue({ token: 't' });
+
+    const opts = freshOpts();
+    companionUploadUrl(
+      makeUploadFile({ remoteUrl: 'https://example.com/x', name: 'fallback.png', type: 'image/png' }),
+      opts,
+    );
+
+    await new Promise((r) => setTimeout(r, 0));
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(uploadFromUrl).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.any(String),
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          name: 'fallback.png',
+          type: 'image/png',
+        }),
+      }),
+      expect.any(AbortSignal),
+    );
+  });
+});
+
+describe('companionUploadFile', () => {
+  it('errors when remoteInfo is missing', () => {
+    const opts = freshOpts();
+    companionUploadFile(makeUploadFile({ remoteInfo: null }), opts);
+    expect(opts.onError).toHaveBeenCalledWith(
+      expect.objectContaining({ message: expect.stringContaining('remoteInfo') }),
+    );
+    expect(uploadRemoteFile).not.toHaveBeenCalled();
+  });
+
+  it('forwards name, type, filerobot-folder, and JSON-stringified meta/tags/product', async () => {
+    (uploadRemoteFile as ReturnType<typeof vi.fn>).mockResolvedValue({ token: 'sock-1' });
+
+    const opts = freshOpts();
+    companionUploadFile(
+      makeUploadFile({
+        id: 'f-rem-1',
+        remoteInfo: makeRemoteInfo({ size: 4242 }),
+        name: 'photo.jpg',
+        type: 'image/jpeg',
+        meta: { alt: 'sunset', credit: 'me' },
+        tags: ['nature', 'sunset'],
+        product: { ref: 'sku-1', position: 0 },
+      }),
+      opts,
+    );
+
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(uploadRemoteFile).toHaveBeenCalledWith(
+      'https://eu-on-24001.connector.filerobot.com',
+      'google-drive',
+      'tok',
+      'drive-file-1',
+      expect.objectContaining({
+        fileId: 'f-rem-1',
+        endpoint: 'https://api.filerobot.com/test/v4/files?folder=%2Fuploads',
+        headers: { 'X-Filerobot-Key': 'k' },
+        size: 4242,
+        metadata: {
+          name: 'photo.jpg',
+          type: 'image/jpeg',
+          'filerobot-folder': '/uploads',
+          meta: JSON.stringify({ alt: 'sunset', credit: 'me' }),
+          tags: JSON.stringify(['nature', 'sunset']),
+          product: JSON.stringify({ ref: 'sku-1', position: 0 }),
+        },
+      }),
+      false,
+    );
+  });
+
+  it('omits empty meta/tags/product from the Companion payload', async () => {
+    (uploadRemoteFile as ReturnType<typeof vi.fn>).mockResolvedValue({ token: 'sock-1' });
+
+    const opts = freshOpts();
+    companionUploadFile(
+      makeUploadFile({
+        remoteInfo: makeRemoteInfo(),
+        name: 'photo.jpg',
+        type: 'image/jpeg',
+      }),
+      opts,
+    );
+
+    await new Promise((r) => setTimeout(r, 0));
+
+    const call = (uploadRemoteFile as ReturnType<typeof vi.fn>).mock.calls[0];
+    const metadata = call[4].metadata as Record<string, unknown>;
+    expect(metadata).toEqual({
+      name: 'photo.jpg',
+      type: 'image/jpeg',
+      'filerobot-folder': '/uploads',
+    });
+  });
+
+  it('routes search providers (no token) through /search/{pid}/get/', async () => {
+    (uploadRemoteFile as ReturnType<typeof vi.fn>).mockResolvedValue({ token: 'sock-1' });
+
+    const opts = freshOpts();
+    companionUploadFile(
+      makeUploadFile({
+        remoteInfo: makeRemoteInfo({ provider: 'unsplash', token: '' }),
+        name: 'mountain.jpg',
+        type: 'image/jpeg',
+      }),
+      opts,
+    );
+
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(uploadRemoteFile).toHaveBeenCalledWith(
+      expect.any(String),
+      'unsplash',
+      '',
+      expect.any(String),
+      expect.objectContaining({
+        metadata: expect.objectContaining({
+          name: 'mountain.jpg',
+          type: 'image/jpeg',
+        }),
+      }),
+      true,
     );
   });
 });

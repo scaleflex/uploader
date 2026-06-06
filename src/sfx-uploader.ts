@@ -34,12 +34,19 @@ import {
   getFileCategory,
   getFileTypeIconUrl,
   getDefaultFileTypeIconUrl,
+  isSystemFile,
 } from "./utils/file-utils";
 import {
   validateFile,
   validateFileInfo,
   buildAcceptString,
+  isMaxFilesError,
 } from "./utils/validate";
+import {
+  getRelativePath,
+  relativeFolderFromPath,
+  extractFilesFromDataTransfer,
+} from "./utils/folder-traversal";
 import type {
   ProviderId,
   ConnectorConfig,
@@ -51,6 +58,7 @@ import type {
   MetadataConfig,
   MetadataSchema,
 } from "./metadata/schema/schema.types";
+import type { TaxonodeEntry } from "./metadata/taxonomies/taxonomies.types";
 import {
   firstMissingRequiredFieldKey,
   isFieldRequired,
@@ -322,7 +330,7 @@ export interface UploaderConfig {
   /**
    * Automatically close the uploader when all uploads complete.
    * - `true`  — closes after a 1.5 s delay so the user briefly sees the success state.
-   * - number — custom delay in milliseconds (e.g. `2000` for 2 s).
+   * - number — custom delay in milliseconds (e.g. `2000` for 2 s, `0` for immediate).
    * - `false` / omitted — disabled (default).
    *
    * Fires `onCompleteAction` + `onClose` callbacks and the corresponding public
@@ -411,10 +419,38 @@ export interface UploaderConfig {
    * Wordplex CDN; English defaults are shown for any untranslated keys.
    */
   locale?: string;
+  /**
+   * Preserve nested folder hierarchy when a user drags a folder onto the drop
+   * zone or selects a directory in the file picker. When `true` (default),
+   * each file's path relative to the dropped/selected root is captured and
+   * appended to `targetFolder` on upload — so dropping `photos/2026/jan/x.png`
+   * into a `targetFolder` of `assets` uploads to `assets/photos/2026/jan`.
+   *
+   * Set to `false` to flatten everything into `targetFolder`, ignoring the
+   * source structure (legacy behavior). Drag-drop of a folder still ingests
+   * the files in either mode; only the destination path differs.
+   *
+   * Also surfaces a small "or upload a folder" affordance next to the
+   * "browse" link, letting users pick a folder from the OS picker (in
+   * addition to the existing file picker). Folder picking from the OS
+   * dialog requires browser support for `webkitdirectory` (all modern
+   * Chromium/WebKit/Firefox builds).
+   *
+   * Default: `true`.
+   */
+  preserveFolderStructure?: boolean;
 }
 
-/** Default tus-related fields for new UploadFile objects. */
-const TUS_DEFAULTS = { isTus: false, tusUploadUrl: null } as const;
+/**
+ * Default tus-related fields and the empty `relativeFolder` for new UploadFile
+ * objects. Folder structure (when a user drags or selects a directory) is
+ * applied by overriding `relativeFolder` after this spread.
+ */
+const TUS_DEFAULTS = {
+  isTus: false,
+  tusUploadUrl: null,
+  relativeFolder: '',
+} as const;
 
 export type UploaderPhase = "empty" | "ready" | "uploading" | "complete";
 
@@ -2285,6 +2321,11 @@ export class SfxUploader extends LitElement {
       color: #ef4444;
     }
 
+    .float-icon.info {
+      background: var(--sfx-up-info-bg, rgba(0, 144, 228, 0.08));
+      color: var(--sfx-up-info, #0090e4);
+    }
+
     .float-title {
       font-size: 13px;
       font-weight: 600;
@@ -2458,6 +2499,37 @@ export class SfxUploader extends LitElement {
       height: 12px;
     }
 
+    .float-item-done.info {
+      background: var(--sfx-up-info-bg, rgba(0, 144, 228, 0.08));
+      color: var(--sfx-up-info, #0090e4);
+    }
+
+    .float-item-done.info svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .float-info-note {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 14px 10px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      box-shadow: inset 0 0 0 1px var(--sfx-up-info-border, rgba(0, 144, 228, 0.20));
+      background: var(--sfx-up-info-bg, rgba(0, 144, 228, 0.04));
+      color: var(--sfx-up-info-text, #024a71);
+      font-size: 12px;
+      line-height: 16px;
+    }
+
+    .float-info-note svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+      color: var(--sfx-up-info, #0090e4);
+    }
+
     .float-item-spinner {
       width: 16px;
       height: 16px;
@@ -2570,10 +2642,10 @@ export class SfxUploader extends LitElement {
         0 28px 80px var(--sfx-up-shadow, rgba(0, 0, 0, 0.18)),
         0 4px 16px oklch(0 0 0 / 0.06);
       width: 100%;
-      max-width: 520px;
-      height: 75vh;
-      max-height: 640px;
-      min-height: 400px;
+      max-width: 760px;
+      height: 78vh;
+      max-height: 720px;
+      min-height: 420px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
@@ -2969,13 +3041,14 @@ export class SfxUploader extends LitElement {
       }
       /* Let the preview image scale down instead of forcing a
          340×240 crop — on a 1920×600 kiosk that hardcoded size
-         looked tiny; relying on max-width/max-height lets the wrap
-         fill whatever vertical space the layout gives it. */
+         looked tiny. Use a definite height so the inner image's
+         max-height: 100% actually resolves; otherwise tall images
+         (e.g. 52×984) render at intrinsic height and escape the
+         panel. */
       .preview-img-wrap {
-        width: auto;
-        height: auto;
-        max-width: min(420px, 60vw);
-        max-height: min(280px, 55vh);
+        width: min(420px, 60vw);
+        height: min(280px, 55vh);
+        max-width: 100%;
       }
     }
   `;
@@ -3067,6 +3140,7 @@ export class SfxUploader extends LitElement {
    *  connectedCallback and updated when batches are saved/cleared. */
   @state() private _hasStoredReview = false;
   private _metadataAutocomplete: any = null;
+  private _taxonomyService: any = null;
   private _videoBlobUrls = new Map<File, string>();
 
   /** Persisted ETA — holds the last computed value so the display doesn't flicker when speed momentarily drops to 0. */
@@ -3163,6 +3237,10 @@ export class SfxUploader extends LitElement {
       this._onClearAll();
     }
     this._previewFileId = null;
+    // Reset any open sub-overlay so reopening the uploader starts clean
+    // instead of resurrecting the bulk-metadata modal on top.
+    this._bulkMetadataOpen = false;
+    this._bulkMetadataInitialFieldKey = null;
     this.config?.callbacks?.onClose?.();
     this._dispatchPublic(PublicEvents.CLOSE, {});
     this.requestUpdate();
@@ -3318,6 +3396,48 @@ export class SfxUploader extends LitElement {
     if (changed) this._store.setState({ files: next });
   }
 
+  /** Persist or clear the display-side taxonomy entry for one file/field. */
+  updateFileTaxonode(
+    fileId: string,
+    fieldKey: string,
+    entry: TaxonodeEntry | null,
+  ): void {
+    const current = this._store.getState().files;
+    const existing = current.get(fileId);
+    if (!existing || !SfxUploader._MODIFIABLE_STATUSES.has(existing.status))
+      return;
+
+    const nextTaxonodes = { ...(existing.taxonodes ?? {}) };
+    if (entry == null) delete nextTaxonodes[fieldKey];
+    else nextTaxonodes[fieldKey] = entry;
+
+    const next = new Map(current);
+    next.set(fileId, { ...existing, taxonodes: nextTaxonodes });
+    this._store.setState({ files: next });
+  }
+
+  /** Batch version of {@link updateFileTaxonode} — same entry for many files. */
+  updateFilesTaxonode(
+    fileIds: string[],
+    fieldKey: string,
+    entry: TaxonodeEntry | null,
+  ): void {
+    const current = this._store.getState().files;
+    const next = new Map(current);
+    let changed = false;
+    for (const fileId of fileIds) {
+      const existing = current.get(fileId);
+      if (!existing || !SfxUploader._MODIFIABLE_STATUSES.has(existing.status))
+        continue;
+      const nextTaxonodes = { ...(existing.taxonodes ?? {}) };
+      if (entry == null) delete nextTaxonodes[fieldKey];
+      else nextTaxonodes[fieldKey] = entry;
+      next.set(fileId, { ...existing, taxonodes: nextTaxonodes });
+      changed = true;
+    }
+    if (changed) this._store.setState({ files: next });
+  }
+
   /**
    * Update product fields (ref + position) for a single file. The patch is
    * merged onto the existing `product` object. Passing `undefined` for a key
@@ -3361,16 +3481,21 @@ export class SfxUploader extends LitElement {
 
   // --- Lifecycle ---
 
-  updated(changed: Map<string, unknown>) {
+  willUpdate(changed: Map<string, unknown>) {
+    // Run state mutations BEFORE render so they fold into the current update
+    // cycle. Mutating reactive @state in `updated()` schedules a second
+    // render and trips Lit's change-in-update warning.
+
     if (changed.has("config") && this.config) {
       this._applyConfig(this.config);
     }
 
-    // Resolve image dimensions when preview file changes
+    // Preview file changes: clear/resolve dimensions display.
     if (changed.has("_previewFileId") && this._previewFileId) {
       const targetId = this._previewFileId;
       const file = this._store.getState().files.get(targetId);
       if (file) {
+        // Async — fine; mutation lands in a later cycle, not this one.
         this._getImageDimensions(file).then((dims) => {
           if (this._previewFileId !== targetId) return; // stale
           this._previewDims = dims ? `${dims.w} × ${dims.h}` : "—";
@@ -3379,30 +3504,26 @@ export class SfxUploader extends LitElement {
         this._previewDims = "—";
       }
     }
-    this._applyDefaultPreviewWidth();
-    // Render floating card portal in document.body
-    this._updateFloatingPortal();
+
+    // Preview layout default width: the panel opens at 3/8 (~37.5%) on first
+    // appearance, giving the grid 5/8. Apply once; the user's drag wins after.
+    // Preview layout only renders when `_previewFileId` is set, so we use that
+    // as the trigger instead of a DOM measurement in `updated()`.
+    if (this._previewFileId) {
+      if (!this._previewDefaultApplied) {
+        this._splitPct = 62.5;
+        this._previewDefaultApplied = true;
+      }
+    } else if (this._previewDefaultApplied) {
+      this._previewDefaultApplied = false;
+    }
   }
 
-  /**
-   * The preview panel opens at 3/8 (~37.5%) of the modal width by default,
-   * giving the grid 5/8. On first appearance of the preview layout we set
-   * _splitPct once; after that the user's own divider drag wins until the
-   * preview layout is dismissed.
-   */
-  private _applyDefaultPreviewWidth() {
-    const layout =
-      this.shadowRoot?.querySelector<HTMLElement>(".preview-layout");
-    if (!layout) {
-      this._previewDefaultApplied = false;
-      return;
-    }
-    if (this._previewDefaultApplied) return;
-    const width = layout.getBoundingClientRect().width;
-    if (width <= 0) return;
-    // Preview panel takes 3/8 (~37.5%) of the modal by default → grid gets 5/8.
-    this._splitPct = 62.5;
-    this._previewDefaultApplied = true;
+  updated(_changed: Map<string, unknown>) {
+    // Render floating card portal in document.body. This touches non-reactive
+    // fields (`_portalContainer`, `_floatShownDispatched`) and external DOM
+    // outside the shadow root, so it belongs after the host has updated.
+    this._updateFloatingPortal();
   }
 
   private _injectFloatStyles() {
@@ -3418,6 +3539,7 @@ export class SfxUploader extends LitElement {
       [data-sfx-upload-float] .float-icon.done { background:#f0fdf4; color:#22c55e; }
       [data-sfx-upload-float] .float-icon.warn { background:#fffbeb; color:#f59e0b; }
       [data-sfx-upload-float] .float-icon.error { background:#fef2f2; color:#ef4444; }
+      [data-sfx-upload-float] .float-icon.info { background:var(--sfx-up-info-bg, rgba(0,144,228,0.08)); color:var(--sfx-up-info, #0090e4); }
       [data-sfx-upload-float] .float-title { font-size:13px; font-weight:600; color:#1e293b; }
       [data-sfx-upload-float] .float-subtitle { font-size:11px; color:#94a3b8; }
       [data-sfx-upload-float] .float-actions { display:flex; gap:4px; }
@@ -3446,6 +3568,10 @@ export class SfxUploader extends LitElement {
       [data-sfx-upload-float] .float-item-size { font-size:11px; color:#94a3b8; }
       [data-sfx-upload-float] .float-item-done { width:18px; height:18px; border-radius:50%; background:#f0fdf4; color:#22c55e; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
       [data-sfx-upload-float] .float-item-done svg { width:12px; height:12px; }
+      [data-sfx-upload-float] .float-item-done.info { background:var(--sfx-up-info-bg, rgba(0,144,228,0.08)); color:var(--sfx-up-info, #0090e4); }
+      [data-sfx-upload-float] .float-item-done.info svg { width:14px; height:14px; }
+      [data-sfx-upload-float] .float-info-note { display:flex; align-items:center; gap:8px; margin:0 14px 10px; padding:6px 10px; border-radius:8px; box-shadow:inset 0 0 0 1px var(--sfx-up-info-border, rgba(0,144,228,0.20)); background:var(--sfx-up-info-bg, rgba(0,144,228,0.04)); color:var(--sfx-up-info-text, #024a71); font-size:12px; line-height:16px; }
+      [data-sfx-upload-float] .float-info-note svg { width:14px; height:14px; flex-shrink:0; color:var(--sfx-up-info, #0090e4); }
       [data-sfx-upload-float] .float-item-spinner { width:16px; height:16px; border:2px solid #e8edf5; border-top-color:#2563eb; border-radius:50%; animation:sfxSpin .8s linear infinite; flex-shrink:0; }
       [data-sfx-upload-float] .float-item-status { display:flex; flex-direction:row; align-items:center; gap:4px; flex-shrink:0; }
       [data-sfx-upload-float] .float-item-error-wrap { position:relative; display:flex; align-items:center; flex-shrink:0; }
@@ -3471,6 +3597,7 @@ export class SfxUploader extends LitElement {
       [data-sfx-upload-float] .float-collapsed-icon.done { color:#22c55e; }
       [data-sfx-upload-float] .float-collapsed-icon.warn { color:#f59e0b; }
       [data-sfx-upload-float] .float-collapsed-icon.error { color:#ef4444; }
+      [data-sfx-upload-float] .float-collapsed-icon.info { color:var(--sfx-up-info, #0090e4); }
       [data-sfx-upload-float] .float-collapsed-text { font-size:13px; font-weight:500; color:#1e293b; white-space:nowrap; }
       [data-sfx-upload-float] .float-collapsed-pct { font-size:13px; font-weight:600; color:#2563eb; }
       [data-sfx-upload-float] .float-collapsed-actions { display:flex; gap:4px; }
@@ -3763,6 +3890,17 @@ export class SfxUploader extends LitElement {
   }
 
   /**
+   * Whether the drop-zone / drop-tile should expose the "browse folder"
+   * affordance and render a `webkitdirectory` input. True when:
+   *   - the host hasn't disabled it via `preserveFolderStructure: false`, and
+   *   - multi-select is allowed (single-asset slots can't accept a folder).
+   */
+  private get _allowFolderUpload(): boolean {
+    if (this.config?.preserveFolderStructure === false) return false;
+    return this._allowMulti;
+  }
+
+  /**
    * Build the per-file upload-params resolver from `forceName` and
    * `getUploadParams`. Host-supplied `getUploadParams` keys win on collision.
    * Returns `undefined` when neither is configured.
@@ -3809,7 +3947,7 @@ export class SfxUploader extends LitElement {
     if (!mc || !this._apiBase || !this._authHeaders) return;
 
     try {
-      const { fetchMetadataSchema, createTagsAutocomplete } = await import(
+      const { fetchMetadataSchema, createTagsAutocomplete, createTaxonomyService } = await import(
         "./metadata"
       );
       const baseSchema = await fetchMetadataSchema(
@@ -3818,6 +3956,19 @@ export class SfxUploader extends LitElement {
         mc.projectUuid,
         mc,
       );
+      // Construct the autocomplete + taxonomy services BEFORE assigning the
+      // schema. The schema is a `@state` property whose assignment triggers a
+      // re-render; the services are plain fields, so if we set them after,
+      // the render scheduled by the schema set reads them as `null` and
+      // child fields mount without a service.
+      this._metadataAutocomplete = createTagsAutocomplete(
+        this._apiBase,
+        this._authHeaders,
+      );
+      this._taxonomyService = createTaxonomyService(
+        this._apiBase,
+        this._authHeaders,
+      );
       // When products are enabled, splice the synthetic "Product" group into
       // the schema right after the last root group. The metadata-form (used in
       // both the preview sidebar and the bulk-edit sidebar) then renders the
@@ -3825,10 +3976,6 @@ export class SfxUploader extends LitElement {
       this._metadataSchema = baseSchema.productsEnabled
         ? injectProductGroup(baseSchema, this._storeCtrl.state.t)
         : baseSchema;
-      this._metadataAutocomplete = createTagsAutocomplete(
-        this._apiBase,
-        this._authHeaders,
-      );
       const requiredFieldKeys = this._metadataSchema.fields
         .filter((f) => isFieldRequired(f, mc))
         .map((f) => f.key);
@@ -3889,6 +4036,15 @@ export class SfxUploader extends LitElement {
     const next = new Map(this._store.getState().files);
     next.set(fileId, { ...existing, meta: { ...existing.meta, [key]: value } });
     this._store.setState({ files: next });
+  };
+
+  /** Handle taxonomy-entry-change from the preview metadata form. */
+  private _onPreviewTaxonomyEntry = (
+    e: CustomEvent<{ key: string; entry: TaxonodeEntry | null }>,
+  ) => {
+    const fileId = this._previewFileId;
+    if (!fileId) return;
+    this.updateFileTaxonode(fileId, e.detail.key, e.detail.entry);
   };
 
   /**
@@ -4138,9 +4294,10 @@ export class SfxUploader extends LitElement {
         this._dispatchPublic(PublicEvents.ALL_COMPLETE, { successful, failed });
         callbacks?.onAllComplete?.(successful, failed);
 
-        // Auto-close after a brief delay so the user sees the success state
+        // Auto-close after a brief delay so the user sees the success state.
+        // Treat `0` as a valid delay (close immediately) — only false/null/undefined disable.
         const closeOpt = this.config?.closeOnComplete;
-        if (closeOpt) {
+        if (closeOpt !== false && closeOpt != null) {
           const delay = typeof closeOpt === "number" ? closeOpt : 1500;
           this._closeOnCompleteTimer = setTimeout(() => {
             this._closeOnCompleteTimer = null;
@@ -4258,15 +4415,46 @@ export class SfxUploader extends LitElement {
       this._reviewFiles = [];
     }
 
+    // Resolved once per call so the config reads are stable across the loop.
+    const preserveFolders = this.config?.preserveFolderStructure !== false;
+
+    // Folder drops can blow past `maxNumberOfFiles` — once we hit the cap we
+    // tally the rest into a single aggregate toast instead of flooding the
+    // queue with N rejection cards.
+    let overflowCount = 0;
+    let hitOverflow = false;
+
     for (const file of rawFiles) {
+      // Silently skip OS-generated metadata files (.DS_Store, Thumbs.db, …) — never user-intended.
+      if (isSystemFile(file.name)) continue;
+
+      // Once the cap is hit, the limit can't lift mid-loop — tally and skip
+      // without creating per-file rejection entries.
+      if (hitOverflow) {
+        overflowCount++;
+        continue;
+      }
+
+      // Capture the file's path within a dropped/selected folder tree (set by
+      // drop-zone via `_sfxRelativePath` or by the browser's directory input
+      // via `webkitRelativePath`). Empty when the file was added flat. When
+      // the host opts out via `preserveFolderStructure: false` we ignore the
+      // path so uploads stay flat under `targetFolder`.
+      const relativeFolder = preserveFolders
+        ? relativeFolderFromPath(getRelativePath(file))
+        : '';
+
       // Re-read state each iteration so maxNumberOfFiles validation sees previously added files
       const s = this._store.getState();
 
-      // Skip duplicate files (same name + size already in queue)
+      // Skip duplicate files (same name + size + relativeFolder already in
+      // queue). The folder is part of the identity so that two files named
+      // `image.png` in different subfolders both get uploaded.
       const isDuplicate = [...s.files.values()].some(
         (f) =>
           f.name === file.name &&
           f.size === file.size &&
+          f.relativeFolder === relativeFolder &&
           f.status !== "rejected" &&
           f.status !== "cancelled",
       );
@@ -4283,6 +4471,13 @@ export class SfxUploader extends LitElement {
         s.files,
       );
       if (error) {
+        if (isMaxFilesError(error)) {
+          // First overflow hit — switch to aggregate mode for the rest of
+          // the batch. Don't create a rejected entry for this one.
+          hitOverflow = true;
+          overflowCount++;
+          continue;
+        }
         // Create a rejected file entry so the user sees the error
         const rejectedPreview =
           effectiveType.startsWith("image/") && !isBrowserUnrenderableImage(effectiveType)
@@ -4310,6 +4505,7 @@ export class SfxUploader extends LitElement {
           product: {},
           remoteInfo: null,
           ...TUS_DEFAULTS,
+          relativeFolder,
         };
         addFile(this._store, uploadFile);
         this._dispatchPublic(PublicEvents.FILE_REJECTED, {
@@ -4364,6 +4560,7 @@ export class SfxUploader extends LitElement {
         product: {},
         remoteInfo: null,
         ...TUS_DEFAULTS,
+        relativeFolder,
       };
 
       addFile(this._store, uploadFile);
@@ -4406,6 +4603,23 @@ export class SfxUploader extends LitElement {
       }
     }
 
+    // One aggregate notice for files dropped past the cap — beats N rejection
+    // cards when a 500-file folder is dropped into a 5-slot uploader.
+    if (overflowCount > 0) {
+      const t = this._storeCtrl.state.t;
+      const max =
+        this._store.getState().restrictions.maxNumberOfFiles ?? 0;
+      this._showToast(
+        t('tooManyFilesSkipped', {
+          count: overflowCount,
+          max,
+          defaultValue_one: 'Skipped {{count}} file — limit is {{max}}',
+          defaultValue_other: 'Skipped {{count}} files — limit is {{max}}',
+        }),
+        'warning',
+      );
+    }
+
     // Auto-proceed if configured
     if (this._store.getState().queueConfig.autoProceed) {
       this.upload();
@@ -4414,9 +4628,29 @@ export class SfxUploader extends LitElement {
 
   // --- Event handlers ---
 
-  private _onFilesSelected = (e: CustomEvent<{ files: File[] }>) => {
-    this._processIncomingFiles(e.detail.files);
+  private _onFilesSelected = (
+    e: CustomEvent<{ files: File[]; hadDirectories?: boolean }>,
+  ) => {
+    const { files, hadDirectories } = e.detail;
+    if (files.length === 0 && hadDirectories) {
+      this._showEmptyFolderToast();
+      return;
+    }
+    this._processIncomingFiles(files);
   };
+
+  private _onFolderEmpty = () => {
+    this._showEmptyFolderToast();
+  };
+
+  /** Surface the "dropped folder is empty" hint once per drop. */
+  private _showEmptyFolderToast() {
+    const t = this._storeCtrl.state.t;
+    this._showToast(
+      t('emptyFolderDrop', 'The dropped folder is empty — no files were added'),
+      'info',
+    );
+  }
 
   private _onDropTileSourceClick = (e: CustomEvent<{ source: SourceDef }>) => {
     e.stopPropagation();
@@ -4499,6 +4733,9 @@ export class SfxUploader extends LitElement {
 
     const type = guessMimeType(name);
     const isImage = type.startsWith("image/");
+
+    // Silently skip OS-generated metadata files (.DS_Store, Thumbs.db, …) — never user-intended.
+    if (isSystemFile(name)) return;
 
     // Validate against restrictions (size=0 for URL imports, so size checks are skipped)
     const s = this._store.getState();
@@ -5037,6 +5274,32 @@ export class SfxUploader extends LitElement {
     this.updateFilesProduct(changes);
   };
 
+  private _onBulkTaxonomySaveBatch = (
+    e: CustomEvent<{
+      changes: Array<{
+        fileId: string;
+        taxonodes: Record<string, TaxonodeEntry | null>;
+      }>;
+    }>,
+  ) => {
+    const { changes } = e.detail;
+    if (!changes.length) return;
+    const current = this._store.getState().files;
+    const next = new Map(current);
+    for (const { fileId, taxonodes } of changes) {
+      const existing = current.get(fileId);
+      if (!existing || !SfxUploader._MODIFIABLE_STATUSES.has(existing.status))
+        continue;
+      const merged = { ...(existing.taxonodes ?? {}) };
+      for (const [k, v] of Object.entries(taxonodes)) {
+        if (v == null) delete merged[k];
+        else merged[k] = v;
+      }
+      next.set(fileId, { ...existing, taxonodes: merged });
+    }
+    this._store.setState({ files: next });
+  };
+
   private _onBulkMetadataClose = () => {
     this._bulkMetadataOpen = false;
     this._bulkMetadataInitialFieldKey = null;
@@ -5180,15 +5443,24 @@ export class SfxUploader extends LitElement {
     e: CustomEvent<{ files: RemoteFileInfo[] }>,
   ) => {
     const callbacks = this.config?.callbacks;
+    // Folder hierarchy from connector selection is only preserved when the
+    // host hasn't opted out, mirroring the local drag/drop behavior.
+    const preserveFolders = this.config?.preserveFolderStructure !== false;
     for (const info of e.detail.files) {
+      // Silently skip OS-generated metadata files (.DS_Store, Thumbs.db, …) — never user-intended.
+      if (isSystemFile(info.name)) continue;
+
+      const relativeFolder = preserveFolders ? (info.relativeFolder ?? '') : '';
+
       // Re-read state each iteration so maxNumberOfFiles sees previously added files
       const s = this._store.getState();
 
-      // Skip duplicate files (same name + size already in queue)
+      // Skip duplicate files (same name + size + relativeFolder already in queue)
       const isDuplicate = [...s.files.values()].some(
         (f) =>
           f.name === info.name &&
           f.size === info.size &&
+          f.relativeFolder === relativeFolder &&
           f.status !== "rejected" &&
           f.status !== "cancelled",
       );
@@ -5229,6 +5501,7 @@ export class SfxUploader extends LitElement {
           product: {},
           remoteInfo: info,
           ...TUS_DEFAULTS,
+          relativeFolder,
         };
         addFile(this._store, rejFile);
         this._dispatchPublic(PublicEvents.FILE_REJECTED, {
@@ -5261,6 +5534,7 @@ export class SfxUploader extends LitElement {
         product: {},
         remoteInfo: info,
         ...TUS_DEFAULTS,
+        relativeFolder,
       };
       addFile(this._store, uploadFile);
       this._dispatchPublic(PublicEvents.FILE_ADDED, { file: uploadFile });
@@ -5414,12 +5688,21 @@ export class SfxUploader extends LitElement {
     }
     this._bodyDragOver = false;
 
-    const files = Array.from(e.dataTransfer?.files ?? []);
-    if (files.length > 0) {
+    const dataTransfer = e.dataTransfer;
+    if (!dataTransfer) return;
+
+    // Recursively expand any dropped folders so nested files arrive with
+    // their relative paths attached. The util never rejects — per-entry
+    // errors are caught internally — so there's no `.catch` here.
+    extractFilesFromDataTransfer(dataTransfer).then(({ files, hadDirectories }) => {
+      if (files.length === 0) {
+        if (hadDirectories) this._showEmptyFolderToast();
+        return;
+      }
       this._onFilesSelected(
-        new CustomEvent("files-selected", { detail: { files } }),
+        new CustomEvent("files-selected", { detail: { files, hadDirectories } }),
       );
-    }
+    });
   };
 
   private _onKeyDown = (e: KeyboardEvent) => {
@@ -5428,6 +5711,11 @@ export class SfxUploader extends LitElement {
         this._onFsClose();
         return;
       }
+      // Bulk metadata modal sits on top of the main modal and owns its own
+      // ESC handler. Don't also dismiss the underlying uploader, or the user
+      // loses both with one key press (and reopening would resurrect the
+      // bulk modal from stale state).
+      if (this._bulkMetadataOpen) return;
       // When minimized, the modal is hidden behind the floating pill — ESC
       // shouldn't fire a phantom dismiss against an invisible target.
       if (this._isMinimized) return;
@@ -5844,6 +6132,13 @@ export class SfxUploader extends LitElement {
     const isDone = this._phase === "complete";
     const completed = files.filter((f) => f.status === "complete").length;
     const failed = files.filter((f) => f.status === "failed").length;
+    const alreadyExistedCount = files.filter(
+      (f) => f.status === "complete" && f.alreadyExisted,
+    ).length;
+    // Every successful file already existed on the server — show as info state
+    // (matches success-card).
+    const allAlreadyExisted =
+      completed > 0 && failed === 0 && alreadyExistedCount >= completed;
 
     // Collapsed pill — compact white bar
     if (this._isPillExpanded === false) {
@@ -5883,17 +6178,32 @@ export class SfxUploader extends LitElement {
                         <line x1="12" y1="16" x2="12.01" y2="16" />
                       </svg>
                     </div>`
-                : html`<div class="float-collapsed-icon done">
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2.5"
-                      stroke-linecap="round"
-                    >
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  </div>`
+                : allAlreadyExisted
+                  ? html`<div class="float-collapsed-icon info">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="16" x2="12" y2="12" />
+                        <line x1="12" y1="8" x2="12.01" y2="8" />
+                      </svg>
+                    </div>`
+                  : html`<div class="float-collapsed-icon done">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.5"
+                        stroke-linecap="round"
+                      >
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    </div>`
               : html`<div class="float-collapsed-spinner"></div>`}
             <span class="float-collapsed-text"
               >${isDone
@@ -5901,7 +6211,9 @@ export class SfxUploader extends LitElement {
                   ? completed > 0
                     ? t('partiallyUploaded', 'Partially uploaded')
                     : t('uploadFailed', 'Upload failed')
-                  : t('uploadComplete', 'Upload complete')
+                  : allAlreadyExisted
+                    ? t('alreadyInLibrary', { count: alreadyExistedCount, defaultValue_one: '{{count}} file was already in your library', defaultValue_other: '{{count}} files were already in your library' })
+                    : t('uploadComplete', 'Upload complete')
                 : t('uploadingFiles', { count: files.length, defaultValue_one: 'Uploading {{count}} file', defaultValue_other: 'Uploading {{count}} files' })}</span
             >
             ${!isDone
@@ -5963,7 +6275,9 @@ export class SfxUploader extends LitElement {
                   ? completed > 0
                     ? "warn"
                     : "error"
-                  : "done"
+                  : allAlreadyExisted
+                    ? "info"
+                    : "done"
                 : ""}"
             >
               ${isDone
@@ -5995,15 +6309,28 @@ export class SfxUploader extends LitElement {
                         <line x1="12" y1="8" x2="12" y2="12" />
                         <line x1="12" y1="16" x2="12.01" y2="16" />
                       </svg>`
-                  : html`<svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2.5"
-                      stroke-linecap="round"
-                    >
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>`
+                  : allAlreadyExisted
+                    ? html`<svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="16" x2="12" y2="12" />
+                        <line x1="12" y1="8" x2="12.01" y2="8" />
+                      </svg>`
+                    : html`<svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.5"
+                        stroke-linecap="round"
+                      >
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>`
                 : html`<svg
                     viewBox="0 0 24 24"
                     fill="none"
@@ -6023,12 +6350,16 @@ export class SfxUploader extends LitElement {
                     ? completed > 0
                       ? t('partiallyUploaded', 'Partially uploaded')
                       : t('uploadFailed', 'Upload failed')
-                    : t('uploadComplete', 'Upload complete')
+                    : allAlreadyExisted
+                      ? t('alreadyInLibrary', { count: alreadyExistedCount, defaultValue_one: '{{count}} file was already in your library', defaultValue_other: '{{count}} files were already in your library' })
+                      : t('uploadComplete', 'Upload complete')
                   : t('uploadingFiles', { count: files.length, defaultValue_one: 'Uploading {{count}} file', defaultValue_other: 'Uploading {{count}} files' })}
               </div>
               <div class="float-subtitle">
                 ${isDone
-                  ? `${t('filesUploaded', { count: completed, defaultValue_one: '{{count}} file uploaded', defaultValue_other: '{{count}} files uploaded' })}${failed > 0 ? `, ${t('nFailed', '{{count}} failed', { count: failed })}` : ""}`
+                  ? allAlreadyExisted
+                    ? t('alreadyInLibrarySubtitle', { count: alreadyExistedCount, defaultValue_one: 'It’s ready to use — nothing new to upload', defaultValue_other: 'They’re ready to use — nothing new to upload' })
+                    : `${t('filesUploaded', { count: completed, defaultValue_one: '{{count}} file uploaded', defaultValue_other: '{{count}} files uploaded' })}${failed > 0 ? `, ${t('nFailed', '{{count}} failed', { count: failed })}` : ""}`
                   : `${t('nOfNComplete', '{{completed}} of {{total}} complete', { completed, total: files.length })}${this._lastEta > 0 ? ` · ${t('etaLeft', '~{{eta}} left', { eta: formatEta(this._lastEta) })}` : ""}`}
               </div>
             </div>
@@ -6101,6 +6432,16 @@ export class SfxUploader extends LitElement {
             ></div>
           </div>
         </div>
+        ${isDone && alreadyExistedCount > 0 && !allAlreadyExisted
+          ? html`<div class="float-info-note" role="status">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="16" x2="12" y2="12" />
+                <line x1="12" y1="8" x2="12.01" y2="8" />
+              </svg>
+              <span>${t('alreadyInLibrary', { count: alreadyExistedCount, defaultValue_one: '{{count}} file was already in your library', defaultValue_other: '{{count}} files were already in your library' })}</span>
+            </div>`
+          : nothing}
         <div class="float-items">
           ${files.map((f) => {
             const isFailed = f.status === "failed" || f.status === "error";
@@ -6145,17 +6486,35 @@ export class SfxUploader extends LitElement {
                               </svg>
                             </button>`
                           : nothing}
-                        <div class="float-item-done">
-                        <svg
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2.5"
-                          stroke-linecap="round"
-                        >
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                      </div>`
+                        ${f.alreadyExisted
+                          ? html`<div
+                              class="float-item-done info"
+                              title=${t('alreadyUploaded', 'Already uploaded')}
+                            >
+                              <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                              >
+                                <circle cx="12" cy="12" r="10" />
+                                <line x1="12" y1="16" x2="12" y2="12" />
+                                <line x1="12" y1="8" x2="12.01" y2="8" />
+                              </svg>
+                            </div>`
+                          : html`<div class="float-item-done">
+                              <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2.5"
+                                stroke-linecap="round"
+                              >
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                            </div>`}`
                     : isFailed
                     ? html` <div class="float-item-error-wrap">
                           <svg
@@ -6368,6 +6727,7 @@ export class SfxUploader extends LitElement {
             .searchRunIds=${this._similarRunIds}
             .searchActiveIds=${this._similarActiveIds}
             .searchResults=${this._similarResults}
+            .directory=${this._allowFolderUpload}
             ?drag-active=${this._bodyDragOver}
             @source-click=${this._onDropTileSourceClick}
           ></sfx-file-list>
@@ -6656,12 +7016,15 @@ export class SfxUploader extends LitElement {
                 <div
                   class="preview-metadata"
                   @field-blur=${this._onPreviewMetadataBlur}
+                  @taxonomy-entry-change=${this._onPreviewTaxonomyEntry}
                 >
                   <sfx-metadata-form
                     .schema=${this._metadataSchema}
                     .meta=${this._previewMeta(previewFile)}
                     .config=${this.config.metadataConfig}
                     .autocomplete=${this._metadataAutocomplete}
+                    .taxonomyService=${this._taxonomyService}
+                    .taxonodes=${previewFile.taxonodes ?? null}
                   ></sfx-metadata-form>
                 </div>
               `
@@ -7003,6 +7366,7 @@ export class SfxUploader extends LitElement {
       <div
         class="content"
         @files-selected=${this._onFilesSelected}
+        @folder-empty=${this._onFolderEmpty}
         @source-click=${this._onSourceClick}
         @file-remove=${this._onFileRemove}
         @file-preview=${this._onFilePreview}
@@ -7111,6 +7475,7 @@ export class SfxUploader extends LitElement {
                         .sourcesLayout=${this.config?.sourcesLayout ?? "pills"}
                         .mode=${this.config?.mode ?? "modal"}
                         .multi=${this._allowMulti}
+                        .directory=${this._allowFolderUpload}
                       ></sfx-drop-zone>
                       ${this._hasStoredReview
                         ? html`<button
@@ -7152,6 +7517,7 @@ export class SfxUploader extends LitElement {
                           .searchRunIds=${this._similarRunIds}
                           .searchActiveIds=${this._similarActiveIds}
                           .searchResults=${this._similarResults}
+                          .directory=${this._allowFolderUpload}
                           ?drag-active=${this._bodyDragOver}
                           @source-click=${this._onDropTileSourceClick}
                         ></sfx-file-list>
@@ -7236,9 +7602,11 @@ export class SfxUploader extends LitElement {
                 )}
                 .config=${this.config?.metadataConfig ?? null}
                 .autocomplete=${this._metadataAutocomplete}
+                .taxonomyService=${this._taxonomyService}
                 .initialFieldKey=${this._bulkMetadataInitialFieldKey}
                 @metadata-save-batch=${this._onBulkMetadataSaveBatch}
                 @product-save-batch=${this._onBulkProductSaveBatch}
+                @taxonomy-save-batch=${this._onBulkTaxonomySaveBatch}
                 @metadata-close=${this._onBulkMetadataClose}
               ></sfx-bulk-metadata-modal>
             `
