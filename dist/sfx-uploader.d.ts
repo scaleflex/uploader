@@ -456,9 +456,12 @@ export declare class SfxUploader extends LitElement {
      */
     private get _metadataDefaultLanguage();
     /**
-     * Effective per-group active variants: schema defaults (first variant of
-     * each group) merged with user picks from `_regionalFilters`. Built fresh
-     * on each access so newly-loaded schemas immediately seed defaults.
+     * Effective per-group active variants: schema defaults merged with user
+     * picks from `_regionalFilters`. The LANGUAGES-group default tries to match
+     * the user's profile language (`metadataConfig.language`, falling back to
+     * the UI `locale`) before the schema's first variant, so e.g. an FR profile
+     * lands on the French variant instead of the schema's first language.
+     * Built fresh on each access so newly-loaded schemas immediately seed defaults.
      */
     private get _effectiveRegionalFilters();
     /**

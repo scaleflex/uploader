@@ -21,10 +21,13 @@ export declare function resolveFieldRegionalKey(field: MetadataField, config: Me
  */
 export declare function getFieldRegionalVariantHint(field: MetadataField, groups: RegionalVariantsGroup[] | undefined, filters: Record<string, string> | undefined, fallbackLanguage: string | undefined): string | undefined;
 /**
- * Default `regionalFilters` map from the schema's groups — first variant of
- * each group becomes that group's initial active value. Used by the uploader
- * to seed state before the user picks anything. Mirrors admin v5's
- * `metadataAdaptAndSet` initialization.
+ * Default `regionalFilters` map from the schema's groups. Each group seeds
+ * to its first variant — except LANGUAGES-type groups, which try to match the
+ * user's profile language (BCP 47, e.g. `'fr'` or `'fr-FR'`) first so a user
+ * with a French profile lands on the French variant by default. Used by the
+ * uploader to seed state before the user picks anything. Mirrors admin v5's
+ * `metadataAdaptAndSet` initialization plus the profile-language preference
+ * Vitaly asked for in the regional-variants review.
  */
-export declare function buildDefaultRegionalFilters(groups: RegionalVariantsGroup[] | undefined): Record<string, string>;
+export declare function buildDefaultRegionalFilters(groups: RegionalVariantsGroup[] | undefined, userLanguage?: string): Record<string, string>;
 //# sourceMappingURL=resolve.d.ts.map
