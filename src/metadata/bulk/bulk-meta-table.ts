@@ -21,6 +21,8 @@ export class SfxBulkMetaTable extends LitElement {
   @property({ attribute: false }) config: MetadataConfig | null = null;
   @property({ attribute: false }) autocomplete: unknown;
   @property({ attribute: false }) taxonomyService: unknown;
+  @property({ attribute: false }) ultratags: unknown;
+  @property({ attribute: false }) defaultLanguage?: string;
 
   private _getEffectiveValue(file: UploadFile): unknown {
     const fileMap = this.staged.get(file.id);
@@ -48,6 +50,8 @@ export class SfxBulkMetaTable extends LitElement {
             .config=${this.config}
             .autocomplete=${this.autocomplete}
             .taxonomyService=${this.taxonomyService}
+            .ultratags=${this.ultratags}
+            .defaultLanguage=${this.defaultLanguage}
           ></sfx-bulk-meta-row>
         `,
       )}

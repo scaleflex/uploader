@@ -2,6 +2,8 @@ import type { MetadataField, MetadataFieldType } from '../schema/schema.types';
 import { isUnsupportedFieldType } from '../schema/schema.types';
 import type { UploadFile } from '../../store/store.types';
 import { mapValueToBackend } from '../schema/value-transforms';
+import { mergeUltratagItems } from '../ultratags/ultratags.utils';
+import type { UltratagsValueItem } from '../ultratags/ultratags.types';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -28,6 +30,7 @@ export interface PendingOp {
 export const ARRAY_TYPES: ReadonlySet<MetadataFieldType> = new Set([
   'multi-select',
   'tags',
+  'ultratags',
 ]);
 
 /** Text-like field types — bulk ops concatenate / substring-remove strings. */
@@ -102,6 +105,14 @@ export function applyBulkOperation(
         const incoming = Array.isArray(operationValue) ? operationValue : [];
         if (incoming.length === 0) return current;
 
+        if (fieldType === 'ultratags') {
+          return mergeUltratagItems(
+            current as Array<UltratagsValueItem | string>,
+            incoming as Array<UltratagsValueItem | string>,
+            false,
+          );
+        }
+
         if (fieldType === 'tags') {
           const seen = new Set(current.map((t: string) => t));
           const combined = [...current];
@@ -146,6 +157,14 @@ export function applyBulkOperation(
         const current = Array.isArray(currentValue) ? currentValue : [];
         const toRemove = Array.isArray(operationValue) ? operationValue : [];
         if (toRemove.length === 0) return current;
+
+        if (fieldType === 'ultratags') {
+          return mergeUltratagItems(
+            current as Array<UltratagsValueItem | string>,
+            toRemove as Array<UltratagsValueItem | string>,
+            true,
+          );
+        }
 
         if (fieldType === 'tags') {
           const removeSet = new Set(

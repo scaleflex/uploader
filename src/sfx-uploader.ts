@@ -2434,6 +2434,21 @@ export class SfxUploader extends LitElement {
   @state() private _hasStoredReview = false;
   private _metadataAutocomplete: any = null;
   private _taxonomyService: any = null;
+  private _ultratagsService: any = null;
+
+  /**
+   * Default language for ultratags label fallback — first variant of the
+   * regional-variants "LANGUAGES" group from the metadata schema, mirroring
+   * admin's `selectMetadataRegionalVariantLanguagesGroup`. When no LANGUAGES
+   * group is defined or the user hasn't set `config.language`, the field
+   * component falls back to 'en'.
+   */
+  private get _metadataDefaultLanguage(): string | undefined {
+    const groups = this._metadataSchema?.regionalVariantsGroups;
+    if (!groups) return undefined;
+    const langGroup = groups.find((g) => g.type === 'LANGUAGES');
+    return langGroup?.variants.find(Boolean)?.api_value || undefined;
+  }
   private _videoBlobUrls = new Map<File, string>();
 
   /** Persisted ETA — holds the last computed value so the display doesn't flicker when speed momentarily drops to 0. */
@@ -3240,7 +3255,7 @@ export class SfxUploader extends LitElement {
     if (!mc || !this._apiBase || !this._authHeaders) return;
 
     try {
-      const { fetchMetadataSchema, createTagsAutocomplete, createTaxonomyService } = await import(
+      const { fetchMetadataSchema, createTagsAutocomplete, createTaxonomyService, createUltratagsService } = await import(
         "./metadata"
       );
       const baseSchema = await fetchMetadataSchema(
@@ -3249,16 +3264,20 @@ export class SfxUploader extends LitElement {
         mc.projectUuid,
         mc,
       );
-      // Construct the autocomplete + taxonomy services BEFORE assigning the
-      // schema. The schema is a `@state` property whose assignment triggers a
-      // re-render; the services are plain fields, so if we set them after,
-      // the render scheduled by the schema set reads them as `null` and
-      // child fields mount without a service.
+      // Construct the autocomplete + taxonomy + ultratags services BEFORE
+      // assigning the schema. The schema is a `@state` property whose
+      // assignment triggers a re-render; the services are plain fields, so if
+      // we set them after, the render scheduled by the schema set reads them as
+      // `null` and child fields mount without a service.
       this._metadataAutocomplete = createTagsAutocomplete(
         this._apiBase,
         this._authHeaders,
       );
       this._taxonomyService = createTaxonomyService(
+        this._apiBase,
+        this._authHeaders,
+      );
+      this._ultratagsService = createUltratagsService(
         this._apiBase,
         this._authHeaders,
       );
@@ -5916,6 +5935,8 @@ export class SfxUploader extends LitElement {
                     .config=${this.config.metadataConfig}
                     .autocomplete=${this._metadataAutocomplete}
                     .taxonomyService=${this._taxonomyService}
+                    .ultratags=${this._ultratagsService}
+                    .defaultLanguage=${this._metadataDefaultLanguage}
                     .taxonodes=${previewFile.taxonodes ?? null}
                   ></sfx-metadata-form>
                 </div>
@@ -6232,6 +6253,8 @@ export class SfxUploader extends LitElement {
                 .config=${this.config?.metadataConfig ?? null}
                 .autocomplete=${this._metadataAutocomplete}
                 .taxonomyService=${this._taxonomyService}
+                .ultratags=${this._ultratagsService}
+                .defaultLanguage=${this._metadataDefaultLanguage}
                 .initialFieldKey=${this._bulkMetadataInitialFieldKey}
                 @metadata-save-batch=${this._onBulkMetadataSaveBatch}
                 @product-save-batch=${this._onBulkProductSaveBatch}

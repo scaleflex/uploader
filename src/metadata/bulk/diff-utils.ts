@@ -1,4 +1,6 @@
 import type { MetadataField, MetadataConfig } from '../schema/schema.types';
+import type { UltratagsValueItem } from '../ultratags/ultratags.types';
+import { extractUltratagItems, resolveLabel } from '../ultratags/ultratags.utils';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -28,7 +30,7 @@ export type FieldDiff = ScalarDiff | ArrayDiff;
 // Array field types
 // ---------------------------------------------------------------------------
 
-const ARRAY_TYPES = new Set(['multi-select', 'tags']);
+const ARRAY_TYPES = new Set(['multi-select', 'tags', 'ultratags']);
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -156,6 +158,46 @@ function diffTags(oldArr: unknown[], newArr: unknown[]): ArrayDiffItem[] {
   return items;
 }
 
+/**
+ * Diff ultratags by stable identity (`sid` > `slug` > `uuid`) so a tag that
+ * round-trips with extra `i18n` fields doesn't show as removed+added. Labels
+ * are resolved per-language via the same fallback chain as the pill renderer.
+ */
+function diffUltratags(
+  oldRaw: unknown,
+  newRaw: unknown,
+  language: string | undefined,
+): ArrayDiffItem[] {
+  const oldItems = extractUltratagItems(oldRaw);
+  const newItems = extractUltratagItems(newRaw);
+  const lang = language || 'en';
+  const keyOf = (item: UltratagsValueItem): string =>
+    item.sid || item.slug || item.uuid || '';
+  const labelOf = (item: UltratagsValueItem): string => {
+    const resolved = resolveLabel(
+      { i18n: item.i18n, slug: item.slug || '' },
+      lang,
+      lang,
+    ).value;
+    return resolved || item.slug || item.sid || '';
+  };
+  const oldKeys = new Set(oldItems.map(keyOf).filter(Boolean));
+  const newKeys = new Set(newItems.map(keyOf).filter(Boolean));
+
+  const items: ArrayDiffItem[] = [];
+  for (const item of newItems) {
+    const key = keyOf(item);
+    items.push({ label: labelOf(item), state: oldKeys.has(key) ? 'kept' : 'added' });
+  }
+  for (const item of oldItems) {
+    const key = keyOf(item);
+    if (!newKeys.has(key)) {
+      items.push({ label: labelOf(item), state: 'removed' });
+    }
+  }
+  return items;
+}
+
 function diffMultiSelect(
   oldArr: unknown[],
   newArr: unknown[],
@@ -195,6 +237,17 @@ export function computeFieldDiff(
   const newV = extractRegionalVariant(newValue, field, language);
 
   if (ARRAY_TYPES.has(field.type)) {
+    // Ultratags storage may be a per-language map; `extractRegionalVariant`
+    // above strips the wrap for regional-variant fields, but ultratags are
+    // language-independent and read from the raw value. Pass `oldValue` /
+    // `newValue` directly so `extractUltratagItems` sees the full payload.
+    if (field.type === 'ultratags') {
+      return {
+        kind: 'array',
+        items: diffUltratags(oldValue, newValue, language),
+      };
+    }
+
     const oldArr = toArray(oldV);
     const newArr = toArray(newV);
 

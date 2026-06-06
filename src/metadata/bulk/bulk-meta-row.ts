@@ -29,6 +29,8 @@ export class SfxBulkMetaRow extends LitElement {
   @property({ attribute: false }) config: MetadataConfig | null = null;
   @property({ attribute: false }) autocomplete: unknown;
   @property({ attribute: false }) taxonomyService: unknown;
+  @property({ attribute: false }) ultratags: unknown;
+  @property({ attribute: false }) defaultLanguage?: string;
 
   @state() private _error: string | null = null;
 
@@ -170,6 +172,9 @@ export class SfxBulkMetaRow extends LitElement {
                   .autocomplete=${this.autocomplete}
                   .taxonomyService=${this.taxonomyService}
                   .taxonomyEntry=${this.taxonomyEntry}
+                  .ultratags=${this.ultratags}
+                  .language=${this.config?.language}
+                  .defaultLanguage=${this.defaultLanguage}
                 ></sfx-metadata-field-edit>
               </div>
               ${this._error

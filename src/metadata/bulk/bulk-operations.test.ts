@@ -6,13 +6,13 @@ import type { MetadataFieldType } from '../schema/schema.types';
 // ---------------------------------------------------------------------------
 
 describe('getAvailableOperations', () => {
-  const arrayTypes: MetadataFieldType[] = ['multi-select', 'tags'];
+  const arrayTypes: MetadataFieldType[] = ['multi-select', 'tags', 'ultratags'];
   const textTypes: MetadataFieldType[] = ['text', 'textarea', 'attachment-uri'];
   const scalarTypes: MetadataFieldType[] = [
     'numeric', 'decimal2', 'boolean', 'date', 'select-one', 'geopoint', 'taxonomy-node',
   ];
   const unsupportedTypes: MetadataFieldType[] = [
-    'asset-attachments', 'attachments-assets', 'integer-list', 'ultratags',
+    'asset-attachments', 'attachments-assets', 'integer-list',
   ];
 
   it.each(unsupportedTypes)('returns [] for unsupported type %s', (type) => {
@@ -127,6 +127,38 @@ describe('applyBulkOperation ADD', () => {
     });
   });
 
+  describe('ultratags (sid/slug deduplication)', () => {
+    it('appends new items', () => {
+      const cur = [{ slug: 'rose', sid: '#utrose' }];
+      const inc = [{ slug: 'lily', sid: '#utlily' }];
+      expect(applyBulkOperation('ADD', cur, inc, 'ultratags')).toEqual([
+        { slug: 'rose', sid: '#utrose' },
+        { slug: 'lily', sid: '#utlily' },
+      ]);
+    });
+
+    it('deduplicates by sid', () => {
+      const cur = [{ slug: 'rose', sid: '#utrose' }];
+      const inc = [{ slug: 'red-rose', sid: '#utrose' }];
+      expect(applyBulkOperation('ADD', cur, inc, 'ultratags')).toEqual([
+        { slug: 'rose', sid: '#utrose' },
+      ]);
+    });
+
+    it('deduplicates by slug when sid is absent', () => {
+      const cur = [{ slug: 'rose' }];
+      const inc = [{ slug: 'rose', i18n: { en: 'Rose' } }];
+      expect(applyBulkOperation('ADD', cur, inc, 'ultratags')).toEqual([
+        { slug: 'rose' },
+      ]);
+    });
+
+    it('handles null current value', () => {
+      const inc = [{ slug: 'rose', sid: '#utrose' }];
+      expect(applyBulkOperation('ADD', null, inc, 'ultratags')).toEqual(inc);
+    });
+  });
+
   describe('multi-select (JSON.stringify deduplication)', () => {
     it('appends new values', () => {
       expect(applyBulkOperation('ADD', ['v1'], ['v2'], 'multi-select')).toEqual(['v1', 'v2']);
@@ -176,6 +208,35 @@ describe('applyBulkOperation DELETE', () => {
 
     it('handles null current value', () => {
       expect(applyBulkOperation('DELETE', null, ['v1'], 'multi-select')).toEqual([]);
+    });
+  });
+
+  describe('ultratags (sid/slug match)', () => {
+    it('removes the matched entry by sid', () => {
+      const cur = [
+        { slug: 'rose', sid: '#utrose' },
+        { slug: 'lily', sid: '#utlily' },
+      ];
+      const inc = [{ sid: '#utrose' }];
+      expect(applyBulkOperation('DELETE', cur, inc, 'ultratags')).toEqual([
+        { slug: 'lily', sid: '#utlily' },
+      ]);
+    });
+
+    it('removes by slug when sid missing', () => {
+      const cur = [{ slug: 'rose' }, { slug: 'lily' }];
+      const inc = [{ slug: 'lily' }];
+      expect(applyBulkOperation('DELETE', cur, inc, 'ultratags')).toEqual([{ slug: 'rose' }]);
+    });
+
+    it('ignores non-existing items', () => {
+      const cur = [{ slug: 'rose' }];
+      const inc = [{ slug: 'orchid' }];
+      expect(applyBulkOperation('DELETE', cur, inc, 'ultratags')).toEqual(cur);
+    });
+
+    it('handles null current value', () => {
+      expect(applyBulkOperation('DELETE', null, [{ slug: 'rose' }], 'ultratags')).toEqual([]);
     });
   });
 

@@ -3,6 +3,7 @@ import { property } from 'lit/decorators.js';
 import type { MetadataField } from './schema/schema.types';
 import { isUnsupportedField } from './schema/schema.types';
 import type { TaxonodeEntry } from './taxonomies/taxonomies.types';
+import type { UltratagsValueItem } from './ultratags/ultratags.types';
 
 /**
  * Thin dispatcher that renders the correct field editor based on field.type.
@@ -19,6 +20,10 @@ export class SfxMetadataFieldEdit extends LitElement {
   @property({ attribute: false }) autocomplete: unknown;
   @property({ attribute: false }) taxonomyService: unknown;
   @property({ attribute: false }) taxonomyEntry: TaxonodeEntry | null = null;
+  @property({ attribute: false }) ultratags: unknown;
+  @property({ attribute: false }) language?: string;
+  @property({ attribute: false }) defaultLanguage?: string;
+  @property({ attribute: false }) ultratagsRestrictToItems: UltratagsValueItem[] | null = null;
   @property({ type: Boolean }) disabled = false;
 
   render() {
@@ -46,6 +51,15 @@ export class SfxMetadataFieldEdit extends LitElement {
 
       case 'tags':
         return html`<sfx-meta-tags-field .field=${f} .value=${v} .autocomplete=${this.autocomplete} ?disabled=${d}></sfx-meta-tags-field>`;
+
+      case 'ultratags':
+        return html`<sfx-meta-ultratags-field
+          .field=${f} .value=${v}
+          .ultratags=${this.ultratags}
+          .language=${this.language}
+          .defaultLanguage=${this.defaultLanguage}
+          .restrictToItems=${this.ultratagsRestrictToItems ?? undefined}
+          ?disabled=${d}></sfx-meta-ultratags-field>`;
 
       case 'taxonomy-node':
         return html`<sfx-meta-taxonomy-node-field .field=${f} .value=${v} .taxonomyService=${this.taxonomyService} .entry=${this.taxonomyEntry} ?disabled=${d}></sfx-meta-taxonomy-node-field>`;

@@ -14,6 +14,7 @@ import {
 } from './bulk-operations';
 import { bulkOpBarStyles } from './bulk-metadata.styles';
 import type { TaxonodeEntry } from '../taxonomies/taxonomies.types';
+import type { UltratagsValueItem } from '../ultratags/ultratags.types';
 
 /**
  * Operation bar for bulk metadata editing.
@@ -25,6 +26,15 @@ export class SfxBulkMetaOpBar extends LitElement {
   @property({ attribute: false }) field!: MetadataField;
   @property({ attribute: false }) autocomplete: unknown;
   @property({ attribute: false }) taxonomyService: unknown;
+  @property({ attribute: false }) ultratags: unknown;
+  @property({ attribute: false }) defaultLanguage?: string;
+  /**
+   * Union of ultratag items currently set on the selected files. Passed to
+   * the ultratags editor as `restrictToItems` when the user picks the Delete
+   * operation, so the dropdown only suggests tags actually present on the
+   * selection (admin parity).
+   */
+  @property({ attribute: false }) ultratagsPresentOnSelection: UltratagsValueItem[] = [];
   @property({ attribute: false }) config: MetadataConfig | null = null;
   @property({ type: Number }) selectedCount = 0;
 
@@ -39,6 +49,7 @@ export class SfxBulkMetaOpBar extends LitElement {
     switch (type) {
       case 'multi-select':
       case 'tags':
+      case 'ultratags':
         return [];
       case 'boolean':
         return 'null';
@@ -47,7 +58,6 @@ export class SfxBulkMetaOpBar extends LitElement {
       case 'asset-attachments':
       case 'attachments-assets':
       case 'integer-list':
-      case 'ultratags':
         // Unsupported types never reach an editor; the value is irrelevant.
         return null;
       case 'taxonomy-node':
@@ -298,6 +308,14 @@ export class SfxBulkMetaOpBar extends LitElement {
                     .autocomplete=${this.autocomplete}
                     .taxonomyService=${this.taxonomyService}
                     .taxonomyEntry=${this._pendingTaxonode}
+                    .ultratags=${this.ultratags}
+                    .language=${this.config?.language}
+                    .defaultLanguage=${this.defaultLanguage}
+                    .ultratagsRestrictToItems=${
+                      this.field.type === 'ultratags' && this._operation === 'DELETE'
+                        ? this.ultratagsPresentOnSelection
+                        : null
+                    }
                   ></sfx-metadata-field-edit>
                 </div>
               </div>

@@ -77,11 +77,11 @@ describe('isFieldRequired', () => {
     expect(isFieldRequired(field)).toBe(false);
   });
 
-  it('returns false for ultratags even if listed in config.requiredFields', () => {
+  it('honors required for ultratags when listed in config.requiredFields (supported during upload)', () => {
     const field = makeField({ ckey: 'ut', type: 'ultratags', required: 0 });
     expect(
       isFieldRequired(field, { projectUuid: 'p', requiredFields: ['ut'] }),
-    ).toBe(false);
+    ).toBe(true);
   });
 
   it('honors required for taxonomy-node (supported during upload)', () => {

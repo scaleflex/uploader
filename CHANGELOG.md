@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `ultratags` (custom tags) is now an editable field type during upload, matching the admin app's vocabulary editor:
+  - Search the project vocabulary via `GET /v5/meta/ultratags?meta=…&q=…&format=regvar:api` (debounced 300 ms, min 2 characters, AbortController on each new keystroke).
+  - Create new entries on the fly via `POST /v5/meta/ultratags` with `mode: 'upsert'` — the dropdown's "Create '<query>'" affordance fires the POST and appends the returned `output[0]` (enriched with `sid` + `uuid`) to the field value.
+  - Pills resolve labels using the same fallback chain as admin (`lang` → `~LANG` regional variant → `defaultLang`); prefilled values that arrive as SIDs (`#ut…`) are resolved once on mount via `QUERY /v5/meta/ultratags` with `{ ultratags_sids: […] }` so chips render readable text.
+  - Bulk-edit Set / Add / Remove are wired through `applyBulkOperation`, deduplicating by `sid || slug || uuid`. The bulk Remove dropdown is restricted to the union of tags actually present on the selected files (admin parity).
+  - New `createUltratagsService(apiBase, headers)` factory exported from the metadata module; wired automatically in `_preloadMetadataSchema` alongside the tags and taxonomy services.
 - Cloud connector browser improvements:
   - **Folder upload** — folders in cloud listings (Google Drive, Dropbox, OneDrive, Box) now have a checkbox. Selecting one or more folders and clicking *Add* recursively walks each folder via Companion and uploads every file inside, preserving hierarchy through `UploadFile.relativeFolder` (the same plumbing used for local drag-and-drop folder uploads). A busy overlay reports progress while traversal runs.
   - **Back vs close split** — the top-left arrow now navigates to the *parent folder* and is disabled at root. A new **close (×) button** at the top right dismisses the modal. Previously the arrow closed the modal even mid-navigation.

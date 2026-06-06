@@ -62,6 +62,8 @@ export class SfxMetadataForm extends LitElement {
   @property({ attribute: false }) config: MetadataConfig | null = null;
   @property({ attribute: false }) autocomplete: unknown;
   @property({ attribute: false }) taxonomyService: unknown;
+  @property({ attribute: false }) ultratags: unknown;
+  @property({ attribute: false }) defaultLanguage?: string;
   @property({ attribute: false }) taxonodes: Record<string, TaxonodeEntry | null> | null = null;
   @property({ type: Boolean }) disabled = false;
 
@@ -102,6 +104,8 @@ export class SfxMetadataForm extends LitElement {
                       .autocomplete=${this.autocomplete}
                       .taxonomyService=${this.taxonomyService}
                       .taxonomyEntry=${this.taxonodes?.[f.key] ?? null}
+                      .ultratags=${this.ultratags}
+                      .defaultLanguage=${this.defaultLanguage}
                       ?disabled=${this.disabled}
                     ></sfx-metadata-field>
                   `,

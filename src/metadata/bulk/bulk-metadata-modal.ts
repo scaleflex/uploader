@@ -19,6 +19,8 @@ import { missingRequiredFieldKeysInStaged } from '../schema/required-fields';
 import { computeBulkResult, isValueRequiredForPreview, type BulkOperation, type PendingOp } from './bulk-operations';
 import { bulkModalStyles } from './bulk-metadata.styles';
 import type { TaxonodeEntry } from '../taxonomies/taxonomies.types';
+import type { UltratagsValueItem } from '../ultratags/ultratags.types';
+import { extractUltratagItems, mergeUltratagItems } from '../ultratags/ultratags.utils';
 
 /**
  * Full-screen overlay modal for bulk metadata editing.
@@ -33,6 +35,8 @@ export class SfxBulkMetadataModal extends LitElement {
   @property({ attribute: false }) config: MetadataConfig | null = null;
   @property({ attribute: false }) autocomplete: unknown;
   @property({ attribute: false }) taxonomyService: unknown;
+  @property({ attribute: false }) ultratags: unknown;
+  @property({ attribute: false }) defaultLanguage?: string;
   /** When set, the modal opens with this field active instead of the first one. */
   @property({ attribute: false }) initialFieldKey: string | null = null;
 
@@ -204,6 +208,27 @@ export class SfxBulkMetadataModal extends LitElement {
 
   private get _activeField(): MetadataField | undefined {
     return this.schema?.fieldsByKey?.get(this._activeFieldKey);
+  }
+
+  /**
+   * Union of ultratag items currently present on the selected files for the
+   * active ultratags field. Feeds the op-bar's `restrictToItems` so the bulk
+   * Delete dropdown only suggests tags actually present on the selection.
+   */
+  private get _ultratagsPresentOnSelection(): UltratagsValueItem[] {
+    const field = this._activeField;
+    if (!field || field.type !== 'ultratags') return [];
+    let union: Array<UltratagsValueItem | string> = [];
+    for (const fileId of this._selected) {
+      const file = this._originalFiles.get(fileId);
+      const staged = this._staged.get(fileId)?.get(field.key);
+      const raw = staged !== undefined ? staged : file?.meta?.[field.key];
+      const items = extractUltratagItems(raw);
+      if (items.length) {
+        union = mergeUltratagItems(union, items, false);
+      }
+    }
+    return union.filter((item): item is UltratagsValueItem => typeof item !== 'string');
   }
 
   /**
@@ -676,6 +701,9 @@ export class SfxBulkMetadataModal extends LitElement {
                       .field=${field}
                       .autocomplete=${this.autocomplete}
                       .taxonomyService=${this.taxonomyService}
+                      .ultratags=${this.ultratags}
+                      .defaultLanguage=${this.defaultLanguage}
+                      .ultratagsPresentOnSelection=${this._ultratagsPresentOnSelection}
                       .config=${this.config}
                       .selectedCount=${this._selected.size}
                       @bulk-apply=${this._onBulkApply}
@@ -717,6 +745,8 @@ export class SfxBulkMetadataModal extends LitElement {
                         .config=${this.config}
                         .autocomplete=${this.autocomplete}
                         .taxonomyService=${this.taxonomyService}
+                        .ultratags=${this.ultratags}
+                        .defaultLanguage=${this.defaultLanguage}
                         @row-field-change=${this._onRowFieldChange}
                         @row-toggle=${this._onRowToggle}
                         @row-taxonomy-entry=${this._onRowTaxonomyEntry}

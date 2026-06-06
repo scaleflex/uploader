@@ -4,6 +4,8 @@ import type { MetadataField, GeoPoint, TagOption } from './schema/schema.types';
 import { isUnsupportedField } from './schema/schema.types';
 import { UNSUPPORTED_FIELD_MESSAGE } from './fields/unsupported-field';
 import type { TaxonodeEntry } from './taxonomies/taxonomies.types';
+import type { UltratagsValueItem } from './ultratags/ultratags.types';
+import { resolveLabel } from './ultratags/ultratags.utils';
 
 export class SfxMetadataFieldView extends LitElement {
   static styles = css`
@@ -37,6 +39,8 @@ export class SfxMetadataFieldView extends LitElement {
   @property({ attribute: false }) field!: MetadataField;
   @property({ attribute: false }) value: unknown;
   @property({ attribute: false }) taxonomyEntry: TaxonodeEntry | null = null;
+  @property({ attribute: false }) language?: string;
+  @property({ attribute: false }) defaultLanguage?: string;
 
   private _formatValue(): string | ReturnType<typeof html> {
     const v = this.value;
@@ -95,6 +99,24 @@ export class SfxMetadataFieldView extends LitElement {
       case 'tags': {
         if (!Array.isArray(v) || v.length === 0) return '';
         return (v as TagOption[]).map(t => t.label || t.value).join(', ');
+      }
+
+      case 'ultratags': {
+        if (!Array.isArray(v) || v.length === 0) return '';
+        const lang = this.language || 'en';
+        const defaultLang = this.defaultLanguage || lang;
+        return (v as Array<UltratagsValueItem | string>)
+          .map((item) => {
+            if (typeof item === 'string') return item;
+            const resolved = resolveLabel(
+              { i18n: item.i18n, slug: item.slug || '' },
+              lang,
+              defaultLang,
+            ).value;
+            return resolved || item.slug || item.sid || '';
+          })
+          .filter(Boolean)
+          .join(', ');
       }
 
       case 'taxonomy-node': {

@@ -7,6 +7,7 @@ import { isFieldRequired } from './schema/required-fields';
 import { mapValueToBackend, mapValueFromBackend } from './schema/value-transforms';
 import { metadataFieldStyles } from './metadata.styles';
 import type { TaxonodeEntry } from './taxonomies/taxonomies.types';
+import type { UltratagsValueItem } from './ultratags/ultratags.types';
 
 export class SfxMetadataFieldEl extends LitElement {
   static styles = [metadataFieldStyles];
@@ -17,6 +18,9 @@ export class SfxMetadataFieldEl extends LitElement {
   @property({ attribute: false }) autocomplete: unknown;
   @property({ attribute: false }) taxonomyService: unknown;
   @property({ attribute: false }) taxonomyEntry: TaxonodeEntry | null = null;
+  @property({ attribute: false }) ultratags: unknown;
+  @property({ attribute: false }) defaultLanguage?: string;
+  @property({ attribute: false }) ultratagsRestrictToItems: UltratagsValueItem[] | null = null;
   @property({ type: Boolean }) disabled = false;
 
   @state() private _error: string | null = null;
@@ -86,6 +90,14 @@ export class SfxMetadataFieldEl extends LitElement {
         return html`<sfx-meta-multi-select-field .field=${f} .value=${v} ?disabled=${d}></sfx-meta-multi-select-field>`;
       case 'tags':
         return html`<sfx-meta-tags-field .field=${f} .value=${v} .autocomplete=${this.autocomplete} ?disabled=${d}></sfx-meta-tags-field>`;
+      case 'ultratags':
+        return html`<sfx-meta-ultratags-field
+          .field=${f} .value=${v}
+          .ultratags=${this.ultratags}
+          .language=${this.config?.language}
+          .defaultLanguage=${this.defaultLanguage}
+          .restrictToItems=${this.ultratagsRestrictToItems ?? undefined}
+          ?disabled=${d}></sfx-meta-ultratags-field>`;
       case 'taxonomy-node':
         return html`<sfx-meta-taxonomy-node-field .field=${f} .value=${v} .taxonomyService=${this.taxonomyService} .entry=${this.taxonomyEntry} ?disabled=${d}></sfx-meta-taxonomy-node-field>`;
       case 'boolean':

@@ -4,6 +4,8 @@ import type {
   TagOption,
 } from './schema.types';
 import type { UploadFile } from '../../store/store.types';
+import type { UltratagsValueItem } from '../ultratags/ultratags.types';
+import { extractUltratagItems } from '../ultratags/ultratags.utils';
 
 // ---------------------------------------------------------------------------
 // Backend → Frontend
@@ -47,6 +49,12 @@ export function mapValueFromBackend(
       return (value as unknown[]).map(t =>
         typeof t === 'string' ? { value: t, label: t } : t,
       );
+
+    case 'ultratags':
+      // Backend may return a flat array (slugs / objects) or a per-language map
+      // (`{ lang: [{slug,sid,label}, …] }`); extractUltratagItems handles both
+      // by merging into the enriched UltratagsValueItem[] the UI works with.
+      return extractUltratagItems(rawValue);
 
     case 'multi-select':
       return value || [];
@@ -110,6 +118,19 @@ export function mapValueToBackend(
         : [];
       break;
 
+    case 'ultratags':
+      // BE autocomplete returns "~XX" placeholders in `i18n` for languages not
+      // yet filled in. Sending the full item back would overwrite real
+      // translations with those placeholders, so the save payload carries
+      // slugs only (admin parity, see
+      // js-admin-react-filerobot-v5/src/features/asset-details/utils/map-metadata-values-to-backend.ts).
+      transformed = Array.isArray(value)
+        ? (value as Array<UltratagsValueItem | string>)
+            .map((item) => (typeof item === 'string' ? item : item.slug))
+            .filter((slug): slug is string => !!slug)
+        : [];
+      break;
+
     case 'select-one':
       transformed = value === '' ? null : value;
       break;
@@ -132,8 +153,10 @@ export function mapValueToBackend(
       transformed = value;
   }
 
-  // Wrap regional variants
-  if (field.regional_variants_group_uuid) {
+  // Wrap regional variants. Ultratags are language-independent — their
+  // `regional_variants_group_uuid` only drives label fallback for display, not
+  // per-language storage, so the flat array is saved as-is (admin parity).
+  if (field.regional_variants_group_uuid && field.type !== 'ultratags') {
     const lang = language ?? 'en';
     const existing =
       (file?.meta?.[field.key] as Record<string, unknown> | undefined) ?? {};

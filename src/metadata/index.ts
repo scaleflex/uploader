@@ -9,6 +9,13 @@ export { isAssetHasMetadataValue, getFilesWithMissingRequired, deepMergeMeta } f
 export { createTagsAutocomplete } from './tags/tags-autocomplete';
 export { createTaxonomyService } from './taxonomies/taxonomies-service';
 export type { TaxonomyService } from './taxonomies/taxonomies-service';
+export { createUltratagsService } from './ultratags/ultratags-service';
+export type {
+  UltratagEntry,
+  UltratagsServiceLike,
+  UltratagsValue,
+  UltratagsValueItem,
+} from './ultratags/ultratags.types';
 
 export type {
   MetadataSchema,
@@ -42,6 +49,7 @@ import './fields/number-field';
 import './fields/date-field';
 import './fields/geo-point-field';
 import './fields/taxonomy-node-field';
+import './fields/ultratags-field';
 import './fields/unsupported-field';
 
 // Import dispatcher components (side effect)

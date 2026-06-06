@@ -33,6 +33,8 @@ export class SfxMetadataPanel extends LitElement {
   @property({ attribute: false }) config: MetadataConfig | null = null;
   @property({ attribute: false }) autocomplete: unknown = null;
   @property({ attribute: false }) taxonomyService: unknown = null;
+  @property({ attribute: false }) ultratags: unknown = null;
+  @property({ attribute: false }) defaultLanguage?: string;
 
   /** Local copy of the current file's taxonomy entries (single-file mode). */
   @state() private _localTaxonodes: Record<string, TaxonodeEntry | null> = {};
@@ -275,6 +277,8 @@ export class SfxMetadataPanel extends LitElement {
           .config=${this.config}
           .autocomplete=${this.autocomplete}
           .taxonomyService=${this.taxonomyService}
+          .ultratags=${this.ultratags}
+          .defaultLanguage=${this.defaultLanguage}
           .taxonodes=${this._localTaxonodes}
         ></sfx-metadata-form>
       </div>

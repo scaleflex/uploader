@@ -178,4 +178,76 @@ describe('mapValueToBackend', () => {
       expect(mapValueToBackend(field, 'Hello')).toEqual({ en: 'Hello' });
     });
   });
+
+  describe('ultratags', () => {
+    const field = makeField({ type: 'ultratags' });
+
+    it('maps the items array to a flat slug-string array (admin parity, drops i18n placeholders)', () => {
+      expect(
+        mapValueToBackend(field, [
+          { slug: 'rose', sid: '#utrose', i18n: { en: 'Rose' } },
+          { slug: 'lily', sid: '#utlily', i18n: { en: 'Lily', '~FR': 'Lily' } },
+        ]),
+      ).toEqual(['rose', 'lily']);
+    });
+
+    it('passes through bare-string slugs', () => {
+      expect(mapValueToBackend(field, ['rose', 'lily'])).toEqual(['rose', 'lily']);
+    });
+
+    it('filters out items without a slug', () => {
+      expect(
+        mapValueToBackend(field, [{ sid: '#utorphan' }, { slug: 'rose' }]),
+      ).toEqual(['rose']);
+    });
+
+    it('defaults to [] when value is not an array', () => {
+      expect(mapValueToBackend(field, null)).toEqual([]);
+      expect(mapValueToBackend(field, undefined)).toEqual([]);
+    });
+
+    it('does NOT wrap as {lang: …} even when the field has a regional_variants_group_uuid', () => {
+      const regional = makeField({ type: 'ultratags', regional_variants_group_uuid: 'rv-group-1' });
+      expect(
+        mapValueToBackend(regional, [{ slug: 'rose' }], undefined, 'fr'),
+      ).toEqual(['rose']);
+    });
+  });
+});
+
+describe('mapValueFromBackend: ultratags', () => {
+  const field = makeField({ type: 'ultratags' });
+
+  it('extracts a flat slug array into enriched items', () => {
+    expect(mapValueFromBackend(field, ['rose', 'lily'])).toEqual([
+      { slug: 'rose' },
+      { slug: 'lily' },
+    ]);
+  });
+
+  it('aggregates a per-language map into a single set of items with merged i18n', () => {
+    const raw = {
+      en: [{ slug: 'rose', sid: '#utrose', label: 'Rose' }],
+      fr: [{ slug: 'rose', sid: '#utrose', label: 'Rose FR' }],
+    };
+    expect(mapValueFromBackend(field, raw)).toEqual([
+      { slug: 'rose', sid: '#utrose', i18n: { en: 'Rose', fr: 'Rose FR' } },
+    ]);
+  });
+
+  it('ignores regional_variants_group_uuid for ultratags (reads the full raw value)', () => {
+    const regional = makeField({ type: 'ultratags', regional_variants_group_uuid: 'rv-group-1' });
+    const raw = {
+      en: [{ slug: 'rose', sid: '#utrose', label: 'Rose' }],
+      fr: [{ slug: 'rose', sid: '#utrose', label: 'Rose FR' }],
+    };
+    expect(mapValueFromBackend(regional, raw, 'en')).toEqual([
+      { slug: 'rose', sid: '#utrose', i18n: { en: 'Rose', fr: 'Rose FR' } },
+    ]);
+  });
+
+  it('returns [] for null/undefined', () => {
+    expect(mapValueFromBackend(field, null)).toEqual([]);
+    expect(mapValueFromBackend(field, undefined)).toEqual([]);
+  });
 });

@@ -2,8 +2,8 @@ import { LitElement, html, css, svg, type TemplateResult } from 'lit';
 
 /**
  * Shown in place of an editor for metadata field types the uploader can't
- * support before the asset exists (file attachments, ultratags, taxonomy
- * nodes). Pure placeholder — no inputs, no events.
+ * support before the asset exists (file attachments, integer-list).
+ * Pure placeholder — no inputs, no events.
  */
 export const UNSUPPORTED_FIELD_MESSAGE =
   'This field is not supported during upload. You can edit it later in the asset library.';
