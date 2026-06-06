@@ -155,6 +155,30 @@ export interface RemoteThumbnailContext {
   providerId?: import('./connectors/connector.types').ProviderId;
 }
 
+/** One similar asset returned by the embedding/similarity endpoint. */
+export interface SimilarAsset {
+  uuid: string;
+  /** Similarity score 0..1. */
+  score: number;
+  /** CDN url of the similar asset (preview + open target). */
+  url: string;
+  // TODO(dev): the similarity response only returns uuid/score/url. Populate the
+  // fields below if the backend adds them (or a metadata lookup is done) — the
+  // results card shows size/resolution only when present.
+  /** Display name (defaults to the filename derived from `url`). */
+  name?: string;
+  /** File size in bytes. */
+  size?: number;
+  /** Pixel dimensions. */
+  width?: number;
+  height?: number;
+}
+
+/** Max images that can be selected for a single similarity check (FRA-10365). */
+const SIMILAR_MAX_SELECTION = 10;
+/** Resolution options for the video-transcode setting (Upload settings panel). */
+const SETTINGS_RESOLUTIONS = ["Auto", "1080p", "720p", "480p"] as const;
+
 export interface UploaderConfig {
   auth: AuthConfig;
   targetFolder?: string;
@@ -176,6 +200,40 @@ export interface UploaderConfig {
   connectors?: ConnectorConfig;
   /** Show "Fill Metadata" button in the actions bar. */
   showFillMetadata?: boolean;
+  /**
+   * Enable the "Check similar assets" feature (gated). When enabled, a
+   * "Check similar" button appears in the actions bar and on image tiles,
+   * letting the user check uploaded images against similar assets in the
+   * library. The settings screen and similarity-confidence docs are handled
+   * separately; `confidence` maps to the backend similarity threshold.
+   */
+  similarityCheck?: { enabled: boolean; confidence?: "low" | "mid" | "high" };
+  /**
+   * The "Upload settings" panel is always available — a gear button in the
+   * header opens a global settings panel in the preview side area, letting the
+   * user configure image resizing, video transcoding and resumable (tus)
+   * uploads before uploading. This optional config only seeds the initial
+   * control values via `defaults`; the panel itself needs no flag to appear.
+   *
+   * TODO(dev): the panel currently only captures UI state. Wire the captured
+   * values to the upload flow:
+   *   - resize + maxWidth/maxHeight → image-processing upload params
+   *   - transcode + resolution + protocol → video-processing upload params
+   *   - resumable → `tusConfig` (resumable tus uploads)
+   * and seed the panel from `defaults` on first render. See
+   * mockups/FRA-10365-dev-handoff.md.
+   */
+  uploadSettings?: {
+    defaults?: {
+      resize?: boolean;
+      maxWidth?: number;
+      maxHeight?: number;
+      transcode?: boolean;
+      resolution?: "Auto" | "1080p" | "720p" | "480p";
+      protocol?: "HLS" | "DASH";
+      resumable?: boolean;
+    };
+  };
   /** Metadata editing configuration. When provided, enables the built-in metadata form. */
   metadataConfig?: MetadataConfig;
   /** Layout for the import-from sources section: horizontal pills (default) or cards grid. */
@@ -516,7 +574,8 @@ export class SfxUploader extends LitElement {
       height: 30px;
       border-radius: 8px;
       border: none;
-      background: var(--sfx-up-surface, #f8fafc);
+      /* Transparent by default — the filled background appears only on hover. */
+      background: none;
       color: var(--sfx-up-text-muted, #94a3b8);
       cursor: pointer;
       display: flex;
@@ -583,7 +642,30 @@ export class SfxUploader extends LitElement {
     }
 
     .header-btn-close {
-      margin-left: auto;
+      /* 8px gap from the settings gear to its left (when present). The button
+         group is right-aligned by .header-title's flex:1, not by an auto
+         margin — so this fixed margin only adds the gap, keeping the close
+         button flush to the right padding edge. */
+      margin-left: 8px;
+    }
+
+    /* Settings gear sits just left of the close button (title's flex:1 pushes
+       the button group to the right). No right margin so that in inline mode —
+       where there is no close button — the gear lines up with the right padding
+       edge, matching the preview panel's close button below it. The gap to the
+       close button (when present) comes from .header-btn-close's margin-left. */
+    .header-btn-settings {
+      margin-right: 0;
+    }
+    /* Active (settings open): only the icon turns brand-blue — no persistent
+       background fill. The fill still appears on hover, like every other icon. */
+    .header-btn-settings.on {
+      background: none;
+      color: var(--sfx-up-primary, #2563eb);
+    }
+    .header-btn-settings.on:hover {
+      background: var(--sfx-up-primary-bg, #eff6ff);
+      color: var(--sfx-up-primary, #2563eb);
     }
 
     /* --- Responsive header buttons --- */
@@ -875,6 +957,17 @@ export class SfxUploader extends LitElement {
     }
 
     /* --- Preview split layout --- */
+    /* Modal grid view: bigger tiles (≈4 per row at the 1100px modal width) so
+       the Details / Check similar buttons fit with their text labels instead of
+       collapsing to icons (a tile must stay wider than the 208px icon cutoff in
+       file-item.ts). Scoped to the non-preview modal grid only — inline mode and
+       the preview split layout keep their own grid-min, and the file-list
+       ≤768/≤440 column breakpoints override grid-template-columns entirely, so
+       they're unaffected. */
+    .modal-card .body > sfx-file-list {
+      --sfx-up-grid-min: 220px;
+    }
+
     .preview-layout {
       display: flex;
       flex: 1;
@@ -1019,10 +1112,18 @@ export class SfxUploader extends LitElement {
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-      padding: 24px 16px 12px;
+      /* Right padding matches the main header's (24px) so the panel's close
+         button lines up vertically with the header's close-all button. */
+      padding: 24px 24px 12px 16px;
       flex-shrink: 0;
       box-sizing: border-box;
       border-bottom: 1px solid var(--sfx-up-border, #e2e8f0);
+    }
+    /* Settings panel only: right padding 16px so the close ✕ lines up with the
+       toggles below it (settings-body padding is 16px). The file-preview header
+       keeps 24px. */
+    .preview-panel-header.settings-header {
+      padding-right: 16px;
     }
 
     /* Mobile back-arrow — hidden by default, shown at <=768px to give
@@ -1041,7 +1142,9 @@ export class SfxUploader extends LitElement {
     .preview-header-actions {
       display: flex;
       align-items: center;
-      gap: 4px;
+      /* 8px to match the header's gear↔close gap, so the second icon
+         (fullscreen) lines up vertically with the header's gear. */
+      gap: 8px;
       flex-shrink: 0;
     }
 
@@ -1058,11 +1161,14 @@ export class SfxUploader extends LitElement {
       white-space: nowrap;
     }
 
+    /* Mirror the main header's close-all button (.header-btn) so the panel's
+       close button matches it exactly and aligns on the same vertical line. */
     .preview-panel-header button {
-      width: 32px;
-      height: 32px;
-      border-radius: 6px;
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
       border: none;
+      /* Transparent by default — filled background appears only on hover. */
       background: none;
       cursor: pointer;
       display: flex;
@@ -1077,13 +1183,584 @@ export class SfxUploader extends LitElement {
     }
 
     .preview-panel-header button:hover {
-      background: var(--sfx-up-surface, #f3f4f6);
-      color: var(--sfx-up-text, #374151);
+      background: var(--sfx-up-border, #e2e8f0);
+      color: var(--sfx-up-text, #1e293b);
     }
 
     .preview-panel-header button svg {
       width: 16px;
       height: 16px;
+    }
+
+    /* --- Details / Similar tab switcher (preview side-panel) --- */
+    .preview-tabs {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      /* Symmetric vertical padding so the row is evenly centered. */
+      padding: 8px 16px;
+      flex-shrink: 0;
+      border-bottom: 1px solid var(--sfx-up-border-light, #f1f5f9);
+      /* Query container so the Discard button can drop its label when the row
+         (i.e. the panel) gets too narrow for the text to fit on one line. */
+      container-type: inline-size;
+      container-name: sfx-sim-tabs;
+    }
+    /* Discard "this image" lives at the right edge of the tab row (secondary,
+       subordinate to the primary Upload action). */
+    .preview-tab-discard {
+      margin-left: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 30px;
+      padding: 0 10px;
+      border: none;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--sfx-up-error, #dc2626);
+      font-family: inherit;
+      font-size: 12.5px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .preview-tab-discard:hover {
+      background: #fef2f2;
+    }
+    .preview-tab-discard svg {
+      width: 14px;
+      height: 14px;
+    }
+    .discard-label {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    /* On a narrow panel the Discard button drops its label and collapses to an
+       icon, so the tabs always fit on one row. The tab labels ("Details" /
+       "Similar") stay; only the secondary Discard action sheds its text.
+       320 is roughly where "Discard this image" + both tabs stop fitting. */
+    @container sfx-sim-tabs (max-width: 320px) {
+      .discard-label {
+        display: none;
+      }
+      .preview-tab-discard {
+        gap: 0;
+        padding: 0 8px;
+      }
+    }
+    .preview-tab {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 30px;
+      padding: 0 12px;
+      border: none;
+      background: none;
+      border-bottom: 2px solid transparent;
+      color: var(--sfx-up-text-muted, #5b6e82);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .preview-tab:hover {
+      color: var(--sfx-up-text, #37414b);
+    }
+    .preview-tab.active {
+      color: var(--sfx-up-primary, #2563eb);
+      border-bottom-color: var(--sfx-up-primary, #2563eb);
+    }
+    .preview-tab-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 16px;
+      height: 16px;
+      padding: 0 5px;
+      border-radius: 999px;
+      /* Light/compact: muted neutral by default; brand-colored on the active tab. */
+      background: var(--sfx-up-surface, #f1f5f9);
+      color: var(--sfx-up-text-muted, #94a3b8);
+      font-size: 10.5px;
+      font-weight: 600;
+    }
+    .preview-tab.active .preview-tab-count {
+      color: var(--sfx-up-primary, #2563eb);
+    }
+
+    /* --- Similar-assets panel body --- */
+    /* Always exactly 2 cards per row, regardless of how many similar there are
+       or how wide the panel is dragged — consistent, never a lone ballooned
+       card or a single column. minmax(0, 1fr) lets columns shrink cleanly. */
+    .psim-body {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 4px 16px 16px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      grid-auto-rows: max-content;
+      gap: 12px;
+      align-content: start;
+    }
+    /* Identical to .tile in file-item.ts. */
+    .psim-card {
+      border-radius: 10px;
+      background: var(--sfx-up-bg, #fff);
+      border: 1px solid #dde3ed;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.06);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: box-shadow 0.15s;
+    }
+    .psim-card:hover {
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06), 0 6px 16px rgba(0, 0, 0, 0.08);
+    }
+    /* Identical to .preview in file-item.ts (checker bg + 16/10). */
+    .psim-iw {
+      position: relative;
+      aspect-ratio: 16 / 10;
+      flex-shrink: 0;
+      overflow: hidden;
+      border-radius: 10px 10px 0 0;
+      background-color: var(--sfx-up-checker-bg, #fff);
+      background-image:
+        linear-gradient(45deg, var(--sfx-up-checker-tile, #f0f0f0) 25%, transparent 25%),
+        linear-gradient(-45deg, var(--sfx-up-checker-tile, #f0f0f0) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, var(--sfx-up-checker-tile, #f0f0f0) 75%),
+        linear-gradient(-45deg, transparent 75%, var(--sfx-up-checker-tile, #f0f0f0) 75%);
+      background-size: 16px 16px;
+      background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+    }
+    .psim-iw img {
+      position: absolute;
+      inset: 0;
+      margin: auto;
+      display: block;
+      max-width: 100%;
+      max-height: 100%;
+    }
+    .psim-score {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      z-index: 2;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.95);
+      color: var(--sfx-up-primary, #2563eb);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+    .psim-score.high {
+      color: var(--sfx-up-success, #15803d);
+    }
+    .psim-open {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      z-index: 2;
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      border: none;
+      background: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+      color: var(--sfx-up-primary, #2563eb);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      /* Revealed on card hover (keyboard focus also reveals it). */
+      opacity: 0;
+      transform: scale(0.92);
+      transition: opacity 0.15s ease, transform 0.15s ease;
+    }
+    .psim-card:hover .psim-open,
+    .psim-open:focus-visible {
+      opacity: 1;
+      transform: scale(1);
+    }
+    .psim-open svg {
+      width: 13px;
+      height: 13px;
+    }
+    /* Identical to .info in file-item.ts. */
+    .psim-foot {
+      padding: 8px 12px;
+      min-width: 0;
+      overflow: hidden;
+    }
+    .psim-foot-name {
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--sfx-up-text, #111827);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .psim-foot-meta {
+      font-size: 11px;
+      color: var(--sfx-up-text-muted, #5b6e82);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 2px;
+    }
+    .psim-empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: var(--sfx-up-text-muted, #94a3b8);
+      padding: 40px;
+      text-align: center;
+    }
+    .psim-empty-ic {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--sfx-up-surface, #f8fafc);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .psim-empty-ic svg {
+      width: 22px;
+      height: 22px;
+    }
+    .psim-empty b {
+      color: var(--sfx-up-text-secondary, #475569);
+      font-size: 16px;
+      font-weight: 500;
+    }
+    .psim-empty span {
+      font-size: 14px;
+    }
+
+    /* --- Upload settings panel (global) --- */
+    /* overflow:visible (not auto) so a first-row [data-tip] tooltip can extend
+       above the row without being clipped — vertical scrolling, when the
+       content is taller than the panel, is handled by the parent .preview-panel
+       (which already scrolls). Horizontal overflow is bounded by the tooltip's
+       own max-width (≤ row width), so nothing escapes the panel sideways. */
+    .settings-body {
+      flex: 1;
+      min-height: 0;
+      overflow: visible;
+      padding: 8px 16px 16px 16px;
+    }
+    .sgroup-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      /* Design token: font-medium · 16/24, color main/foreground. */
+      font-size: 16px;
+      line-height: 24px;
+      font-weight: 500;
+      color: var(--sfx-up-text, #1e293b);
+      margin: 12px 0 16px;
+    }
+    .sgroup-title-spaced {
+      margin-top: 28px;
+    }
+    .sgroup-title svg {
+      width: 20px;
+      height: 20px;
+      color: #8b9cae;
+    }
+    .srow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      /* Positioning context for the [data-tip] tooltip so it centres inside the
+         row (never wider than the row → never clipped by the panel edges). */
+      position: relative;
+    }
+    .srow-spaced {
+      margin-top: 24px;
+    }
+    .srow-lbl {
+      font-size: 16px;
+      color: var(--sfx-up-text, #1e293b);
+    }
+    .srow-spacer {
+      flex: 1;
+    }
+    /* Info icon (circle-"i" SVG) — hover shows a styled tooltip (see [data-tip]
+       below). Per design: 18.33×18.33, fill #8B9CAE. */
+    .info-i {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18.33px;
+      height: 18.33px;
+      color: #8b9cae;
+      cursor: help;
+      flex-shrink: 0;
+    }
+    .info-i svg {
+      width: 100%;
+      height: 100%;
+    }
+    /* "Beta" badge next to the Resume uploads label — per design-system specs
+       (corner-radius-15, status-success-15 border, emerald-100 bg, spacers
+       05/2 padding). Token fallbacks are hardcoded since those CSS vars aren't
+       defined in this project. */
+    .sbeta {
+      display: inline-flex;
+      align-items: center;
+      box-sizing: border-box;
+      height: 24px;
+      padding: 0 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(0, 167, 82, 0.15);
+      background: #d0fae5;
+      color: #00a752;
+      /* Design token: font-normal · 14/20. */
+      font-size: 14px;
+      line-height: 20px;
+      font-weight: 400;
+      cursor: help;
+      flex-shrink: 0;
+    }
+    /* Styled hover tooltip for any [data-tip] in the settings panel (info "i"
+       chips and the Beta pill). Matches the design-system tooltip: light
+       "main/secondary" surface, dark "main/foreground" text, shadow-sm — a
+       plain rounded rectangle (no arrow). Wraps long text. Replaces the native
+       title so it shows instantly and reads the same everywhere there's an info
+       icon. */
+    .settings-body [data-tip]::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: calc(100% + 8px);
+      /* Anchored to the row (not the icon) and centred within it, capped at the
+         row width — so it can never overflow the panel's left/right edges and
+         get clipped by the scroll container. */
+      left: 0;
+      right: 0;
+      margin-inline: auto;
+      width: max-content;
+      max-width: min(100%, 320px);
+      white-space: normal;
+      text-align: left;
+      line-height: 1.5;
+      background: var(--sfx-up-surface, #f1f5f9);
+      color: var(--sfx-up-text, #1e293b);
+      border: 1px solid var(--sfx-up-border, #e2e8f0);
+      font-size: 11.5px;
+      font-weight: 500;
+      font-style: normal;
+      padding: 9px 12px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      opacity: 0;
+      visibility: hidden;
+      transition:
+        opacity 0.15s,
+        visibility 0.15s;
+      pointer-events: none;
+      z-index: 60;
+    }
+    .settings-body [data-tip]:hover::after {
+      opacity: 1;
+      visibility: visible;
+    }
+    /* Switch toggle (matches the global brand primary). */
+    .sw-toggle {
+      width: 42px;
+      height: 24px;
+      border: none;
+      padding: 0;
+      border-radius: 999px;
+      background: var(--sfx-up-border, #cbd5e1);
+      position: relative;
+      cursor: pointer;
+      transition: background 0.15s;
+      flex: 0 0 42px;
+    }
+    .sw-toggle::after {
+      content: "";
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+      transition: left 0.15s;
+    }
+    .sw-toggle.on {
+      background: var(--sfx-up-primary, #2563eb);
+    }
+    .sw-toggle.on::after {
+      left: 21px;
+    }
+    /* Dependent fields fade + disable when their parent toggle is off. */
+    .dep-off {
+      opacity: 0.45;
+      pointer-events: none;
+    }
+    /* Input controls stay a fixed width, left-aligned (the toggles, by contrast,
+       span the full width and pin to the right edge). */
+    .sfields {
+      display: flex;
+      gap: 16px;
+      margin: 4px 0;
+      max-width: 520px;
+    }
+    .sfield {
+      flex: 1;
+      min-width: 0;
+      position: relative;
+    }
+    .sfield-block {
+      margin-bottom: 24px;
+      max-width: 520px;
+    }
+    .sfield label {
+      display: block;
+      /* Design token: font-normal · 14/20, color main/secondary-foreground. */
+      font-size: 14px;
+      line-height: 20px;
+      font-weight: 400;
+      color: var(--sfx-up-text-secondary, #475569);
+      margin-bottom: 6px;
+    }
+    /* The Protocols label sits 16px above its radio list (matches the 16px gap
+       between the radio rows); all other field labels use the 6px base above. */
+    .sfield-radios label {
+      margin-bottom: 16px;
+    }
+    .sinp {
+      display: flex;
+      align-items: center;
+      box-sizing: border-box;
+      height: 40px;
+      border: 1.5px solid var(--sfx-up-border, #e2e8f0);
+      border-radius: 8px;
+      background: var(--sfx-up-bg, #fff);
+      padding: 0 14px;
+      transition: border-color 0.12s;
+    }
+    .sinp:focus-within {
+      border-color: var(--sfx-up-primary, #2563eb);
+    }
+    .sinp input {
+      border: none;
+      background: none;
+      outline: none;
+      font: inherit;
+      font-size: 15px;
+      color: var(--sfx-up-text, #1e293b);
+      width: 100%;
+      min-width: 0;
+    }
+    .sinp .sfx {
+      font-size: 13px;
+      color: var(--sfx-up-text-muted, #94a3b8);
+      font-weight: 600;
+    }
+    .ssel {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 44px;
+      border: 1.5px solid var(--sfx-up-border, #e2e8f0);
+      border-radius: 8px;
+      background: var(--sfx-up-bg, #fff);
+      padding: 0 14px;
+      font-size: 15px;
+      color: var(--sfx-up-text, #1e293b);
+      cursor: pointer;
+      user-select: none;
+      transition: border-color 0.12s;
+    }
+    .ssel svg {
+      width: 16px;
+      height: 16px;
+      color: var(--sfx-up-text-muted, #94a3b8);
+      transition: transform 0.15s;
+    }
+    .sfield.open .ssel {
+      border-color: var(--sfx-up-primary, #2563eb);
+    }
+    .sfield.open .ssel svg {
+      transform: rotate(180deg);
+    }
+    .smenu {
+      position: absolute;
+      left: 0;
+      right: 0;
+      margin-top: 6px;
+      border: 1px solid var(--sfx-up-border, #e2e8f0);
+      border-radius: 8px;
+      background: var(--sfx-up-bg, #fff);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+      overflow: hidden;
+      z-index: 10;
+    }
+    .sopt {
+      padding: 10px 14px;
+      font-size: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--sfx-up-text, #1e293b);
+    }
+    .sopt:hover {
+      background: var(--sfx-up-border-light, #f1f5f9);
+    }
+    .sopt.cur {
+      color: var(--sfx-up-primary, #2563eb);
+      font-weight: 600;
+    }
+    .sopt svg {
+      width: 15px;
+      height: 15px;
+    }
+    .sradio-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      cursor: pointer;
+    }
+    .sradio {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 1.5px solid var(--sfx-up-border, #cbd5e1);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 20px;
+      transition: border-color 0.12s;
+    }
+    .sradio.on {
+      border-color: var(--sfx-up-primary, #2563eb);
+    }
+    .sradio.on::after {
+      content: "";
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--sfx-up-primary, #2563eb);
+    }
+    .sradio-lbl {
+      font-size: 14px;
+      color: var(--sfx-up-text, #1e293b);
     }
 
     .preview-doc-wrap {
@@ -2383,10 +3060,40 @@ export class SfxUploader extends LitElement {
   @state() private _showUrlDialog = false;
   @state() private _showCameraDialog = false;
   @state() private _showScreenCastDialog = false;
+  /** "Check similar assets": whether the image-selection mode is active. */
+  @state() private _similarSelectMode = false;
+  /** "Check similar assets": ids of images picked for the similarity check. */
+  @state() private _similarSelectedIds = new Set<string>();
+  /** Similarity search: all ids in the active run (empty = no search running). */
+  @state() private _similarRunIds: string[] = [];
+  /** Similarity search: ids currently being searched (spinner). */
+  @state() private _similarActiveIds = new Set<string>();
+  /** Similarity results per checked image id (presence = checked). The badge
+   *  shows the count ("N similar" / "No similar"); accumulates across runs. */
+  @state() private _similarResults = new Map<string, SimilarAsset[]>();
+  /** Which tab the preview side-panel shows: file details or similar assets. */
+  @state() private _previewPanelTab: "details" | "similar" = "details";
+  /** Pending timers for the simulated search progression (demo only). */
+  private _similarSimTimers: number[] = [];
+  /** Counter to vary the mock similar count across ad-hoc single checks. */
+  private _simMockCounter = 0;
   @state() private _previewFileId: string | null = null;
   @state() private _previewDims: string = "—";
   @state() private _fileInfoOpen: boolean = true;
   @state() private _splitPct = 58; // file-grid-side percentage
+  // --- Upload settings panel (global; toggled by the header gear) ---
+  /** Whether the global Upload settings panel is showing in the side area. */
+  @state() private _showSettings = false;
+  @state() private _setResize = true;
+  @state() private _setMaxW = 2000;
+  @state() private _setMaxH = 2000;
+  @state() private _setTranscode = false;
+  @state() private _setResolution: "Auto" | "1080p" | "720p" | "480p" = "Auto";
+  /** Whether the resolution custom-select dropdown is open. */
+  @state() private _setResolutionOpen = false;
+  @state() private _setProtocol: "HLS" | "DASH" = "HLS";
+  /** Resumable (tus) uploads toggle — maps to `tusConfig`. */
+  @state() private _setResumable = false;
   private _isResizing = false;
   private _splitRafId = 0;
   /** Has the default split (3/8 panel) been applied for the current preview session? */
@@ -4205,6 +4912,9 @@ export class SfxUploader extends LitElement {
       const remaining = [...this._store.getState().files.values()];
       this._previewFileId = remaining.length > 0 ? remaining[0].id : null;
     }
+    // Purge any similarity-check state for this id so the progress banner and
+    // selection don't reference a file that no longer exists.
+    this._purgeSimilarState(fileId);
     this._dispatchPublic(PublicEvents.FILE_REMOVED, { file: snapshot });
     this.config?.callbacks?.onFileRemoved?.(snapshot);
   }
@@ -4217,6 +4927,10 @@ export class SfxUploader extends LitElement {
     const file = this._store.getState().files.get(e.detail.fileId);
     if (!file) return;
     this._previewFileId = file.id;
+    // A tile action takes over the side-panel: leave the global settings view.
+    this._showSettings = false;
+    // Opening via the "Details" action always lands on the Details tab.
+    this._previewPanelTab = "details";
     this._dispatchPublic(PublicEvents.FILE_PREVIEW, { file });
     this.config?.callbacks?.onFilePreview?.(file);
   };
@@ -4234,6 +4948,283 @@ export class SfxUploader extends LitElement {
     this._dispatchPublic(PublicEvents.FILL_METADATA, { files });
     this.config?.callbacks?.onFillMetadata?.(files);
   };
+
+  // --- "Check similar assets" (FRA-10365) --------------------------------
+  // The selection UX is fully wired here; the actual similarity request is
+  // left to the engine integration — see _runSimilarityCheck below.
+
+  /** Images eligible for the similarity check (renderable images only). */
+  private _similarImageFiles(): UploadFile[] {
+    return [...this._store.getState().files.values()].filter(
+      (f) => getFileCategory(f) === "image" && !isBrowserUnrenderableImage(f.type),
+    );
+  }
+
+  /** Eligible images not yet checked — the selectable pool. Already-checked
+   *  images are "done", so selection/"Select all" skips them. */
+  private _similarUncheckedFiles(): UploadFile[] {
+    return this._similarImageFiles().filter((f) => !this._similarResults.has(f.id));
+  }
+
+  private _onCheckSimilarEnter = () => {
+    this._similarSelectedIds = new Set();
+    this._similarSelectMode = true;
+  };
+
+  private _onCheckSimilarCancel = () => {
+    this._similarSelectMode = false;
+    this._similarSelectedIds = new Set();
+  };
+
+  private _onSimilarToggle = (e: CustomEvent<{ fileId: string }>) => {
+    const id = e.detail.fileId;
+    // Reassign the Set (don't mutate) so Lit detects the change and re-renders.
+    const next = new Set(this._similarSelectedIds);
+    if (next.has(id)) {
+      next.delete(id);
+    } else {
+      // Cap selection at SIMILAR_MAX_SELECTION (FRA-10365 reviewer feedback).
+      if (next.size >= SIMILAR_MAX_SELECTION) return;
+      next.add(id);
+    }
+    this._similarSelectedIds = next;
+  };
+
+  private _onSimilarSelectAll = (e: CustomEvent<{ selected: boolean }>) => {
+    // "Select all" picks the next batch of up to SIMILAR_MAX_SELECTION images
+    // that haven't been checked yet (so it never re-selects the done ones).
+    this._similarSelectedIds = e.detail.selected
+      ? new Set(
+          this._similarUncheckedFiles()
+            .slice(0, SIMILAR_MAX_SELECTION)
+            .map((f) => f.id),
+        )
+      : new Set();
+  };
+
+  private _onCheckSimilarRun = () => {
+    const files = this._similarImageFiles().filter((f) =>
+      this._similarSelectedIds.has(f.id),
+    );
+    if (!files.length) return;
+    this._runSimilarityCheck(files);
+    this._similarSelectMode = false;
+    this._similarSelectedIds = new Set();
+  };
+
+  private _onCheckSimilarSingle = (
+    e: CustomEvent<{ fileId: string; file: UploadFile }>,
+  ) => {
+    const file = e.detail.file;
+    if (!file) return;
+    this._checkSimilarSingleFile(file);
+  };
+
+  /**
+   * Single (per-tile) check: processes one image independently and
+   * accumulatively — clicking several tiles spins them all, no click cancels
+   * another, and there is no batch progress banner (that's only for the
+   * select-all-and-Check batch).
+   *
+   * TODO(dev): replace the simulated timeout with the real per-image API call
+   * (render w=300 → POST embedding). Multiple of these may run concurrently;
+   * add a sensible concurrency limit if needed.
+   */
+  private _checkSimilarSingleFile(file: UploadFile) {
+    // TODO(dev): also skip when the id is already queued in a batch run
+    // (this._similarRunIds.includes(file.id)) to avoid double-processing.
+    if (this._similarActiveIds.has(file.id)) return; // already in progress
+    this._similarActiveIds = new Set(this._similarActiveIds).add(file.id);
+    const idx = this._simMockCounter++;
+    const t = window.setTimeout(() => {
+      const active = new Set(this._similarActiveIds);
+      active.delete(file.id);
+      this._similarActiveIds = active;
+      const results = new Map(this._similarResults);
+      results.set(file.id, this._mockSimilarAssets(file, idx));
+      this._similarResults = results;
+    }, 1100);
+    this._similarSimTimers.push(t);
+  }
+
+  /**
+   * Runs the similarity check for the given images and drives the loading UI
+   * (per-tile spinner + batch progress banner).
+   *
+   * TODO(dev): replace the simulated per-image progression below with the real
+   * request. For each image: render a w=300 version, POST it to the embedding
+   * endpoint (https://ai.scaleflex.com/images/embedding/...) with the threshold
+   * derived from `this.config?.similarityCheck?.confidence` (low 0.60 / mid 0.75
+   * / high 0.90), collect the returned `similar_assets`, and mark the image done.
+   * Then surface the results in a panel (Open in new window / Discard from
+   * upload) — that screen is the next step. The loading UI, selection mode,
+   * per-tile button and events are already wired; only the network call and the
+   * results rendering remain.
+   */
+  private _runSimilarityCheck(files: UploadFile[]) {
+    this._clearSimilarRun();
+    if (!files.length) return;
+    this._similarRunIds = files.map((f) => f.id);
+
+    // --- Simulated progression (demo) — dev replaces with real API calls. ---
+    let i = 0;
+    const step = () => {
+      if (i >= files.length) {
+        // Run finished: surface the results in the side-panel for the first
+        // checked image that has matches (unless the user is already viewing a
+        // preview), then auto-dismiss the progress banner after a short pause.
+        // TODO(dev): clear the run (this._clearSimilarRun) when the real batch
+        // of requests completes.
+        if (!this._previewFileId) {
+          const firstWithResults = files.find(
+            (f) => (this._similarResults.get(f.id)?.length ?? 0) > 0,
+          );
+          if (firstWithResults) {
+            this._previewFileId = firstWithResults.id;
+            // Results take over the side-panel: leave the global settings view.
+            this._showSettings = false;
+            this._previewPanelTab = "similar";
+          }
+        }
+        const done = window.setTimeout(() => this._clearSimilarRun(), 1500);
+        this._similarSimTimers.push(done);
+        return;
+      }
+      const file = files[i];
+      const id = file.id;
+      this._similarActiveIds = new Set(this._similarActiveIds).add(id);
+      const t = window.setTimeout(() => {
+        const active = new Set(this._similarActiveIds);
+        active.delete(id);
+        this._similarActiveIds = active;
+        // Store results (presence = checked → badge). Reassign Map for Lit.
+        const next = new Map(this._similarResults);
+        next.set(id, this._mockSimilarAssets(file, i));
+        this._similarResults = next;
+        i += 1;
+        step();
+      }, 1100);
+      this._similarSimTimers.push(t);
+    };
+    step();
+    // --- end simulated progression ---
+  }
+
+  /**
+   * TODO(dev): remove. Generates fake similar_assets for the demo so the
+   * results UI is visible. Replace with the real `similar_assets` from the
+   * embedding endpoint response.
+   */
+  private _mockSimilarAssets(file: UploadFile, index: number): SimilarAsset[] {
+    // Vary count so all cases show: 0 (none), 1 (few), several, many (+N).
+    const count = [3, 1, 0, 12, 0, 24, 2][index % 7];
+    const dot = file.name.lastIndexOf(".");
+    const base = dot > 0 ? file.name.slice(0, dot) : file.name;
+    const ext = dot > 0 ? file.name.slice(dot + 1).toLowerCase() : "jpg";
+    return Array.from({ length: count }, (_, k) => ({
+      uuid: `${file.id}-sim-${k}`,
+      score: Math.max(0.6, 0.99 - k * 0.04),
+      // Demo reuses the source preview so a real image shows; the real BE
+      // returns the similar asset's own CDN url (filename lives in that url).
+      url: file.previewUrl || "",
+      // TODO(dev): drop these — the BE response carries the asset's own url
+      // (name is extracted from it) and, when available, size/dimensions.
+      name: `${base}-match-${k + 1}.${ext}`,
+      size: file.size ? Math.round(file.size * (0.6 + (k % 5) * 0.1)) : undefined,
+      width: 1920,
+      height: 1080,
+    }));
+  }
+
+  /** Clears only the current run (timers, run/active ids). Keeps the persistent
+   *  checked set so finished images stay marked. Used by Cancel / Done. */
+  private _clearSimilarRun() {
+    this._similarSimTimers.forEach((t) => clearTimeout(t));
+    this._similarSimTimers = [];
+    this._similarRunIds = [];
+    this._similarActiveIds = new Set();
+  }
+
+  private _onSimilarSearchCancel = () => {
+    this._clearSimilarRun();
+  };
+
+  /** Remove all similarity-check references to a file id (on file removal). */
+  private _purgeSimilarState(id: string) {
+    if (this._similarRunIds.includes(id)) {
+      this._similarRunIds = this._similarRunIds.filter((x) => x !== id);
+    }
+    if (this._similarActiveIds.has(id)) {
+      const a = new Set(this._similarActiveIds);
+      a.delete(id);
+      this._similarActiveIds = a;
+    }
+    if (this._similarResults.has(id)) {
+      const r = new Map(this._similarResults);
+      r.delete(id);
+      this._similarResults = r;
+    }
+    if (this._similarSelectedIds.has(id)) {
+      const s = new Set(this._similarSelectedIds);
+      s.delete(id);
+      this._similarSelectedIds = s;
+    }
+  }
+
+  /** Open the similar results for an image (from its tile badge) in the side
+   *  panel: switch to its preview and select the "Similar" tab. */
+  private _onSimilarOpenResults = (e: CustomEvent<{ fileId: string }>) => {
+    this._previewFileId = e.detail.fileId;
+    // A tile action takes over the side-panel: leave the global settings view.
+    this._showSettings = false;
+    this._previewPanelTab = "similar";
+  };
+
+  /** Open a similar asset in a new window. */
+  private _openSimilarAsset(url: string) {
+    if (url) window.open(url, "_blank", "noopener,noreferrer");
+  }
+
+  /** Discard the previewed image from the upload; move to the next file (so the
+   *  side panel stays open) or close the preview when none remain. */
+  private _discardPreviewFile() {
+    const id = this._previewFileId;
+    if (!id) return;
+    const files = [...this._store.getState().files.values()];
+    const idx = files.findIndex((f) => f.id === id);
+    const nextId = files[idx + 1]?.id ?? files[idx - 1]?.id ?? null;
+    // _removeFile purges results/run/selection for this id.
+    this._removeFile(id);
+    this._previewFileId = nextId;
+  }
+
+  /** Display name for a similar asset: the filename extracted from its URL
+   *  (decoded, query stripped), falling back to an explicit name or the uuid. */
+  private _simAssetName(r: SimilarAsset): string {
+    let fromUrl = "";
+    if (r.url) {
+      const raw = r.url.split("?")[0].split("/").pop() || "";
+      try {
+        fromUrl = decodeURIComponent(raw);
+      } catch {
+        fromUrl = raw;
+      }
+    }
+    return r.name || fromUrl || r.uuid;
+  }
+
+  /** Meta line for a similar asset card: format · size · resolution. Excludes the
+   *  name itself — only a real file extension counts (avoids echoing the name). */
+  private _simAssetMeta(r: SimilarAsset): string {
+    const name = this._simAssetName(r);
+    const dot = name.lastIndexOf(".");
+    const ext = dot > 0 ? name.slice(dot + 1).toUpperCase() : "";
+    const parts: string[] = [];
+    if (ext && ext.length <= 5) parts.push(ext);
+    if (r.size) parts.push(formatFileSize(r.size));
+    if (r.width && r.height) parts.push(`${r.width}×${r.height}`);
+    return parts.join(" · ");
+  }
 
   private _onRequireMetadata = () => {
     const t = this._storeCtrl.state.t;
@@ -4353,6 +5344,13 @@ export class SfxUploader extends LitElement {
 
   private _onClearAll = () => {
     const callbacks = this.config?.callbacks;
+
+    // Reset similarity-check state (run + results + panel tab).
+    this._clearSimilarRun();
+    this._similarResults = new Map();
+    this._previewPanelTab = "details";
+    this._similarSelectMode = false;
+    this._similarSelectedIds = new Set();
 
     // Clear closeOnComplete timer so a stale auto-close doesn't fire after reset
     if (this._closeOnCompleteTimer) {
@@ -4919,6 +5917,36 @@ export class SfxUploader extends LitElement {
           </button>`
         : nothing;
 
+    // Gear → toggles the global Upload settings panel in the side area.
+    // Always available (no config flag); only shown once files exist, since the
+    // panel renders inside the preview split layout which needs files.
+    const hasFilesForSettings = this._storeCtrl.state.files.size > 0;
+    const settingsBtn =
+      hasFilesForSettings
+        ? html`<button
+            class="header-btn header-btn-settings ${this._showSettings ? "on" : ""}"
+            aria-label=${t('uploadSettings', 'Upload settings')}
+            title=${t('uploadSettings', 'Upload settings')}
+            @click=${() => {
+              this._showSettings = !this._showSettings;
+            }}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="3" />
+              <path
+                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+              />
+            </svg>
+          </button>`
+        : nothing;
+
     const closeBtn =
       header === "close"
         ? html`<button
@@ -4958,6 +5986,7 @@ export class SfxUploader extends LitElement {
             </div>`
           : nothing}
         <div class="header-title">${t('uploadFiles', 'Upload Files')}</div>
+        ${settingsBtn}
         ${closeBtn}
       </div>
     `;
@@ -5663,6 +6692,30 @@ export class SfxUploader extends LitElement {
 
     const targetFolder = this._store.getState().targetFolder;
     const totalSize = files.reduce((sum, f) => sum + (f.size || 0), 0);
+    // Mirror the similarity-check wiring of the main grid so selection works
+    // in the preview (split) layout too.
+    const similarityEnabled = !!this.config?.similarityCheck?.enabled;
+    const similarUncheckedIds = files
+      .filter(
+        (f) =>
+          getFileCategory(f) === "image" &&
+          !isBrowserUnrenderableImage(f.type) &&
+          !this._similarResults.has(f.id),
+      )
+      .map((f) => f.id);
+    const similarCappedCount = Math.min(
+      similarUncheckedIds.length,
+      SIMILAR_MAX_SELECTION,
+    );
+    const allSimilarSelected =
+      similarCappedCount > 0 &&
+      this._similarSelectedIds.size >= similarCappedCount;
+    const similarSelectionFull =
+      this._similarSelectedIds.size >= SIMILAR_MAX_SELECTION;
+    // Similar-results for the previewed file (presence = it has been checked).
+    const previewSimilar = this._similarResults.get(previewFile.id);
+    const hasSimilarTab = previewSimilar !== undefined;
+    const panelTab = hasSimilarTab ? this._previewPanelTab : "details";
     return html`
       <div class="preview-topbar"></div>
       <div class="preview-layout">
@@ -5683,6 +6736,16 @@ export class SfxUploader extends LitElement {
             .sources=${this._mergedSources}
             .accept=${buildAcceptString(this._storeCtrl.state.restrictions)}
             .multi=${this._allowMulti}
+            .showCheckSimilar=${similarityEnabled}
+            .selectMode=${this._similarSelectMode}
+            .selectedIds=${this._similarSelectedIds}
+            .allSelected=${allSimilarSelected}
+            .selectionFull=${similarSelectionFull}
+            .maxSelection=${SIMILAR_MAX_SELECTION}
+            .previewOpen=${true}
+            .searchRunIds=${this._similarRunIds}
+            .searchActiveIds=${this._similarActiveIds}
+            .searchResults=${this._similarResults}
             .directory=${this._allowFolderUpload}
             ?drag-active=${this._bodyDragOver}
             @source-click=${this._onDropTileSourceClick}
@@ -5696,6 +6759,9 @@ export class SfxUploader extends LitElement {
           @lostpointercapture=${this._onSplitPointerUp}
         ></div>
         <div class="preview-panel" ${cspStyle({ flex: String(100 - this._splitPct) })}>
+          ${this._showSettings
+            ? this._renderSettingsPanel()
+            : html`
           <div class="preview-panel-header">
             <button
               class="preview-back-btn"
@@ -5777,6 +6843,48 @@ export class SfxUploader extends LitElement {
               </button>
             </div>
           </div>
+          ${hasSimilarTab
+            ? html`
+                <div class="preview-tabs" role="tablist">
+                  <button
+                    class="preview-tab ${panelTab === "details" ? "active" : ""}"
+                    role="tab"
+                    aria-selected=${panelTab === "details"}
+                    @click=${() => {
+                      this._previewPanelTab = "details";
+                    }}
+                  >
+                    ${t('details', 'Details')}
+                  </button>
+                  <button
+                    class="preview-tab ${panelTab === "similar" ? "active" : ""}"
+                    role="tab"
+                    aria-selected=${panelTab === "similar"}
+                    @click=${() => {
+                      this._previewPanelTab = "similar";
+                    }}
+                  >
+                    ${t('similarTab', 'Similar')}
+                    ${previewSimilar && previewSimilar.length > 0
+                      ? html`<span class="preview-tab-count"
+                          >${previewSimilar.length}</span
+                        >`
+                      : nothing}
+                  </button>
+                  <button
+                    class="preview-tab-discard"
+                    @click=${() => this._discardPreviewFile()}
+                    aria-label=${t('discardThisImage', 'Discard this image')}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                    <span class="discard-label">${t('discardThisImage', 'Discard this image')}</span>
+                  </button>
+                </div>
+              `
+            : nothing}
+          ${panelTab === "similar"
+            ? this._renderSimilarPanel(previewFile, previewSimilar ?? [])
+            : html`
           ${previewFile.type.startsWith("video/") && previewFile.file
             ? html`
                 <div class="preview-media-area">
@@ -6000,6 +7108,227 @@ export class SfxUploader extends LitElement {
                   </div>
                 </div>
               `}
+              `}
+          `}
+        </div>
+      </div>
+    `;
+  }
+
+  /** "Similar" tab body of the preview side-panel: the similar-asset cards for
+   *  the previewed image, plus a discard action. Empty state when none. */
+  private _renderSimilarPanel(file: UploadFile, results: SimilarAsset[]) {
+    const t = this._storeCtrl.state.t;
+    if (results.length === 0) {
+      return html`
+        <div class="psim-empty">
+          <span class="psim-empty-ic"
+            ><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg
+          ></span>
+          <b>${t('noSimilarFound', 'No similar assets found')}</b>
+          <span>${t('noSimilarHint', 'This image looks unique in your library.')}</span>
+        </div>
+      `;
+    }
+    return html`
+      <div class="psim-body">
+        ${results.map((r) => {
+          const pct = Math.round(r.score * 100);
+          return html`
+            <div class="psim-card">
+              <div class="psim-iw">
+                <span class="psim-score ${r.score >= 0.9 ? "high" : ""}">${pct}%</span>
+                <button
+                  class="psim-open"
+                  @click=${() => this._openSimilarAsset(r.url)}
+                  title=${t('openInNewWindow', 'Open in new window')}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                </button>
+                ${r.url ? html`<img src=${r.url} alt="" />` : nothing}
+              </div>
+              <div class="psim-foot">
+                <div class="psim-foot-name">${this._simAssetName(r)}</div>
+                <div class="psim-foot-meta">${this._simAssetMeta(r)}</div>
+              </div>
+            </div>
+          `;
+        })}
+      </div>
+    `;
+  }
+
+  /** Global "Upload settings" view shown in the preview side-panel when the
+   *  header gear is active. Captures image/video/resumable upload preferences.
+   *  TODO(dev): all controls here are UI-only — wire the captured values into
+   *  the upload flow (resize → image params, transcode/resolution/protocol →
+   *  video params, resumable → tusConfig) and seed initial values from
+   *  config.uploadSettings.defaults. See mockups/FRA-10365-dev-handoff.md. */
+  private _renderSettingsPanel() {
+    const t = this._storeCtrl.state.t;
+    const files = [...this._storeCtrl.state.files.values()];
+    const hasVideo = files.some((f) => f.type.startsWith("video/"));
+    const onNum = (set: (v: number) => void) => (e: Event) => {
+      const v = parseInt((e.target as HTMLInputElement).value, 10);
+      set(Number.isFinite(v) ? v : 0);
+    };
+    return html`
+      <div class="preview-panel-header settings-header">
+        <span class="preview-header-name"
+          >${t('uploadSettings', 'Upload settings')}</span
+        >
+        <div class="preview-header-actions">
+          <button
+            @click=${() => {
+              this._showSettings = false;
+            }}
+            title=${t('close', 'Close')}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="settings-body">
+        <!-- Image settings -->
+        <div class="sgroup-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg>
+          ${t('imageSettings', 'Image settings')}
+        </div>
+        <div class="srow">
+          <span class="srow-lbl">${t('resizeImages', 'Resize Images')}</span>
+          <span class="info-i" data-tip=${t('resizeImagesInfo', 'Scale down large images to the maximum dimensions below before uploading.')}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span>
+          <span class="srow-spacer"></span>
+          <button
+            class="sw-toggle ${this._setResize ? "on" : ""}"
+            role="switch"
+            aria-checked=${this._setResize}
+            aria-label=${t('resizeImages', 'Resize Images')}
+            @click=${() => {
+              this._setResize = !this._setResize;
+            }}
+          ></button>
+        </div>
+        <div class="sfields ${this._setResize ? "" : "dep-off"}">
+          <div class="sfield">
+            <label>${t('maxWidth', 'Max Width')}</label>
+            <div class="sinp">
+              <input
+                type="number"
+                min="1"
+                inputmode="numeric"
+                .value=${String(this._setMaxW)}
+                @input=${onNum((v) => (this._setMaxW = v))}
+              />
+              <span class="sfx">px</span>
+            </div>
+          </div>
+          <div class="sfield">
+            <label>${t('maxHeight', 'Max Height')}</label>
+            <div class="sinp">
+              <input
+                type="number"
+                min="1"
+                inputmode="numeric"
+                .value=${String(this._setMaxH)}
+                @input=${onNum((v) => (this._setMaxH = v))}
+              />
+              <span class="sfx">px</span>
+            </div>
+          </div>
+        </div>
+
+        ${hasVideo
+          ? html`
+              <!-- Video settings (only when the queue contains a video) -->
+              <div class="sgroup-title sgroup-title-spaced">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 8-6 4 6 4V8Z"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg>
+                ${t('videoSettings', 'Video settings')}
+              </div>
+              <div class="srow">
+                <span class="srow-lbl">${t('transcodeVideo', 'Transcode video')}</span>
+                <span class="info-i" data-tip=${t('transcodeVideoInfo', 'Re-encode videos into adaptive streaming formats for smoother playback.')}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span>
+                <span class="srow-spacer"></span>
+                <button
+                  class="sw-toggle ${this._setTranscode ? "on" : ""}"
+                  role="switch"
+                  aria-checked=${this._setTranscode}
+                  aria-label=${t('transcodeVideo', 'Transcode video')}
+                  @click=${() => {
+                    this._setTranscode = !this._setTranscode;
+                    if (!this._setTranscode) this._setResolutionOpen = false;
+                  }}
+                ></button>
+              </div>
+              <div
+                class="sfield sfield-block ${this._setTranscode ? "" : "dep-off"} ${this._setResolutionOpen ? "open" : ""}"
+              >
+                <label>${t('resolution', 'Resolution')}</label>
+                <div
+                  class="ssel"
+                  @click=${() => {
+                    this._setResolutionOpen = !this._setResolutionOpen;
+                  }}
+                >
+                  <span>${this._setResolution}</span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                ${this._setResolutionOpen && this._setTranscode
+                  ? html`
+                      <div class="smenu">
+                        ${SETTINGS_RESOLUTIONS.map(
+                          (r) => html`
+                            <div
+                              class="sopt ${r === this._setResolution ? "cur" : ""}"
+                              @click=${() => {
+                                this._setResolution = r;
+                                this._setResolutionOpen = false;
+                              }}
+                            >
+                              ${r}
+                              ${r === this._setResolution
+                                ? html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`
+                                : nothing}
+                            </div>
+                          `,
+                        )}
+                      </div>
+                    `
+                  : nothing}
+              </div>
+              <div class="sfield sfield-block sfield-radios ${this._setTranscode ? "" : "dep-off"}">
+                <label>${t('protocols', 'Protocols')}</label>
+                ${(["HLS", "DASH"] as const).map(
+                  (p) => html`
+                    <div
+                      class="sradio-row"
+                      @click=${() => {
+                        this._setProtocol = p;
+                      }}
+                    >
+                      <span class="sradio ${this._setProtocol === p ? "on" : ""}"></span>
+                      <span class="sradio-lbl">${p}</span>
+                    </div>
+                  `,
+                )}
+              </div>
+            `
+          : nothing}
+
+        <!-- Resume uploads (resumable / tus) -->
+        <div class="srow srow-spaced">
+          <span class="srow-lbl">${t('resumeUploads', 'Resume uploads')}</span>
+          <span class="info-i" data-tip=${t('resumeUploadsInfo', 'Enable the ability to resume uploads (recommended if you expect large files); slightly slower compared to uploading files in one go')}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span>
+          <span class="sbeta" data-tip=${t('betaInfo', 'Beta functionality — you may experience performance issues in some cases')}>${t('beta', 'Beta')}</span>
+          <span class="srow-spacer"></span>
+          <button
+            class="sw-toggle ${this._setResumable ? "on" : ""}"
+            role="switch"
+            aria-checked=${this._setResumable}
+            aria-label=${t('resumeUploads', 'Resume uploads')}
+            @click=${() => {
+              this._setResumable = !this._setResumable;
+            }}
+          ></button>
         </div>
       </div>
     `;
@@ -6032,6 +7361,27 @@ export class SfxUploader extends LitElement {
     const phase = this._phase;
     const accept = buildAcceptString(s.restrictions);
     const hasFiles = files.length > 0;
+    const similarityEnabled = !!this.config?.similarityCheck?.enabled;
+    // Selection targets only not-yet-checked images. "Select all" reflects
+    // whether that pool (capped at the max) is fully picked; selection is full
+    // at SIMILAR_MAX_SELECTION.
+    const similarUncheckedIds = files
+      .filter(
+        (f) =>
+          getFileCategory(f) === "image" &&
+          !isBrowserUnrenderableImage(f.type) &&
+          !this._similarResults.has(f.id),
+      )
+      .map((f) => f.id);
+    const similarCappedCount = Math.min(
+      similarUncheckedIds.length,
+      SIMILAR_MAX_SELECTION,
+    );
+    const allSimilarSelected =
+      similarCappedCount > 0 &&
+      this._similarSelectedIds.size >= similarCappedCount;
+    const similarSelectionFull =
+      this._similarSelectedIds.size >= SIMILAR_MAX_SELECTION;
 
     return html`
       <div
@@ -6052,6 +7402,14 @@ export class SfxUploader extends LitElement {
         @retry-all=${this._onRetryAll}
         @clear-all=${this._onClearAll}
         @add-more=${this._onAddMore}
+        @check-similar-enter=${this._onCheckSimilarEnter}
+        @check-similar-cancel=${this._onCheckSimilarCancel}
+        @check-similar-run=${this._onCheckSimilarRun}
+        @check-similar-single=${this._onCheckSimilarSingle}
+        @similar-toggle=${this._onSimilarToggle}
+        @similar-select-all=${this._onSimilarSelectAll}
+        @check-similar-search-cancel=${this._onSimilarSearchCancel}
+        @similar-open-results=${this._onSimilarOpenResults}
         @upload-start=${this._onUploadStart}
         @upload-more=${this._onUploadMore}
         @primary-action=${this._onPrimaryAction}
@@ -6067,7 +7425,7 @@ export class SfxUploader extends LitElement {
         <div
           class="body ${hasFiles ? "has-files" : ""} ${this._bodyDragOver
             ? "body-drag-over"
-            : ""} ${this._previewFileId ? "has-preview" : ""}"
+            : ""} ${this._previewFileId || this._showSettings ? "has-preview" : ""}"
           @dragenter=${hasFiles ? this._onBodyDragEnter : nothing}
           @dragover=${hasFiles ? this._onBodyDragOver : nothing}
           @dragleave=${hasFiles ? this._onBodyDragLeave : nothing}
@@ -6154,7 +7512,7 @@ export class SfxUploader extends LitElement {
                           </button>`
                         : nothing}`}
                 ${hasFiles
-                  ? this._previewFileId
+                  ? this._previewFileId || this._showSettings
                     ? this._renderPreviewLayout(files)
                     : html`
                         <div class="asset-count">
@@ -6171,6 +7529,15 @@ export class SfxUploader extends LitElement {
                           .sources=${this._mergedSources}
                           .accept=${accept}
                           .multi=${this._allowMulti}
+                          .showCheckSimilar=${similarityEnabled}
+                          .selectMode=${this._similarSelectMode}
+                          .selectedIds=${this._similarSelectedIds}
+                          .allSelected=${allSimilarSelected}
+                          .selectionFull=${similarSelectionFull}
+                          .maxSelection=${SIMILAR_MAX_SELECTION}
+                          .searchRunIds=${this._similarRunIds}
+                          .searchActiveIds=${this._similarActiveIds}
+                          .searchResults=${this._similarResults}
                           .directory=${this._allowFolderUpload}
                           ?drag-active=${this._bodyDragOver}
                           @source-click=${this._onDropTileSourceClick}
@@ -6197,6 +7564,10 @@ export class SfxUploader extends LitElement {
                   this.config?.showFillMetadata ?? this.config?.metadataConfig
                 )}
                 .requireMetadataFirst=${this._hasUnfilledRequiredMetadata}
+                .showCheckSimilar=${similarityEnabled}
+                .selectMode=${this._similarSelectMode}
+                .selectedCount=${this._similarSelectedIds.size}
+                .maxSelection=${SIMILAR_MAX_SELECTION}
               ></sfx-actions-bar>
             `
           : nothing}

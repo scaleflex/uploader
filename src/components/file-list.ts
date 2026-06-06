@@ -62,6 +62,173 @@ export class SfxFileList extends LitElement {
       padding: 4px var(--sfx-grid-pad-r, 8px) 16px var(--sfx-grid-pad-l, 16px);
     }
 
+    /* Instruction / progress banner. Sticky to the top of the scrolling grid so
+       it stays reachable (Select all / Check / Cancel / progress) when there are
+       many assets and the list is long. */
+    .similar-banner {
+      position: sticky;
+      top: 0;
+      z-index: 6;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 0 var(--sfx-grid-pad-r, 8px) 12px var(--sfx-grid-pad-l, 16px);
+      padding: 8px 16px;
+      border-radius: 10px;
+      background: var(--sfx-up-primary-bg, #eff6ff);
+      border: 1px solid var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.18));
+    }
+
+    .similar-banner-ico {
+      flex: 0 0 30px;
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      background: var(--sfx-up-bg, #fff);
+      color: var(--sfx-up-primary, #2563eb);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .similar-banner-ico svg { width: 16px; height: 16px; }
+
+    .similar-banner-txt { flex: 1; min-width: 0; }
+    .similar-banner-txt b {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: #37414b;
+    }
+    .similar-banner-txt span {
+      font-size: 12px;
+      font-weight: 400;
+      color: #5b6e82;
+    }
+
+    .similar-select-count {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 40px;
+      height: 24px;
+      padding: 0 8px;
+      border-radius: 999px;
+      background: var(--sfx-up-surface, #eef2ff);
+      color: var(--sfx-up-primary, #2563eb);
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .similar-select-count.full {
+      background: var(--sfx-up-primary, #2563eb);
+      color: #fff;
+    }
+
+    .similar-select-all {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      flex: 0 0 auto;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--sfx-up-primary, #2563eb);
+      cursor: pointer;
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    .similar-select-all input {
+      appearance: none;
+      -webkit-appearance: none;
+      box-sizing: border-box;
+      width: 22px;
+      height: 22px;
+      margin: 0;
+      border: none;
+      border-radius: 6px;
+      background: var(--sfx-up-bg, #fff);
+      box-shadow: inset 0 0 0 1.5px #ccd6de;
+      cursor: pointer;
+      position: relative;
+      top: 1px;
+      transition: background-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .similar-select-all input:checked {
+      background: var(--sfx-up-primary, #2563eb);
+      box-shadow: inset 0 0 0 1.5px var(--sfx-up-primary, #2563eb);
+    }
+
+    .similar-select-all input:checked::after {
+      content: '';
+      position: absolute;
+      left: 7px;
+      top: 3.5px;
+      width: 5px;
+      height: 9px;
+      border: solid #fff;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+    }
+
+    /* --- Similarity search progress banner --- */
+    .search-ring {
+      flex: 0 0 22px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2.5px solid var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.18));
+      border-top-color: var(--sfx-up-primary, #2563eb);
+      animation: simBannerSpin 0.7s linear infinite;
+    }
+
+    @keyframes simBannerSpin { to { transform: rotate(360deg); } }
+
+    .search-done-ico {
+      flex: 0 0 22px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--sfx-up-success, #16a34a);
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .search-done-ico svg { width: 14px; height: 14px; }
+
+    .search-bar {
+      height: 6px;
+      border-radius: 3px;
+      background: var(--sfx-up-bg, #fff);
+      overflow: hidden;
+      margin-top: 7px;
+    }
+    .search-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      background: var(--sfx-up-primary, #2563eb);
+      transition: width 0.3s ease;
+    }
+
+    .search-cancel {
+      flex: 0 0 auto;
+      height: 32px;
+      padding: 0 14px;
+      border-radius: 6px;
+      border: 1.5px solid var(--sfx-up-border, #e2e8f0);
+      background: var(--sfx-up-bg, #fff);
+      color: var(--sfx-up-text-secondary, #475569);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .search-cancel:hover { background: var(--sfx-up-border-light, #f1f5f9); }
+
     /* Mobile: 2 cols at <=768, 1 col at <=440. Use viewport @media not
        container queries — container queries fire on local file-list width
        which is narrow in desktop preview mode, breaking desktop layout. */
@@ -460,6 +627,26 @@ export class SfxFileList extends LitElement {
   @property({ type: String }) mode: 'upload' | 'review' = 'upload';
   @property({ type: Boolean }) showLocateButton = false;
   @property({ type: Boolean }) showCopyCdnButton = false;
+  /** Show the per-tile "Check similar" button (images only, when enabled). */
+  @property({ type: Boolean }) showCheckSimilar = false;
+  /** When true, tiles show selection checkboxes for the similarity check. */
+  @property({ type: Boolean }) selectMode = false;
+  /** Ids of images currently picked in selection mode. */
+  @property({ attribute: false }) selectedIds: Set<string> = new Set();
+  /** Whether every selectable image is currently picked (for "Select all"). */
+  @property({ type: Boolean }) allSelected = false;
+  /** Selection has hit the cap — unselected tiles can't be picked. */
+  @property({ type: Boolean }) selectionFull = false;
+  /** Max images selectable for a similarity check (0 = no cap shown). */
+  @property({ type: Number }) maxSelection = 0;
+  /** Preview side-panel is open — tiles suppress their hover similar popover. */
+  @property({ type: Boolean }) previewOpen = false;
+  /** Ids of all images in the active similarity-search run (empty = no search). */
+  @property({ attribute: false }) searchRunIds: string[] = [];
+  /** Ids currently being searched (spinner). */
+  @property({ attribute: false }) searchActiveIds: Set<string> = new Set();
+  /** Results per checked image id (presence = checked). Value length = badge count. */
+  @property({ attribute: false }) searchResults: Map<string, unknown[]> = new Map();
 
   @state() private _moreOpen = false;
   @state() private _dropTileMaxVisible = 3;
@@ -721,12 +908,90 @@ export class SfxFileList extends LitElement {
     `;
   }
 
+  private _onSelectAll(e: Event) {
+    const checked = (e.target as HTMLInputElement).checked;
+    this.dispatchEvent(
+      new CustomEvent('similar-select-all', {
+        detail: { selected: checked },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
+  private _onSearchCancel() {
+    this.dispatchEvent(
+      new CustomEvent('check-similar-search-cancel', { bubbles: true, composed: true }),
+    );
+  }
+
+  /** Per-tile similarity-search status (done is shown via the result badge,
+   *  not a status here). */
+  private _statusFor(id: string): '' | 'searching' | 'queued' {
+    if (this.searchActiveIds.has(id)) return 'searching';
+    if (this.searchRunIds.includes(id) && !this.searchResults.has(id)) return 'queued';
+    return '';
+  }
+
   render() {
+    const searchTotal = this.searchRunIds.length;
+    // Run-specific progress: how many of THIS run's ids already have results.
+    const searchDone = this.searchRunIds.filter((id) => this.searchResults.has(id)).length;
+    const searchPct = searchTotal ? Math.round((searchDone / searchTotal) * 100) : 0;
+    const allDone = searchTotal > 0 && searchDone === searchTotal;
     return html`
+      ${searchTotal > 1 && !this.previewOpen
+        ? html`
+            <div class="similar-banner search">
+              ${allDone
+                ? html`<span class="search-done-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>`
+                : html`<span class="search-ring"></span>`}
+              <div class="similar-banner-txt">
+                <b>${allDone
+                  ? this.t('similarCheckDone', 'Similarity check complete')
+                  : this.t('checkingSimilar', 'Checking for similar assets…')}</b>
+                <span>${this.t('similarProgress', '{{done}} of {{total}} done', { done: searchDone, total: searchTotal })}</span>
+                <div class="search-bar"><div class="search-bar-fill" ${cspStyle({ width: `${searchPct}%` })}></div></div>
+              </div>
+              <button class="search-cancel" @click=${this._onSearchCancel}>
+                ${allDone ? this.t('done', 'Done') : this.t('cancel', 'Cancel')}
+              </button>
+            </div>
+          `
+        : nothing}
+      ${this.selectMode
+        ? html`
+            <div class="similar-banner">
+              <span class="similar-banner-ico">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                  <circle cx="11" cy="11" r="7" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+              </span>
+              <div class="similar-banner-txt">
+                <b>${this.t('selectImagesToCheck', 'Select images to check for similar assets')}</b>
+                <span>${this.maxSelection > 0
+                  ? this.t('selectImagesHintMax', 'Pick up to {{max}}, then click Check', { max: this.maxSelection })
+                  : this.t('selectImagesHint', 'Pick one or more, then click Check')}</span>
+              </div>
+              ${this.maxSelection > 0
+                ? html`<span class="similar-select-count ${this.selectionFull ? 'full' : ''}">${this.selectedIds.size}/${this.maxSelection}</span>`
+                : nothing}
+              <label class="similar-select-all">
+                <input
+                  type="checkbox"
+                  .checked=${this.allSelected}
+                  @change=${this._onSelectAll}
+                />
+                ${this.t('selectAll', 'Select all')}
+              </label>
+            </div>
+          `
+        : nothing}
       <div class="grid">
-        ${this.showDropTile && this.mode !== 'review' ? this._renderDropTile() : nothing}
+        ${this.showDropTile && this.mode !== 'review' && !this.selectMode ? this._renderDropTile() : nothing}
         ${this.files.map(
-          (f, i) => html`<sfx-file-item .t=${this.t} .file=${f} .mode=${this.mode} .showLocateButton=${this.showLocateButton} .showCopyCdnButton=${this.showCopyCdnButton} ${cspStyle({ '--tile-index': String(i) })}></sfx-file-item>`,
+          (f, i) => html`<sfx-file-item .t=${this.t} .file=${f} .mode=${this.mode} .showLocateButton=${this.showLocateButton} .showCopyCdnButton=${this.showCopyCdnButton} .showCheckSimilar=${this.showCheckSimilar} .selectMode=${this.selectMode} .isSelected=${this.selectedIds.has(f.id)} .selectionFull=${this.selectionFull} .previewOpen=${this.previewOpen} .similarStatus=${this._statusFor(f.id)} .similarCount=${this.searchResults.get(f.id)?.length ?? -1} .similarResults=${this.searchResults.get(f.id) ?? []} ${cspStyle({ '--tile-index': String(i) })}></sfx-file-item>`,
         )}
       </div>
     `;

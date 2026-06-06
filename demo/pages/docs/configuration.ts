@@ -72,6 +72,8 @@ const page: Page = {
             <tr><td><code>forceName</code></td><td><code>string | (() =&gt; string)</code></td><td><code>undefined</code></td><td>Force every uploaded file to be saved under this exact name in <code>targetFolder</code>, overwriting any existing file with the same name. Translates to <code>&amp;opt_force_name=…</code> on the upload request and works across every source (local file, URL import, Google Drive, Unsplash, …). Setting this implicitly clamps <code>restrictions.maxNumberOfFiles</code> to <code>1</code>, disables the multi-select on the file picker, and bypasses tus regardless of file size. Use for single-asset slots like watermarks, default images, or folder icons.</td></tr>
             <tr><td><code>getUploadParams</code></td><td><code>(file) =&gt; Record&lt;string, string&gt; | undefined</code></td><td><code>undefined</code></td><td>Append arbitrary query parameters (typically Filerobot <code>opt_*</code> flags) to every upload request. Called per file just before its request is sent and merged into the URL of whichever upload path runs (XHR / URL / tus / Companion). Returning a non-empty object also forces the XHR path. Wins on key collision against <code>forceName</code>.</td></tr>
             <tr><td><code>tusConfig</code></td><td><code>TusConfig | boolean</code></td><td><code>undefined</code></td><td>Enable resumable uploads via the tus protocol for large files. Pass <code>true</code> for defaults (10 MB threshold, 5 MB chunks) or a <code>TusConfig</code> object. See <a href="#/examples/resumable-upload">Resumable upload example</a>.</td></tr>
+            <tr><td><code>similarityCheck</code></td><td><code>{ enabled: boolean; confidence?: 'low' | 'mid' | 'high' }</code></td><td><code>undefined</code></td><td>Let users check images against visually similar assets in the library before uploading, to avoid duplicates. Hidden unless <code>enabled</code>. <code>confidence</code> maps to the similarity threshold (low 0.60 / mid 0.75 / high 0.90). See <a href="#/examples/similar-check">Similar asset check example</a>.</td></tr>
+            <tr><td><code>uploadSettings</code></td><td><code>{ defaults?: {…} }</code></td><td><code>undefined</code> (panel always shown)</td><td>The settings panel (gear icon, image resize / video transcode / resumable uploads) is <strong>always available</strong> once files are added — no flag needed. This optional config only seeds the panel's starting values via <code>defaults</code>. See <a href="#/examples/upload-settings">Upload settings example</a>.</td></tr>
           </tbody>
         </table>
 
@@ -292,6 +294,62 @@ uploaderB.config = {
   lastUploadReview: 'avatars',         // key: "sfx-uploader:last-upload:avatars"
 };`,
         )}
+
+        <h3>Similar asset check</h3>
+        <p>Enable <strong>similarity checking</strong> to let users compare images they are about to upload against visually similar assets already in the library — a duplicate-prevention step that happens <em>before</em> the upload finishes. The feature is <strong>disabled by default</strong> and is gated behind <code>similarityCheck.enabled</code>; no UI appears unless it is turned on.</p>
+        ${code(
+          'typescript',
+          `uploader.config = {
+  auth: { /* ... */ },
+  similarityCheck: {
+    enabled: true,
+    confidence: 'mid', // 'low' | 'mid' | 'high' (optional, default 'mid')
+  },
+};`,
+        )}
+        <p>Once enabled, users can:</p>
+        <ul>
+          <li>click <strong>Check similar</strong> on a single image tile (shown under <em>Details</em>; image-only — HEIC/HEIF are excluded), or</li>
+          <li>use the toolbar <strong>Check similar</strong> button to enter <strong>selection mode</strong> and check up to <strong>10</strong> images in one batch.</li>
+        </ul>
+        <p>Matches are surfaced in the <strong>Similar</strong> tab of the preview panel (next to <em>Details</em>), each with its similarity score. The <code>confidence</code> level maps to the backend similarity threshold:</p>
+        <table class="config-table">
+          <thead><tr><th>Confidence</th><th>Threshold</th><th>Behavior</th></tr></thead>
+          <tbody>
+            <tr><td><code>'low'</code></td><td>0.60</td><td>Loosest — surfaces more (and looser) matches</td></tr>
+            <tr><td><code>'mid'</code></td><td>0.75</td><td>Balanced (default)</td></tr>
+            <tr><td><code>'high'</code></td><td>0.90</td><td>Strictest — only near-identical matches</td></tr>
+          </tbody>
+        </table>
+        <p>See the <a href="#/examples/similar-check">Similar asset check example</a> for an interactive demo.</p>
+
+        <h3>Upload settings</h3>
+        <p>The uploader ships with a built-in <strong>settings panel</strong> that is <strong>always available</strong> — a gear icon appears in the header once files are added, opening a panel where users tune <strong>image resizing</strong>, <strong>video transcoding</strong>, and <strong>resumable uploads</strong> before uploading. No config flag is required to enable it.</p>
+        <p>The panel has three sections:</p>
+        <ul>
+          <li><strong>Image settings</strong> — resize images to a maximum width / height (px).</li>
+          <li><strong>Video settings</strong> — shown only when the queue contains a video: transcode to an adaptive format with a chosen resolution (Auto / 1080p / 720p / 480p) and protocol (HLS / DASH).</li>
+          <li><strong>Resume uploads</strong> — enable resumable (tus) uploads. Marked <strong>Beta</strong>.</li>
+        </ul>
+        <p>To change the panel's <strong>starting values</strong>, pass the optional <code>uploadSettings.defaults</code>. Omit it and the panel still appears with built-in defaults.</p>
+        ${code(
+          'typescript',
+          `uploader.config = {
+  auth: { /* ... */ },
+  uploadSettings: {
+    defaults: {
+      resize: true,
+      maxWidth: 2048,
+      maxHeight: 2048,
+      transcode: true,
+      resolution: '1080p', // 'Auto' | '1080p' | '720p' | '480p'
+      protocol: 'HLS',     // 'HLS' | 'DASH'
+      resumable: true,
+    },
+  },
+};`,
+        )}
+        <p>See the <a href="#/examples/upload-settings">Upload settings example</a> for an interactive demo.</p>
 
         <h3>Resizable preview panel</h3>
         <p>When you click a file to preview it, the uploader splits into a <strong>file grid</strong> on the left and a <strong>preview panel</strong> on the right (420 px wide by default). Drag the vertical divider between them to resize — the file grid automatically adapts its column count (e.g. 3 → 4 columns) as you give it more space. The split range is clamped to 25 %–75 %.</p>

@@ -116,6 +116,12 @@ export class SfxActionsBar extends LitElement {
         gap: 8px;
       }
 
+      .select-count {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--sfx-up-text-secondary, #475569);
+      }
+
       /* --- Button overrides (base in shared-styles) --- */
 
       .btn-sec {
@@ -254,6 +260,14 @@ export class SfxActionsBar extends LitElement {
   @property({ type: Boolean }) requireMetadataFirst = false;
   @property({ type: Number }) completedCount = 0;
   @property({ type: Number }) uploadProgress = 0;
+  /** Show the "Check similar" button (gated by config.similarityCheck.enabled). */
+  @property({ type: Boolean }) showCheckSimilar = false;
+  /** When true, the bar shows the similar-image selection toolbar instead. */
+  @property({ type: Boolean }) selectMode = false;
+  /** Number of images currently picked for the similarity check. */
+  @property({ type: Number }) selectedCount = 0;
+  /** Max images selectable for a similarity check (0 = no cap shown). */
+  @property({ type: Number }) maxSelection = 0;
 
   private _clear() {
     this.dispatchEvent(
@@ -291,8 +305,31 @@ export class SfxActionsBar extends LitElement {
     );
   }
 
+  private _checkSimilarEnter() {
+    this.dispatchEvent(
+      new CustomEvent("check-similar-enter", { bubbles: true, composed: true }),
+    );
+  }
+
+  private _checkSimilarCancel() {
+    this.dispatchEvent(
+      new CustomEvent("check-similar-cancel", { bubbles: true, composed: true }),
+    );
+  }
+
+  private _checkSimilarRun() {
+    this.dispatchEvent(
+      new CustomEvent("check-similar-run", { bubbles: true, composed: true }),
+    );
+  }
+
   render() {
     const isUploading = this.uploadState === "uploading";
+
+    // "Check similar assets" image-selection mode replaces the normal bar.
+    if (this.selectMode) {
+      return this._renderSelectToolbar();
+    }
 
     return html`
       ${isUploading
@@ -343,6 +380,27 @@ export class SfxActionsBar extends LitElement {
                     <line x1="10" y1="9" x2="8" y2="9" />
                   </svg>
                   <span class="btn-label">${this.t('fillMetadata', 'Fill Metadata')}</span>
+                </button>
+              `
+            : nothing}
+          ${this.showCheckSimilar && this.uploadState === "idle"
+            ? html`
+                <button
+                  class="btn-sec"
+                  @click=${this._checkSimilarEnter}
+                  aria-label=${this.t('checkSimilar', 'Check similar')}
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                  >
+                    <circle cx="11" cy="11" r="7" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  </svg>
+                  <span class="btn-label">${this.t('checkSimilar', 'Check similar')}</span>
                 </button>
               `
             : nothing}
@@ -400,6 +458,42 @@ export class SfxActionsBar extends LitElement {
               `
             : nothing}
           ${this._renderUploadButton()}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderSelectToolbar() {
+    const n = this.selectedCount;
+    return html`
+      <div class="buttons-row">
+        <div class="left">
+          <span class="select-count">
+            ${n > 0
+              ? this.maxSelection > 0
+                ? this.t('imagesSelectedMax', '{{count}}/{{max}} selected', { count: n, max: this.maxSelection })
+                : this.t('imagesSelected', '{{count}} selected', { count: n })
+              : this.t('noImagesSelected', 'No images selected')}
+          </span>
+        </div>
+        <div class="right">
+          <button class="btn-ghost" @click=${this._checkSimilarCancel} aria-label=${this.t('cancel', 'Cancel')}>
+            <span class="btn-label">${this.t('cancel', 'Cancel')}</span>
+          </button>
+          <button
+            class="btn-primary"
+            @click=${this._checkSimilarRun}
+            ?disabled=${n === 0}
+            aria-label=${this.t('check', 'Check')}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <circle cx="11" cy="11" r="7" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <span class="btn-label">
+              ${n > 0 ? this.t('checkCount', 'Check ({{count}})', { count: n }) : this.t('check', 'Check')}
+            </span>
+          </button>
         </div>
       </div>
     `;

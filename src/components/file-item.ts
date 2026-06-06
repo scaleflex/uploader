@@ -2,7 +2,8 @@ import { LitElement, html, css, nothing } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { cspStyle } from '../utils/csp-style';
 import type { UploadFile, TFunction } from '../store/store.types';
-import { formatFileSize, getFileCategory, getFileExtension, getFileTypeIconUrl, getDefaultFileTypeIconUrl } from '../utils/file-utils';
+import type { SimilarAsset } from '../sfx-uploader';
+import { formatFileSize, getFileCategory, getFileExtension, getFileTypeIconUrl, getDefaultFileTypeIconUrl, isBrowserUnrenderableImage } from '../utils/file-utils';
 
 export class SfxFileItem extends LitElement {
   static styles = css`
@@ -36,6 +37,12 @@ export class SfxFileItem extends LitElement {
       aspect-ratio: 16 / 10;
       overflow: hidden;
       flex-shrink: 0;
+      /* Query container so the hover actions can adapt to the TILE width (not
+         the viewport). On .preview — never on .tile — because container-type
+         makes the element a containing block for fixed-positioned descendants,
+         which would break the .sim-popover (position: fixed) living on .tile. */
+      container-type: inline-size;
+      container-name: sfx-tile-media;
       background-color: var(--sfx-up-checker-bg, #fff);
       background-image:
         linear-gradient(45deg, var(--sfx-up-checker-tile, #f0f0f0) 25%, transparent 25%),
@@ -177,8 +184,12 @@ export class SfxFileItem extends LitElement {
       z-index: 10;
     }
 
+    /* Reveal on hover or KEYBOARD focus only (:has(:focus-visible)) — a mouse
+       click sets :focus but not :focus-visible, so actions don't linger/stick
+       after clicking the tile. */
     .tile:hover .actions,
-    .tile:focus-within .actions {
+    .tile:focus-visible .actions,
+    .tile:has(:focus-visible) .actions {
       opacity: 1;
     }
 
@@ -224,51 +235,313 @@ export class SfxFileItem extends LitElement {
     }
 
     /* --- Preview button --- */
-    .preview-btn {
+    /* Centered hover actions wrapper (Details + optional Check similar).
+       Flex column with stretch so both buttons share one width. */
+    .center-actions {
       position: absolute;
-      bottom: 50%;
+      top: 50%;
       left: 50%;
-      transform: translate(-50%, 50%);
-      padding: 6px 16px;
-      border-radius: 6px;
-      border: 1.5px solid var(--sfx-up-primary, #2563eb);
-      background: var(--sfx-up-bg, #fff);
-      cursor: pointer;
+      transform: translate(-50%, -50%);
       display: flex;
-      align-items: center;
-      gap: 5px;
+      flex-direction: column;
+      gap: 6px;
+      align-items: stretch;
       opacity: 0;
-      transition: all 0.15s ease;
-      color: var(--sfx-up-primary, #2563eb);
-      font-family: inherit;
-      font-size: 11px;
-      font-weight: 600;
-      white-space: nowrap;
+      transition: opacity 0.15s ease;
       z-index: 5;
     }
 
-    .tile:hover .preview-btn,
-    .tile:focus-within .preview-btn {
+    .tile:hover .center-actions,
+    .tile:focus-visible .center-actions,
+    .tile:has(:focus-visible) .center-actions {
       opacity: 1;
     }
 
     @media (hover: none) {
-      .preview-btn { opacity: 1; }
+      .center-actions { opacity: 1; }
     }
 
+    .preview-btn,
+    .check-similar-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      box-sizing: border-box;
+      /* Fixed height so both buttons match regardless of border width. */
+      height: 32px;
+      padding: 0 16px;
+      /* Fixed width so every button is identical across ALL tiles, regardless
+         of how short the label is ("No similar" / "Details") — extra empty
+         space is intentional, by design. Sized to fit the longest label
+         ("View N similar"). max-width keeps it inside genuinely narrow tiles,
+         where the container query below collapses it to an icon. */
+      width: 160px;
+      max-width: 100%;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .cs-label {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Collapse to icon-only before the fixed 160px button ever looks cramped.
+       Cutoff = button width (160px) + a comfortable side margin (~24px per
+       side = 48px). Above this → text labels with clear air on both sides;
+       at/below → icons only, so the button never sits tight against the edges. */
+    @container sfx-tile-media (max-width: 208px) {
+      /* Icon-only: lay the two square buttons side by side, not stacked —
+         more compact and balanced when there's no text to align. */
+      .center-actions {
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+      }
+      .center-actions .cs-label {
+        display: none;
+      }
+      .preview-btn,
+      .check-similar-btn {
+        width: 40px;
+        padding: 0;
+        gap: 0;
+        justify-content: center;
+      }
+    }
+
+    /* Details — white, borderless (transparent border keeps the same box
+       height as Check similar), blue text. On hover it stays white and scales
+       up slightly (no blue fill, no darkening). Same look in both modes. */
+    .preview-btn {
+      border: 1px solid var(--sfx-up-primary, #2563eb);
+      background: var(--sfx-up-bg, #fff);
+      color: var(--sfx-up-primary, #2563eb);
+    }
+
+    /* Hover feedback via shadow, NOT scale — scaling one button would make it
+       wider than its sibling; both must stay the same width. */
     .preview-btn:hover {
-      background: var(--sfx-up-primary, #2563eb);
-      color: var(--sfx-up-bg, #fff);
+      background: var(--sfx-up-bg, #fff);
+      color: var(--sfx-up-primary, #2563eb);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.14);
     }
 
     .preview-btn:hover svg {
-      stroke: var(--sfx-up-bg, #fff);
+      stroke: var(--sfx-up-primary, #2563eb);
     }
 
-    .preview-btn svg {
+    /* Check similar — filled primary, visually distinct from Details */
+    .check-similar-btn {
+      border: 1.5px solid var(--sfx-up-primary, #2563eb);
+      background: var(--sfx-up-primary, #2563eb);
+      color: var(--sfx-up-bg, #fff);
+      box-shadow: 0 2px 8px var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.35));
+    }
+
+    /* Hover feedback via a stronger glow, NOT scale, so width stays identical
+       to the Details button. */
+    .check-similar-btn:hover {
+      background: var(--sfx-up-primary, #2563eb);
+      border-color: var(--sfx-up-primary, #2563eb);
+      box-shadow: 0 4px 12px var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.45));
+    }
+
+    /* "No similar found" — muted/neutral, NOT an action to re-run; clicking it
+       just opens the panel's empty-state message. */
+    .check-similar-btn.no-similar,
+    .check-similar-btn.no-similar:hover {
+      background: var(--sfx-up-bg, #fff);
+      border-color: var(--sfx-up-border, #e2e8f0);
+      color: var(--sfx-up-text-muted, #94a3b8);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    .preview-btn svg,
+    .check-similar-btn svg {
       width: 13px;
       height: 13px;
     }
+
+    /* Asset-picker style: on hover a dark semi-transparent overlay covers the
+       preview, with the Details / Check similar buttons sitting on top. Only
+       when the feature is enabled (cs-overlay) — normal mode is untouched. */
+    .tile.cs-overlay .preview::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0);
+      transition: background 0.15s ease;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .tile.cs-overlay:hover .preview::after {
+      background: rgba(0, 0, 0, 0.45);
+    }
+
+    /* --- Similar-image selection mode (asset-picker look) --- */
+    .tile.selectable { cursor: pointer; }
+    /* Selected: blue ring hugging the card, depth shadow preserved. */
+    .tile.selected {
+      box-shadow:
+        0 0 0 1px var(--sfx-up-primary, #2563eb),
+        0 1px 3px rgba(0, 0, 0, 0.04),
+        0 4px 12px rgba(0, 0, 0, 0.06);
+    }
+    /* Non-image tiles can't be checked — dim them while selecting. */
+    .tile.select-dimmed { opacity: 0.5; }
+
+    /* Always-visible checkbox: empty white square → filled blue when checked. */
+    .similar-cb {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      box-sizing: border-box;
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      border: 1.5px solid #cbd5e1;
+      background: var(--sfx-up-bg, #fff);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 11;
+      transition: background-color 0.15s ease, border-color 0.15s ease;
+    }
+
+    .similar-cb svg { width: 16px; height: 16px; opacity: 0; transition: opacity 0.15s ease; }
+
+    .similar-cb.checked {
+      background: var(--sfx-up-primary, #2563eb);
+      border-color: var(--sfx-up-primary, #2563eb);
+    }
+
+    .similar-cb.checked svg { opacity: 1; }
+
+    /* Selection cap reached: unselected checkboxes are muted + not clickable. */
+    .similar-cb.disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* --- Similarity search loading states --- */
+    /* Queued (waiting its turn): just dimmed, no badge. */
+    .tile.sim-queued { opacity: 0.55; transition: opacity 0.15s ease; }
+    /* On hover a queued tile un-dims so its Details button is clearly visible. */
+    .tile.sim-queued:hover { opacity: 1; }
+
+    /* Searching: dark overlay + spinner over the preview. */
+    .sim-search-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 8;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      background: rgba(15, 23, 42, 0.55);
+      color: #fff;
+    }
+    .sim-search-overlay .sim-spinner {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-top-color: #fff;
+      animation: spinRing 0.7s linear infinite;
+    }
+    .sim-search-overlay .sim-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Checked: result badge "N similar" / "No similar" (top-left). Doubles as
+       the "checked" indicator — no separate green check. */
+    .sim-result-badge {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      z-index: 8;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      height: 24px;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: var(--sfx-up-primary, #2563eb);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      box-shadow: 0 2px 6px var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.22));
+      pointer-events: none;
+      transition: opacity 0.15s ease;
+    }
+    .sim-result-badge svg { width: 12px; height: 12px; }
+    .sim-result-badge.none {
+      background: var(--sfx-up-bg, #fff);
+      color: var(--sfx-up-text-muted, #94a3b8);
+      border: 1px solid var(--sfx-up-border, #e2e8f0);
+      box-shadow: none;
+    }
+    /* Hide the resting badge whenever the centered Details / View-similar
+       buttons show (hover OR keyboard focus) so they never overlap. */
+    .tile:hover .sim-result-badge,
+    .tile:focus-visible .sim-result-badge,
+    .tile:has(:focus-visible) .sim-result-badge { opacity: 0; }
+
+    /* Review-pick tile (results modal left list): plain selectable card. */
+    .tile.review-pick { cursor: pointer; }
+    .tile.review-pick:hover .sim-result-badge { opacity: 1; }
+    .tile.review-pick .name-input { pointer-events: none; }
+
+    /* --- Hover preview popover (best match) --- */
+    .sim-popover {
+      position: fixed;
+      width: 240px;
+      background: var(--sfx-up-bg, #fff);
+      border: 1px solid var(--sfx-up-border, #e8edf5);
+      border-radius: 12px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+      z-index: 10000;
+      overflow: hidden;
+      cursor: pointer;
+      animation: simPopIn 0.12s ease;
+    }
+    @keyframes simPopIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+    .sim-popover .pop-hero { position: relative; aspect-ratio: 16 / 10; background: var(--sfx-up-surface, #eef); }
+    .sim-popover .pop-hero img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .sim-popover .pop-best {
+      position: absolute; top: 8px; left: 8px; font-size: 11px; font-weight: 700;
+      padding: 3px 9px; border-radius: 999px; background: rgba(255, 255, 255, 0.95);
+      color: var(--sfx-up-primary, #2563eb); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+    .sim-popover .pop-best.high { color: var(--sfx-up-success, #16a34a); }
+    .sim-popover .pop-body { padding: 11px 13px 8px; }
+    .sim-popover .pop-t { font-size: 12.5px; font-weight: 600; color: var(--sfx-up-text, #1e293b); }
+    .sim-popover .pop-s { font-size: 11.5px; color: var(--sfx-up-text-muted, #94a3b8); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sim-popover .pop-foot { padding: 0 13px 12px; display: flex; align-items: center; justify-content: space-between; }
+    .sim-popover .pop-thumbs { display: inline-flex; }
+    .sim-popover .pop-thumbs img { width: 22px; height: 22px; border-radius: 5px; border: 2px solid #fff; object-fit: cover; margin-left: -8px; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); }
+    .sim-popover .pop-thumbs img:first-child { margin-left: 0; }
+    .sim-popover .pop-more {
+      width: 22px; height: 22px; border-radius: 5px; border: 2px solid #fff; margin-left: -8px;
+      background: var(--sfx-up-primary, #2563eb); color: #fff; font-size: 9.5px; font-weight: 700;
+      display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+    .sim-popover .pop-open { font-size: 11.5px; font-weight: 600; color: var(--sfx-up-primary, #2563eb); display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+    .sim-popover .pop-open svg { width: 12px; height: 12px; }
 
     /* --- Progress bar --- */
     .progress {
@@ -574,7 +847,33 @@ export class SfxFileItem extends LitElement {
   @property({ type: Boolean }) showLocateButton = false;
   /** Whether to show the "Copy CDN" hover action on completed review tiles. */
   @property({ type: Boolean }) showCopyCdnButton = false;
+  /** Show the per-tile "Check similar" button (images only, when enabled). */
+  @property({ type: Boolean }) showCheckSimilar = false;
+  /** When true, the tile is in similar-image selection mode (shows a checkbox). */
+  @property({ type: Boolean }) selectMode = false;
+  /** Whether this tile is currently picked in selection mode. */
+  @property({ type: Boolean }) isSelected = false;
+  /** Selection has reached the max — unselected tiles can't be picked. */
+  @property({ type: Boolean }) selectionFull = false;
+  /** The preview side-panel is open — suppress the hover similar popover. */
+  @property({ type: Boolean }) previewOpen = false;
+  /** Similarity-search status for this tile: '' | 'searching' | 'queued'. */
+  @property({ type: String }) similarStatus: '' | 'searching' | 'queued' = '';
+  /** Number of similar assets found once checked (-1 = not checked yet → no badge). */
+  @property({ type: Number }) similarCount = -1;
+  /** The similar assets found for this image (for the hover preview popover). */
+  @property({ attribute: false }) similarResults: SimilarAsset[] = [];
+  /** Review-pick mode: render as a plain selectable tile (used in the results
+   *  review modal's left list) — no hover actions, delete, checkbox or popover;
+   *  the result badge stays visible; clicking selects it. */
+  @property({ type: Boolean }) reviewPick = false;
   @state() private _dims = '';
+  /** Hover-preview popover (View similar) state + fixed position. */
+  @state() private _simPopover = false;
+  private _simPopLeft = 0;
+  private _simPopTop = 0;
+  private _simPopTimer: number | null = null;
+  private _simHideTimer: number | null = null;
   /** Brief flash on the Copy CDN button after a successful copy. */
   @state() private _copied = false;
   private _copiedTimer: number | null = null;
@@ -605,6 +904,14 @@ export class SfxFileItem extends LitElement {
     // Clear the Copy CDN flash timer so it doesn't fire on a detached
     // component (avoids a Lit "setState on disconnected element" warning
     // and a tiny memory leak holding the closure reference).
+    if (this._simPopTimer != null) {
+      clearTimeout(this._simPopTimer);
+      this._simPopTimer = null;
+    }
+    if (this._simHideTimer != null) {
+      clearTimeout(this._simHideTimer);
+      this._simHideTimer = null;
+    }
     if (this._copiedTimer != null) {
       clearTimeout(this._copiedTimer);
       this._copiedTimer = null;
@@ -636,6 +943,75 @@ export class SfxFileItem extends LitElement {
     e.stopPropagation();
     this._emit('file-preview');
   }
+
+  /** Per-tile "Check similar" — check this single image against the library. */
+  private _checkSimilarSingle(e: Event) {
+    e.stopPropagation();
+    if (!this.file) return;
+    this._emit('check-similar-single', { file: this.file });
+  }
+
+  /** Toggle this image's selection while in similar-image selection mode. */
+  private _toggleSimilar(e: Event) {
+    e.stopPropagation();
+    // Can't add beyond the selection cap (FRA-10365); deselecting is fine.
+    if (this.selectionFull && !this.isSelected) return;
+    this._emit('similar-toggle');
+  }
+
+  /** Select this image in the results-review modal's left list. */
+  private _reviewSelect() {
+    this._emit('similar-results-select', { fileId: this.file.id });
+  }
+
+  /** Open the similar-results review panel for this image. */
+  private _openResults(e: Event) {
+    e.stopPropagation();
+    this._simPopoverClose();
+    this._emit('similar-open-results');
+  }
+
+  /** Show the hover preview popover, positioned beside the tile (flips left
+   *  when there isn't room on the right; clamped vertically to the viewport). */
+  private _simPopoverShow = () => {
+    // Suppressed while the preview side-panel is open (it already shows similar).
+    if (this.previewOpen) return;
+    if (!this.similarResults.length) return;
+    this._simCancelHide();
+    if (this._simPopover) return;
+    const rect = this.getBoundingClientRect();
+    const popW = 240;
+    const popH = 280;
+    let left = rect.right + 12;
+    if (left + popW > window.innerWidth - 8) left = rect.left - popW - 12;
+    this._simPopLeft = Math.max(8, left);
+    this._simPopTop = Math.max(8, Math.min(rect.top, window.innerHeight - popH - 8));
+    if (this._simPopTimer) clearTimeout(this._simPopTimer);
+    this._simPopTimer = window.setTimeout(() => {
+      this.style.zIndex = '50';
+      this._simPopover = true;
+    }, 150);
+  };
+
+  /** Cancel a pending hide (mouse entered the button or the popover). */
+  private _simCancelHide = () => {
+    if (this._simHideTimer) { clearTimeout(this._simHideTimer); this._simHideTimer = null; }
+  };
+
+  /** Schedule a hide with a small delay so the mouse can bridge the gap
+   *  between the button and the popover without it closing. */
+  private _simScheduleHide = () => {
+    if (this._simPopTimer) { clearTimeout(this._simPopTimer); this._simPopTimer = null; }
+    if (this._simHideTimer) clearTimeout(this._simHideTimer);
+    this._simHideTimer = window.setTimeout(() => this._simPopoverClose(), 180);
+  };
+
+  private _simPopoverClose = () => {
+    if (this._simPopTimer) { clearTimeout(this._simPopTimer); this._simPopTimer = null; }
+    if (this._simHideTimer) { clearTimeout(this._simHideTimer); this._simHideTimer = null; }
+    if (this._simPopover) this._simPopover = false;
+    this.style.zIndex = '';
+  };
 
   private _locate(e: Event) {
     e.stopPropagation();
@@ -675,6 +1051,26 @@ export class SfxFileItem extends LitElement {
     const isRejected = f.status === 'rejected';
     const isReview = this.mode === 'review';
     const ext = getFileExtension(f.name);
+    // HEIC/HEIF are images by MIME but browsers can't render them — they can't
+    // be sent as a w=300 preview, so the similarity feature must skip them.
+    const isImage = category === 'image' && !isBrowserUnrenderableImage(f.type);
+    // Similar-image selection applies only to selectable images (upload mode).
+    const inSelectMode = this.selectMode && isImage && !isReview;
+    // Already-checked images (have a results entry) are "done" — no checkbox, so
+    // selection (and "Select all") naturally targets the not-yet-checked ones.
+    const alreadyChecked = this.similarCount >= 0;
+    const canSelectSimilar =
+      inSelectMode && !alreadyChecked && this.similarStatus === '';
+    // Centered hover actions (Details + optional Check similar) show only on a
+    // normal, not-yet-uploaded tile and not while picking images.
+    const showCenterActions =
+      !isReview && !isDone && !isUploading && !isPaused && !isError &&
+      f.status !== 'rejected' && !this.selectMode && this.similarStatus !== 'searching' &&
+      !this.reviewPick;
+    // Dark hover overlay whenever the centered actions show — for every file
+    // type (documents/videos included), so Details always has a backdrop.
+    // The Check similar button itself still only appears on images.
+    const csOverlay = showCenterActions;
 
     const tileClass = [
       'tile',
@@ -683,10 +1079,21 @@ export class SfxFileItem extends LitElement {
       isPaused ? 'paused' : '',
       isRejected ? 'rejected' : '',
       isReview ? 'review' : '',
+      canSelectSimilar ? 'selectable' : '',
+      canSelectSimilar && this.isSelected ? 'selected' : '',
+      this.selectMode && !isImage && !isReview ? 'select-dimmed' : '',
+      csOverlay ? 'cs-overlay' : '',
+      this.similarStatus === 'queued' ? 'sim-queued' : '',
+      this.reviewPick ? 'review-pick' : '',
+      this.reviewPick && this.isSelected ? 'selected' : '',
     ].filter(Boolean).join(' ');
 
     return html`
-      <div class=${tileClass} tabindex="0">
+      <div
+        class=${tileClass}
+        tabindex="0"
+        @click=${this.reviewPick ? this._reviewSelect : canSelectSimilar ? this._toggleSimilar : undefined}
+      >
         <!-- Preview area -->
         <div class="preview">
           ${f.previewUrl
@@ -710,17 +1117,95 @@ export class SfxFileItem extends LitElement {
                 </div>
               `}
 
-          <!-- Preview button (not in review mode — review uses its own
-               stacked Locate / Copy CDN actions instead) -->
-          ${!isReview && !isDone && !isUploading && !isPaused && !isError && f.status !== 'rejected'
+          <!-- Similarity search: spinner overlay while this image is being checked -->
+          ${this.similarStatus === 'searching'
             ? html`
-                <button class="preview-btn" @click=${this._preview} aria-label=${this.t('details', 'Details')}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                    <circle cx="12" cy="12" r="3"/>
+                <div class="sim-search-overlay">
+                  <div class="sim-spinner"></div>
+                  <div class="sim-label">${this.t('searching', 'Searching…')}</div>
+                </div>
+              `
+            : nothing}
+
+          <!-- Similarity result badge once checked: "N similar" (click to open
+               results) or "No similar". Replaces the green check. -->
+          ${!this.similarStatus && this.similarCount >= 0
+            ? this.similarCount > 0
+              ? html`
+                  <span class="sim-result-badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+                      <circle cx="11" cy="11" r="7" />
+                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                    ${this.t('nSimilar', '{{count}} similar', { count: this.similarCount })}
+                  </span>
+                `
+              : html`<span class="sim-result-badge none">${this.t('noSimilar', 'No similar')}</span>`
+            : nothing}
+
+          <!-- Similar-image selection checkbox (selection mode, unchecked images only) -->
+          ${canSelectSimilar
+            ? html`
+                <span
+                  class="similar-cb ${this.isSelected ? 'checked' : ''} ${this.selectionFull && !this.isSelected ? 'disabled' : ''}"
+                  @click=${this._toggleSimilar}
+                  role="checkbox"
+                  aria-checked=${this.isSelected ? 'true' : 'false'}
+                  aria-disabled=${this.selectionFull && !this.isSelected ? 'true' : 'false'}
+                  aria-label=${this.t('selectImage', 'Select image')}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
                   </svg>
-                  ${this.t('details', 'Details')}
-                </button>
+                </span>
+              `
+            : nothing}
+
+          <!-- Centered hover actions: Details + (optional) Check similar.
+               Not in review mode (review uses Locate / Copy CDN) and hidden
+               while picking images in similar-selection mode. -->
+          ${showCenterActions
+            ? html`
+                <div class="center-actions">
+                  <button class="preview-btn" @click=${this._preview} aria-label=${this.t('details', 'Details')}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                      <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                    <span class="cs-label">${this.t('details', 'Details')}</span>
+                  </button>
+                  ${this.similarCount > 0
+                    ? html`
+                        <button class="check-similar-btn" @click=${this._openResults} @mouseenter=${this._simPopoverShow} @mouseleave=${this._simScheduleHide} aria-label=${this.t('viewSimilar', 'View similar assets')}>
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                            <circle cx="11" cy="11" r="7"/>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                          </svg>
+                          <span class="cs-label">${this.t('viewNSimilar', 'View {{count}} similar', { count: this.similarCount })}</span>
+                        </button>
+                      `
+                    : this.similarCount === 0
+                      ? html`
+                          <button class="check-similar-btn no-similar" @click=${this._openResults} aria-label=${this.t('noSimilarFound', 'No similar assets found')}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                              <circle cx="11" cy="11" r="7"/>
+                              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                            </svg>
+                            <span class="cs-label">${this.t('noSimilar', 'No similar')}</span>
+                          </button>
+                        `
+                      : this.showCheckSimilar && isImage
+                        ? html`
+                            <button class="check-similar-btn" @click=${this._checkSimilarSingle} aria-label=${this.t('checkSimilar', 'Check similar')}>
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                                <circle cx="11" cy="11" r="7"/>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                              </svg>
+                              <span class="cs-label">${this.t('checkSimilar', 'Check similar')}</span>
+                            </button>
+                          `
+                        : nothing}
+                </div>
               `
             : nothing}
 
@@ -812,8 +1297,9 @@ export class SfxFileItem extends LitElement {
             : nothing}
         </div>
 
-        <!-- Action buttons (hidden in review mode — files are read-only) -->
-        ${isReview ? nothing : html`
+        <!-- Action buttons (hidden in review mode and while picking images
+             for the similarity check — files are read-only there) -->
+        ${isReview || this.selectMode || this.reviewPick ? nothing : html`
         <div class="actions">
           ${isUploading && f.isTus
             ? html`
@@ -860,9 +1346,54 @@ export class SfxFileItem extends LitElement {
         <div class="info">
           <input class="name-input" type="text" .value=${f.name} title=${f.name}
             aria-label=${this.t('fileName', 'File name')}
-            ?readonly=${isReview}
-            @change=${isReview ? nothing : this._rename} @click=${(e: Event) => e.stopPropagation()} />
+            ?readonly=${isReview || this.reviewPick}
+            @change=${isReview || this.reviewPick ? nothing : this._rename} @click=${(e: Event) => e.stopPropagation()} />
           <div class="meta">${ext || ''}${f.size ? ` \u00B7 ${formatFileSize(f.size)}` : ''}${this._dims ? ` \u00B7 ${this._dims}` : ''}</div>
+        </div>
+      </div>
+      ${this._renderSimPopover()}
+    `;
+  }
+
+  /** Hover preview popover (variant C: best match large + the rest stacked). */
+  private _renderSimPopover() {
+    if (!this._simPopover || !this.similarResults.length) return nothing;
+    const sorted = [...this.similarResults].sort((a, b) => b.score - a.score);
+    const best = sorted[0];
+    const total = sorted.length;
+    const rest = sorted.slice(1);
+    const thumbs = rest.slice(0, 3);
+    const moreCount = rest.length - thumbs.length;
+    const pct = Math.round(best.score * 100);
+    return html`
+      <div
+        class="sim-popover"
+        @mouseenter=${this._simCancelHide}
+        @mouseleave=${this._simScheduleHide}
+        @click=${this._openResults}
+        ${cspStyle({ left: `${this._simPopLeft}px`, top: `${this._simPopTop}px` })}
+      >
+        <div class="pop-hero">
+          ${best.url ? html`<img src=${best.url} alt="" />` : nothing}
+          <span class="pop-best ${best.score >= 0.9 ? 'high' : ''}">${this.t('bestMatch', '{{pct}}% best match', { pct })}</span>
+        </div>
+        <div class="pop-body">
+          <div class="pop-t">${this.t('closestSimilar', 'Closest similar asset')}</div>
+          <div class="pop-s">${best.uuid}</div>
+        </div>
+        <div class="pop-foot">
+          ${rest.length
+            ? html`<div class="pop-thumbs">
+                ${thumbs.map((r) => html`<img src=${r.url} alt="" />`)}
+                ${moreCount > 0 ? html`<span class="pop-more">+${moreCount}</span>` : nothing}
+              </div>`
+            : html`<span></span>`}
+          <span class="pop-open">
+            ${total === 1
+              ? this.t('open', 'Open')
+              : this.t('openAllN', 'Open all {{count}}', { count: total })}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </span>
         </div>
       </div>
     `;

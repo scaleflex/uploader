@@ -63,6 +63,21 @@
       .config-grid input:focus {
         border-color: #2563eb;
       }
+      .config-grid label.checkbox {
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #334155;
+        cursor: pointer;
+      }
+      .config-grid label.checkbox input {
+        width: 16px;
+        height: 16px;
+        accent-color: #2563eb;
+        cursor: pointer;
+      }
       .apply-btn {
         margin-top: 14px;
         height: 36px;
@@ -83,6 +98,8 @@
       sfx-uploader {
         width: 100%;
         max-width: 1200px;
+        /* Brand primary — the whole widget (incl. Check similar) inherits this. */
+        --primary: #496ced;
       }
     </style>
     <script type="module" src="./main.ts"></script>
@@ -106,6 +123,10 @@
         <label>
           Airbox PUID (optional)
           <input id="cfg-airbox-puid" type="text" value="unhxiA0WHiB0SFhHGL8DVr1SbS" placeholder="optional" />
+        </label>
+        <label class="checkbox full-width">
+          <input id="cfg-similarity-check" type="checkbox" />
+          Enable “Check similar assets”
         </label>
       </div>
       <div style="display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap;">
