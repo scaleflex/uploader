@@ -148,6 +148,12 @@ describe('isSystemFile', () => {
     expect(isSystemFile('.DS_Store')).toBe(true);
   });
 
+  it('matches Finder-numbered .DS_Store variants', () => {
+    expect(isSystemFile('.DS_Store 2')).toBe(true);
+    expect(isSystemFile('.DS_Store 3')).toBe(true);
+    expect(isSystemFile('folder/.DS_Store 2')).toBe(true);
+  });
+
   it('matches Thumbs.db', () => {
     expect(isSystemFile('Thumbs.db')).toBe(true);
   });

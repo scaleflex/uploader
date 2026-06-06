@@ -62,8 +62,10 @@ const SYSTEM_FILENAMES = new Set(['.ds_store', 'thumbs.db', 'desktop.ini']);
 
 /** OS-generated metadata files (e.g. .DS_Store, Thumbs.db) that should be silently skipped on upload. */
 export function isSystemFile(name: string): boolean {
-  const base = name.split(/[\\/]/).pop() ?? name;
-  return SYSTEM_FILENAMES.has(base.toLowerCase());
+  const base = (name.split(/[\\/]/).pop() ?? name).toLowerCase();
+  // Catches Finder's numbered variants like ".DS_Store 2" left after cross-filesystem merges.
+  if (base.startsWith('.ds_store')) return true;
+  return SYSTEM_FILENAMES.has(base);
 }
 
 // --- File type icon utilities (v3 SVG icons) ---
