@@ -5375,7 +5375,13 @@ export class SfxUploader extends LitElement {
     this.config?.callbacks?.onFileLocate?.(file);
     if (!allowed) return;
     const url = resolveLocateUrl(file, this.config ?? undefined);
-    if (url) window.open(url, '_blank', 'noopener,noreferrer');
+    // Navigate the current tab to the asset's library deep-link rather than
+    // spawning a new browser tab. The uploader is almost always embedded
+    // inside the admin/DAM itself, so locating means revealing the file in
+    // the already-loaded widget — not opening a duplicate context. Hosts that
+    // want different behaviour can preventDefault() the cancelable
+    // `sfx-file-locate` event above and route it themselves.
+    if (url) window.location.assign(url);
   }
 
   private _onFileLocate = (e: CustomEvent<{ fileId: string; file: UploadFile }>) => {
