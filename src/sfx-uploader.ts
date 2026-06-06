@@ -1085,9 +1085,14 @@ export class SfxUploader extends LitElement {
       display: flex;
       align-items: center;
       gap: 4px;
-      padding: 8px 16px 0;
+      /* Symmetric vertical padding so the row is evenly centered. */
+      padding: 8px 16px;
       flex-shrink: 0;
       border-bottom: 1px solid var(--sfx-up-border-light, #f1f5f9);
+      /* Query container so the Discard button can drop its label when the row
+         (i.e. the panel) gets too narrow for the text to fit on one line. */
+      container-type: inline-size;
+      container-name: sfx-sim-tabs;
     }
     /* Discard "this image" lives at the right edge of the tab row (secondary,
        subordinate to the primary Upload action). */
@@ -1096,7 +1101,7 @@ export class SfxUploader extends LitElement {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      height: 28px;
+      height: 30px;
       padding: 0 10px;
       border: none;
       border-radius: 6px;
@@ -1114,6 +1119,25 @@ export class SfxUploader extends LitElement {
     .preview-tab-discard svg {
       width: 14px;
       height: 14px;
+    }
+    .discard-label {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    /* On a narrow panel the Discard button drops its label and collapses to an
+       icon, so the tabs always fit on one row. The tab labels ("Details" /
+       "Similar") stay; only the secondary Discard action sheds its text.
+       320 is roughly where "Discard this image" + both tabs stop fitting. */
+    @container sfx-sim-tabs (max-width: 320px) {
+      .discard-label {
+        display: none;
+      }
+      .preview-tab-discard {
+        gap: 0;
+        padding: 0 8px;
+      }
     }
     .preview-tab {
       display: inline-flex;
@@ -1157,17 +1181,16 @@ export class SfxUploader extends LitElement {
     }
 
     /* --- Similar-assets panel body --- */
-    /* Match the left file grid exactly: same min column, gap, tile chrome. */
+    /* Always exactly 2 cards per row, regardless of how many similar there are
+       or how wide the panel is dragged — consistent, never a lone ballooned
+       card or a single column. minmax(0, 1fr) lets columns shrink cleanly. */
     .psim-body {
       flex: 1;
       min-height: 0;
       overflow-y: auto;
       padding: 4px 16px 16px;
       display: grid;
-      grid-template-columns: repeat(
-        auto-fill,
-        minmax(var(--sfx-up-grid-min, 200px), 1fr)
-      );
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       grid-auto-rows: max-content;
       gap: 12px;
       align-content: start;
@@ -6028,7 +6051,7 @@ export class SfxUploader extends LitElement {
                     aria-label=${t('discardThisImage', 'Discard this image')}
                   >
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
-                    ${t('discardThisImage', 'Discard this image')}
+                    <span class="discard-label">${t('discardThisImage', 'Discard this image')}</span>
                   </button>
                 </div>
               `

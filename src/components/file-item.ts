@@ -37,6 +37,12 @@ export class SfxFileItem extends LitElement {
       aspect-ratio: 16 / 10;
       overflow: hidden;
       flex-shrink: 0;
+      /* Query container so the hover actions can adapt to the TILE width (not
+         the viewport). On .preview — never on .tile — because container-type
+         makes the element a containing block for fixed-positioned descendants,
+         which would break the .sim-popover (position: fixed) living on .tile. */
+      container-type: inline-size;
+      container-name: sfx-tile-media;
       background-color: var(--sfx-up-checker-bg, #fff);
       background-image:
         linear-gradient(45deg, var(--sfx-up-checker-tile, #f0f0f0) 25%, transparent 25%),
@@ -265,8 +271,13 @@ export class SfxFileItem extends LitElement {
       /* Fixed height so both buttons match regardless of border width. */
       height: 32px;
       padding: 0 16px;
-      /* Consistent width so Details matches Check similar in both modes. */
-      min-width: 140px;
+      /* Fixed width so every button is identical across ALL tiles, regardless
+         of how short the label is ("No similar" / "Details") — extra empty
+         space is intentional, by design. Sized to fit the longest label
+         ("View N similar"). max-width keeps it inside genuinely narrow tiles,
+         where the container query below collapses it to an icon. */
+      width: 160px;
+      max-width: 100%;
       border-radius: 6px;
       cursor: pointer;
       font-family: inherit;
@@ -274,6 +285,36 @@ export class SfxFileItem extends LitElement {
       font-weight: 600;
       white-space: nowrap;
       transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .cs-label {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Collapse to icon-only the moment the side gap disappears: the cutoff is
+       the button width (160px) + a minimum of breathing room (~16px per side).
+       Wider than this → text labels with visible air on both sides; narrower →
+       icons only, so the button never sits cramped edge-to-edge with text. */
+    @container sfx-tile-media (max-width: 192px) {
+      /* Icon-only: lay the two square buttons side by side, not stacked —
+         more compact and balanced when there's no text to align. */
+      .center-actions {
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+      }
+      .center-actions .cs-label {
+        display: none;
+      }
+      .preview-btn,
+      .check-similar-btn {
+        width: 40px;
+        padding: 0;
+        gap: 0;
+        justify-content: center;
+      }
     }
 
     /* Details — white, borderless (transparent border keeps the same box
@@ -285,10 +326,12 @@ export class SfxFileItem extends LitElement {
       color: var(--sfx-up-primary, #2563eb);
     }
 
+    /* Hover feedback via shadow, NOT scale — scaling one button would make it
+       wider than its sibling; both must stay the same width. */
     .preview-btn:hover {
       background: var(--sfx-up-bg, #fff);
       color: var(--sfx-up-primary, #2563eb);
-      transform: scale(1.05);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.14);
     }
 
     .preview-btn:hover svg {
@@ -303,12 +346,12 @@ export class SfxFileItem extends LitElement {
       box-shadow: 0 2px 8px var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.35));
     }
 
-    /* No darkening on hover — same color, just a slight scale-up (both
-       buttons grow on hover, not only Details). */
+    /* Hover feedback via a stronger glow, NOT scale, so width stays identical
+       to the Details button. */
     .check-similar-btn:hover {
       background: var(--sfx-up-primary, #2563eb);
       border-color: var(--sfx-up-primary, #2563eb);
-      transform: scale(1.05);
+      box-shadow: 0 4px 12px var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.45));
     }
 
     /* "No similar found" — muted/neutral, NOT an action to re-run; clicking it
@@ -1129,7 +1172,7 @@ export class SfxFileItem extends LitElement {
                       <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                       <circle cx="12" cy="12" r="3"/>
                     </svg>
-                    ${this.t('details', 'Details')}
+                    <span class="cs-label">${this.t('details', 'Details')}</span>
                   </button>
                   ${this.similarCount > 0
                     ? html`
@@ -1138,7 +1181,7 @@ export class SfxFileItem extends LitElement {
                             <circle cx="11" cy="11" r="7"/>
                             <line x1="21" y1="21" x2="16.65" y2="16.65"/>
                           </svg>
-                          ${this.t('viewNSimilar', 'View {{count}} similar', { count: this.similarCount })}
+                          <span class="cs-label">${this.t('viewNSimilar', 'View {{count}} similar', { count: this.similarCount })}</span>
                         </button>
                       `
                     : this.similarCount === 0
@@ -1148,7 +1191,7 @@ export class SfxFileItem extends LitElement {
                               <circle cx="11" cy="11" r="7"/>
                               <line x1="21" y1="21" x2="16.65" y2="16.65"/>
                             </svg>
-                            ${this.t('noSimilar', 'No similar')}
+                            <span class="cs-label">${this.t('noSimilar', 'No similar')}</span>
                           </button>
                         `
                       : this.showCheckSimilar && isImage
@@ -1158,7 +1201,7 @@ export class SfxFileItem extends LitElement {
                                 <circle cx="11" cy="11" r="7"/>
                                 <line x1="21" y1="21" x2="16.65" y2="16.65"/>
                               </svg>
-                              ${this.t('checkSimilar', 'Check similar')}
+                              <span class="cs-label">${this.t('checkSimilar', 'Check similar')}</span>
                             </button>
                           `
                         : nothing}
