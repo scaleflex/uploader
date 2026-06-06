@@ -168,4 +168,59 @@ describe('buildDefaultRegionalFilters', () => {
     const full = group('full', [['x', 'X']]);
     expect(buildDefaultRegionalFilters([empty, full])).toEqual({ full: 'x' });
   });
+
+  describe('user-language preference for LANGUAGES groups', () => {
+    const langs = group(
+      'lang',
+      [['en', 'English'], ['fr', 'French'], ['de', 'German']],
+      { type: 'FTYPE_LANGUAGES' },
+    );
+    const cur = group('cur', [['USD', 'USD'], ['EUR', 'EUR']], {
+      type: 'FTYPE_CURRENCIES',
+    });
+
+    it('picks the LANGUAGES variant matching the user language', () => {
+      expect(buildDefaultRegionalFilters([langs], 'fr')).toEqual({ lang: 'fr' });
+    });
+
+    it('matches case-insensitively', () => {
+      expect(buildDefaultRegionalFilters([langs], 'FR')).toEqual({ lang: 'fr' });
+    });
+
+    it('matches base tag when user passes a region-qualified locale', () => {
+      expect(buildDefaultRegionalFilters([langs], 'fr-FR')).toEqual({
+        lang: 'fr',
+      });
+    });
+
+    it('matches the variant base when user passes only the language base', () => {
+      const langsRegional = group(
+        'lang',
+        [['en-US', 'EN-US'], ['fr-FR', 'FR-FR']],
+        { type: 'FTYPE_LANGUAGES' },
+      );
+      expect(buildDefaultRegionalFilters([langsRegional], 'fr')).toEqual({
+        lang: 'fr-FR',
+      });
+    });
+
+    it('falls back to the first variant when no match exists', () => {
+      expect(buildDefaultRegionalFilters([langs], 'es')).toEqual({ lang: 'en' });
+    });
+
+    it('ignores the user language for non-LANGUAGES groups', () => {
+      expect(buildDefaultRegionalFilters([cur], 'EUR')).toEqual({ cur: 'USD' });
+    });
+
+    it('keeps non-LANGUAGES groups on first variant while preferring user lang elsewhere', () => {
+      expect(buildDefaultRegionalFilters([langs, cur], 'de')).toEqual({
+        lang: 'de',
+        cur: 'USD',
+      });
+    });
+
+    it('falls back to first variant when no user language is given', () => {
+      expect(buildDefaultRegionalFilters([langs])).toEqual({ lang: 'en' });
+    });
+  });
 });

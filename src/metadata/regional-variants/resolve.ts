@@ -3,6 +3,7 @@ import type {
   MetadataField,
   RegionalVariantsGroup,
 } from '../schema/schema.types';
+import { REGIONAL_VARIANT_TYPE } from './constants';
 
 /**
  * Resolve the per-field active regional-variant key — the slot a field's
@@ -51,18 +52,52 @@ export function getFieldRegionalVariantHint(
 }
 
 /**
- * Default `regionalFilters` map from the schema's groups — first variant of
- * each group becomes that group's initial active value. Used by the uploader
- * to seed state before the user picks anything. Mirrors admin v5's
- * `metadataAdaptAndSet` initialization.
+ * Default `regionalFilters` map from the schema's groups. Each group seeds
+ * to its first variant — except LANGUAGES-type groups, which try to match the
+ * user's profile language (BCP 47, e.g. `'fr'` or `'fr-FR'`) first so a user
+ * with a French profile lands on the French variant by default. Used by the
+ * uploader to seed state before the user picks anything. Mirrors admin v5's
+ * `metadataAdaptAndSet` initialization plus the profile-language preference
+ * Vitaly asked for in the regional-variants review.
  */
 export function buildDefaultRegionalFilters(
   groups: RegionalVariantsGroup[] | undefined,
+  userLanguage?: string,
 ): Record<string, string> {
   const out: Record<string, string> = {};
   for (const g of groups ?? []) {
-    const first = g.variants[0]?.api_value;
-    if (first) out[g.uuid] = first;
+    if (!g.variants?.length) continue;
+    const preferred =
+      g.type === REGIONAL_VARIANT_TYPE.LANGUAGES
+        ? matchLanguageVariant(g.variants, userLanguage)
+        : undefined;
+    out[g.uuid] = preferred ?? g.variants[0].api_value;
   }
   return out;
+}
+
+/**
+ * Pick the variant whose `api_value` best matches `userLanguage` (BCP 47).
+ * Tries case-insensitive exact match, then base-tag in either direction
+ * (`fr-FR` ↔ `fr`). Returns `undefined` to let the caller fall back.
+ */
+function matchLanguageVariant(
+  variants: RegionalVariantsGroup['variants'],
+  userLanguage: string | undefined,
+): string | undefined {
+  if (!userLanguage) return undefined;
+  const user = userLanguage.toLowerCase();
+  const userBase = user.split('-')[0];
+  let baseToVariant: string | undefined;
+  let variantBaseMatch: string | undefined;
+  for (const v of variants) {
+    const api = v.api_value?.toLowerCase();
+    if (!api) continue;
+    if (api === user) return v.api_value;
+    if (!baseToVariant && api === userBase) baseToVariant = v.api_value;
+    if (!variantBaseMatch && api.split('-')[0] === userBase) {
+      variantBaseMatch = v.api_value;
+    }
+  }
+  return baseToVariant ?? variantBaseMatch;
 }

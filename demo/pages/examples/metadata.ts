@@ -8,6 +8,7 @@ const META_STORAGE_KEY = 'sfx-uploader-demo-meta';
 interface MetaCreds {
   projectUuid: string;
   enforceRequired: string;
+  language: string;
   sessionToken: string;
   companyToken: string;
   projectToken: string;
@@ -16,6 +17,7 @@ interface MetaCreds {
 const META_DEFAULTS: MetaCreds = {
   projectUuid: '',
   enforceRequired: 'auto',
+  language: '',
   sessionToken: '',
   companyToken: '',
   projectToken: '',
@@ -66,6 +68,12 @@ const page: Page = {
             <label style="display: block; font-size: 13px; color: #64748b; margin-bottom: 4px;">Project UUID</label>
             <input id="project-uuid" type="text" placeholder="Enter project UUID"
               style="width: 340px; height: 36px; padding: 0 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; font-family: inherit;" />
+          </div>
+          <div>
+            <label style="display: block; font-size: 13px; color: #64748b; margin-bottom: 4px;">Profile language</label>
+            <input id="profile-language" type="text" placeholder="e.g. fr, en, fr-FR"
+              title="BCP 47 user locale. Mapped to both config.locale (UI translations) and metadataConfig.language (regional-variants default + ultratags fallback)."
+              style="width: 160px; height: 36px; padding: 0 10px; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; font-family: inherit; box-sizing: border-box;" />
           </div>
           <div>
             <label style="display: block; font-size: 13px; color: #64748b; margin-bottom: 4px;">Enforce required</label>
@@ -139,6 +147,16 @@ const page: Page = {
           <li>When required fields are missing, clicking <strong>Upload</strong> opens the bulk metadata editor positioned on the first missing field, and the "Fill Metadata" button is promoted to primary. Enforcement is on by default (<code>enforceRequiredBeforeUpload: 'auto'</code>) whenever a field has <code>required: 1</code>, the API sets <code>force_filling_metadata_on_upload</code>, or you pass an explicit <code>requiredFields</code> list. Set it to <code>false</code> to opt out.</li>
           <li>Metadata is included in the upload request automatically &mdash; no changes to the upload flow needed.</li>
         </ol>
+        <h3 style="margin-top: 16px;">Regional variants</h3>
+        <p style="font-size: 14px; color: #475569; margin-bottom: 8px;">
+          If the project schema defines <code>regional_variants_groups</code> (LANGUAGES, CURRENCIES, or CUSTOM types — wire values <code>FTYPE_LANGUAGES</code>, <code>FTYPE_CURRENCIES</code>, <code>FTYPE_CUSTOM</code>), a Globe-icon <strong>Regional settings</strong> dropdown automatically appears in the uploader header (between the gear and the close button) and inside the bulk-metadata modal topbar. The user can switch the active variant for every multi-variant group:
+        </p>
+        <ul style="font-size: 14px; line-height: 1.8; color: #475569; padding-left: 20px;">
+          <li>Each regional metadata field is wrapped under its group's active variant when saved &mdash; e.g. a LANGUAGES-keyed text field saves as <code>{ en: 'Hello', fr: 'Bonjour' }</code>. Switching language flips which slot the user edits while the others are preserved.</li>
+          <li>Picking the LANGUAGES variant also drives the ultratags label rendering &mdash; the dropdown and chips render the <code>i18n[lang]</code> value (with <code>~LANG</code> regional fallback and <code>defaultLang</code> fallback chain).</li>
+          <li>A small inline hint below each regional field's input shows which group + variant is currently active (e.g. <em>Languages: English</em>, <em>Currencies: USD</em>).</li>
+          <li>You can pre-seed the selection by passing <code>metadataConfig.regionalFilters: { [groupUuid]: 'fr', … }</code>. Otherwise the LANGUAGES group defaults to the variant matching <code>metadataConfig.language</code> (BCP 47, case-insensitive, with base/region fallback &mdash; <code>fr-FR</code> ↔ <code>fr</code>); CURRENCIES and CUSTOM groups default to their first variant. When no language is set, every group falls back to its first variant.</li>
+        </ul>
         <div style="margin-top: 12px; padding: 12px 16px; background: #eff6ff; border-radius: 8px; font-size: 13px; color: #1e40af;">
           <strong>Finding your project UUID:</strong> In the Filerobot Hub, the project UUID is available from the session data
           at <code>session_company.projects_roles[].project_uuid</code>.
@@ -220,7 +238,13 @@ const page: Page = {
               <td style="padding: 8px 12px;"><code>language</code></td>
               <td style="padding: 8px 12px;"><code>string</code></td>
               <td style="padding: 8px 12px;"><code>'en'</code></td>
-              <td style="padding: 8px 12px;">Language key for tags and regional variants.</td>
+              <td style="padding: 8px 12px;">User locale (BCP 47) &mdash; drives ultratags label fallback, seeds the LANGUAGES regional-variants group's default active variant (matched case-insensitively with base/region fallback), and is used as the default slot key when reading/writing regional-variant fields whose group is not listed in <code>regionalFilters</code>.</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #f1f5f9;">
+              <td style="padding: 8px 12px;"><code>regionalFilters</code></td>
+              <td style="padding: 8px 12px;"><code>Record&lt;string, string&gt;</code></td>
+              <td style="padding: 8px 12px;">auto from schema</td>
+              <td style="padding: 8px 12px;">Currently-active variant per regional-variants group, keyed by group UUID (e.g. <code>{ '4cf3a9c7-…': 'fr', 'b1d28e…': 'EUR' }</code>). When the schema defines <code>regional_variants_groups</code> the uploader seeds defaults: the LANGUAGES group prefers the variant matching <code>language</code> (BCP 47, case-insensitive, base/region fallback), other groups use the first variant. The in-header <strong>Regional settings</strong> dropdown lets the user override them. Each field is wrapped/unwrapped under <code>regionalFilters[field.regional_variants_group_uuid]</code>.</td>
             </tr>
             <tr style="border-bottom: 1px solid #f1f5f9;">
               <td style="padding: 8px 12px;"><code>defaults</code></td>
@@ -378,6 +402,7 @@ uploader.open();
     const enforceChevron = enforceWrap.querySelector('.meta-select-chevron') as SVGElement;
     const enforceMenu = enforceWrap.querySelector('.meta-select-menu') as HTMLDivElement;
     const enforceOptions = enforceWrap.querySelectorAll('.meta-select-option') as NodeListOf<HTMLButtonElement>;
+    const profileLanguageInput = document.getElementById('profile-language') as HTMLInputElement;
     const hubSessionInput = document.getElementById('hub-session') as HTMLInputElement;
     const hubCompanyInput = document.getElementById('hub-company') as HTMLInputElement;
     const hubProjectInput = document.getElementById('hub-project') as HTMLInputElement;
@@ -428,6 +453,7 @@ uploader.open();
     if (saved.projectUuid) projectUuidInput.value = saved.projectUuid;
     if (saved.enforceRequired) setEnforceValue(saved.enforceRequired);
     else setEnforceValue('auto');
+    if (saved.language) profileLanguageInput.value = saved.language;
     if (saved.sessionToken) hubSessionInput.value = saved.sessionToken;
     if (saved.companyToken) hubCompanyInput.value = saved.companyToken;
     if (saved.projectToken) hubProjectInput.value = saved.projectToken;
@@ -435,12 +461,13 @@ uploader.open();
     document.getElementById('open-btn')!.addEventListener('click', () => {
       const projectUuid = projectUuidInput.value.trim();
       const enforceVal = enforceWrap.dataset.value || 'auto';
+      const language = profileLanguageInput.value.trim();
       const sessionToken = hubSessionInput.value.trim();
       const companyToken = hubCompanyInput.value.trim();
       const projectToken = hubProjectInput.value.trim() || projectUuid;
 
       // Save to localStorage for next visit
-      saveMetaCreds({ projectUuid, enforceRequired: enforceVal, sessionToken, companyToken, projectToken });
+      saveMetaCreds({ projectUuid, enforceRequired: enforceVal, language, sessionToken, companyToken, projectToken });
 
       if (!projectUuid) {
         alert('Please enter a project UUID');
@@ -477,13 +504,15 @@ uploader.open();
         uploader.style.removeProperty('--sfx-up-bulk-modal-height');
       }
 
-      log('config', { projectUuid, enforce, hasHubHeaders: !!hubHeaders, largeMain, largeBulk });
+      log('config', { projectUuid, enforce, language: language || undefined, hasHubHeaders: !!hubHeaders, largeMain, largeBulk });
 
       uploader.config = buildConfig({
+        ...(language ? { locale: language } : {}),
         metadataConfig: {
           projectUuid,
           enforceRequiredBeforeUpload: enforce,
           hubHeaders,
+          ...(language ? { language } : {}),
         },
       });
       uploader.open();

@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Regional variants language selector** — a Globe-icon "Regional settings" dropdown in the header lets users switch the active variant for every regional-variants group in the schema (LANGUAGES, CURRENCIES, CUSTOM). Mirrors admin v5's `RegionalFiltersDropdown`. Picking French flips ultratags labels to the `fr` i18n value and wraps regional metadata fields under the right slot key.
+  - Multi-group dropdown with section headers; keyboard nav (arrow keys / Enter / Escape).
+  - Mounted in the host header (between the gear and the close button) and inside the bulk-metadata modal topbar. Both share the host's `_regionalFilters` state via a `regional-change` event.
+  - Inline hint label ("Languages: English" / "Currencies: USD") rendered below every regional field's input.
+- `MetadataConfig.regionalFilters?: Record<string, string>` — per-group active variant, keyed by group UUID. Defaults are seeded from the schema (first variant of each group); user picks via the selector override them.
+- New `regional-variants/` module: `<sfx-regional-settings>` element, `resolveFieldRegionalKey` + `getFieldRegionalVariantHint` + `buildDefaultRegionalFilters` helpers, and a `REGIONAL_VARIANT_TYPE` constant (`{ LANGUAGES: 'FTYPE_LANGUAGES', CURRENCIES: 'FTYPE_CURRENCIES', CUSTOM: 'FTYPE_CUSTOM' }`) that mirrors admin v5's wire values.
+
+### Changed
+
+- The LANGUAGES regional-variants group now defaults to the variant matching the user's profile language (`metadataConfig.language`, falling back to `config.locale`) instead of always the first variant — so a French profile lands on the French variant on first open. Matches case-insensitively and accepts BCP 47 base/region pairs in either direction (`fr-FR` ↔ `fr`); falls back to the first variant when no match exists. Non-LANGUAGES groups (CURRENCIES, CUSTOM) keep the first-variant default.
+
+### Changed
+
+- `mapValueToBackend` / `mapValueFromBackend` / `computeBulkResult` now resolve the slot key per-field via `resolveFieldRegionalKey(field, config)`, keyed by the field's group UUID — not a single global `language`. CURRENCIES and CUSTOM regional fields now wrap correctly under their own variant (previously they were silently mis-keyed under whatever `config.language` was).
+- Editing a regional field in single-file preview mode no longer wipes out the other-language slots — the metadata-field dispatcher passes a fake-file into `mapValueToBackend` so the spread retains existing translations.
+- Similarity-check sticky banner is now fully opaque (two-layer background) and uses `z-index: 20` so tile content doesn't bleed through when scrolling.
+- "Similar" tab count badge renders as a filled brand-blue circle (was a translucent pill).
+- File-tile action buttons keep their text labels at every tile width instead of collapsing to icon-only when the side panel opens.
+
 - The Upload settings panel now drives the upload request, aligning with admin v5 (`js-admin-react-filerobot-v5`):
   - **Image resize** — when *Resize Images* is on and the file is an image or PDF, the request gets `&resize=W,H` (matches v5's `appendResizeQueryParams`).
   - **Video transcode** — when *Transcode video* is on and the file is a video, the request gets `&postprocess=transcode&video-resolution=…&video_protocols=…` (matches v5's `appendVideoTranscodeQueryParams`).
