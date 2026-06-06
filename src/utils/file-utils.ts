@@ -58,6 +58,14 @@ export function getFileExtension(name: string): string {
   return dot >= 0 ? name.slice(dot + 1).toUpperCase() : '';
 }
 
+const SYSTEM_FILENAMES = new Set(['.ds_store', 'thumbs.db', 'desktop.ini']);
+
+/** OS-generated metadata files (e.g. .DS_Store, Thumbs.db) that should be silently skipped on upload. */
+export function isSystemFile(name: string): boolean {
+  const base = name.split(/[\\/]/).pop() ?? name;
+  return SYSTEM_FILENAMES.has(base.toLowerCase());
+}
+
 // --- File type icon utilities (v3 SVG icons) ---
 
 const FILE_TYPES_ICON_BASE = 'https://scaleflex.cloudimg.io/v7/assets/file-types/v3/';

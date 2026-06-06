@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Folder structure preservation when a user drags a folder onto the drop zone or picks a directory in the file dialog. Nested files are now recursively walked (via `webkitGetAsEntry`) and each file's path within the dropped root is captured on `UploadFile.relativeFolder`. The upload engine joins that path onto `targetFolder` so Filerobot recreates the original hierarchy — e.g. dropping `photos/2026/jan/x.png` with `targetFolder: 'assets'` uploads to `assets/photos/2026/jan`.
+  - New `preserveFolderStructure?: boolean` config option (default `true`). When `false`, dropped folders are still ingested but uploads stay flat under `targetFolder` (legacy behaviour).
+  - Drop zone and drop-tile gain an extra "or upload a folder" affordance next to the "browse" link (rendered alongside a hidden `webkitdirectory` input) when folder support is enabled and multi-select is allowed. Single-asset slots (`forceName` or `maxNumberOfFiles: 1`) automatically hide the folder picker.
+  - New i18n keys: `orUploadFolderPrefix` (default `"or upload a "`), `uploadFolder` (default `"folder"`).
 - Sizing CSS custom properties so hosts can enlarge (or shrink) the modals without forking styles:
   - `--sfx-up-modal-max-width` — main uploader modal max width (default `1100px`).
   - `--sfx-up-bulk-modal-width` — bulk metadata edit modal width (default `980px`).
@@ -63,6 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Required-metadata enforcement is now on by default. `metadataConfig.enforceRequiredBeforeUpload` defaults to `'auto'` (was effectively `false`), and `'auto'` now also enforces when any schema field has `required: 1` or `metadataConfig.requiredFields` is provided — previously it only honored the `force_filling_metadata_on_upload` flag from the API store. Set `enforceRequiredBeforeUpload: false` to opt out.
 - Clicking **Upload** with required metadata still missing no longer leaves the button silently disabled. Instead, the bulk metadata editor opens positioned on the first missing required field (Airbox-parity behavior). The "Fill Metadata" button is promoted to primary in this state so the next action is obvious.
 - `integer-list` metadata fields are now treated as unsupported during upload (same as `ultratags`, `taxonomy-node`, `asset-attachments`, `attachments-assets`). They render the read-only "Not editable during upload" placeholder and are excluded from bulk operations — users can edit them in the asset library after ingest.
+- OS-generated metadata files (`.DS_Store`, `Thumbs.db`, `desktop.ini`) are now silently skipped at all three intake paths (local file pick / drop, URL import, cloud connector). Previously a macOS user drag-and-dropping a folder would see `.DS_Store` queued and either uploaded or rejected with a "type not allowed" error. The skip is silent (no rejected entry, no toast) to match the behavior of the duplicate guard — these files are never user-intended.
 
 ### Fixed
 

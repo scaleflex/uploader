@@ -1,4 +1,4 @@
-import { generateFileId, formatFileSize, formatEta, getFileCategory, getFileExtension, guessMimeType } from './file-utils';
+import { generateFileId, formatFileSize, formatEta, getFileCategory, getFileExtension, guessMimeType, isSystemFile } from './file-utils';
 
 describe('generateFileId', () => {
   it('returns unique IDs', () => {
@@ -140,5 +140,35 @@ describe('guessMimeType', () => {
 
   it('is case-insensitive', () => {
     expect(guessMimeType('PHOTO.JPG')).toBe('image/jpeg');
+  });
+});
+
+describe('isSystemFile', () => {
+  it('matches .DS_Store', () => {
+    expect(isSystemFile('.DS_Store')).toBe(true);
+  });
+
+  it('matches Thumbs.db', () => {
+    expect(isSystemFile('Thumbs.db')).toBe(true);
+  });
+
+  it('matches desktop.ini', () => {
+    expect(isSystemFile('desktop.ini')).toBe(true);
+  });
+
+  it('is case-insensitive', () => {
+    expect(isSystemFile('.ds_store')).toBe(true);
+    expect(isSystemFile('THUMBS.DB')).toBe(true);
+  });
+
+  it('matches when the file has a directory path prefix', () => {
+    expect(isSystemFile('folder/.DS_Store')).toBe(true);
+    expect(isSystemFile('a\\b\\Thumbs.db')).toBe(true);
+  });
+
+  it('does not match regular files', () => {
+    expect(isSystemFile('photo.jpg')).toBe(false);
+    expect(isSystemFile('document.pdf')).toBe(false);
+    expect(isSystemFile('my-thumbs.db.txt')).toBe(false);
   });
 });
