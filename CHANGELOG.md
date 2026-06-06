@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The LANGUAGES regional-variants group now defaults to the variant matching the user's profile language (`metadataConfig.language`, falling back to `config.locale`) instead of always the first variant — so a French profile lands on the French variant on first open. Matches case-insensitively and accepts BCP 47 base/region pairs in either direction (`fr-FR` ↔ `fr`); falls back to the first variant when no match exists. Non-LANGUAGES groups (CURRENCIES, CUSTOM) keep the first-variant default.
+
+### Changed
+
 - `mapValueToBackend` / `mapValueFromBackend` / `computeBulkResult` now resolve the slot key per-field via `resolveFieldRegionalKey(field, config)`, keyed by the field's group UUID — not a single global `language`. CURRENCIES and CUSTOM regional fields now wrap correctly under their own variant (previously they were silently mis-keyed under whatever `config.language` was).
 - Editing a regional field in single-file preview mode no longer wipes out the other-language slots — the metadata-field dispatcher passes a fake-file into `mapValueToBackend` so the spread retains existing translations.
 - Similarity-check sticky banner is now fully opaque (two-layer background) and uses `z-index: 20` so tile content doesn't bleed through when scrolling.
