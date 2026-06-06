@@ -122,6 +122,71 @@ export class SfxActionsBar extends LitElement {
         color: var(--sfx-up-text-secondary, #475569);
       }
 
+      /* --- Always-on similarity selection toolbar --- */
+      .sim-ico {
+        flex: 0 0 30px;
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        background: var(--sfx-up-primary-bg, #eff6ff);
+        color: var(--sfx-up-primary, #2563eb);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .sim-ico svg { width: 16px; height: 16px; }
+
+      .sim-text { min-width: 0; display: flex; flex-direction: column; line-height: 1.25; }
+      .sim-text b {
+        font-size: 13.5px;
+        font-weight: 600;
+        color: var(--sfx-up-text, #1e293b);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .sim-text span {
+        font-size: 12px;
+        font-weight: 400;
+        color: var(--sfx-up-text-muted, #64748b);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .count-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 40px;
+        height: 28px;
+        padding: 0 10px;
+        border-radius: 999px;
+        background: var(--sfx-up-surface, #eef2ff);
+        color: var(--sfx-up-primary, #2563eb);
+        font-size: 13px;
+        font-weight: 700;
+      }
+      .count-pill.full {
+        background: var(--sfx-up-primary, #2563eb);
+        color: #fff;
+      }
+
+      .select-all {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--sfx-up-primary, #2563eb);
+        padding: 0 6px;
+        height: 28px;
+        border-radius: 6px;
+        transition: background 0.15s ease;
+      }
+      .select-all:hover { background: var(--sfx-up-primary-bg, #eff6ff); }
+
       /* --- Button overrides (base in shared-styles) --- */
 
       .btn-sec {
@@ -268,6 +333,8 @@ export class SfxActionsBar extends LitElement {
   @property({ type: Number }) selectedCount = 0;
   /** Max images selectable for a similarity check (0 = no cap shown). */
   @property({ type: Number }) maxSelection = 0;
+  /** Whether all selectable images are currently picked (drives "Select all"). */
+  @property({ type: Boolean }) allSelected = false;
 
   private _clear() {
     this.dispatchEvent(
@@ -320,6 +387,16 @@ export class SfxActionsBar extends LitElement {
   private _checkSimilarRun() {
     this.dispatchEvent(
       new CustomEvent("check-similar-run", { bubbles: true, composed: true }),
+    );
+  }
+
+  private _similarSelectAll() {
+    this.dispatchEvent(
+      new CustomEvent("similar-select-all", {
+        detail: { selected: !this.allSelected },
+        bubbles: true,
+        composed: true,
+      }),
     );
   }
 
@@ -465,18 +542,36 @@ export class SfxActionsBar extends LitElement {
 
   private _renderSelectToolbar() {
     const n = this.selectedCount;
+    const max = this.maxSelection;
+    const full = max > 0 && n >= max;
     return html`
       <div class="buttons-row">
         <div class="left">
-          <span class="select-count">
-            ${n > 0
-              ? this.maxSelection > 0
-                ? this.t('imagesSelectedMax', '{{count}}/{{max}} selected', { count: n, max: this.maxSelection })
-                : this.t('imagesSelected', '{{count}} selected', { count: n })
-              : this.t('noImagesSelected', 'No images selected')}
+          <span class="sim-ico">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+              <circle cx="11" cy="11" r="7" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
           </span>
+          <div class="sim-text">
+            <b>${this.t('selectImagesToCheck', 'Select images to check for similar assets')}</b>
+            <span>${max > 0
+              ? this.t('selectImagesHintMax', 'Pick up to {{max}}, then click Check', { max })
+              : this.t('selectImagesHint', 'Pick one or more, then click Check')}</span>
+          </div>
         </div>
         <div class="right">
+          ${max > 0
+            ? html`<span
+                class="count-pill ${full ? 'full' : ''}"
+                aria-label=${this.t('countSelected', '{{count}} of {{max}} selected', { count: n, max })}
+              >${n}/${max}</span>`
+            : nothing}
+          <button class="select-all" type="button" @click=${this._similarSelectAll}>
+            ${this.allSelected
+              ? this.t('deselectAll', 'Deselect all')
+              : this.t('selectAll', 'Select all')}
+          </button>
           <button class="btn-ghost" @click=${this._checkSimilarCancel} aria-label=${this.t('cancel', 'Cancel')}>
             <span class="btn-label">${this.t('cancel', 'Cancel')}</span>
           </button>
@@ -484,15 +579,13 @@ export class SfxActionsBar extends LitElement {
             class="btn-primary"
             @click=${this._checkSimilarRun}
             ?disabled=${n === 0}
-            aria-label=${this.t('check', 'Check')}
+            aria-label=${this.t('checkSimilar', 'Check similar')}
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
               <circle cx="11" cy="11" r="7" />
               <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
-            <span class="btn-label">
-              ${n > 0 ? this.t('checkCount', 'Check ({{count}})', { count: n }) : this.t('check', 'Check')}
-            </span>
+            <span class="btn-label">${this.t('checkSimilar', 'Check similar')}</span>
           </button>
         </div>
       </div>

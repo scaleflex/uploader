@@ -56,6 +56,9 @@ import './fields/unsupported-field';
 import './metadata-field-edit';
 import './metadata-field-view';
 
+// Regional variants selector
+import './regional-variants/regional-settings';
+
 // Bulk metadata modal
 import './bulk/index';
 export { SfxBulkMetadataModal } from './bulk/index';

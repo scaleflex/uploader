@@ -4,14 +4,26 @@ import { buildConfig } from '../../lib/auth';
 import { renderCodeBlock } from '../../lib/code-block';
 import { initCustomSelects } from '../../lib/custom-select';
 
-type UploadDefaults = NonNullable<NonNullable<UploaderConfig['uploadSettings']>['defaults']>;
+type UploadSettingsObject = Exclude<UploaderConfig['uploadSettings'], false | undefined>;
+type UploadDefaults = NonNullable<UploadSettingsObject['defaults']>;
+type Resolution = 'auto' | 'mobile' | 'tablet' | 'desktop' | 'hq' | 'sample';
 
+const RESOLUTION_LABELS: Record<Resolution, string> = {
+  auto: 'Auto',
+  mobile: 'Mobile',
+  tablet: 'Tablet',
+  desktop: 'Desktop',
+  hq: 'HQ',
+  sample: 'Sample',
+};
+
+let panelEnabled = true;
+let showResumableSwitcher = false;
 let resize = false;
 let maxWidth: number | undefined;
 let maxHeight: number | undefined;
 let transcode = false;
-let resolution: 'Auto' | '1080p' | '720p' | '480p' = 'Auto';
-let protocol: 'HLS' | 'DASH' = 'HLS';
+let resolution: Resolution = 'auto';
 let resumable = false;
 
 function buildDefaults(): UploadDefaults {
@@ -24,10 +36,21 @@ function buildDefaults(): UploadDefaults {
   if (transcode) {
     defaults.transcode = true;
     defaults.resolution = resolution;
-    defaults.protocol = protocol;
+    defaults.protocol = 'hls';
   }
   if (resumable) defaults.resumable = true;
   return defaults;
+}
+
+function buildUploadSettings(): UploaderConfig['uploadSettings'] | undefined {
+  if (!panelEnabled) return false;
+  const defaults = buildDefaults();
+  const hasDefaults = Object.keys(defaults).length > 0;
+  if (!showResumableSwitcher && !hasDefaults) return undefined;
+  const out: UploadSettingsObject = {};
+  if (showResumableSwitcher) out.showResumableSwitcher = true;
+  if (hasDefaults) out.defaults = defaults;
+  return out;
 }
 
 function updateCode() {
@@ -35,37 +58,49 @@ function updateCode() {
   if (!container) return;
   container.innerHTML = '';
 
-  const defaults = buildDefaults();
-  const hasDefaults = Object.keys(defaults).length > 0;
+  const us = buildUploadSettings();
 
-  const defaultsBody = Object.entries(defaults)
-    .map(([k, v]) => `      ${k}: ${typeof v === 'string' ? `'${v}'` : v},`)
-    .join('\n');
+  let snippet: string;
+  if (us === false) {
+    snippet = `
+// Disable the Upload settings panel — the gear icon never appears.
+uploader.config = {
+  auth: { /* ... */ },
+  uploadSettings: false,
+};`;
+  } else if (us === undefined) {
+    snippet = `
+// The settings panel is available by default — no config needed.
+// The gear icon appears in the header once the queue contains an
+// image, PDF, or video, opening the panel with built-in defaults.
+uploader.config = {
+  auth: { /* ... */ },
+};`;
+  } else {
+    const lines: string[] = [];
+    if (us.showResumableSwitcher) lines.push(`    showResumableSwitcher: true,`);
+    if (us.defaults) {
+      const defaultsBody = Object.entries(us.defaults)
+        .map(([k, v]) => `      ${k}: ${typeof v === 'string' ? `'${v}'` : v},`)
+        .join('\n');
+      lines.push(`    defaults: {\n${defaultsBody}\n    },`);
+    }
+    snippet = `
+// Seed the panel's starting values and optionally expose the
+// resumable (tus) switcher (mirrors admin v5's behavior).
+uploader.config = {
+  auth: { /* ... */ },
+  uploadSettings: {
+${lines.join('\n')}
+  },
+};`;
+  }
 
   renderCodeBlock('#code-container', [
     {
       label: 'JavaScript',
       lang: 'javascript',
-      code: hasDefaults
-        ? `
-// The settings panel is always available — the gear icon appears
-// in the header once files are added. \`uploadSettings\` is optional
-// and only changes the panel's starting values.
-uploader.config = {
-  auth: { /* ... */ },
-  uploadSettings: {
-    defaults: {
-${defaultsBody}
-    },
-  },
-};`
-        : `
-// The settings panel is always available — no config needed.
-// The gear icon appears in the header once files are added,
-// opening Image / Video / Resume-uploads controls with built-in defaults.
-uploader.config = {
-  auth: { /* ... */ },
-};`,
+      code: snippet,
     },
   ]);
 }
@@ -75,11 +110,25 @@ const page: Page = {
     return `
       <div class="page-header">
         <h1>Upload settings</h1>
-        <p>The uploader ships with a built-in <strong>settings panel</strong> — a gear icon appears in the header once files are added, letting users tune <strong>image resizing</strong>, <strong>video transcoding</strong>, and <strong>resumable uploads</strong> before uploading. It is <strong>always available</strong>; no config flag turns it on. Use the optional <code>uploadSettings.defaults</code> to change the panel's starting values.</p>
+        <p>The uploader ships with a built-in <strong>settings panel</strong> — a gear icon appears in the header once the queue contains an image, PDF, or video, letting users tune <strong>image resizing</strong>, <strong>video transcoding</strong>, and (optionally) <strong>resumable uploads</strong> before uploading. Pass <code>uploadSettings: false</code> to disable the panel entirely, or use <code>uploadSettings.defaults</code> / <code>uploadSettings.showResumableSwitcher</code> to tune its behavior.</p>
       </div>
 
       <section class="page-section">
         <div class="config-controls">
+          <div class="form-group">
+            <label for="us-panel">Settings panel</label>
+            <select id="us-panel">
+              <option value="true" selected>Enabled</option>
+              <option value="false">Disabled</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="us-resumable-switcher">Resumable switcher</label>
+            <select id="us-resumable-switcher">
+              <option value="false" selected>Hidden</option>
+              <option value="true">Shown</option>
+            </select>
+          </div>
           <div class="form-group">
             <label for="us-resize">Resize images</label>
             <select id="us-resize">
@@ -115,17 +164,12 @@ const page: Page = {
           <div class="form-group">
             <label for="us-resolution">Resolution</label>
             <select id="us-resolution">
-              <option value="Auto" selected>Auto</option>
-              <option value="1080p">1080p</option>
-              <option value="720p">720p</option>
-              <option value="480p">480p</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="us-protocol">Protocol</label>
-            <select id="us-protocol">
-              <option value="HLS" selected>HLS</option>
-              <option value="DASH">DASH</option>
+              <option value="auto" selected>Auto</option>
+              <option value="mobile">Mobile</option>
+              <option value="tablet">Tablet</option>
+              <option value="desktop">Desktop</option>
+              <option value="hq">HQ</option>
+              <option value="sample">Sample</option>
             </select>
           </div>
           <div class="form-group">
@@ -142,16 +186,16 @@ const page: Page = {
       <section class="page-section">
         <h2>How it works</h2>
         <ol>
-          <li>Add a file to the uploader — the <strong>gear icon</strong> then appears in the header.</li>
+          <li>Add a file to the uploader — the <strong>gear icon</strong> appears in the header when at least one image, PDF, or video is queued.</li>
           <li>Click it to open the settings panel in the preview side area.</li>
-          <li>Adjust the controls before uploading. The panel has three sections:</li>
+          <li>Adjust the controls before uploading. The panel has up to three sections:</li>
         </ol>
         <ul>
-          <li><strong>Image settings</strong> — toggle <em>Resize Images</em> and set Max Width / Max Height (px).</li>
-          <li><strong>Video settings</strong> — shown only when the queue contains a video: toggle <em>Transcode video</em>, pick a Resolution (Auto / 1080p / 720p / 480p) and a Protocol (HLS / DASH).</li>
-          <li><strong>Resume uploads</strong> — toggle resumable (tus) uploads. Marked <strong>Beta</strong>.</li>
-        </ol>
-        <p><code>uploadSettings</code> is entirely optional — omit it and the panel still appears with built-in defaults. Setting <code>defaults</code> only changes the controls' initial values.</p>
+          <li><strong>Image settings</strong> — shown when the queue contains images or PDFs. Toggle <em>Resize Images</em> and set Max Width / Max Height (px). When enabled, the upload request gets <code>&amp;resize=W,H</code>.</li>
+          <li><strong>Video settings</strong> — shown when the queue contains a video. Toggle <em>Transcode video</em>, pick a Resolution (${Object.values(RESOLUTION_LABELS).join(' / ')}). Protocol is HLS (DASH was removed). When enabled, the upload request gets <code>&amp;postprocess=transcode&amp;video-resolution=…&amp;video_protocols=hls</code>.</li>
+          <li><strong>Resume uploads</strong> — only shown when the host sets <code>uploadSettings.showResumableSwitcher: true</code>. Toggles the resumable (tus) upload path on/off. Marked <strong>Beta</strong>.</li>
+        </ul>
+        <p>Pass <code>uploadSettings: false</code> to disable the gear button entirely. Otherwise the panel is available by default; <code>defaults</code> only changes the controls' initial values.</p>
       </section>
 
       <section class="page-section">
@@ -162,16 +206,25 @@ const page: Page = {
   },
 
   init(uploader: SfxUploader) {
+    panelEnabled = true;
+    showResumableSwitcher = false;
     resize = false;
     maxWidth = undefined;
     maxHeight = undefined;
     transcode = false;
-    resolution = 'Auto';
-    protocol = 'HLS';
+    resolution = 'auto';
     resumable = false;
     updateCode();
     const cleanupSelects = initCustomSelects();
 
+    document.getElementById('us-panel')!.addEventListener('change', (e) => {
+      panelEnabled = (e.target as HTMLSelectElement).value === 'true';
+      updateCode();
+    });
+    document.getElementById('us-resumable-switcher')!.addEventListener('change', (e) => {
+      showResumableSwitcher = (e.target as HTMLSelectElement).value === 'true';
+      updateCode();
+    });
     document.getElementById('us-resize')!.addEventListener('change', (e) => {
       resize = (e.target as HTMLSelectElement).value === 'true';
       updateCode();
@@ -191,11 +244,7 @@ const page: Page = {
       updateCode();
     });
     document.getElementById('us-resolution')!.addEventListener('change', (e) => {
-      resolution = (e.target as HTMLSelectElement).value as typeof resolution;
-      updateCode();
-    });
-    document.getElementById('us-protocol')!.addEventListener('change', (e) => {
-      protocol = (e.target as HTMLSelectElement).value as typeof protocol;
+      resolution = (e.target as HTMLSelectElement).value as Resolution;
       updateCode();
     });
     document.getElementById('us-resumable')!.addEventListener('change', (e) => {
@@ -204,9 +253,9 @@ const page: Page = {
     });
 
     document.getElementById('open-btn')!.addEventListener('click', () => {
-      const defaults = buildDefaults();
+      const us = buildUploadSettings();
       uploader.config = buildConfig({
-        ...(Object.keys(defaults).length ? { uploadSettings: { defaults } } : {}),
+        ...(us !== undefined ? { uploadSettings: us } : {}),
       });
       uploader.open();
     });

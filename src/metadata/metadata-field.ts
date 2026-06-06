@@ -1,6 +1,10 @@
 import { LitElement, html, css, nothing } from 'lit';
 import { property, state } from 'lit/decorators.js';
-import type { MetadataField, MetadataConfig } from './schema/schema.types';
+import type {
+  MetadataField,
+  MetadataConfig,
+  RegionalVariantsGroup,
+} from './schema/schema.types';
 import { isUnsupportedField } from './schema/schema.types';
 import { validateField } from './schema/validation';
 import { isFieldRequired } from './schema/required-fields';
@@ -8,6 +12,11 @@ import { mapValueToBackend, mapValueFromBackend } from './schema/value-transform
 import { metadataFieldStyles } from './metadata.styles';
 import type { TaxonodeEntry } from './taxonomies/taxonomies.types';
 import type { UltratagsValueItem } from './ultratags/ultratags.types';
+import type { UploadFile } from '../store/store.types';
+import {
+  resolveFieldRegionalKey,
+  getFieldRegionalVariantHint,
+} from './regional-variants/resolve';
 
 export class SfxMetadataFieldEl extends LitElement {
   static styles = [metadataFieldStyles];
@@ -21,6 +30,11 @@ export class SfxMetadataFieldEl extends LitElement {
   @property({ attribute: false }) ultratags: unknown;
   @property({ attribute: false }) defaultLanguage?: string;
   @property({ attribute: false }) ultratagsRestrictToItems: UltratagsValueItem[] | null = null;
+  /**
+   * Schema's regional-variants groups, used to render the per-field hint
+   * label ("Languages: English"). Optional — when omitted, no hint is shown.
+   */
+  @property({ attribute: false }) regionalVariantsGroups: RegionalVariantsGroup[] = [];
   @property({ type: Boolean }) disabled = false;
 
   @state() private _error: string | null = null;
@@ -43,7 +57,13 @@ export class SfxMetadataFieldEl extends LitElement {
 
     this._error = null;
 
-    const transformed = mapValueToBackend(this.field, value, undefined, this.config?.language);
+    // For regional-variant fields, `this.value` already holds the full
+    // `{en: …, fr: …}` map; pass it via a fake file so `mapValueToBackend`
+    // can spread the other-language slots back onto the saved value instead
+    // of zapping them. Mirrors the bulk-meta-row path.
+    const fakeFile = { meta: { [this.field.key]: this.value } } as unknown as UploadFile;
+    const regionalKey = resolveFieldRegionalKey(this.field, this.config);
+    const transformed = mapValueToBackend(this.field, value, fakeFile, regionalKey);
 
     this._dispatching = true;
     this.dispatchEvent(
@@ -118,7 +138,14 @@ export class SfxMetadataFieldEl extends LitElement {
     const f = this.field;
     if (!f) return nothing;
 
-    const displayValue = mapValueFromBackend(f, this.value, this.config?.language);
+    const regionalKey = resolveFieldRegionalKey(f, this.config);
+    const displayValue = mapValueFromBackend(f, this.value, regionalKey);
+    const hint = getFieldRegionalVariantHint(
+      f,
+      this.regionalVariantsGroups,
+      this.config?.regionalFilters,
+      this.config?.language,
+    );
     const isTextarea = f.type === 'textarea';
     const rowClass = isTextarea ? 'field-row field-row--top' : 'field-row';
 
@@ -130,6 +157,9 @@ export class SfxMetadataFieldEl extends LitElement {
         </div>
         <div class="field-content">
           ${this._renderField(f, displayValue)}
+          ${hint
+            ? html`<div class="field-regional-hint" title=${hint}>${hint}</div>`
+            : nothing}
           ${this._error ? html`<div class="field-error" id="error-${f.key}" role="alert">${this._error}</div>` : nothing}
         </div>
       </div>

@@ -310,6 +310,9 @@ export class SfxMetaUltratagsField extends MetadataFieldBase {
     // dedupe identical searches that differ only in capitalisation.
     const normalised = q.trim().toLowerCase();
     this._loading = true;
+    // No `lang` param — admin v5 omits it too. The BE returns full
+    // multilingual `i18n` for every entry and label resolution is done
+    // client-side via `resolveLabel(entry, _currentLang, _defaultLang)`.
     svc
       .list({
         meta: this.field.key,

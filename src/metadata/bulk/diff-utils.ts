@@ -1,6 +1,7 @@
 import type { MetadataField, MetadataConfig } from '../schema/schema.types';
 import type { UltratagsValueItem } from '../ultratags/ultratags.types';
 import { extractUltratagItems, resolveLabel } from '../ultratags/ultratags.utils';
+import { resolveFieldRegionalKey } from '../regional-variants/resolve';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -232,9 +233,12 @@ export function computeFieldDiff(
   newValue: unknown,
   config?: MetadataConfig | null,
 ): FieldDiff {
-  const language = config?.language;
-  const oldV = extractRegionalVariant(oldValue, field, language);
-  const newV = extractRegionalVariant(newValue, field, language);
+  // Slot key: regional fields use the field's group filter; ultratags label
+  // resolution still uses the user locale (`config.language`).
+  const regionalKey = resolveFieldRegionalKey(field, config);
+  const userLocale = config?.language;
+  const oldV = extractRegionalVariant(oldValue, field, regionalKey);
+  const newV = extractRegionalVariant(newValue, field, regionalKey);
 
   if (ARRAY_TYPES.has(field.type)) {
     // Ultratags storage may be a per-language map; `extractRegionalVariant`
@@ -244,7 +248,7 @@ export function computeFieldDiff(
     if (field.type === 'ultratags') {
       return {
         kind: 'array',
-        items: diffUltratags(oldValue, newValue, language),
+        items: diffUltratags(oldValue, newValue, userLocale),
       };
     }
 

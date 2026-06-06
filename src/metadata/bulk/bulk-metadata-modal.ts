@@ -21,6 +21,7 @@ import { bulkModalStyles } from './bulk-metadata.styles';
 import type { TaxonodeEntry } from '../taxonomies/taxonomies.types';
 import type { UltratagsValueItem } from '../ultratags/ultratags.types';
 import { extractUltratagItems, mergeUltratagItems } from '../ultratags/ultratags.utils';
+import { resolveFieldRegionalKey } from '../regional-variants/resolve';
 
 /**
  * Full-screen overlay modal for bulk metadata editing.
@@ -422,7 +423,7 @@ export class SfxBulkMetadataModal extends LitElement {
     if (!field) return;
 
     const { operation, value: frontendValue, taxonomyEntry } = e.detail;
-    const language = this.config?.language;
+    const regionalKey = resolveFieldRegionalKey(field, this.config);
     const updates: Array<[string, string, unknown]> = [];
 
     for (const fileId of this._selected) {
@@ -439,7 +440,7 @@ export class SfxBulkMetadataModal extends LitElement {
         currentStaged,
         frontendValue,
         operation,
-        language,
+        regionalKey,
       );
 
       updates.push([fileId, field.key, result]);
@@ -673,6 +674,13 @@ export class SfxBulkMetadataModal extends LitElement {
           <!-- Top bar -->
           <div class="fm-topbar">
             <span class="fm-topbar-title">Fill multiple assets</span>
+            ${this.schema.regionalVariantsGroups?.length
+              ? html`<sfx-regional-settings
+                  class="fm-topbar-regional"
+                  .groups=${this.schema.regionalVariantsGroups}
+                  .selectedFilters=${this.config?.regionalFilters ?? {}}
+                ></sfx-regional-settings>`
+              : nothing}
             <button class="fm-topbar-close" @click=${this._onClose} title="Close">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                 <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />

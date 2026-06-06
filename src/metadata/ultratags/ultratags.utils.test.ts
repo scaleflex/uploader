@@ -79,6 +79,7 @@ describe('resolveLabel', () => {
       resolveLabel({ slug: 'rose', i18n: {} }, 'en', 'fr').value,
     ).toBe('');
   });
+
 });
 
 describe('buildUltratagsLookup + findUltratagEntry', () => {

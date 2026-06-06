@@ -200,7 +200,7 @@ describe('parseMetadataSchema', () => {
     const rvGroup = {
       uuid: 'rv1',
       label: 'Languages',
-      type: 'LANGUAGES' as const,
+      type: 'FTYPE_LANGUAGES' as const,
       isRoot: true,
       variants: [{ internal_unique_value: 'en', api_value: 'en', label: 'English' }],
     };

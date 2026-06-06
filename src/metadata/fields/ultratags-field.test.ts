@@ -240,4 +240,142 @@ describe('SfxMetaUltratagsField', () => {
     const chip = el.shadowRoot!.querySelector('.chip');
     expect(chip?.textContent?.trim()).toContain('Rose');
   });
+
+  describe('language switching', () => {
+    it('renders dropdown option labels in the current language', async () => {
+      // Mirrors the real BE response shape the user shared — an entry whose
+      // English label is "Annatown" but whose French label is "baller".
+      const svc = makeService({
+        listResp: {
+          items: [
+            { uuid: 'u1', sid: '#utannatown', slug: 'annatown', i18n: { fr: 'baller', en: 'Annatown' } },
+          ],
+          stats: { count: 1, total_count: 1 },
+        },
+      });
+      const el = await mount(svc, [], 'fr');
+      const input = el.shadowRoot!.querySelector<HTMLInputElement>('.input')!;
+      input.value = 'baller';
+      input.dispatchEvent(new Event('input'));
+      await flush(el);
+
+      const options = el.shadowRoot!.querySelectorAll('.option');
+      expect(options.length).toBe(1);
+      expect(options[0].textContent?.trim()).toBe('baller');
+    });
+
+    it('updates dropdown labels when language prop changes after results load', async () => {
+      const svc = makeService({
+        listResp: {
+          items: [
+            { uuid: 'u1', sid: '#utannatown', slug: 'annatown', i18n: { fr: 'baller', en: 'Annatown' } },
+          ],
+          stats: { count: 1, total_count: 1 },
+        },
+      });
+      const el = await mount(svc, [], 'en');
+      const input = el.shadowRoot!.querySelector<HTMLInputElement>('.input')!;
+      input.value = 'baller';
+      input.dispatchEvent(new Event('input'));
+      await flush(el);
+
+      // English first.
+      expect(
+        el.shadowRoot!.querySelector('.option')?.textContent?.trim(),
+      ).toBe('Annatown');
+
+      // Switch the language prop — mirrors what happens when the host
+      // updates _effectiveMetadataConfig.language after a regional pick.
+      el.language = 'fr';
+      await flush(el);
+
+      expect(
+        el.shadowRoot!.querySelector('.option')?.textContent?.trim(),
+      ).toBe('baller');
+    });
+
+    it('updates chip labels for already-added items when language prop changes', async () => {
+      const svc = makeService();
+      const el = await mount(
+        svc,
+        [{ slug: 'annatown', sid: '#utannatown', i18n: { fr: 'baller', en: 'Annatown' } }],
+        'en',
+      );
+      await flush(el);
+      expect(
+        el.shadowRoot!.querySelector('.chip')?.textContent?.trim(),
+      ).toContain('Annatown');
+
+      el.language = 'fr';
+      await flush(el);
+      expect(
+        el.shadowRoot!.querySelector('.chip')?.textContent?.trim(),
+      ).toContain('baller');
+    });
+
+    it('propagates config.language through metadata-form → metadata-field → ultratags-field', async () => {
+      // Mirrors the real host flow: host changes _effectiveMetadataConfig.language,
+      // which flows down to <sfx-metadata-form>, then <sfx-metadata-field>, then
+      // <sfx-meta-ultratags-field>. The field receives `.language=${config.language}`
+      // from the metadata-field dispatcher and resolves labels accordingly.
+      await import('../metadata-form');
+      await import('../metadata-field');
+      const svc = makeService({
+        listResp: {
+          items: [
+            { uuid: 'u1', sid: '#utannatown', slug: 'annatown', i18n: { fr: 'baller', en: 'Annatown' } },
+          ],
+          stats: { count: 1, total_count: 1 },
+        },
+      });
+      const form = document.createElement('sfx-metadata-form') as HTMLElement & {
+        schema: unknown;
+        meta: unknown;
+        config: unknown;
+        ultratags: unknown;
+        updateComplete: Promise<unknown>;
+      };
+      form.schema = {
+        groups: [
+          {
+            uuid: 'g1',
+            name: 'Tags',
+            fields: [makeField()],
+          },
+        ],
+        fields: [makeField()],
+        fieldsByKey: new Map([['tags_field', makeField()]]),
+        forceFillingOnUpload: false,
+        regionalVariantsGroups: [],
+        language: 'en',
+        productsEnabled: false,
+      };
+      form.meta = {};
+      form.ultratags = svc;
+      form.config = { projectUuid: 'p', language: 'en' };
+      document.body.appendChild(form);
+      await flush(form);
+
+      // Reach the inner ultratags field through the shadow boundaries.
+      const field = form.shadowRoot!.querySelector('sfx-metadata-field')!;
+      const ultraEl = (field.shadowRoot!.querySelector(
+        'sfx-meta-ultratags-field',
+      ) as SfxMetaUltratagsField)!;
+      const input = ultraEl.shadowRoot!.querySelector<HTMLInputElement>('.input')!;
+      input.value = 'baller';
+      input.dispatchEvent(new Event('input'));
+      await flush(form);
+      expect(
+        ultraEl.shadowRoot!.querySelector('.option')?.textContent?.trim(),
+      ).toBe('Annatown');
+
+      // Switch the form's config — mirrors the host's _effectiveMetadataConfig
+      // returning a new object with language='fr' after a regional pick.
+      form.config = { projectUuid: 'p', language: 'fr' };
+      await flush(form);
+      expect(
+        ultraEl.shadowRoot!.querySelector('.option')?.textContent?.trim(),
+      ).toBe('baller');
+    });
+  });
 });

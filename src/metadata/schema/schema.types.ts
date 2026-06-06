@@ -137,10 +137,17 @@ export interface MetadataSchema {
   productsEnabled: boolean;
 }
 
+/**
+ * Group type string returned by the BE. The wire values are `FTYPE_LANGUAGES`,
+ * `FTYPE_CURRENCIES`, `FTYPE_CUSTOM` (mirrors admin v5's `REGIONAL_VARIANT_TYPE`).
+ * The `(string & {})` keeps IDE completions for the known values while still
+ * accepting any string the BE might add in the future.
+ */
 export interface RegionalVariantsGroup {
   uuid: string;
   label: string;
-  type: 'LANGUAGES' | 'CURRENCIES' | 'CUSTOM';
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  type: 'FTYPE_LANGUAGES' | 'FTYPE_CURRENCIES' | 'FTYPE_CUSTOM' | (string & {});
   icon?: string;
   isRoot: boolean;
   variants: RegionalVariant[];
@@ -210,7 +217,20 @@ export interface MetadataConfig {
    */
   enforceRequiredBeforeUpload?: boolean | 'auto';
   showTags?: boolean;
+  /**
+   * User locale — drives ultratags label fallback and is used as the default
+   * key when reading/writing regional-variant fields whose group has no entry
+   * in `regionalFilters`.
+   */
   language?: string;
+  /**
+   * Currently-active variant value per regional-variants group, keyed by
+   * group UUID. Mirrors admin v5's `metadataRegionalFilters` slice. Lets a
+   * single project mix LANGUAGES, CURRENCIES, and CUSTOM groups — each field
+   * is wrapped/unwrapped under `regionalFilters[field.regional_variants_group_uuid]`.
+   * When unset for a given group, falls back to `language`, then `'en'`.
+   */
+  regionalFilters?: Record<string, string>;
   defaults?: Record<string, unknown>;
   /**
    * Force-enable the hardcoded "Product" fields section (ref + position).

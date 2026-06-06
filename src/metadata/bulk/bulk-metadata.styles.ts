@@ -154,6 +154,12 @@ export const bulkModalStyles = css`
     color: var(--sfx-up-text-secondary, #64748b);
   }
 
+  /* Regional-settings sits to the left of the close button — same 8px gap
+     rule as the main header. */
+  .fm-topbar-regional {
+    margin-right: 8px;
+  }
+
   /* ---- Body ---- */
   .fm-body {
     flex: 1;

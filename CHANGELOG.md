@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The Upload settings panel now drives the upload request, aligning with admin v5 (`js-admin-react-filerobot-v5`):
+  - **Image resize** — when *Resize Images* is on and the file is an image or PDF, the request gets `&resize=W,H` (matches v5's `appendResizeQueryParams`).
+  - **Video transcode** — when *Transcode video* is on and the file is a video, the request gets `&postprocess=transcode&video-resolution=…&video_protocols=…` (matches v5's `appendVideoTranscodeQueryParams`).
+  - **Resumable** — when the resumable switcher is exposed and toggled off, all files fall back to XHR; toggled on, the engine uses tus over the threshold (synthesizing a default `tusConfig` when the host didn't supply one).
+- `uploadSettings: false` shorthand and `uploadSettings.enabled` to disable the panel entirely (the gear button never appears).
+- `uploadSettings.showResumableSwitcher` (default `false`) — gates the Resume uploads row inside the panel, matching v5's `showResumableUploadSwitcher` explorer option.
+- The gear button now appears only when the queue contains a processable file (image, PDF, or video) — non-processable queues hide it.
+
+### Changed
+
+- `uploadSettings.defaults.resolution` vocabulary now matches admin v5: `'auto' | 'mobile' | 'tablet' | 'desktop' | 'hq' | 'sample'` (was `'Auto' | '1080p' | '720p' | '480p'`).
+- `uploadSettings.defaults.protocol` is now `'hls'` only (DASH removed; FRA-5131 — DASH transcoding broken). New i18n keys for the panel labels: `resolutionAuto`, `resolutionMobile`, `resolutionTablet`, `resolutionDesktop`, `resolutionHq`, `resolutionSample`, `protocolHls`.
+- The Image settings section now only renders when the queue contains images or PDFs (matches v5).
+
 - `ultratags` (custom tags) is now an editable field type during upload, matching the admin app's vocabulary editor:
   - Search the project vocabulary via `GET /v5/meta/ultratags?meta=…&q=…&format=regvar:api` (debounced 300 ms, min 2 characters, AbortController on each new keystroke).
   - Create new entries on the fly via `POST /v5/meta/ultratags` with `mode: 'upsert'` — the dropdown's "Create '<query>'" affordance fires the POST and appends the returned `output[0]` (enriched with `sid` + `uuid`) to the field value.

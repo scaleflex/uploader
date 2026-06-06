@@ -404,6 +404,18 @@ export const metadataFieldStyles = css`
     margin-top: 2px;
   }
 
+  /* Per-field regional-variants hint, e.g. "Languages: English". Mirrors
+     admin v5's useFieldRegionalVariantHint description text. */
+  .field-regional-hint {
+    font-size: 11px;
+    color: var(--sfx-up-text-muted, #94a3b8);
+    margin-top: 4px;
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
   /* Mobile: stack label above the input full-width. The fixed 144px
      label column gets crushed on narrow viewports. */
   @media (max-width: 768px) {

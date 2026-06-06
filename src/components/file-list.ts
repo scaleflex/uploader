@@ -57,25 +57,32 @@ export class SfxFileList extends LitElement {
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(var(--sfx-up-grid-min, 200px), 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(var(--sfx-up-grid-min, 224px), 1fr));
       gap: 12px;
       padding: 4px var(--sfx-grid-pad-r, 8px) 16px var(--sfx-grid-pad-l, 16px);
     }
 
     /* Instruction / progress banner. Sticky to the top of the scrolling grid so
        it stays reachable (Select all / Check / Cancel / progress) when there are
-       many assets and the list is long. */
+       many assets and the list is long. Two-layer background so the banner
+       stays fully opaque even when the host project sets --accent to a
+       translucent colour: solid bg underneath, primary tint on top. z-index
+       must clear in-tile overlays (max z-index inside a tile is 11). */
     .similar-banner {
       position: sticky;
       top: 0;
-      z-index: 6;
+      z-index: 20;
       display: flex;
       align-items: center;
       gap: 12px;
       margin: 0 var(--sfx-grid-pad-r, 8px) 12px var(--sfx-grid-pad-l, 16px);
       padding: 8px 16px;
       border-radius: 10px;
-      background: var(--sfx-up-primary-bg, #eff6ff);
+      background-color: var(--sfx-up-bg, #fff);
+      background-image: linear-gradient(
+        var(--sfx-up-primary-bg, #eff6ff),
+        var(--sfx-up-primary-bg, #eff6ff)
+      );
       border: 1px solid var(--sfx-up-primary-glow, rgba(37, 99, 235, 0.18));
     }
 
@@ -959,39 +966,10 @@ export class SfxFileList extends LitElement {
             </div>
           `
         : nothing}
-      ${this.selectMode
-        ? html`
-            <div class="similar-banner">
-              <span class="similar-banner-ico">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
-                  <circle cx="11" cy="11" r="7" />
-                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                </svg>
-              </span>
-              <div class="similar-banner-txt">
-                <b>${this.t('selectImagesToCheck', 'Select images to check for similar assets')}</b>
-                <span>${this.maxSelection > 0
-                  ? this.t('selectImagesHintMax', 'Pick up to {{max}}, then click Check', { max: this.maxSelection })
-                  : this.t('selectImagesHint', 'Pick one or more, then click Check')}</span>
-              </div>
-              ${this.maxSelection > 0
-                ? html`<span class="similar-select-count ${this.selectionFull ? 'full' : ''}">${this.selectedIds.size}/${this.maxSelection}</span>`
-                : nothing}
-              <label class="similar-select-all">
-                <input
-                  type="checkbox"
-                  .checked=${this.allSelected}
-                  @change=${this._onSelectAll}
-                />
-                ${this.t('selectAll', 'Select all')}
-              </label>
-            </div>
-          `
-        : nothing}
       <div class="grid">
-        ${this.showDropTile && this.mode !== 'review' && !this.selectMode ? this._renderDropTile() : nothing}
+        ${this.showDropTile && this.mode !== 'review' ? this._renderDropTile() : nothing}
         ${this.files.map(
-          (f, i) => html`<sfx-file-item .t=${this.t} .file=${f} .mode=${this.mode} .showLocateButton=${this.showLocateButton} .showCopyCdnButton=${this.showCopyCdnButton} .showCheckSimilar=${this.showCheckSimilar} .selectMode=${this.selectMode} .isSelected=${this.selectedIds.has(f.id)} .selectionFull=${this.selectionFull} .previewOpen=${this.previewOpen} .similarStatus=${this._statusFor(f.id)} .similarCount=${this.searchResults.get(f.id)?.length ?? -1} .similarResults=${this.searchResults.get(f.id) ?? []} ${cspStyle({ '--tile-index': String(i) })}></sfx-file-item>`,
+          (f, i) => html`<sfx-file-item .t=${this.t} .file=${f} .mode=${this.mode} .showLocateButton=${this.showLocateButton} .showCopyCdnButton=${this.showCopyCdnButton} .showCheckSimilar=${this.showCheckSimilar} .selectMode=${this.selectMode} .isSelected=${this.selectedIds.has(f.id)} .selectionActive=${this.selectedIds.size > 0} .selectionFull=${this.selectionFull} .previewOpen=${this.previewOpen} .similarStatus=${this._statusFor(f.id)} .similarCount=${this.searchResults.get(f.id)?.length ?? -1} .similarResults=${this.searchResults.get(f.id) ?? []} ${cspStyle({ '--tile-index': String(i) })}></sfx-file-item>`,
         )}
       </div>
     `;

@@ -324,26 +324,28 @@ uploaderB.config = {
         <p>See the <a href="#/examples/similar-check">Similar asset check example</a> for an interactive demo.</p>
 
         <h3>Upload settings</h3>
-        <p>The uploader ships with a built-in <strong>settings panel</strong> that is <strong>always available</strong> — a gear icon appears in the header once files are added, opening a panel where users tune <strong>image resizing</strong>, <strong>video transcoding</strong>, and <strong>resumable uploads</strong> before uploading. No config flag is required to enable it.</p>
-        <p>The panel has three sections:</p>
+        <p>The uploader ships with a built-in <strong>settings panel</strong> — a gear icon appears in the header once the queue contains an image, PDF, or video, opening a panel where users tune <strong>image resizing</strong>, <strong>video transcoding</strong>, and (optionally) <strong>resumable uploads</strong> before uploading. Pass <code>uploadSettings: false</code> to disable the panel entirely.</p>
+        <p>The panel has up to three sections:</p>
         <ul>
-          <li><strong>Image settings</strong> — resize images to a maximum width / height (px).</li>
-          <li><strong>Video settings</strong> — shown only when the queue contains a video: transcode to an adaptive format with a chosen resolution (Auto / 1080p / 720p / 480p) and protocol (HLS / DASH).</li>
-          <li><strong>Resume uploads</strong> — enable resumable (tus) uploads. Marked <strong>Beta</strong>.</li>
+          <li><strong>Image settings</strong> — shown when the queue contains images or PDFs. Resize to a maximum width / height (px); the upload request gets <code>&amp;resize=W,H</code>.</li>
+          <li><strong>Video settings</strong> — shown when the queue contains a video. Transcode to an adaptive format with a chosen resolution (Auto / Mobile / Tablet / Desktop / HQ / Sample) over HLS; the upload request gets <code>&amp;postprocess=transcode&amp;video-resolution=…&amp;video_protocols=hls</code>.</li>
+          <li><strong>Resume uploads</strong> — only shown when the host sets <code>uploadSettings.showResumableSwitcher: true</code>. Toggles resumable (tus) uploads. Marked <strong>Beta</strong>.</li>
         </ul>
-        <p>To change the panel's <strong>starting values</strong>, pass the optional <code>uploadSettings.defaults</code>. Omit it and the panel still appears with built-in defaults.</p>
+        <p>Use <code>uploadSettings.defaults</code> to change the panel's <strong>starting values</strong>; omit it and the panel uses built-in defaults.</p>
         ${code(
           'typescript',
           `uploader.config = {
   auth: { /* ... */ },
   uploadSettings: {
+    // enabled: false,                 // or pass uploadSettings: false
+    showResumableSwitcher: true,       // mirrors admin v5; default false
     defaults: {
       resize: true,
       maxWidth: 2048,
       maxHeight: 2048,
       transcode: true,
-      resolution: '1080p', // 'Auto' | '1080p' | '720p' | '480p'
-      protocol: 'HLS',     // 'HLS' | 'DASH'
+      resolution: 'auto', // 'auto' | 'mobile' | 'tablet' | 'desktop' | 'hq' | 'sample'
+      protocol: 'hls',    // 'hls'
       resumable: true,
     },
   },

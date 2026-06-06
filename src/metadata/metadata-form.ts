@@ -106,6 +106,7 @@ export class SfxMetadataForm extends LitElement {
                       .taxonomyEntry=${this.taxonodes?.[f.key] ?? null}
                       .ultratags=${this.ultratags}
                       .defaultLanguage=${this.defaultLanguage}
+                      .regionalVariantsGroups=${this.schema?.regionalVariantsGroups ?? []}
                       ?disabled=${this.disabled}
                     ></sfx-metadata-field>
                   `,

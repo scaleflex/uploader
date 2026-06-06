@@ -8,6 +8,7 @@ import { formatFileSize, getFileTypeIconUrl, getDefaultFileTypeIconUrl } from '.
 import { computeBulkResult, type PendingOp } from './bulk-operations';
 import { bulkRowStyles } from './bulk-metadata.styles';
 import type { TaxonodeEntry } from '../taxonomies/taxonomies.types';
+import { resolveFieldRegionalKey } from '../regional-variants/resolve';
 
 /**
  * Per-file row in the bulk metadata table.
@@ -72,7 +73,7 @@ export class SfxBulkMetaRow extends LitElement {
       this.field,
       value,
       fakeFile,
-      this.config?.language,
+      resolveFieldRegionalKey(this.field, this.config),
     );
 
     // Skip dispatch if value hasn't changed — avoids unnecessary staged map
@@ -110,7 +111,7 @@ export class SfxBulkMetaRow extends LitElement {
       this.value,
       op.value,
       op.operation,
-      this.config?.language,
+      resolveFieldRegionalKey(this.field, this.config),
     );
   }
 
@@ -168,7 +169,7 @@ export class SfxBulkMetaRow extends LitElement {
             : html`<div class="row-field-edit">
                 <sfx-metadata-field-edit
                   .field=${this.field}
-                  .value=${mapValueFromBackend(this.field, this.value, this.config?.language)}
+                  .value=${mapValueFromBackend(this.field, this.value, resolveFieldRegionalKey(this.field, this.config))}
                   .autocomplete=${this.autocomplete}
                   .taxonomyService=${this.taxonomyService}
                   .taxonomyEntry=${this.taxonomyEntry}

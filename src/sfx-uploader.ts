@@ -58,6 +58,8 @@ import type {
   MetadataConfig,
   MetadataSchema,
 } from "./metadata/schema/schema.types";
+import { REGIONAL_VARIANT_TYPE } from "./metadata/regional-variants/constants";
+import { buildDefaultRegionalFilters } from "./metadata/regional-variants/resolve";
 import type { TaxonodeEntry } from "./metadata/taxonomies/taxonomies.types";
 import {
   firstMissingRequiredFieldKey,
@@ -176,8 +178,22 @@ export interface SimilarAsset {
 
 /** Max images that can be selected for a single similarity check (FRA-10365). */
 const SIMILAR_MAX_SELECTION = 10;
-/** Resolution options for the video-transcode setting (Upload settings panel). */
-const SETTINGS_RESOLUTIONS = ["Auto", "1080p", "720p", "480p"] as const;
+/** Resolution options for the video-transcode setting (Upload settings panel).
+ *  Mirrors admin v5's vocabulary (`auto / mobile / tablet / desktop / hq / sample`).
+ *  The selected value is forwarded as the `video-resolution` query param. */
+const SETTINGS_RESOLUTIONS = [
+  'auto',
+  'mobile',
+  'tablet',
+  'desktop',
+  'hq',
+  'sample',
+] as const;
+type SettingsResolution = (typeof SETTINGS_RESOLUTIONS)[number];
+/** Streaming protocols available for video transcoding. Currently HLS only —
+ *  DASH was removed for parity with admin v5 (FRA-5131: DASH transcoding broken). */
+const SETTINGS_PROTOCOLS = ['hls'] as const;
+type SettingsProtocol = (typeof SETTINGS_PROTOCOLS)[number];
 
 export interface UploaderConfig {
   auth: AuthConfig;
@@ -209,28 +225,38 @@ export interface UploaderConfig {
    */
   similarityCheck?: { enabled: boolean; confidence?: "low" | "mid" | "high" };
   /**
-   * The "Upload settings" panel is always available — a gear button in the
-   * header opens a global settings panel in the preview side area, letting the
-   * user configure image resizing, video transcoding and resumable (tus)
-   * uploads before uploading. This optional config only seeds the initial
-   * control values via `defaults`; the panel itself needs no flag to appear.
+   * The "Upload settings" panel — a gear button in the header opens a global
+   * settings panel in the preview side area, letting the user configure image
+   * resizing, video transcoding and (optionally) resumable (tus) uploads
+   * before uploading. The selected values are wired into the upload flow:
    *
-   * TODO(dev): the panel currently only captures UI state. Wire the captured
-   * values to the upload flow:
-   *   - resize + maxWidth/maxHeight → image-processing upload params
-   *   - transcode + resolution + protocol → video-processing upload params
-   *   - resumable → `tusConfig` (resumable tus uploads)
-   * and seed the panel from `defaults` on first render. See
-   * mockups/FRA-10365-dev-handoff.md.
+   *   - `resize` + `maxWidth`/`maxHeight` → `&resize={w},{h}` (image / PDF)
+   *   - `transcode` + `resolution` + `protocol` → `&postprocess=transcode&
+   *     video-resolution={res}&video_protocols={proto}` (video)
+   *   - `resumable` → toggles the resumable (tus) upload path on/off
+   *
+   * Pass `uploadSettings: false` to disable the panel entirely (the gear
+   * button never appears). Otherwise the gear shows whenever the queue
+   * contains processable files (images, PDFs, or videos). The resumable
+   * switcher is hidden by default and only appears when
+   * `showResumableSwitcher` is true (mirrors admin v5).
+   * See mockups/FRA-10365-dev-handoff.md.
    */
-  uploadSettings?: {
+  uploadSettings?: false | {
+    /** Show the gear icon that opens the settings panel. Default true.
+     *  Pass `uploadSettings: false` as shorthand to disable entirely. */
+    enabled?: boolean;
+    /** Show the "Resume uploads" (tus) switcher inside the panel.
+     *  Mirrors admin v5's `showResumableUploadSwitcher`. Default false. */
+    showResumableSwitcher?: boolean;
+    /** Initial values for the panel controls. */
     defaults?: {
       resize?: boolean;
       maxWidth?: number;
       maxHeight?: number;
       transcode?: boolean;
-      resolution?: "Auto" | "1080p" | "720p" | "480p";
-      protocol?: "HLS" | "DASH";
+      resolution?: SettingsResolution;
+      protocol?: SettingsProtocol;
       resumable?: boolean;
     };
   };
@@ -649,6 +675,11 @@ export class SfxUploader extends LitElement {
       margin-left: 8px;
     }
 
+    /* Regional-settings sits to the left of the gear; same 8px gap rule. */
+    .header-regional {
+      margin-right: 8px;
+    }
+
     /* Settings gear sits just left of the close button (title's flex:1 pushes
        the button group to the right). No right margin so that in inline mode —
        where there is no close button — the gear lines up with the right padding
@@ -983,7 +1014,6 @@ export class SfxUploader extends LitElement {
       display: flex;
       flex-direction: column;
       position: relative;
-      --sfx-up-grid-min: 170px;
     }
 
     .preview-layout .file-grid-side::after {
@@ -1045,7 +1075,9 @@ export class SfxUploader extends LitElement {
       position: absolute;
       top: 0;
       bottom: 0;
-      left: 4px;
+      /* Sit flush against the panel's left edge so the header's
+         border-bottom continues from this line without a gap. */
+      right: 0;
       width: 1px;
       background: var(--sfx-up-border, #e8edf5);
     }
@@ -1112,11 +1144,13 @@ export class SfxUploader extends LitElement {
       align-items: center;
       justify-content: space-between;
       gap: 8px;
-      /* Right padding matches the main header's (24px) so the panel's close
+      /* Symmetric vertical padding so the row is evenly centered; right
+         padding matches the main header's (24px) so the panel's close
          button lines up vertically with the header's close-all button. */
-      padding: 24px 24px 12px 16px;
+      padding: 12px 24px 12px 16px;
       flex-shrink: 0;
       box-sizing: border-box;
+      min-height: 54px;
       border-bottom: 1px solid var(--sfx-up-border, #e2e8f0);
     }
     /* Settings panel only: right padding 16px so the close ✕ lines up with the
@@ -1207,21 +1241,20 @@ export class SfxUploader extends LitElement {
       container-name: sfx-sim-tabs;
     }
     /* Discard "this image" lives at the right edge of the tab row (secondary,
-       subordinate to the primary Upload action). */
+       subordinate to the primary Upload action). Icon-only — text is in the
+       title/aria-label. */
     .preview-tab-discard {
       margin-left: auto;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      justify-content: center;
+      width: 30px;
       height: 30px;
-      padding: 0 10px;
+      padding: 0;
       border: none;
       border-radius: 6px;
       background: transparent;
       color: var(--sfx-up-error, #dc2626);
-      font-family: inherit;
-      font-size: 12.5px;
-      font-weight: 500;
       cursor: pointer;
       transition: background 0.15s ease;
     }
@@ -1229,27 +1262,8 @@ export class SfxUploader extends LitElement {
       background: #fef2f2;
     }
     .preview-tab-discard svg {
-      width: 14px;
-      height: 14px;
-    }
-    .discard-label {
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    /* On a narrow panel the Discard button drops its label and collapses to an
-       icon, so the tabs always fit on one row. The tab labels ("Details" /
-       "Similar") stay; only the secondary Discard action sheds its text.
-       320 is roughly where "Discard this image" + both tabs stop fitting. */
-    @container sfx-sim-tabs (max-width: 320px) {
-      .discard-label {
-        display: none;
-      }
-      .preview-tab-discard {
-        gap: 0;
-        padding: 0 8px;
-      }
+      width: 16px;
+      height: 16px;
     }
     .preview-tab {
       display: inline-flex;
@@ -1278,18 +1292,21 @@ export class SfxUploader extends LitElement {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-width: 16px;
-      height: 16px;
+      /* Equal width + height so single-digit counts render as a perfect
+         circle. Padding stays out of the way; for ≥4-digit counts the
+         min-width grows but the radius keeps the ends rounded. */
+      box-sizing: border-box;
+      min-width: 18px;
+      height: 18px;
       padding: 0 5px;
       border-radius: 999px;
-      /* Light/compact: muted neutral by default; brand-colored on the active tab. */
-      background: var(--sfx-up-surface, #f1f5f9);
-      color: var(--sfx-up-text-muted, #94a3b8);
+      /* Filled chip: brand-blue background with white text. Stays the same
+         on the active tab — only the underline and tab text colour change. */
+      background: var(--sfx-up-primary, #2563eb);
+      color: #fff;
       font-size: 10.5px;
       font-weight: 600;
-    }
-    .preview-tab.active .preview-tab-count {
-      color: var(--sfx-up-primary, #2563eb);
+      line-height: 1;
     }
 
     /* --- Similar-assets panel body --- */
@@ -3088,10 +3105,10 @@ export class SfxUploader extends LitElement {
   @state() private _setMaxW = 2000;
   @state() private _setMaxH = 2000;
   @state() private _setTranscode = false;
-  @state() private _setResolution: "Auto" | "1080p" | "720p" | "480p" = "Auto";
+  @state() private _setResolution: SettingsResolution = 'auto';
   /** Whether the resolution custom-select dropdown is open. */
   @state() private _setResolutionOpen = false;
-  @state() private _setProtocol: "HLS" | "DASH" = "HLS";
+  @state() private _setProtocol: SettingsProtocol = 'hls';
   /** Resumable (tus) uploads toggle — maps to `tusConfig`. */
   @state() private _setResumable = false;
   private _isResizing = false;
@@ -3113,6 +3130,15 @@ export class SfxUploader extends LitElement {
   @state() private _isMinimized = false;
   @state() private _isPillExpanded = false;
   @state() private _metadataSchema: MetadataSchema | null = null;
+  /**
+   * Currently active variant per regional-variants group, keyed by group
+   * UUID. Mirrors admin v5's `metadataRegionalFilters` slice. Lets a single
+   * project mix LANGUAGES, CURRENCIES, and CUSTOM groups — each field is
+   * wrapped/unwrapped under `regionalFilters[field.regional_variants_group_uuid]`.
+   * Defaults are seeded from the schema (first variant of each group) and
+   * the user can change any group via the regional-settings selector.
+   */
+  @state() private _regionalFilters: Record<string, string> = {};
   @state() private _bulkMetadataOpen = false;
   /** When non-null, the bulk modal opens with this field active. */
   @state() private _bulkMetadataInitialFieldKey: string | null = null;
@@ -3153,9 +3179,71 @@ export class SfxUploader extends LitElement {
   private get _metadataDefaultLanguage(): string | undefined {
     const groups = this._metadataSchema?.regionalVariantsGroups;
     if (!groups) return undefined;
-    const langGroup = groups.find((g) => g.type === 'LANGUAGES');
+    const langGroup = groups.find(
+      (g) => g.type === REGIONAL_VARIANT_TYPE.LANGUAGES,
+    );
     return langGroup?.variants.find(Boolean)?.api_value || undefined;
   }
+
+  /**
+   * Effective per-group active variants: schema defaults (first variant of
+   * each group) merged with user picks from `_regionalFilters`. Built fresh
+   * on each access so newly-loaded schemas immediately seed defaults.
+   */
+  private get _effectiveRegionalFilters(): Record<string, string> {
+    return {
+      ...buildDefaultRegionalFilters(this._metadataSchema?.regionalVariantsGroups),
+      ...this._regionalFilters,
+    };
+  }
+
+  /**
+   * Backward-compat single-language getter. Returns the active LANGUAGES-group
+   * variant if any, falling back to `config.metadataConfig.language`.
+   * Preserves call sites that still think in terms of a single "current
+   * editing language" — new code should use `_effectiveRegionalFilters` instead.
+   */
+  private get _activeLanguage(): string | undefined {
+    const groups = this._metadataSchema?.regionalVariantsGroups ?? [];
+    const langGroup = groups.find(
+      (g) => g.type === REGIONAL_VARIANT_TYPE.LANGUAGES,
+    );
+    const filters = this._effectiveRegionalFilters;
+    return (
+      (langGroup ? filters[langGroup.uuid] : undefined) ??
+      this.config?.metadataConfig?.language
+    );
+  }
+
+  /**
+   * `metadataConfig` with `regionalFilters` populated from the active
+   * per-group picks and `language` mirrored from the active LANGUAGES-group
+   * variant (when any). Passed to `<sfx-metadata-form>` and
+   * `<sfx-bulk-metadata-modal>`; field components resolve their own slot key
+   * via `resolveFieldRegionalKey(field, config)`.
+   */
+  private get _effectiveMetadataConfig(): MetadataConfig | null {
+    const mc = this.config?.metadataConfig;
+    if (!mc) return null;
+    const filters = {
+      ...(mc.regionalFilters ?? {}),
+      ...this._effectiveRegionalFilters,
+    };
+    const lang = this._activeLanguage ?? mc.language;
+    return {
+      ...mc,
+      regionalFilters: filters,
+      language: lang,
+    };
+  }
+
+  private _onRegionalChange = (
+    e: CustomEvent<{ groupUuid: string; value: string }>,
+  ) => {
+    const { groupUuid, value } = e.detail;
+    if (!groupUuid) return;
+    this._regionalFilters = { ...this._regionalFilters, [groupUuid]: value };
+  };
   private _videoBlobUrls = new Map<File, string>();
 
   /** Persisted ETA — holds the last computed value so the display doesn't flicker when speed momentarily drops to 0. */
@@ -3503,6 +3591,16 @@ export class SfxUploader extends LitElement {
 
     if (changed.has("config") && this.config) {
       this._applyConfig(this.config);
+      // Guard: if the host disabled the Upload settings panel while it was
+      // open (uncommon, but possible if config is swapped at runtime), close
+      // it so we don't render a panel the user can no longer dismiss via the
+      // gear button.
+      const us = this.config.uploadSettings;
+      const settingsEnabled =
+        us !== false && (us == null || us.enabled !== false);
+      if (!settingsEnabled && this._showSettings) {
+        this._showSettings = false;
+      }
     }
 
     // Preview file changes: clear/resolve dimensions display.
@@ -3775,6 +3873,21 @@ export class SfxUploader extends LitElement {
       this._store.setState(updates);
     }
 
+    // Seed the Upload settings panel controls from `uploadSettings.defaults`
+    // (parity with admin v5 project-config seeding). Skipped entirely when
+    // `uploadSettings: false` — the panel is disabled so its state is moot.
+    const us = cfg.uploadSettings;
+    if (us && us.defaults) {
+      const d = us.defaults;
+      if (d.resize !== undefined) this._setResize = d.resize;
+      if (d.maxWidth !== undefined) this._setMaxW = d.maxWidth;
+      if (d.maxHeight !== undefined) this._setMaxH = d.maxHeight;
+      if (d.transcode !== undefined) this._setTranscode = d.transcode;
+      if (d.resolution !== undefined) this._setResolution = d.resolution;
+      if (d.protocol !== undefined) this._setProtocol = d.protocol;
+      if (d.resumable !== undefined) this._setResumable = d.resumable;
+    }
+
     // Re-evaluate stored review availability (connectedCallback may have
     // run before config was set, so _lastUploadId was null at that point).
     const reviewId = this._lastUploadId;
@@ -3864,9 +3977,25 @@ export class SfxUploader extends LitElement {
   }
 
   private _normalizeTusConfig(): TusConfig | undefined {
+    // Honor the Upload settings panel's "Resume uploads" switcher when
+    // visible: forcing it off short-circuits TUS entirely (engine falls back
+    // to XHR for every file), and forcing it on synthesizes a default tus
+    // config when the host didn't supply one. The switcher is only "in play"
+    // when the host opted into `showResumableSwitcher: true`.
+    const us = this.config?.uploadSettings;
+    const switcherActive = !!us && us.showResumableSwitcher === true;
+
     const raw = this.config?.tusConfig;
-    const base: TusConfig | undefined =
+    let base: TusConfig | undefined =
       raw === true ? {} : raw || undefined;
+
+    if (switcherActive) {
+      if (!this._setResumable) return undefined;
+      // Switcher is ON — make sure tus is wired even if the host didn't
+      // supply tusConfig (mirrors the `raw === true` synthesis path).
+      if (!base) base = {};
+    }
+
     if (!base) return undefined;
 
     // Derive tus endpoint and JSON base from the configured Companion host
@@ -3916,9 +4045,13 @@ export class SfxUploader extends LitElement {
   }
 
   /**
-   * Build the per-file upload-params resolver from `forceName` and
-   * `getUploadParams`. Host-supplied `getUploadParams` keys win on collision.
-   * Returns `undefined` when neither is configured.
+   * Build the per-file upload-params resolver. Layers four sources, with
+   * later sources winning on key collision:
+   *   1. Upload settings panel (resize / transcode) — wired here.
+   *   2. `forceName` → `opt_force_name`.
+   *   3. Host-supplied `getUploadParams(file)` — always wins so hosts can
+   *      override anything the panel chose.
+   * Returns `undefined` when no source contributed any params for the file.
    */
   private _buildUploadParamsResolver():
     | ((file: UploadFile) => Record<string, string> | undefined)
@@ -3926,16 +4059,40 @@ export class SfxUploader extends LitElement {
     const cfg = this.config;
     if (!cfg) return undefined;
     const { forceName, getUploadParams } = cfg;
-    if (forceName == null && !getUploadParams) return undefined;
+    // The panel always contributes a resolver (callbacks resolve current
+    // state at upload time), so we don't gate on settings-panel state here.
 
     return (file: UploadFile) => {
       const params: Record<string, string> = {};
+
+      // 1) Upload settings panel — gated by file category. Snapshot current
+      //    @state at upload time so user changes between toggling and clicking
+      //    Upload are honored.
+      const category = getFileCategory(file);
+      if (
+        this._setResize &&
+        (category === 'image' || category === 'pdf') &&
+        this._setMaxW > 0 &&
+        this._setMaxH > 0
+      ) {
+        params.resize = `${this._setMaxW},${this._setMaxH}`;
+      }
+      if (this._setTranscode && category === 'vid') {
+        params.postprocess = 'transcode';
+        params['video-resolution'] = this._setResolution;
+        params.video_protocols = this._setProtocol;
+      }
+
+      // 2) forceName.
       if (forceName != null) {
-        const name = typeof forceName === "function" ? forceName() : forceName;
+        const name = typeof forceName === 'function' ? forceName() : forceName;
         if (name) params.opt_force_name = name;
       }
+
+      // 3) Host callback wins on collision so integrators can override.
       const extra = getUploadParams?.(file);
       if (extra) Object.assign(params, extra);
+
       return Object.keys(params).length > 0 ? params : undefined;
     };
   }
@@ -5918,11 +6075,24 @@ export class SfxUploader extends LitElement {
         : nothing;
 
     // Gear → toggles the global Upload settings panel in the side area.
-    // Always available (no config flag); only shown once files exist, since the
-    // panel renders inside the preview split layout which needs files.
-    const hasFilesForSettings = this._storeCtrl.state.files.size > 0;
+    // Visibility rules:
+    //   - host can disable the panel entirely via `uploadSettings: false` or
+    //     `uploadSettings.enabled: false`,
+    //   - shown only when the queue contains files the panel can act on
+    //     (images, PDFs, or videos), since the panel renders inside the
+    //     preview split layout and the controls only make sense then.
+    const us = this.config?.uploadSettings;
+    const settingsEnabled =
+      us !== false && (us == null || us.enabled !== false);
+    const filesForGear = [...this._storeCtrl.state.files.values()];
+    const hasImageForGear = filesForGear.some(
+      (f) => getFileCategory(f) === 'image' && !isBrowserUnrenderableImage(f.type),
+    );
+    const hasPdfForGear = filesForGear.some((f) => getFileCategory(f) === 'pdf');
+    const hasVideoForGear = filesForGear.some((f) => getFileCategory(f) === 'vid');
+    const hasProcessable = hasImageForGear || hasPdfForGear || hasVideoForGear;
     const settingsBtn =
-      hasFilesForSettings
+      settingsEnabled && hasProcessable
         ? html`<button
             class="header-btn header-btn-settings ${this._showSettings ? "on" : ""}"
             aria-label=${t('uploadSettings', 'Upload settings')}
@@ -5946,6 +6116,20 @@ export class SfxUploader extends LitElement {
             </svg>
           </button>`
         : nothing;
+
+    // Regional-variants selector — only mounted when the schema is loaded
+    // and exposes at least one multi-variant group. The selector itself
+    // returns `nothing` when no group has >1 variant, so it's cheap to
+    // render unconditionally — but we still gate on schema presence to
+    // avoid feeding it an empty `groups` array on first paint.
+    const regionalBtn = this._metadataSchema?.regionalVariantsGroups?.length
+      ? html`<sfx-regional-settings
+          class="header-regional"
+          .groups=${this._metadataSchema.regionalVariantsGroups}
+          .selectedFilters=${this._effectiveRegionalFilters}
+          @regional-change=${this._onRegionalChange}
+        ></sfx-regional-settings>`
+      : nothing;
 
     const closeBtn =
       header === "close"
@@ -5986,6 +6170,7 @@ export class SfxUploader extends LitElement {
             </div>`
           : nothing}
         <div class="header-title">${t('uploadFiles', 'Upload Files')}</div>
+        ${regionalBtn}
         ${settingsBtn}
         ${closeBtn}
       </div>
@@ -6737,7 +6922,7 @@ export class SfxUploader extends LitElement {
             .accept=${buildAcceptString(this._storeCtrl.state.restrictions)}
             .multi=${this._allowMulti}
             .showCheckSimilar=${similarityEnabled}
-            .selectMode=${this._similarSelectMode}
+            .selectMode=${similarityEnabled}
             .selectedIds=${this._similarSelectedIds}
             .allSelected=${allSimilarSelected}
             .selectionFull=${similarSelectionFull}
@@ -6864,20 +7049,17 @@ export class SfxUploader extends LitElement {
                       this._previewPanelTab = "similar";
                     }}
                   >
-                    ${t('similarTab', 'Similar')}
-                    ${previewSimilar && previewSimilar.length > 0
-                      ? html`<span class="preview-tab-count"
-                          >${previewSimilar.length}</span
-                        >`
+                    <span>${t('similarTab', 'Similar')}</span>${previewSimilar && previewSimilar.length > 0
+                      ? html`<span class="preview-tab-count">${previewSimilar.length}</span>`
                       : nothing}
                   </button>
                   <button
                     class="preview-tab-discard"
                     @click=${() => this._discardPreviewFile()}
                     aria-label=${t('discardThisImage', 'Discard this image')}
+                    title=${t('discardThisImage', 'Discard this image')}
                   >
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
-                    <span class="discard-label">${t('discardThisImage', 'Discard this image')}</span>
                   </button>
                 </div>
               `
@@ -7040,7 +7222,7 @@ export class SfxUploader extends LitElement {
                   <sfx-metadata-form
                     .schema=${this._metadataSchema}
                     .meta=${this._previewMeta(previewFile)}
-                    .config=${this.config.metadataConfig}
+                    .config=${this._effectiveMetadataConfig}
                     .autocomplete=${this._metadataAutocomplete}
                     .taxonomyService=${this._taxonomyService}
                     .ultratags=${this._ultratagsService}
@@ -7159,15 +7341,42 @@ export class SfxUploader extends LitElement {
   }
 
   /** Global "Upload settings" view shown in the preview side-panel when the
-   *  header gear is active. Captures image/video/resumable upload preferences.
-   *  TODO(dev): all controls here are UI-only — wire the captured values into
-   *  the upload flow (resize → image params, transcode/resolution/protocol →
-   *  video params, resumable → tusConfig) and seed initial values from
-   *  config.uploadSettings.defaults. See mockups/FRA-10365-dev-handoff.md. */
+   *  header gear is active. Captures image/video/resumable upload preferences
+   *  and forwards them to the upload flow (image resize → `&resize=w,h`,
+   *  transcode → `&postprocess=transcode&video-resolution=…&video_protocols=…`,
+   *  resumable → toggles the tus path on/off). See mockups/FRA-10365-dev-handoff.md. */
   private _renderSettingsPanel() {
     const t = this._storeCtrl.state.t;
     const files = [...this._storeCtrl.state.files.values()];
-    const hasVideo = files.some((f) => f.type.startsWith("video/"));
+    const hasImage = files.some(
+      (f) => getFileCategory(f) === 'image' && !isBrowserUnrenderableImage(f.type),
+    );
+    const hasPdf = files.some((f) => getFileCategory(f) === 'pdf');
+    const hasVideo = files.some((f) => getFileCategory(f) === 'vid');
+    const us = this.config?.uploadSettings;
+    const showResumableSwitcher = !!us && us.showResumableSwitcher === true;
+    const resolutionLabel = (r: SettingsResolution): string => {
+      switch (r) {
+        case 'auto':
+          return t('resolutionAuto', 'Auto');
+        case 'mobile':
+          return t('resolutionMobile', 'Mobile');
+        case 'tablet':
+          return t('resolutionTablet', 'Tablet');
+        case 'desktop':
+          return t('resolutionDesktop', 'Desktop');
+        case 'hq':
+          return t('resolutionHq', 'HQ');
+        case 'sample':
+          return t('resolutionSample', 'Sample');
+      }
+    };
+    const protocolLabel = (p: SettingsProtocol): string => {
+      switch (p) {
+        case 'hls':
+          return t('protocolHls', 'HLS');
+      }
+    };
     const onNum = (set: (v: number) => void) => (e: Event) => {
       const v = parseInt((e.target as HTMLInputElement).value, 10);
       set(Number.isFinite(v) ? v : 0);
@@ -7189,53 +7398,57 @@ export class SfxUploader extends LitElement {
         </div>
       </div>
       <div class="settings-body">
-        <!-- Image settings -->
-        <div class="sgroup-title">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg>
-          ${t('imageSettings', 'Image settings')}
-        </div>
-        <div class="srow">
-          <span class="srow-lbl">${t('resizeImages', 'Resize Images')}</span>
-          <span class="info-i" data-tip=${t('resizeImagesInfo', 'Scale down large images to the maximum dimensions below before uploading.')}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span>
-          <span class="srow-spacer"></span>
-          <button
-            class="sw-toggle ${this._setResize ? "on" : ""}"
-            role="switch"
-            aria-checked=${this._setResize}
-            aria-label=${t('resizeImages', 'Resize Images')}
-            @click=${() => {
-              this._setResize = !this._setResize;
-            }}
-          ></button>
-        </div>
-        <div class="sfields ${this._setResize ? "" : "dep-off"}">
-          <div class="sfield">
-            <label>${t('maxWidth', 'Max Width')}</label>
-            <div class="sinp">
-              <input
-                type="number"
-                min="1"
-                inputmode="numeric"
-                .value=${String(this._setMaxW)}
-                @input=${onNum((v) => (this._setMaxW = v))}
-              />
-              <span class="sfx">px</span>
-            </div>
-          </div>
-          <div class="sfield">
-            <label>${t('maxHeight', 'Max Height')}</label>
-            <div class="sinp">
-              <input
-                type="number"
-                min="1"
-                inputmode="numeric"
-                .value=${String(this._setMaxH)}
-                @input=${onNum((v) => (this._setMaxH = v))}
-              />
-              <span class="sfx">px</span>
-            </div>
-          </div>
-        </div>
+        ${(hasImage || hasPdf)
+          ? html`
+              <!-- Image settings (only when the queue contains an image or PDF) -->
+              <div class="sgroup-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg>
+                ${t('imageSettings', 'Image settings')}
+              </div>
+              <div class="srow">
+                <span class="srow-lbl">${t('resizeImages', 'Resize Images')}</span>
+                <span class="info-i" data-tip=${t('resizeImagesInfo', 'Scale down large images to the maximum dimensions below before uploading.')}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span>
+                <span class="srow-spacer"></span>
+                <button
+                  class="sw-toggle ${this._setResize ? "on" : ""}"
+                  role="switch"
+                  aria-checked=${this._setResize}
+                  aria-label=${t('resizeImages', 'Resize Images')}
+                  @click=${() => {
+                    this._setResize = !this._setResize;
+                  }}
+                ></button>
+              </div>
+              <div class="sfields ${this._setResize ? "" : "dep-off"}">
+                <div class="sfield">
+                  <label>${t('maxWidth', 'Max Width')}</label>
+                  <div class="sinp">
+                    <input
+                      type="number"
+                      min="1"
+                      inputmode="numeric"
+                      .value=${String(this._setMaxW)}
+                      @input=${onNum((v) => (this._setMaxW = v))}
+                    />
+                    <span class="sfx">px</span>
+                  </div>
+                </div>
+                <div class="sfield">
+                  <label>${t('maxHeight', 'Max Height')}</label>
+                  <div class="sinp">
+                    <input
+                      type="number"
+                      min="1"
+                      inputmode="numeric"
+                      .value=${String(this._setMaxH)}
+                      @input=${onNum((v) => (this._setMaxH = v))}
+                    />
+                    <span class="sfx">px</span>
+                  </div>
+                </div>
+              </div>
+            `
+          : nothing}
 
         ${hasVideo
           ? html`
@@ -7269,7 +7482,7 @@ export class SfxUploader extends LitElement {
                     this._setResolutionOpen = !this._setResolutionOpen;
                   }}
                 >
-                  <span>${this._setResolution}</span>
+                  <span>${resolutionLabel(this._setResolution)}</span>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                 </div>
                 ${this._setResolutionOpen && this._setTranscode
@@ -7284,7 +7497,7 @@ export class SfxUploader extends LitElement {
                                 this._setResolutionOpen = false;
                               }}
                             >
-                              ${r}
+                              ${resolutionLabel(r)}
                               ${r === this._setResolution
                                 ? html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`
                                 : nothing}
@@ -7297,7 +7510,7 @@ export class SfxUploader extends LitElement {
               </div>
               <div class="sfield sfield-block sfield-radios ${this._setTranscode ? "" : "dep-off"}">
                 <label>${t('protocols', 'Protocols')}</label>
-                ${(["HLS", "DASH"] as const).map(
+                ${SETTINGS_PROTOCOLS.map(
                   (p) => html`
                     <div
                       class="sradio-row"
@@ -7306,7 +7519,7 @@ export class SfxUploader extends LitElement {
                       }}
                     >
                       <span class="sradio ${this._setProtocol === p ? "on" : ""}"></span>
-                      <span class="sradio-lbl">${p}</span>
+                      <span class="sradio-lbl">${protocolLabel(p)}</span>
                     </div>
                   `,
                 )}
@@ -7314,22 +7527,31 @@ export class SfxUploader extends LitElement {
             `
           : nothing}
 
-        <!-- Resume uploads (resumable / tus) -->
-        <div class="srow srow-spaced">
-          <span class="srow-lbl">${t('resumeUploads', 'Resume uploads')}</span>
-          <span class="info-i" data-tip=${t('resumeUploadsInfo', 'Enable the ability to resume uploads (recommended if you expect large files); slightly slower compared to uploading files in one go')}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span>
-          <span class="sbeta" data-tip=${t('betaInfo', 'Beta functionality — you may experience performance issues in some cases')}>${t('beta', 'Beta')}</span>
-          <span class="srow-spacer"></span>
-          <button
-            class="sw-toggle ${this._setResumable ? "on" : ""}"
-            role="switch"
-            aria-checked=${this._setResumable}
-            aria-label=${t('resumeUploads', 'Resume uploads')}
-            @click=${() => {
-              this._setResumable = !this._setResumable;
-            }}
-          ></button>
-        </div>
+        ${showResumableSwitcher
+          ? html`
+              <!-- Resume uploads (resumable / tus) -->
+              <div class="srow srow-spaced">
+                <span class="srow-lbl">${t('resumeUploads', 'Resume uploads')}</span>
+                <span class="info-i" data-tip=${t('resumeUploadsInfo', 'Enable the ability to resume uploads (recommended if you expect large files); slightly slower compared to uploading files in one go')}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span>
+                <span class="sbeta" data-tip=${t('betaInfo', 'Beta functionality — you may experience performance issues in some cases')}>${t('beta', 'Beta')}</span>
+                <span class="srow-spacer"></span>
+                <button
+                  class="sw-toggle ${this._setResumable ? "on" : ""}"
+                  role="switch"
+                  aria-checked=${this._setResumable}
+                  aria-label=${t('resumeUploads', 'Resume uploads')}
+                  @click=${() => {
+                    this._setResumable = !this._setResumable;
+                    // Push the new tusConfig into the running engine so the
+                    // change takes effect on the next file picked off the queue.
+                    this._engine?.updateConfig({
+                      tusConfig: this._normalizeTusConfig(),
+                    });
+                  }}
+                ></button>
+              </div>
+            `
+          : nothing}
       </div>
     `;
   }
@@ -7530,7 +7752,7 @@ export class SfxUploader extends LitElement {
                           .accept=${accept}
                           .multi=${this._allowMulti}
                           .showCheckSimilar=${similarityEnabled}
-                          .selectMode=${this._similarSelectMode}
+                          .selectMode=${similarityEnabled}
                           .selectedIds=${this._similarSelectedIds}
                           .allSelected=${allSimilarSelected}
                           .selectionFull=${similarSelectionFull}
@@ -7564,10 +7786,11 @@ export class SfxUploader extends LitElement {
                   this.config?.showFillMetadata ?? this.config?.metadataConfig
                 )}
                 .requireMetadataFirst=${this._hasUnfilledRequiredMetadata}
-                .showCheckSimilar=${similarityEnabled}
-                .selectMode=${this._similarSelectMode}
+                .showCheckSimilar=${false}
+                .selectMode=${similarityEnabled && this._similarSelectedIds.size > 0}
                 .selectedCount=${this._similarSelectedIds.size}
-                .maxSelection=${SIMILAR_MAX_SELECTION}
+                .maxSelection=${similarCappedCount}
+                .allSelected=${allSimilarSelected}
               ></sfx-actions-bar>
             `
           : nothing}
@@ -7621,7 +7844,7 @@ export class SfxUploader extends LitElement {
                 .files=${[...this._store.getState().files.values()].filter(
                   (f) => SfxUploader._MODIFIABLE_STATUSES.has(f.status),
                 )}
-                .config=${this.config?.metadataConfig ?? null}
+                .config=${this._effectiveMetadataConfig}
                 .autocomplete=${this._metadataAutocomplete}
                 .taxonomyService=${this._taxonomyService}
                 .ultratags=${this._ultratagsService}
@@ -7631,6 +7854,7 @@ export class SfxUploader extends LitElement {
                 @product-save-batch=${this._onBulkProductSaveBatch}
                 @taxonomy-save-batch=${this._onBulkTaxonomySaveBatch}
                 @metadata-close=${this._onBulkMetadataClose}
+                @regional-change=${this._onRegionalChange}
               ></sfx-bulk-metadata-modal>
             `
           : nothing}

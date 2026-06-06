@@ -288,32 +288,21 @@ export class SfxFileItem extends LitElement {
     }
 
     .cs-label {
+      flex: 1 1 auto;
       min-width: 0;
       overflow: hidden;
       text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
-    /* Collapse to icon-only before the fixed 160px button ever looks cramped.
-       Cutoff = button width (160px) + a comfortable side margin (~24px per
-       side = 48px). Above this → text labels with clear air on both sides;
-       at/below → icons only, so the button never sits tight against the edges. */
+    /* In narrow tiles the fixed 160px button can be wider than the media area.
+       Let the button shrink to the container width minus a small inset so it
+       doesn't reach the tile edges and the label can still ellipsize. */
     @container sfx-tile-media (max-width: 208px) {
-      /* Icon-only: lay the two square buttons side by side, not stacked —
-         more compact and balanced when there's no text to align. */
-      .center-actions {
-        flex-direction: row;
-        align-items: center;
-        justify-content: center;
-      }
-      .center-actions .cs-label {
-        display: none;
-      }
       .preview-btn,
       .check-similar-btn {
-        width: 40px;
-        padding: 0;
-        gap: 0;
-        justify-content: center;
+        width: calc(100% - 24px);
+        padding: 0 8px;
       }
     }
 
@@ -399,7 +388,9 @@ export class SfxFileItem extends LitElement {
     /* Non-image tiles can't be checked — dim them while selecting. */
     .tile.select-dimmed { opacity: 0.5; }
 
-    /* Always-visible checkbox: empty white square → filled blue when checked. */
+    /* Checkbox: hidden by default, revealed on tile hover/keyboard focus so the
+       UI stays clean until the user is ready to pick. Always visible once
+       checked — selected state must remain glanceable. */
     .similar-cb {
       position: absolute;
       top: 8px;
@@ -416,7 +407,20 @@ export class SfxFileItem extends LitElement {
       justify-content: center;
       cursor: pointer;
       z-index: 11;
-      transition: background-color 0.15s ease, border-color 0.15s ease;
+      opacity: 0;
+      transition: background-color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+    }
+
+    .tile:hover .similar-cb,
+    .tile:focus-visible .similar-cb,
+    .tile:has(:focus-visible) .similar-cb,
+    .similar-cb.checked {
+      opacity: 1;
+    }
+
+    /* Touch devices have no hover — always reveal so picking remains possible. */
+    @media (hover: none) {
+      .similar-cb { opacity: 1; }
     }
 
     .similar-cb svg { width: 16px; height: 16px; opacity: 0; transition: opacity 0.15s ease; }
@@ -428,10 +432,16 @@ export class SfxFileItem extends LitElement {
 
     .similar-cb.checked svg { opacity: 1; }
 
-    /* Selection cap reached: unselected checkboxes are muted + not clickable. */
-    .similar-cb.disabled {
+    /* Selection cap reached: unselected checkboxes are muted on hover and not
+       clickable. Stays hidden when not hovered like the rest. */
+    .similar-cb.disabled { cursor: not-allowed; }
+    .tile:hover .similar-cb.disabled,
+    .tile:focus-visible .similar-cb.disabled,
+    .tile:has(:focus-visible) .similar-cb.disabled {
       opacity: 0.4;
-      cursor: not-allowed;
+    }
+    @media (hover: none) {
+      .similar-cb.disabled { opacity: 0.4; }
     }
 
     /* --- Similarity search loading states --- */
@@ -853,6 +863,9 @@ export class SfxFileItem extends LitElement {
   @property({ type: Boolean }) selectMode = false;
   /** Whether this tile is currently picked in selection mode. */
   @property({ type: Boolean }) isSelected = false;
+  /** Any image in the list is currently picked — non-image tiles dim while
+   *  a similarity selection is in progress to signal they can't be checked. */
+  @property({ type: Boolean }) selectionActive = false;
   /** Selection has reached the max — unselected tiles can't be picked. */
   @property({ type: Boolean }) selectionFull = false;
   /** The preview side-panel is open — suppress the hover similar popover. */
@@ -1062,10 +1075,13 @@ export class SfxFileItem extends LitElement {
     const canSelectSimilar =
       inSelectMode && !alreadyChecked && this.similarStatus === '';
     // Centered hover actions (Details + optional Check similar) show only on a
-    // normal, not-yet-uploaded tile and not while picking images.
+    // normal, not-yet-uploaded tile. With always-on selection mode (similarity
+    // check enabled) the checkbox lives in the corner, so these hover actions
+    // still need to appear — they collapse to icons (see container query) when
+    // a selection is visible to give the checkbox visual priority.
     const showCenterActions =
       !isReview && !isDone && !isUploading && !isPaused && !isError &&
-      f.status !== 'rejected' && !this.selectMode && this.similarStatus !== 'searching' &&
+      f.status !== 'rejected' && this.similarStatus !== 'searching' &&
       !this.reviewPick;
     // Dark hover overlay whenever the centered actions show — for every file
     // type (documents/videos included), so Details always has a backdrop.
@@ -1081,7 +1097,7 @@ export class SfxFileItem extends LitElement {
       isReview ? 'review' : '',
       canSelectSimilar ? 'selectable' : '',
       canSelectSimilar && this.isSelected ? 'selected' : '',
-      this.selectMode && !isImage && !isReview ? 'select-dimmed' : '',
+      this.selectionActive && !isImage && !isReview ? 'select-dimmed' : '',
       csOverlay ? 'cs-overlay' : '',
       this.similarStatus === 'queued' ? 'sim-queued' : '',
       this.reviewPick ? 'review-pick' : '',
@@ -1297,9 +1313,9 @@ export class SfxFileItem extends LitElement {
             : nothing}
         </div>
 
-        <!-- Action buttons (hidden in review mode and while picking images
-             for the similarity check — files are read-only there) -->
-        ${isReview || this.selectMode || this.reviewPick ? nothing : html`
+        <!-- Action buttons (hidden in review mode and the standalone results-
+             pick mode — files are read-only there) -->
+        ${isReview || this.reviewPick ? nothing : html`
         <div class="actions">
           ${isUploading && f.isTus
             ? html`
