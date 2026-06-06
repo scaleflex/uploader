@@ -271,7 +271,7 @@ export interface UploaderConfig {
   /**
    * Automatically close the uploader when all uploads complete.
    * - `true`  — closes after a 1.5 s delay so the user briefly sees the success state.
-   * - number — custom delay in milliseconds (e.g. `2000` for 2 s).
+   * - number — custom delay in milliseconds (e.g. `2000` for 2 s, `0` for immediate).
    * - `false` / omitted — disabled (default).
    *
    * Fires `onCompleteAction` + `onClose` callbacks and the corresponding public
@@ -3525,9 +3525,10 @@ export class SfxUploader extends LitElement {
         this._dispatchPublic(PublicEvents.ALL_COMPLETE, { successful, failed });
         callbacks?.onAllComplete?.(successful, failed);
 
-        // Auto-close after a brief delay so the user sees the success state
+        // Auto-close after a brief delay so the user sees the success state.
+        // Treat `0` as a valid delay (close immediately) — only false/null/undefined disable.
         const closeOpt = this.config?.closeOnComplete;
-        if (closeOpt) {
+        if (closeOpt !== false && closeOpt != null) {
           const delay = typeof closeOpt === "number" ? closeOpt : 1500;
           this._closeOnCompleteTimer = setTimeout(() => {
             this._closeOnCompleteTimer = null;
