@@ -6,6 +6,16 @@ export interface FileInfo {
     type: string;
 }
 /**
+ * Detect whether a validation error is the "max number of files" cap. Used by
+ * `_processIncomingFiles` to short-circuit a folder drop that's over the limit
+ * into a single aggregate message instead of N per-file rejection cards.
+ *
+ * Kept as a string-prefix check so the helper stays in lockstep with
+ * `validateFileInfo` without leaking a structured error type into every
+ * caller.
+ */
+export declare function isMaxFilesError(error: string | null | undefined): boolean;
+/**
  * Validate file info against restrictions. Returns error message or null.
  * Works for local File objects, URL imports, and connector imports.
  */

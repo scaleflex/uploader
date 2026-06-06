@@ -1,5 +1,5 @@
-import { D as Ve, E as Ye, F as ee, G as it, H as B, I as Pe, J as st, K as rt, L as ot, M as Ke, N as nt, O as at, Q as lt } from "./sfx-uploader-Dl0kQPut.js";
-import { R as Qt, T as Zt, V as ei } from "./sfx-uploader-Dl0kQPut.js";
+import { E as Ve, F as Ye, G as ee, H as it, I as B, J as Pe, K as st, L as rt, M as ot, N as Ke, O as nt, Q as at, R as lt } from "./sfx-uploader-CCJwotnI.js";
+import { T as Qt, V as Zt, W as ei } from "./sfx-uploader-CCJwotnI.js";
 import { LitElement as w, css as g, nothing as x, html as a, svg as v } from "lit";
 import { property as p, state as h } from "lit/decorators.js";
 import { classMap as He } from "lit/directives/class-map.js";
@@ -2141,8 +2141,7 @@ Ze([
 customElements.define("sfx-metadata-field-view", W);
 const ie = /* @__PURE__ */ new Set([
   "multi-select",
-  "tags",
-  "integer-list"
+  "tags"
 ]), se = /* @__PURE__ */ new Set([
   "text",
   "textarea",
@@ -3852,7 +3851,6 @@ const z = (E = class extends w {
     switch (e) {
       case "multi-select":
       case "tags":
-      case "integer-list":
         return [];
       case "boolean":
         return "null";
@@ -3860,6 +3858,7 @@ const z = (E = class extends w {
         return { latitude: "", longitude: "" };
       case "asset-attachments":
       case "attachments-assets":
+      case "integer-list":
       case "ultratags":
       case "taxonomy-node":
         return null;
@@ -4215,7 +4214,7 @@ D([
   h()
 ], $.prototype, "_error");
 customElements.define("sfx-bulk-meta-row", $);
-const Kt = /* @__PURE__ */ new Set(["multi-select", "tags", "integer-list"]);
+const Kt = /* @__PURE__ */ new Set(["multi-select", "tags"]);
 function Be(n, e, t) {
   return !e.regional_variants_group_uuid || n == null || typeof n != "object" || Array.isArray(n) ? n : n[t ?? "en"];
 }

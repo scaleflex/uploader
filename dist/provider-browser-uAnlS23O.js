@@ -1,77 +1,139 @@
-import { LitElement as _, css as w, html as s, nothing as c } from "lit";
-import { property as f, state as p } from "lit/decorators.js";
-import { u as $, w as z, n as S, x as I, A as k, y as C, z as y, B as P } from "./sfx-uploader-Dl0kQPut.js";
-const m = "sfx-uploader-token:";
-function x(n) {
+import { LitElement as S, css as z, html as n, nothing as f } from "lit";
+import { property as g, state as x } from "lit/decorators.js";
+import { u as P, w as C, A as y, x as A, n as I, y as M, z as B, B as $, D as L } from "./sfx-uploader-CCJwotnI.js";
+const k = "sfx-uploader-token:";
+function m(l) {
   try {
-    return localStorage.getItem(`${m}${n}`);
+    return localStorage.getItem(`${k}${l}`);
   } catch {
     return null;
   }
 }
-function L(n, e) {
+function V(l, e) {
   try {
-    localStorage.setItem(`${m}${n}`, e);
+    localStorage.setItem(`${k}${l}`, e);
   } catch {
   }
 }
-function g(n) {
+function _(l) {
   try {
-    localStorage.removeItem(`${m}${n}`);
+    localStorage.removeItem(`${k}${l}`);
   } catch {
   }
 }
-function M(n, e) {
-  const r = (i) => {
-    if (n && i.source !== n) return;
-    const t = typeof i.data == "string" ? A(i.data) : i.data;
-    t != null && t.token && e(t.token);
+function H(l, e) {
+  const t = (r) => {
+    if (l && r.source !== l) return;
+    const s = typeof r.data == "string" ? T(r.data) : r.data;
+    s != null && s.token && e(s.token);
   };
-  return window.addEventListener("message", r), () => window.removeEventListener("message", r);
+  return window.addEventListener("message", t), () => window.removeEventListener("message", t);
 }
-function A(n) {
+function T(l) {
   try {
-    return JSON.parse(n);
+    return JSON.parse(l);
   } catch {
     return null;
   }
 }
-var B = Object.defineProperty, d = (n, e, r, i) => {
-  for (var t = void 0, o = n.length - 1, l; o >= 0; o--)
-    (l = n[o]) && (t = l(e, r, t) || t);
-  return t && B(e, r, t), t;
+var E = Object.defineProperty, h = (l, e, t, r) => {
+  for (var s = void 0, p = l.length - 1, i; p >= 0; p--)
+    (i = l[p]) && (s = i(e, t, s) || s);
+  return s && E(e, t, s), s;
 };
-const b = class b extends _ {
+const w = class w extends S {
   constructor() {
-    super(...arguments), this.t = (e, r) => typeof r == "string" ? r : e, this.provider = "google-drive", this.companionUrl = "", this.multi = !0, this.maxSelect = null, this.transformThumbnail = (e) => e, this._authenticated = !1, this._loading = !1, this._items = [], this._selectedIds = /* @__PURE__ */ new Set(), this._breadcrumbs = [], this._nextPagePath = null, this._error = null, this._loadingMore = !1, this._username = null, this._cleanupAuthListener = null, this._authWindow = null, this._handleConnect = () => {
-      var r;
-      const e = $(this.companionUrl, this.provider);
-      this._authWindow = window.open(e, "_blank", "width=600,height=600"), (r = this._cleanupAuthListener) == null || r.call(this), this._cleanupAuthListener = M(this._authWindow, (i) => {
-        var t, o;
-        (t = this._authWindow) == null || t.close(), this._authWindow = null, (o = this._cleanupAuthListener) == null || o.call(this), this._cleanupAuthListener = null, L(this.provider, i), this._authenticated = !0, this._loadFolder("");
+    super(...arguments), this.t = (e, t) => typeof t == "string" ? t : e, this.provider = "google-drive", this.companionUrl = "", this.multi = !0, this.maxSelect = null, this.transformThumbnail = (e) => e, this._authenticated = !1, this._loading = !1, this._items = [], this._selectedIds = /* @__PURE__ */ new Set(), this._breadcrumbs = [], this._nextPagePath = null, this._error = null, this._loadingMore = !1, this._username = null, this._resolvingFolders = !1, this._resolveProgress = 0, this._cleanupAuthListener = null, this._authWindow = null, this._resolveAbort = null, this._handleConnect = () => {
+      var t;
+      try {
+        if (this._authWindow && !this._authWindow.closed) {
+          this._authWindow.focus();
+          return;
+        }
+      } catch {
+        this._authWindow = null;
+      }
+      const e = P(this.companionUrl, this.provider);
+      this._authWindow = window.open(e, "_blank", "width=600,height=600"), (t = this._cleanupAuthListener) == null || t.call(this), this._cleanupAuthListener = H(this._authWindow, (r) => {
+        var s;
+        this._authWindow = null, (s = this._cleanupAuthListener) == null || s.call(this), this._cleanupAuthListener = null, V(this.provider, r), this._authenticated = !0, this._loadFolder("");
       });
     }, this._lastClickedIndex = null, this._toggleSelectAll = () => {
-      const e = this._items.filter((i) => !i.isFolder);
-      e.every((i) => this._selectedIds.has(i.id)) ? this._selectedIds = /* @__PURE__ */ new Set() : this._selectedIds = new Set(e.map((i) => i.id));
-    }, this._onAddSelected = () => {
-      const e = x(this.provider);
+      if (this._items.every((t) => this._selectedIds.has(t.id)))
+        this._selectedIds = /* @__PURE__ */ new Set();
+      else {
+        const t = /* @__PURE__ */ new Set();
+        let r = 0;
+        for (const s of this._items)
+          s.isFolder ? t.add(s.id) : (this.maxSelect === null || r < this.maxSelect) && (t.add(s.id), r++);
+        this._selectedIds = t;
+      }
+    }, this._onAddSelected = async () => {
+      var p, i;
+      const e = m(this.provider);
       if (!e) return;
-      const i = this._items.filter(
-        (t) => !t.isFolder && this._selectedIds.has(t.id)
-      ).map((t) => ({
+      const t = this._items.filter(
+        (o) => !o.isFolder && this._selectedIds.has(o.id)
+      ), r = this._items.filter(
+        (o) => o.isFolder && this._selectedIds.has(o.id)
+      ), s = t.map((o) => ({
         companionUrl: this.companionUrl,
         provider: this.provider,
         token: e,
-        requestPath: t.requestPath,
-        fileId: t.id,
-        name: t.name,
-        mimeType: t.mimeType,
-        size: t.size,
-        thumbnail: t.thumbnail
+        requestPath: o.requestPath,
+        fileId: o.id,
+        name: o.name,
+        mimeType: o.mimeType,
+        size: o.size,
+        thumbnail: o.thumbnail
       }));
+      if (r.length > 0) {
+        (p = this._resolveAbort) == null || p.abort(), this._resolveAbort = new AbortController();
+        const o = this._resolveAbort.signal;
+        this._resolvingFolders = !0, this._resolveProgress = 0;
+        let c = 0;
+        try {
+          for (const a of r) {
+            const b = await C(
+              this.companionUrl,
+              this.provider,
+              e,
+              a.requestPath,
+              a.name,
+              o
+            );
+            if (o.aborted) return;
+            for (const u of b)
+              s.push({
+                companionUrl: this.companionUrl,
+                provider: this.provider,
+                token: e,
+                requestPath: u.requestPath,
+                fileId: u.id,
+                name: u.name,
+                mimeType: u.mimeType,
+                size: u.size,
+                thumbnail: u.thumbnail,
+                relativeFolder: u.relativeFolder
+              });
+            c += b.length, this._resolveProgress = c;
+          }
+        } catch (a) {
+          if (o.aborted) return;
+          if (this._resolvingFolders = !1, a instanceof y) {
+            _(this.provider), this._authenticated = !1;
+            return;
+          }
+          this._error = a instanceof Error ? a.message : this.t("failedToReadFolder", "Failed to read folder contents");
+          return;
+        } finally {
+          ((i = this._resolveAbort) == null ? void 0 : i.signal) === o && (this._resolveAbort = null);
+        }
+        this._resolvingFolders = !1;
+      }
       this.dispatchEvent(
         new CustomEvent("connector-files-selected", {
-          detail: { files: i },
+          detail: { files: s },
           bubbles: !0,
           composed: !0
         })
@@ -84,35 +146,41 @@ const b = class b extends _ {
         })
       );
     }, this._handleLogout = async () => {
-      const e = x(this.provider);
+      const e = m(this.provider);
       if (e) {
         try {
-          await z(this.companionUrl, this.provider, e);
+          await A(this.companionUrl, this.provider, e);
         } catch {
         }
-        g(this.provider);
+        _(this.provider);
       }
       this._reset();
+    }, this._onBack = () => {
+      this._breadcrumbs.length !== 0 && this._onBreadcrumbClick(this._breadcrumbs.length - 2);
+    }, this._cancelResolve = () => {
+      var e;
+      (e = this._resolveAbort) == null || e.abort(), this._resolveAbort = null, this._resolvingFolders = !1, this._resolveProgress = 0;
     };
   }
   connectedCallback() {
     super.connectedCallback(), this._checkAuth();
   }
   disconnectedCallback() {
-    var e;
-    super.disconnectedCallback(), (e = this._cleanupAuthListener) == null || e.call(this), this._cleanupAuthListener = null;
+    var e, t;
+    super.disconnectedCallback(), (e = this._cleanupAuthListener) == null || e.call(this), this._cleanupAuthListener = null, (t = this._resolveAbort) == null || t.abort(), this._resolveAbort = null;
   }
-  updated(e) {
-    e.has("provider") && (this._reset(), this._checkAuth());
+  willUpdate(e) {
+    e.has("provider") && e.get("provider") !== void 0 && (this._reset(), this._checkAuth());
   }
   _reset() {
-    this._authenticated = !1, this._loading = !1, this._items = [], this._selectedIds = /* @__PURE__ */ new Set(), this._breadcrumbs = [], this._nextPagePath = null, this._error = null, this._username = null;
+    var e;
+    (e = this._resolveAbort) == null || e.abort(), this._resolveAbort = null, this._authenticated = !1, this._loading = !1, this._items = [], this._selectedIds = /* @__PURE__ */ new Set(), this._lastClickedIndex = null, this._breadcrumbs = [], this._nextPagePath = null, this._error = null, this._username = null, this._resolvingFolders = !1, this._resolveProgress = 0;
   }
   _checkAuth() {
-    x(this.provider) && (this._authenticated = !0, this._loadFolder(""));
+    m(this.provider) && (this._authenticated = !0, this._loadFolder(""));
   }
   get _providerDef() {
-    return S([this.provider])[0] ?? null;
+    return I([this.provider])[0] ?? null;
   }
   get _providerLabel() {
     var e;
@@ -120,17 +188,17 @@ const b = class b extends _ {
   }
   // --- Folder navigation ---
   async _loadFolder(e) {
-    const r = x(this.provider);
-    if (!r) {
+    const t = m(this.provider);
+    if (!t) {
       this._authenticated = !1;
       return;
     }
     this.offsetHeight > 0 && (this.style.minHeight = `${this.offsetHeight}px`), this._loading = !0, this._error = null, this._items = [], this._selectedIds = /* @__PURE__ */ new Set(), this._lastClickedIndex = null, this._nextPagePath = null;
     try {
-      const i = await I(this.companionUrl, this.provider, r, e);
-      this._items = i.items, this._nextPagePath = i.nextPagePath, i.username && (this._username = i.username);
-    } catch (i) {
-      i instanceof k ? (g(this.provider), this._authenticated = !1) : this._error = i instanceof Error ? i.message : this.t("failedToLoadFiles", "Failed to load files");
+      const r = await M(this.companionUrl, this.provider, t, e);
+      this._items = r.items, this._nextPagePath = r.nextPagePath, r.username && (this._username = r.username);
+    } catch (r) {
+      r instanceof y ? (_(this.provider), this._authenticated = !1) : this._error = r instanceof Error ? r.message : this.t("failedToLoadFiles", "Failed to load files");
     } finally {
       this._loading = !1;
     }
@@ -142,102 +210,133 @@ const b = class b extends _ {
     if (e < 0)
       this._breadcrumbs = [], this._loadFolder("");
     else {
-      const r = this._breadcrumbs[e];
-      this._breadcrumbs = this._breadcrumbs.slice(0, e + 1), this._loadFolder(r.path);
+      const t = this._breadcrumbs[e];
+      this._breadcrumbs = this._breadcrumbs.slice(0, e + 1), this._loadFolder(t.path);
     }
   }
   // --- Load more ---
   async _onLoadMore() {
-    const e = x(this.provider);
+    const e = m(this.provider);
     if (!(!e || !this._nextPagePath)) {
       this._loadingMore = !0;
       try {
-        const r = await C(this.companionUrl, e, this._nextPagePath);
-        this._items = [...this._items, ...r.items], this._nextPagePath = r.nextPagePath;
-      } catch (r) {
-        r instanceof k && (g(this.provider), this._authenticated = !1);
+        const t = await B(this.companionUrl, e, this._nextPagePath);
+        this._items = [...this._items, ...t.items], this._nextPagePath = t.nextPagePath;
+      } catch (t) {
+        t instanceof y && (_(this.provider), this._authenticated = !1);
       } finally {
         this._loadingMore = !1;
       }
     }
   }
-  _toggleSelect(e, r) {
-    const i = this._items.filter((l) => !l.isFolder), t = i.findIndex((l) => l.id === e.id);
+  /**
+   * Files are counted against `maxSelect`; folders are not, because their
+   * contents are unknown until traversal. Excess folder-resolved files get
+   * filtered by per-file validation downstream.
+   */
+  get _selectedFileCount() {
+    return this._items.filter(
+      (e) => !e.isFolder && this._selectedIds.has(e.id)
+    ).length;
+  }
+  _toggleSelect(e, t) {
     if (!this.multi) {
-      this._selectedIds = this._selectedIds.has(e.id) ? /* @__PURE__ */ new Set() : /* @__PURE__ */ new Set([e.id]), t !== -1 && (this._lastClickedIndex = t);
+      if (e.isFolder) return;
+      this._selectedIds = this._selectedIds.has(e.id) ? /* @__PURE__ */ new Set() : /* @__PURE__ */ new Set([e.id]);
+      const o = this._items.filter((c) => !c.isFolder).findIndex((c) => c.id === e.id);
+      o !== -1 && (this._lastClickedIndex = o);
       return;
     }
-    const o = this.maxSelect !== null && this._selectedIds.size >= this.maxSelect;
-    if (r != null && r.shiftKey && this._lastClickedIndex !== null && t !== -1) {
-      const l = Math.min(this._lastClickedIndex, t), v = Math.max(this._lastClickedIndex, t), h = new Set(this._selectedIds);
-      for (let u = l; u <= v; u++)
-        !h.has(i[u].id) && !o && h.add(i[u].id);
-      this._selectedIds = h;
+    const r = this._items.filter((i) => !i.isFolder), s = r.findIndex((i) => i.id === e.id), p = this.maxSelect !== null && this._selectedFileCount >= this.maxSelect;
+    if (!e.isFolder && (t != null && t.shiftKey) && this._lastClickedIndex !== null && s !== -1) {
+      const i = Math.min(this._lastClickedIndex, s), o = Math.max(this._lastClickedIndex, s), c = new Set(this._selectedIds);
+      for (let a = i; a <= o; a++)
+        c.has(r[a].id) || this.maxSelect !== null && [...c].filter((u) => r.some((v) => v.id === u)).length >= this.maxSelect || c.add(r[a].id);
+      this._selectedIds = c;
     } else {
-      const l = new Set(this._selectedIds);
-      l.has(e.id) ? l.delete(e.id) : o || l.add(e.id), this._selectedIds = l;
+      const i = new Set(this._selectedIds);
+      i.has(e.id) ? i.delete(e.id) : (e.isFolder || !p) && i.add(e.id), this._selectedIds = i;
     }
-    t !== -1 && (this._lastClickedIndex = t);
+    s !== -1 && (this._lastClickedIndex = s);
   }
   // --- Render ---
   render() {
-    return s`
+    return n`
       ${this._renderHeader()}
       ${this._authenticated ? this._loading ? this._renderLoading() : this._error ? this._renderError() : this._renderBrowser() : this._renderAuthView()}
     `;
   }
   _renderHeader() {
-    const e = this._providerDef;
-    return s`
+    const e = this._providerDef, t = this._authenticated && this._breadcrumbs.length > 0;
+    return n`
       <div class="browser-header">
-        <button class="back-btn" @click=${this._onClose} title=${this.t("back", "Back")}>
+        <button
+          class="back-btn"
+          ?disabled=${!t}
+          @click=${this._onBack}
+          title=${this.t("back", "Back")}
+          aria-label=${this.t("back", "Back")}
+        >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
             <polyline points="15 18 9 12 15 6" />
           </svg>
         </button>
         <div class="header-brand">
-          ${e != null && e.brandHtml ? s`<div class="header-logo">${y(e)}</div>` : c}
+          ${e != null && e.brandHtml ? n`<div class="header-logo">${$(e)}</div>` : f}
 
           <div class="header-title-group">
             <span class="browser-title">${this._providerLabel}</span>
-            ${this._authenticated && this._username ? s`<span class="header-username">${this._username}</span>` : c}
+            ${this._authenticated && this._username ? n`<span class="header-username">${this._username}</span>` : f}
           </div>
         </div>
-        ${this._authenticated ? s`<button class="logout-btn" @click=${this._handleLogout}>Sign out</button>` : c}
+        ${this._authenticated ? n`<button class="logout-btn" @click=${this._handleLogout}>${this.t("signOut", "Sign out")}</button>` : f}
+        <button
+          class="close-btn"
+          @click=${this._onClose}
+          title=${this.t("close", "Close")}
+          aria-label=${this.t("close", "Close")}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
       </div>
     `;
   }
   _renderAuthView() {
     const e = this._providerDef;
-    return s`
+    return n`
       <div class="auth-view">
         <div class="auth-glow"></div>
         <div class="auth-logo-wrap">
           <div class="auth-ring">
             <div class="auth-logo">
-              ${e != null && e.brandHtml ? s`<span ${P({ display: "flex", "align-items": "center", "justify-content": "center", transform: "scale(2.2)" })}>${y(e)}</span>` : s`<svg viewBox="0 0 24 24" fill="none" stroke="var(--sfx-up-primary, #2563eb)" stroke-width="1.5"><path d="M12 2a5 5 0 015 5v3h1a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2v-8a2 2 0 012-2h1V7a5 5 0 015-5zm3 8H9v-3a3 3 0 016 0v3z" fill="var(--sfx-up-primary, #2563eb)"/></svg>`}
+              ${e != null && e.brandHtml ? n`<span ${L({ display: "flex", "align-items": "center", "justify-content": "center", transform: "scale(2.2)" })}>${$(e)}</span>` : n`<svg viewBox="0 0 24 24" fill="none" stroke="var(--sfx-up-primary, #2563eb)" stroke-width="1.5"><path d="M12 2a5 5 0 015 5v3h1a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2v-8a2 2 0 012-2h1V7a5 5 0 015-5zm3 8H9v-3a3 3 0 016 0v3z" fill="var(--sfx-up-primary, #2563eb)"/></svg>`}
             </div>
           </div>
         </div>
         <div class="auth-content">
-          <div class="auth-title">Connect ${this._providerLabel}</div>
+          <div class="auth-title">
+            ${this.t("connectProvider", "Connect {{provider}}", { provider: this._providerLabel })}
+          </div>
           <div class="auth-text">
-            Sign in to browse and select files from your ${this._providerLabel} account
+            ${this.t("connectProviderHint", "Sign in to browse and select files from your {{provider}} account", { provider: this._providerLabel })}
           </div>
         </div>
         <button class="connect-btn" @click=${this._handleConnect}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3"/>
           </svg>
-          Sign in to ${this._providerLabel}
+          ${this.t("signInToProvider", "Sign in to {{provider}}", { provider: this._providerLabel })}
         </button>
       </div>
     `;
   }
   _renderLoading() {
-    return s`
+    return n`
       <div class="skeleton-list">
-        ${[1, 2, 3, 4, 5, 6, 7].map(() => s`
+        ${[1, 2, 3, 4, 5, 6, 7].map(() => n`
           <div class="skeleton-row">
             <div class="skeleton-check"></div>
             <div class="skeleton-thumb"></div>
@@ -245,13 +344,14 @@ const b = class b extends _ {
               <div class="skeleton-name"></div>
               <div class="skeleton-size"></div>
             </div>
+            <div class="skeleton-modified"></div>
           </div>
         `)}
       </div>
     `;
   }
   _renderError() {
-    return s`
+    return n`
       <div class="error-view">
         <div class="error-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -265,18 +365,27 @@ const b = class b extends _ {
       const e = this._breadcrumbs[this._breadcrumbs.length - 1];
       this._loadFolder((e == null ? void 0 : e.path) ?? "");
     }}>
-          Try again
+          ${this.t("tryAgain", "Try again")}
         </button>
       </div>
     `;
   }
   _renderBrowser() {
-    const e = this._items.filter((t) => !t.isFolder), r = this._items.filter((t) => t.isFolder), i = this._selectedIds.size;
-    return s`
+    const e = this._items.filter((i) => !i.isFolder), t = this._items.filter((i) => i.isFolder), r = this._selectedIds.size, s = this.maxSelect !== null && this._selectedFileCount >= this.maxSelect, p = this._items.length > 0 && this._items.every((i) => this._selectedIds.has(i.id));
+    return n`
       ${this._renderBreadcrumbs()}
 
+      ${this._items.length > 0 ? n`
+            <div class="list-header">
+              <div class="col-check"></div>
+              <div class="col-thumb"></div>
+              <div class="col-name">${this.t("name", "Name")}</div>
+              <div class="col-modified">${this.t("lastModified", "Last modified")}</div>
+            </div>
+          ` : f}
+
       <div class="file-list">
-        ${r.length === 0 && e.length === 0 ? s`
+        ${t.length === 0 && e.length === 0 ? n`
               <div class="empty-state">
                 <div class="empty-icon">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
@@ -284,66 +393,73 @@ const b = class b extends _ {
                     <line x1="9" y1="14" x2="15" y2="14" />
                   </svg>
                 </div>
-                <div class="empty-text">This folder is empty</div>
+                <div class="empty-text">${this.t("folderEmpty", "This folder is empty")}</div>
               </div>
-            ` : c}
+            ` : f}
 
-        ${r.map(
-      (t) => s`
-            <div class="file-item" @click=${() => this._onFolderClick(t)}>
+        ${t.map((i) => {
+      const o = this._selectedIds.has(i.id);
+      return n`
+            <div
+              class="file-item ${o ? "selected" : ""}"
+              @click=${() => this._onFolderClick(i)}
+            >
+              ${this.multi ? n`<input
+                    type="checkbox"
+                    .checked=${o}
+                    aria-label=${this.t("selectFolder", "Select folder")}
+                    @click=${(c) => c.stopPropagation()}
+                    @change=${() => this._toggleSelect(i)}
+                  />` : n`<span class="checkbox-spacer" aria-hidden="true"></span>`}
               <div class="file-thumb folder-thumb">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                   <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" />
                 </svg>
               </div>
               <div class="file-info">
-                <div class="file-name">${t.name}</div>
+                <div class="file-name">${i.name}</div>
               </div>
-              <svg class="folder-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
+              <span class="file-modified">${F(i.modifiedDate, this.t)}</span>
             </div>
-          `
-    )}
+          `;
+    })}
 
-        ${(() => {
-      const t = this.maxSelect !== null && this._selectedIds.size >= this.maxSelect;
-      return e.map((o) => {
-        const l = this._selectedIds.has(o.id);
-        return s`
+        ${e.map((i) => {
+      const o = this._selectedIds.has(i.id);
+      return n`
             <div
-              class="file-item ${l ? "selected" : ""} ${!l && t ? "disabled" : ""}"
-              @click=${(h) => this._toggleSelect(o, h)}
+              class="file-item ${o ? "selected" : ""} ${!o && s ? "disabled" : ""}"
+              @click=${(a) => this._toggleSelect(i, a)}
             >
               <input
                 type="checkbox"
-                .checked=${this._selectedIds.has(o.id)}
-                @click=${(h) => h.stopPropagation()}
-                @change=${() => this._toggleSelect(o)}
+                .checked=${this._selectedIds.has(i.id)}
+                @click=${(a) => a.stopPropagation()}
+                @change=${() => this._toggleSelect(i)}
               />
               <div class="file-thumb">
-                ${o.thumbnail ? s`<img src=${this.transformThumbnail(o.thumbnail)} alt="" loading="lazy" referrerpolicy="no-referrer"
-                      @error=${(h) => {
-          const u = h.target;
-          u.style.display = "none", u.parentElement.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
-        }}
-                    />` : s`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                ${i.thumbnail ? n`<img src=${this.transformThumbnail(i.thumbnail)} alt="" loading="lazy" referrerpolicy="no-referrer"
+                      @error=${(a) => {
+        const b = a.target;
+        b.style.display = "none", b.parentElement.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
+      }}
+                    />` : n`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                       <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
                       <polyline points="14 2 14 8 20 8" />
                     </svg>`}
               </div>
               <div class="file-info">
-                <div class="file-name">${o.name}</div>
+                <div class="file-name">${i.name}</div>
                 <div class="file-meta">
-                  ${o.size ? s`<span class="file-size">${F(o.size)}</span>` : c}
+                  ${i.size ? n`<span class="file-size">${j(i.size)}</span>` : f}
                 </div>
               </div>
+              <span class="file-modified">${F(i.modifiedDate, this.t)}</span>
             </div>
           `;
-      });
-    })()}
+    })}
 
-        ${this._nextPagePath ? s`
+        ${this._nextPagePath ? n`
               <button
                 class="load-more-btn"
                 ?disabled=${this._loadingMore}
@@ -351,55 +467,77 @@ const b = class b extends _ {
               >
                 ${this._loadingMore ? this.t("loading", "Loading") : this.t("loadMore", "Load more")}
               </button>
-            ` : c}
+            ` : f}
       </div>
 
-      ${e.length > 0 || i > 0 ? s`
+      ${this._items.length > 0 || r > 0 ? n`
             <div class="browser-footer">
               <div class="footer-left">
-                ${this.multi ? s`<button class="select-all-btn" @click=${this._toggleSelectAll}>
-                  ${e.every((t) => this._selectedIds.has(t.id)) ? this.t("deselectAll", "Deselect all") : this.t("selectAll", "Select all")}
-                </button>` : c}
-                <span class="selected-count ${i > 0 ? "has-selection" : ""}">
-                  ${i > 0 ? this.t("filesSelected", { count: i, defaultValue_one: "{{count}} file selected", defaultValue_other: "{{count}} files selected" }) : this.t("noFilesSelected", "No files selected")}
+                ${this.multi ? n`<button class="select-all-btn" @click=${this._toggleSelectAll}>
+                  ${p ? this.t("deselectAll", "Deselect all") : this.t("selectAll", "Select all")}
+                </button>` : f}
+                <span class="selected-count ${r > 0 ? "has-selection" : ""}">
+                  ${r > 0 ? this.t("itemsSelected", { count: r, defaultValue_one: "{{count}} item selected", defaultValue_other: "{{count}} items selected" }) : this.t("noFilesSelected", "No files selected")}
                 </span>
               </div>
               <button
                 class="add-btn"
-                ?disabled=${i === 0}
+                ?disabled=${r === 0 || this._resolvingFolders}
                 @click=${this._onAddSelected}
               >
-                Add${i > 0 ? ` ${i}` : ""} file${i === 1 ? "" : "s"}
+                ${r > 0 ? this.t("addItems", {
+      count: r,
+      defaultValue_one: "Add {{count}} item",
+      defaultValue_other: "Add {{count}} items"
+    }) : this.t("add", "Add")}
               </button>
             </div>
-          ` : c}
+          ` : f}
+
+      ${this._resolvingFolders ? n`
+            <div class="busy-overlay">
+              <div class="spinner"></div>
+              <div class="busy-text">
+                ${this._resolveProgress > 0 ? this.t("preparingFilesWithCount", {
+      count: this._resolveProgress,
+      defaultValue_one: "Preparing {{count}} file…",
+      defaultValue_other: "Preparing {{count}} files…"
+    }) : this.t("preparingFiles", "Preparing files…")}
+              </div>
+              <button class="busy-cancel-btn" @click=${this._cancelResolve}>
+                ${this.t("cancel", "Cancel")}
+              </button>
+            </div>
+          ` : f}
     `;
   }
   _renderBreadcrumbs() {
-    return this._breadcrumbs.length === 0 ? c : s`
+    return this._breadcrumbs.length === 0 ? f : n`
       <div class="breadcrumbs">
         <button class="crumb" @click=${() => this._onBreadcrumbClick(-1)}>
           <svg class="crumb-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
           </svg>
-          Root
+          ${this.t("root", "Root")}
         </button>
         ${this._breadcrumbs.map(
-      (e, r) => s`
+      (e, t) => n`
             <span class="crumb-sep">&rsaquo;</span>
-            ${r < this._breadcrumbs.length - 1 ? s`<button class="crumb" @click=${() => this._onBreadcrumbClick(r)}>${e.name}</button>` : s`<span class="crumb-current">${e.name}</span>`}
+            ${t < this._breadcrumbs.length - 1 ? n`<button class="crumb" @click=${() => this._onBreadcrumbClick(t)}>${e.name}</button>` : n`<span class="crumb-current">${e.name}</span>`}
           `
     )}
       </div>
     `;
   }
 };
-b.styles = w`
+w.styles = z`
     :host {
       display: flex;
       flex-direction: column;
+      position: relative;
+      flex: 1 1 0;
+      min-height: 0;
       height: 100%;
-      min-height: 300px;
       font-family: var(--sfx-up-font, 'Inter', system-ui, -apple-system, sans-serif);
       color: var(--sfx-up-text, #1e293b);
       background: var(--sfx-up-bg, #fff);
@@ -415,7 +553,8 @@ b.styles = w`
       flex-shrink: 0;
     }
 
-    .back-btn {
+    .back-btn,
+    .close-btn {
       width: 32px;
       height: 32px;
       border: none;
@@ -430,14 +569,26 @@ b.styles = w`
       flex-shrink: 0;
     }
 
-    .back-btn:hover {
+    .back-btn:hover:not(:disabled),
+    .close-btn:hover {
       background: var(--sfx-up-border, #e8edf5);
       color: var(--sfx-up-text, #1e293b);
     }
 
-    .back-btn svg {
+    .back-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    .back-btn svg,
+    .close-btn svg {
       width: 16px;
       height: 16px;
+    }
+
+    .close-btn svg {
+      width: 18px;
+      height: 18px;
     }
 
     .header-brand {
@@ -668,6 +819,54 @@ b.styles = w`
       margin-right: 2px;
     }
 
+    /* --- Column header --- */
+    .list-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 20px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--sfx-up-text-muted, #94a3b8);
+      border-bottom: 1px solid var(--sfx-up-border-light, #f1f5f9);
+      background: var(--sfx-up-border-light, #fafbfd);
+      flex-shrink: 0;
+    }
+
+    .list-header .col-check {
+      width: 16px;
+      flex-shrink: 0;
+    }
+
+    .list-header .col-thumb {
+      width: 38px;
+      flex-shrink: 0;
+    }
+
+    .list-header .col-name {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .list-header .col-modified {
+      width: 110px;
+      flex-shrink: 0;
+      text-align: right;
+    }
+
+    .file-modified {
+      width: 110px;
+      flex-shrink: 0;
+      text-align: right;
+      font-size: 12px;
+      color: var(--sfx-up-text-muted, #94a3b8);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     /* --- File list --- */
     .file-list {
       flex: 1;
@@ -686,6 +885,7 @@ b.styles = w`
       transition: all 0.15s;
       user-select: none;
       border: 1.5px solid transparent;
+      position: relative;
     }
 
     .file-item:hover {
@@ -709,6 +909,16 @@ b.styles = w`
       accent-color: var(--sfx-up-primary, #2563eb);
       flex-shrink: 0;
       cursor: pointer;
+    }
+
+    /* Invisible placeholder that reserves the same horizontal slot as the
+       checkbox. Used on folder rows in single-select mode so they line up
+       with file rows and the column header. */
+    .checkbox-spacer {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
     }
 
     .file-thumb {
@@ -767,18 +977,6 @@ b.styles = w`
       color: var(--sfx-up-text-muted, #94a3b8);
     }
 
-    .folder-arrow {
-      width: 16px;
-      height: 16px;
-      color: var(--sfx-up-text-muted, #94a3b8);
-      flex-shrink: 0;
-      opacity: 0;
-      transition: opacity 0.15s;
-    }
-
-    .file-item:hover .folder-arrow {
-      opacity: 1;
-    }
 
     /* --- Footer --- */
     .browser-footer {
@@ -1011,6 +1209,15 @@ b.styles = w`
       animation: shimmer 1.5s ease-in-out infinite;
     }
 
+    .skeleton-modified {
+      width: 70px;
+      height: 11px;
+      flex-shrink: 0;
+      border-radius: 6px;
+      background: var(--sfx-up-border-light, #f1f5f9);
+      animation: shimmer 1.5s ease-in-out infinite;
+    }
+
     .skeleton-row:nth-child(1) .skeleton-name { width: 65%; animation-delay: 0s; }
     .skeleton-row:nth-child(1) .skeleton-thumb { animation-delay: 0s; }
     .skeleton-row:nth-child(2) .skeleton-name { width: 45%; animation-delay: 0.1s; }
@@ -1053,58 +1260,162 @@ b.styles = w`
       .auth-logo { animation: none; }
       .auth-view { animation: none; }
     }
+
+    /* Hide the modified column on narrow viewports (mobile fullscreen). */
+    @media (max-width: 540px) {
+      .list-header .col-modified,
+      .file-modified,
+      .skeleton-modified {
+        display: none;
+      }
+    }
+
+    /* --- Folder-traversal busy overlay --- */
+    .busy-overlay {
+      position: absolute;
+      inset: 0;
+      /* Themed background with a translucent veil so the list shows through.
+         Safari < 15.4 needs the -webkit-backdrop-filter alias. */
+      background: color-mix(in srgb, var(--sfx-up-bg, #fff) 85%, transparent);
+      -webkit-backdrop-filter: blur(2px);
+      backdrop-filter: blur(2px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      z-index: 2;
+    }
+
+    /* color-mix() lands in Safari 16.4 / Firefox 113 / Chrome 111. Older
+       browsers ignore the rule above; this gives them a solid-ish veil. */
+    @supports not (background: color-mix(in srgb, red, blue)) {
+      .busy-overlay {
+        background: rgba(255, 255, 255, 0.85);
+      }
+    }
+
+    .busy-text {
+      font-size: 13px;
+      color: var(--sfx-up-text-secondary, #475569);
+      font-weight: 500;
+    }
+
+    .busy-cancel-btn {
+      height: 32px;
+      padding: 0 16px;
+      border: 1.5px solid var(--sfx-up-border, #e8edf5);
+      background: var(--sfx-up-bg, #fff);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--sfx-up-text-secondary, #475569);
+      transition: all 0.15s;
+    }
+
+    .busy-cancel-btn:hover {
+      background: var(--sfx-up-border-light, #f1f5f9);
+      color: var(--sfx-up-text, #1e293b);
+    }
   `;
-let a = b;
-d([
-  f({ attribute: !1 })
-], a.prototype, "t");
-d([
-  f({ type: String })
-], a.prototype, "provider");
-d([
-  f({ type: String })
-], a.prototype, "companionUrl");
-d([
-  f({ type: Boolean })
-], a.prototype, "multi");
-d([
-  f({ type: Number })
-], a.prototype, "maxSelect");
-d([
-  f({ attribute: !1 })
-], a.prototype, "transformThumbnail");
-d([
-  p()
-], a.prototype, "_authenticated");
-d([
-  p()
-], a.prototype, "_loading");
-d([
-  p()
-], a.prototype, "_items");
-d([
-  p()
-], a.prototype, "_selectedIds");
-d([
-  p()
-], a.prototype, "_breadcrumbs");
-d([
-  p()
-], a.prototype, "_nextPagePath");
-d([
-  p()
-], a.prototype, "_error");
-d([
-  p()
-], a.prototype, "_loadingMore");
-d([
-  p()
-], a.prototype, "_username");
-function F(n) {
-  if (n === 0) return "0 B";
-  const e = ["B", "KB", "MB", "GB"], r = Math.min(Math.floor(Math.log(n) / Math.log(1024)), e.length - 1);
-  return `${(n / Math.pow(1024, r)).toFixed(r === 0 ? 0 : 1)} ${e[r]}`;
+let d = w;
+h([
+  g({ attribute: !1 })
+], d.prototype, "t");
+h([
+  g({ type: String })
+], d.prototype, "provider");
+h([
+  g({ type: String })
+], d.prototype, "companionUrl");
+h([
+  g({ type: Boolean })
+], d.prototype, "multi");
+h([
+  g({ type: Number })
+], d.prototype, "maxSelect");
+h([
+  g({ attribute: !1 })
+], d.prototype, "transformThumbnail");
+h([
+  x()
+], d.prototype, "_authenticated");
+h([
+  x()
+], d.prototype, "_loading");
+h([
+  x()
+], d.prototype, "_items");
+h([
+  x()
+], d.prototype, "_selectedIds");
+h([
+  x()
+], d.prototype, "_breadcrumbs");
+h([
+  x()
+], d.prototype, "_nextPagePath");
+h([
+  x()
+], d.prototype, "_error");
+h([
+  x()
+], d.prototype, "_loadingMore");
+h([
+  x()
+], d.prototype, "_username");
+h([
+  x()
+], d.prototype, "_resolvingFolders");
+h([
+  x()
+], d.prototype, "_resolveProgress");
+function j(l) {
+  if (l === 0) return "0 B";
+  const e = ["B", "KB", "MB", "GB"], t = Math.min(Math.floor(Math.log(l) / Math.log(1024)), e.length - 1);
+  return `${(l / Math.pow(1024, t)).toFixed(t === 0 ? 0 : 1)} ${e[t]}`;
+}
+function F(l, e) {
+  if (!l) return "";
+  const t = Date.parse(l);
+  if (Number.isNaN(t)) return "";
+  const r = Math.max(0, Date.now() - t), s = 6e4, p = 60 * s, i = 24 * p, o = 30 * i, c = 365 * i, a = Math.round(r / s);
+  if (a < 1) return e("justNow", "just now");
+  if (a < 60)
+    return e("minutesAgo", {
+      count: a,
+      defaultValue_one: "{{count}} minute ago",
+      defaultValue_other: "{{count}} minutes ago"
+    });
+  const b = Math.round(r / p);
+  if (b < 24)
+    return e("hoursAgo", {
+      count: b,
+      defaultValue_one: "{{count}} hour ago",
+      defaultValue_other: "{{count}} hours ago"
+    });
+  const u = Math.round(r / i);
+  if (u < 2) return e("yesterday", "yesterday");
+  if (u < 30)
+    return e("daysAgo", {
+      count: u,
+      defaultValue_one: "{{count}} day ago",
+      defaultValue_other: "{{count}} days ago"
+    });
+  const v = Math.round(r / o);
+  return v < 12 ? e("monthsAgo", {
+    count: v,
+    defaultValue_one: "{{count}} month ago",
+    defaultValue_other: "{{count}} months ago"
+  }) : e("yearsAgo", {
+    count: Math.round(r / c),
+    defaultValue_one: "{{count}} year ago",
+    defaultValue_other: "{{count}} years ago"
+  });
 }
 export {
-  a as SfxProviderBrowser
+  d as SfxProviderBrowser,
+  F as formatRelativeDate
 };

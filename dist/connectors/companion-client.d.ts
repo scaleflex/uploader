@@ -1,4 +1,4 @@
-import { ProviderId, CompanionListResponse, CompanionSearchResponse } from './connector.types';
+import { ProviderId, CompanionItem, CompanionListResponse, CompanionSearchResponse } from './connector.types';
 /**
  * Build the OAuth connect URL that should be opened in a popup.
  */
@@ -7,11 +7,24 @@ export declare function getAuthUrl(companionUrl: string, provider: ProviderId): 
  * List files/folders in a directory.
  * Note: directory path is NOT encoded — v5 passes it raw and Companion expects it that way.
  */
-export declare function listFiles(companionUrl: string, provider: ProviderId, token: string, directory?: string): Promise<CompanionListResponse>;
+export declare function listFiles(companionUrl: string, provider: ProviderId, token: string, directory?: string, signal?: AbortSignal): Promise<CompanionListResponse>;
 /**
  * Load the next page of results using the nextPagePath from a previous response.
  */
-export declare function listNextPage(companionUrl: string, token: string, nextPagePath: string): Promise<CompanionListResponse>;
+export declare function listNextPage(companionUrl: string, token: string, nextPagePath: string, signal?: AbortSignal): Promise<CompanionListResponse>;
+/**
+ * Recursively collect all files under a folder by repeatedly calling
+ * {@link listFiles} (and paginating via {@link listNextPage}). Each returned
+ * file is annotated with `relativeFolder` — its path relative to the root
+ * folder the caller started at, so the consumer can preserve hierarchy on
+ * the upload side.
+ *
+ * The root folder's own name is included as the first path segment, so a file
+ * at `myFolder/sub/image.png` ends up with `relativeFolder = "myFolder/sub"`.
+ */
+export declare function listFolderRecursive(companionUrl: string, provider: ProviderId, token: string, rootRequestPath: string, rootFolderName: string, signal?: AbortSignal): Promise<Array<CompanionItem & {
+    relativeFolder: string;
+}>>;
 /**
  * Search a search-based provider (e.g. Unsplash).
  * GET /search/{provider}/list?q={query}&{nextPageQuery}

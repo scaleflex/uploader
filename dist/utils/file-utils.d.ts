@@ -11,6 +11,8 @@ export declare function getFileCategory(file: {
 }): string;
 /** Get file extension for display. */
 export declare function getFileExtension(name: string): string;
+/** OS-generated metadata files (e.g. .DS_Store, Thumbs.db) that should be silently skipped on upload. */
+export declare function isSystemFile(name: string): boolean;
 /** Get the CDN-hosted file type icon URL for a given extension. */
 export declare function getFileTypeIconUrl(extension: string): string;
 /** Get the default/generic file type icon URL. */

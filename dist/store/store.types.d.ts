@@ -23,6 +23,7 @@ export interface UploadFile {
     tags: string[];
     product: Product;
     remoteInfo: RemoteFileInfo | null;
+    relativeFolder: string;
     isTus: boolean;
     tusUploadUrl: string | null;
 }

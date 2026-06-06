@@ -10,6 +10,8 @@ export declare class SfxFileList extends LitElement {
     accept: string;
     /** Whether the drop-tile file picker allows multiple selection. */
     multi: boolean;
+    /** When true, the drop-tile renders both a file picker and a `webkitdirectory` folder picker. */
+    directory: boolean;
     /** 'upload' (default): full controls; 'review': read-only post-upload review
      *  with status badges, Open links, and a Local-edit pill on edited files. */
     mode: 'upload' | 'review';
@@ -20,6 +22,7 @@ export declare class SfxFileList extends LitElement {
     private _portalContainer;
     private _outsideClickHandler;
     private _onDropTileClick;
+    private _onDropTileFolderClick;
     private _onFileInput;
     private _onSourceClick;
     private _onScrollOrResize;

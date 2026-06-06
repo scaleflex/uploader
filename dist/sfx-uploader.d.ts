@@ -177,7 +177,7 @@ export interface UploaderConfig {
     /**
      * Automatically close the uploader when all uploads complete.
      * - `true`  — closes after a 1.5 s delay so the user briefly sees the success state.
-     * - number — custom delay in milliseconds (e.g. `2000` for 2 s).
+     * - number — custom delay in milliseconds (e.g. `2000` for 2 s, `0` for immediate).
      * - `false` / omitted — disabled (default).
      *
      * Fires `onCompleteAction` + `onClose` callbacks and the corresponding public
@@ -266,6 +266,26 @@ export interface UploaderConfig {
      * Wordplex CDN; English defaults are shown for any untranslated keys.
      */
     locale?: string;
+    /**
+     * Preserve nested folder hierarchy when a user drags a folder onto the drop
+     * zone or selects a directory in the file picker. When `true` (default),
+     * each file's path relative to the dropped/selected root is captured and
+     * appended to `targetFolder` on upload — so dropping `photos/2026/jan/x.png`
+     * into a `targetFolder` of `assets` uploads to `assets/photos/2026/jan`.
+     *
+     * Set to `false` to flatten everything into `targetFolder`, ignoring the
+     * source structure (legacy behavior). Drag-drop of a folder still ingests
+     * the files in either mode; only the destination path differs.
+     *
+     * Also surfaces a small "or upload a folder" affordance next to the
+     * "browse" link, letting users pick a folder from the OS picker (in
+     * addition to the existing file picker). Folder picking from the OS
+     * dialog requires browser support for `webkitdirectory` (all modern
+     * Chromium/WebKit/Firefox builds).
+     *
+     * Default: `true`.
+     */
+    preserveFolderStructure?: boolean;
 }
 export type UploaderPhase = "empty" | "ready" | "uploading" | "complete";
 export declare class SfxUploader extends LitElement {
@@ -382,14 +402,8 @@ export declare class SfxUploader extends LitElement {
         fileId: string;
         product: Partial<Product>;
     }>): void;
-    updated(changed: Map<string, unknown>): void;
-    /**
-     * The preview panel opens at 3/8 (~37.5%) of the modal width by default,
-     * giving the grid 5/8. On first appearance of the preview layout we set
-     * _splitPct once; after that the user's own divider drag wins until the
-     * preview layout is dismissed.
-     */
-    private _applyDefaultPreviewWidth;
+    willUpdate(changed: Map<string, unknown>): void;
+    updated(_changed: Map<string, unknown>): void;
     private _injectFloatStyles;
     private _updateFloatingPortal;
     private _portalContainer;
@@ -408,6 +422,13 @@ export declare class SfxUploader extends LitElement {
      */
     private get _remainingSlots();
     private get _allowMulti();
+    /**
+     * Whether the drop-zone / drop-tile should expose the "browse folder"
+     * affordance and render a `webkitdirectory` input. True when:
+     *   - the host hasn't disabled it via `preserveFolderStructure: false`, and
+     *   - multi-select is allowed (single-asset slots can't accept a folder).
+     */
+    private get _allowFolderUpload();
     /**
      * Build the per-file upload-params resolver from `forceName` and
      * `getUploadParams`. Host-supplied `getUploadParams` keys win on collision.
@@ -468,6 +489,9 @@ export declare class SfxUploader extends LitElement {
     private get _phase();
     private _processIncomingFiles;
     private _onFilesSelected;
+    private _onFolderEmpty;
+    /** Surface the "dropped folder is empty" hint once per drop. */
+    private _showEmptyFolderToast;
     private _onDropTileSourceClick;
     private _onSourceClick;
     private _handleSourceActivation;

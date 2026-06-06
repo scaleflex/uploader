@@ -1,22 +1,39 @@
-"use strict";Object.defineProperty(exports,Symbol.toStringTag,{value:"Module"});const s=require("lit"),d=require("lit/decorators.js"),c=require("./sfx-uploader-C_eDP35p.cjs"),g="sfx-uploader-token:";function f(a){try{return localStorage.getItem(`${g}${a}`)}catch{return null}}function v(a,e){try{localStorage.setItem(`${g}${a}`,e)}catch{}}function m(a){try{localStorage.removeItem(`${g}${a}`)}catch{}}function y(a,e){const r=i=>{if(a&&i.source!==a)return;const t=typeof i.data=="string"?k(i.data):i.data;t!=null&&t.token&&e(t.token)};return window.addEventListener("message",r),()=>window.removeEventListener("message",r)}function k(a){try{return JSON.parse(a)}catch{return null}}var _=Object.defineProperty,h=(a,e,r,i)=>{for(var t=void 0,o=a.length-1,l;o>=0;o--)(l=a[o])&&(t=l(e,r,t)||t);return t&&_(e,r,t),t};const b=class b extends s.LitElement{constructor(){super(...arguments),this.t=(e,r)=>typeof r=="string"?r:e,this.provider="google-drive",this.companionUrl="",this.multi=!0,this.maxSelect=null,this.transformThumbnail=e=>e,this._authenticated=!1,this._loading=!1,this._items=[],this._selectedIds=new Set,this._breadcrumbs=[],this._nextPagePath=null,this._error=null,this._loadingMore=!1,this._username=null,this._cleanupAuthListener=null,this._authWindow=null,this._handleConnect=()=>{var r;const e=c.getAuthUrl(this.companionUrl,this.provider);this._authWindow=window.open(e,"_blank","width=600,height=600"),(r=this._cleanupAuthListener)==null||r.call(this),this._cleanupAuthListener=y(this._authWindow,i=>{var t,o;(t=this._authWindow)==null||t.close(),this._authWindow=null,(o=this._cleanupAuthListener)==null||o.call(this),this._cleanupAuthListener=null,v(this.provider,i),this._authenticated=!0,this._loadFolder("")})},this._lastClickedIndex=null,this._toggleSelectAll=()=>{const e=this._items.filter(i=>!i.isFolder);e.every(i=>this._selectedIds.has(i.id))?this._selectedIds=new Set:this._selectedIds=new Set(e.map(i=>i.id))},this._onAddSelected=()=>{const e=f(this.provider);if(!e)return;const i=this._items.filter(t=>!t.isFolder&&this._selectedIds.has(t.id)).map(t=>({companionUrl:this.companionUrl,provider:this.provider,token:e,requestPath:t.requestPath,fileId:t.id,name:t.name,mimeType:t.mimeType,size:t.size,thumbnail:t.thumbnail}));this.dispatchEvent(new CustomEvent("connector-files-selected",{detail:{files:i},bubbles:!0,composed:!0}))},this._onClose=()=>{this.dispatchEvent(new CustomEvent("connector-close",{bubbles:!0,composed:!0}))},this._handleLogout=async()=>{const e=f(this.provider);if(e){try{await c.logout(this.companionUrl,this.provider,e)}catch{}m(this.provider)}this._reset()}}connectedCallback(){super.connectedCallback(),this._checkAuth()}disconnectedCallback(){var e;super.disconnectedCallback(),(e=this._cleanupAuthListener)==null||e.call(this),this._cleanupAuthListener=null}updated(e){e.has("provider")&&(this._reset(),this._checkAuth())}_reset(){this._authenticated=!1,this._loading=!1,this._items=[],this._selectedIds=new Set,this._breadcrumbs=[],this._nextPagePath=null,this._error=null,this._username=null}_checkAuth(){f(this.provider)&&(this._authenticated=!0,this._loadFolder(""))}get _providerDef(){return c.getProviderSources([this.provider])[0]??null}get _providerLabel(){var e;return((e=this._providerDef)==null?void 0:e.label)??this.provider}async _loadFolder(e){const r=f(this.provider);if(!r){this._authenticated=!1;return}this.offsetHeight>0&&(this.style.minHeight=`${this.offsetHeight}px`),this._loading=!0,this._error=null,this._items=[],this._selectedIds=new Set,this._lastClickedIndex=null,this._nextPagePath=null;try{const i=await c.listFiles(this.companionUrl,this.provider,r,e);this._items=i.items,this._nextPagePath=i.nextPagePath,i.username&&(this._username=i.username)}catch(i){i instanceof c.AuthExpiredError?(m(this.provider),this._authenticated=!1):this._error=i instanceof Error?i.message:this.t("failedToLoadFiles","Failed to load files")}finally{this._loading=!1}}_onFolderClick(e){this._breadcrumbs=[...this._breadcrumbs,{name:e.name,path:e.requestPath}],this._loadFolder(e.requestPath)}_onBreadcrumbClick(e){if(e<0)this._breadcrumbs=[],this._loadFolder("");else{const r=this._breadcrumbs[e];this._breadcrumbs=this._breadcrumbs.slice(0,e+1),this._loadFolder(r.path)}}async _onLoadMore(){const e=f(this.provider);if(!(!e||!this._nextPagePath)){this._loadingMore=!0;try{const r=await c.listNextPage(this.companionUrl,e,this._nextPagePath);this._items=[...this._items,...r.items],this._nextPagePath=r.nextPagePath}catch(r){r instanceof c.AuthExpiredError&&(m(this.provider),this._authenticated=!1)}finally{this._loadingMore=!1}}}_toggleSelect(e,r){const i=this._items.filter(l=>!l.isFolder),t=i.findIndex(l=>l.id===e.id);if(!this.multi){this._selectedIds=this._selectedIds.has(e.id)?new Set:new Set([e.id]),t!==-1&&(this._lastClickedIndex=t);return}const o=this.maxSelect!==null&&this._selectedIds.size>=this.maxSelect;if(r!=null&&r.shiftKey&&this._lastClickedIndex!==null&&t!==-1){const l=Math.min(this._lastClickedIndex,t),x=Math.max(this._lastClickedIndex,t),p=new Set(this._selectedIds);for(let u=l;u<=x;u++)!p.has(i[u].id)&&!o&&p.add(i[u].id);this._selectedIds=p}else{const l=new Set(this._selectedIds);l.has(e.id)?l.delete(e.id):o||l.add(e.id),this._selectedIds=l}t!==-1&&(this._lastClickedIndex=t)}render(){return s.html`
+"use strict";Object.defineProperty(exports,Symbol.toStringTag,{value:"Module"});const s=require("lit"),c=require("lit/decorators.js"),x=require("./sfx-uploader-BZSlX9vh.cjs"),y="sfx-uploader-token:";function m(l){try{return localStorage.getItem(`${y}${l}`)}catch{return null}}function w(l,e){try{localStorage.setItem(`${y}${l}`,e)}catch{}}function v(l){try{localStorage.removeItem(`${y}${l}`)}catch{}}function $(l,e){const t=r=>{if(l&&r.source!==l)return;const o=typeof r.data=="string"?S(r.data):r.data;o!=null&&o.token&&e(o.token)};return window.addEventListener("message",t),()=>window.removeEventListener("message",t)}function S(l){try{return JSON.parse(l)}catch{return null}}var F=Object.defineProperty,p=(l,e,t,r)=>{for(var o=void 0,u=l.length-1,i;u>=0;u--)(i=l[u])&&(o=i(e,t,o)||o);return o&&F(e,t,o),o};const k=class k extends s.LitElement{constructor(){super(...arguments),this.t=(e,t)=>typeof t=="string"?t:e,this.provider="google-drive",this.companionUrl="",this.multi=!0,this.maxSelect=null,this.transformThumbnail=e=>e,this._authenticated=!1,this._loading=!1,this._items=[],this._selectedIds=new Set,this._breadcrumbs=[],this._nextPagePath=null,this._error=null,this._loadingMore=!1,this._username=null,this._resolvingFolders=!1,this._resolveProgress=0,this._cleanupAuthListener=null,this._authWindow=null,this._resolveAbort=null,this._handleConnect=()=>{var t;try{if(this._authWindow&&!this._authWindow.closed){this._authWindow.focus();return}}catch{this._authWindow=null}const e=x.getAuthUrl(this.companionUrl,this.provider);this._authWindow=window.open(e,"_blank","width=600,height=600"),(t=this._cleanupAuthListener)==null||t.call(this),this._cleanupAuthListener=$(this._authWindow,r=>{var o;this._authWindow=null,(o=this._cleanupAuthListener)==null||o.call(this),this._cleanupAuthListener=null,w(this.provider,r),this._authenticated=!0,this._loadFolder("")})},this._lastClickedIndex=null,this._toggleSelectAll=()=>{if(this._items.every(t=>this._selectedIds.has(t.id)))this._selectedIds=new Set;else{const t=new Set;let r=0;for(const o of this._items)o.isFolder?t.add(o.id):(this.maxSelect===null||r<this.maxSelect)&&(t.add(o.id),r++);this._selectedIds=t}},this._onAddSelected=async()=>{var u,i;const e=m(this.provider);if(!e)return;const t=this._items.filter(n=>!n.isFolder&&this._selectedIds.has(n.id)),r=this._items.filter(n=>n.isFolder&&this._selectedIds.has(n.id)),o=t.map(n=>({companionUrl:this.companionUrl,provider:this.provider,token:e,requestPath:n.requestPath,fileId:n.id,name:n.name,mimeType:n.mimeType,size:n.size,thumbnail:n.thumbnail}));if(r.length>0){(u=this._resolveAbort)==null||u.abort(),this._resolveAbort=new AbortController;const n=this._resolveAbort.signal;this._resolvingFolders=!0,this._resolveProgress=0;let h=0;try{for(const a of r){const g=await x.listFolderRecursive(this.companionUrl,this.provider,e,a.requestPath,a.name,n);if(n.aborted)return;for(const f of g)o.push({companionUrl:this.companionUrl,provider:this.provider,token:e,requestPath:f.requestPath,fileId:f.id,name:f.name,mimeType:f.mimeType,size:f.size,thumbnail:f.thumbnail,relativeFolder:f.relativeFolder});h+=g.length,this._resolveProgress=h}}catch(a){if(n.aborted)return;if(this._resolvingFolders=!1,a instanceof x.AuthExpiredError){v(this.provider),this._authenticated=!1;return}this._error=a instanceof Error?a.message:this.t("failedToReadFolder","Failed to read folder contents");return}finally{((i=this._resolveAbort)==null?void 0:i.signal)===n&&(this._resolveAbort=null)}this._resolvingFolders=!1}this.dispatchEvent(new CustomEvent("connector-files-selected",{detail:{files:o},bubbles:!0,composed:!0}))},this._onClose=()=>{this.dispatchEvent(new CustomEvent("connector-close",{bubbles:!0,composed:!0}))},this._handleLogout=async()=>{const e=m(this.provider);if(e){try{await x.logout(this.companionUrl,this.provider,e)}catch{}v(this.provider)}this._reset()},this._onBack=()=>{this._breadcrumbs.length!==0&&this._onBreadcrumbClick(this._breadcrumbs.length-2)},this._cancelResolve=()=>{var e;(e=this._resolveAbort)==null||e.abort(),this._resolveAbort=null,this._resolvingFolders=!1,this._resolveProgress=0}}connectedCallback(){super.connectedCallback(),this._checkAuth()}disconnectedCallback(){var e,t;super.disconnectedCallback(),(e=this._cleanupAuthListener)==null||e.call(this),this._cleanupAuthListener=null,(t=this._resolveAbort)==null||t.abort(),this._resolveAbort=null}willUpdate(e){e.has("provider")&&e.get("provider")!==void 0&&(this._reset(),this._checkAuth())}_reset(){var e;(e=this._resolveAbort)==null||e.abort(),this._resolveAbort=null,this._authenticated=!1,this._loading=!1,this._items=[],this._selectedIds=new Set,this._lastClickedIndex=null,this._breadcrumbs=[],this._nextPagePath=null,this._error=null,this._username=null,this._resolvingFolders=!1,this._resolveProgress=0}_checkAuth(){m(this.provider)&&(this._authenticated=!0,this._loadFolder(""))}get _providerDef(){return x.getProviderSources([this.provider])[0]??null}get _providerLabel(){var e;return((e=this._providerDef)==null?void 0:e.label)??this.provider}async _loadFolder(e){const t=m(this.provider);if(!t){this._authenticated=!1;return}this.offsetHeight>0&&(this.style.minHeight=`${this.offsetHeight}px`),this._loading=!0,this._error=null,this._items=[],this._selectedIds=new Set,this._lastClickedIndex=null,this._nextPagePath=null;try{const r=await x.listFiles(this.companionUrl,this.provider,t,e);this._items=r.items,this._nextPagePath=r.nextPagePath,r.username&&(this._username=r.username)}catch(r){r instanceof x.AuthExpiredError?(v(this.provider),this._authenticated=!1):this._error=r instanceof Error?r.message:this.t("failedToLoadFiles","Failed to load files")}finally{this._loading=!1}}_onFolderClick(e){this._breadcrumbs=[...this._breadcrumbs,{name:e.name,path:e.requestPath}],this._loadFolder(e.requestPath)}_onBreadcrumbClick(e){if(e<0)this._breadcrumbs=[],this._loadFolder("");else{const t=this._breadcrumbs[e];this._breadcrumbs=this._breadcrumbs.slice(0,e+1),this._loadFolder(t.path)}}async _onLoadMore(){const e=m(this.provider);if(!(!e||!this._nextPagePath)){this._loadingMore=!0;try{const t=await x.listNextPage(this.companionUrl,e,this._nextPagePath);this._items=[...this._items,...t.items],this._nextPagePath=t.nextPagePath}catch(t){t instanceof x.AuthExpiredError&&(v(this.provider),this._authenticated=!1)}finally{this._loadingMore=!1}}}get _selectedFileCount(){return this._items.filter(e=>!e.isFolder&&this._selectedIds.has(e.id)).length}_toggleSelect(e,t){if(!this.multi){if(e.isFolder)return;this._selectedIds=this._selectedIds.has(e.id)?new Set:new Set([e.id]);const n=this._items.filter(h=>!h.isFolder).findIndex(h=>h.id===e.id);n!==-1&&(this._lastClickedIndex=n);return}const r=this._items.filter(i=>!i.isFolder),o=r.findIndex(i=>i.id===e.id),u=this.maxSelect!==null&&this._selectedFileCount>=this.maxSelect;if(!e.isFolder&&(t!=null&&t.shiftKey)&&this._lastClickedIndex!==null&&o!==-1){const i=Math.min(this._lastClickedIndex,o),n=Math.max(this._lastClickedIndex,o),h=new Set(this._selectedIds);for(let a=i;a<=n;a++)h.has(r[a].id)||this.maxSelect!==null&&[...h].filter(f=>r.some(b=>b.id===f)).length>=this.maxSelect||h.add(r[a].id);this._selectedIds=h}else{const i=new Set(this._selectedIds);i.has(e.id)?i.delete(e.id):(e.isFolder||!u)&&i.add(e.id),this._selectedIds=i}o!==-1&&(this._lastClickedIndex=o)}render(){return s.html`
       ${this._renderHeader()}
       ${this._authenticated?this._loading?this._renderLoading():this._error?this._renderError():this._renderBrowser():this._renderAuthView()}
-    `}_renderHeader(){const e=this._providerDef;return s.html`
+    `}_renderHeader(){const e=this._providerDef,t=this._authenticated&&this._breadcrumbs.length>0;return s.html`
       <div class="browser-header">
-        <button class="back-btn" @click=${this._onClose} title=${this.t("back","Back")}>
+        <button
+          class="back-btn"
+          ?disabled=${!t}
+          @click=${this._onBack}
+          title=${this.t("back","Back")}
+          aria-label=${this.t("back","Back")}
+        >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
             <polyline points="15 18 9 12 15 6" />
           </svg>
         </button>
         <div class="header-brand">
-          ${e!=null&&e.brandHtml?s.html`<div class="header-logo">${c.brandIcon(e)}</div>`:s.nothing}
+          ${e!=null&&e.brandHtml?s.html`<div class="header-logo">${x.brandIcon(e)}</div>`:s.nothing}
 
           <div class="header-title-group">
             <span class="browser-title">${this._providerLabel}</span>
             ${this._authenticated&&this._username?s.html`<span class="header-username">${this._username}</span>`:s.nothing}
           </div>
         </div>
-        ${this._authenticated?s.html`<button class="logout-btn" @click=${this._handleLogout}>Sign out</button>`:s.nothing}
+        ${this._authenticated?s.html`<button class="logout-btn" @click=${this._handleLogout}>${this.t("signOut","Sign out")}</button>`:s.nothing}
+        <button
+          class="close-btn"
+          @click=${this._onClose}
+          title=${this.t("close","Close")}
+          aria-label=${this.t("close","Close")}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
       </div>
     `}_renderAuthView(){const e=this._providerDef;return s.html`
       <div class="auth-view">
@@ -24,21 +41,23 @@
         <div class="auth-logo-wrap">
           <div class="auth-ring">
             <div class="auth-logo">
-              ${e!=null&&e.brandHtml?s.html`<span ${c.cspStyle({display:"flex","align-items":"center","justify-content":"center",transform:"scale(2.2)"})}>${c.brandIcon(e)}</span>`:s.html`<svg viewBox="0 0 24 24" fill="none" stroke="var(--sfx-up-primary, #2563eb)" stroke-width="1.5"><path d="M12 2a5 5 0 015 5v3h1a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2v-8a2 2 0 012-2h1V7a5 5 0 015-5zm3 8H9v-3a3 3 0 016 0v3z" fill="var(--sfx-up-primary, #2563eb)"/></svg>`}
+              ${e!=null&&e.brandHtml?s.html`<span ${x.cspStyle({display:"flex","align-items":"center","justify-content":"center",transform:"scale(2.2)"})}>${x.brandIcon(e)}</span>`:s.html`<svg viewBox="0 0 24 24" fill="none" stroke="var(--sfx-up-primary, #2563eb)" stroke-width="1.5"><path d="M12 2a5 5 0 015 5v3h1a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2v-8a2 2 0 012-2h1V7a5 5 0 015-5zm3 8H9v-3a3 3 0 016 0v3z" fill="var(--sfx-up-primary, #2563eb)"/></svg>`}
             </div>
           </div>
         </div>
         <div class="auth-content">
-          <div class="auth-title">Connect ${this._providerLabel}</div>
+          <div class="auth-title">
+            ${this.t("connectProvider","Connect {{provider}}",{provider:this._providerLabel})}
+          </div>
           <div class="auth-text">
-            Sign in to browse and select files from your ${this._providerLabel} account
+            ${this.t("connectProviderHint","Sign in to browse and select files from your {{provider}} account",{provider:this._providerLabel})}
           </div>
         </div>
         <button class="connect-btn" @click=${this._handleConnect}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3"/>
           </svg>
-          Sign in to ${this._providerLabel}
+          ${this.t("signInToProvider","Sign in to {{provider}}",{provider:this._providerLabel})}
         </button>
       </div>
     `}_renderLoading(){const e=[1,2,3,4,5,6,7];return s.html`
@@ -51,6 +70,7 @@
               <div class="skeleton-name"></div>
               <div class="skeleton-size"></div>
             </div>
+            <div class="skeleton-modified"></div>
           </div>
         `)}
       </div>
@@ -65,14 +85,23 @@
         </div>
         <div class="error-text">${this._error}</div>
         <button class="retry-btn" @click=${()=>{const e=this._breadcrumbs[this._breadcrumbs.length-1];this._loadFolder((e==null?void 0:e.path)??"")}}>
-          Try again
+          ${this.t("tryAgain","Try again")}
         </button>
       </div>
-    `}_renderBrowser(){const e=this._items.filter(t=>!t.isFolder),r=this._items.filter(t=>t.isFolder),i=this._selectedIds.size;return s.html`
+    `}_renderBrowser(){const e=this._items.filter(i=>!i.isFolder),t=this._items.filter(i=>i.isFolder),r=this._selectedIds.size,o=this.maxSelect!==null&&this._selectedFileCount>=this.maxSelect,u=this._items.length>0&&this._items.every(i=>this._selectedIds.has(i.id));return s.html`
       ${this._renderBreadcrumbs()}
 
+      ${this._items.length>0?s.html`
+            <div class="list-header">
+              <div class="col-check"></div>
+              <div class="col-thumb"></div>
+              <div class="col-name">${this.t("name","Name")}</div>
+              <div class="col-modified">${this.t("lastModified","Last modified")}</div>
+            </div>
+          `:s.nothing}
+
       <div class="file-list">
-        ${r.length===0&&e.length===0?s.html`
+        ${t.length===0&&e.length===0?s.html`
               <div class="empty-state">
                 <div class="empty-icon">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
@@ -80,53 +109,62 @@
                     <line x1="9" y1="14" x2="15" y2="14" />
                   </svg>
                 </div>
-                <div class="empty-text">This folder is empty</div>
+                <div class="empty-text">${this.t("folderEmpty","This folder is empty")}</div>
               </div>
             `:s.nothing}
 
-        ${r.map(t=>s.html`
-            <div class="file-item" @click=${()=>this._onFolderClick(t)}>
+        ${t.map(i=>{const n=this._selectedIds.has(i.id);return s.html`
+            <div
+              class="file-item ${n?"selected":""}"
+              @click=${()=>this._onFolderClick(i)}
+            >
+              ${this.multi?s.html`<input
+                    type="checkbox"
+                    .checked=${n}
+                    aria-label=${this.t("selectFolder","Select folder")}
+                    @click=${h=>h.stopPropagation()}
+                    @change=${()=>this._toggleSelect(i)}
+                  />`:s.html`<span class="checkbox-spacer" aria-hidden="true"></span>`}
               <div class="file-thumb folder-thumb">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                   <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" />
                 </svg>
               </div>
               <div class="file-info">
-                <div class="file-name">${t.name}</div>
+                <div class="file-name">${i.name}</div>
               </div>
-              <svg class="folder-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
+              <span class="file-modified">${_(i.modifiedDate,this.t)}</span>
             </div>
-          `)}
+          `})}
 
-        ${(()=>{const t=this.maxSelect!==null&&this._selectedIds.size>=this.maxSelect;return e.map(o=>{const l=this._selectedIds.has(o.id),x=!l&&t;return s.html`
+        ${e.map(i=>{const n=this._selectedIds.has(i.id),h=!n&&o;return s.html`
             <div
-              class="file-item ${l?"selected":""} ${x?"disabled":""}"
-              @click=${p=>this._toggleSelect(o,p)}
+              class="file-item ${n?"selected":""} ${h?"disabled":""}"
+              @click=${a=>this._toggleSelect(i,a)}
             >
               <input
                 type="checkbox"
-                .checked=${this._selectedIds.has(o.id)}
-                @click=${p=>p.stopPropagation()}
-                @change=${()=>this._toggleSelect(o)}
+                .checked=${this._selectedIds.has(i.id)}
+                @click=${a=>a.stopPropagation()}
+                @change=${()=>this._toggleSelect(i)}
               />
               <div class="file-thumb">
-                ${o.thumbnail?s.html`<img src=${this.transformThumbnail(o.thumbnail)} alt="" loading="lazy" referrerpolicy="no-referrer"
-                      @error=${p=>{const u=p.target;u.style.display="none",u.parentElement.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'}}
+                ${i.thumbnail?s.html`<img src=${this.transformThumbnail(i.thumbnail)} alt="" loading="lazy" referrerpolicy="no-referrer"
+                      @error=${a=>{const g=a.target;g.style.display="none",g.parentElement.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'}}
                     />`:s.html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                       <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
                       <polyline points="14 2 14 8 20 8" />
                     </svg>`}
               </div>
               <div class="file-info">
-                <div class="file-name">${o.name}</div>
+                <div class="file-name">${i.name}</div>
                 <div class="file-meta">
-                  ${o.size?s.html`<span class="file-size">${w(o.size)}</span>`:s.nothing}
+                  ${i.size?s.html`<span class="file-size">${P(i.size)}</span>`:s.nothing}
                 </div>
               </div>
+              <span class="file-modified">${_(i.modifiedDate,this.t)}</span>
             </div>
-          `})})()}
+          `})}
 
         ${this._nextPagePath?s.html`
               <button
@@ -139,22 +177,34 @@
             `:s.nothing}
       </div>
 
-      ${e.length>0||i>0?s.html`
+      ${this._items.length>0||r>0?s.html`
             <div class="browser-footer">
               <div class="footer-left">
                 ${this.multi?s.html`<button class="select-all-btn" @click=${this._toggleSelectAll}>
-                  ${e.every(t=>this._selectedIds.has(t.id))?this.t("deselectAll","Deselect all"):this.t("selectAll","Select all")}
+                  ${u?this.t("deselectAll","Deselect all"):this.t("selectAll","Select all")}
                 </button>`:s.nothing}
-                <span class="selected-count ${i>0?"has-selection":""}">
-                  ${i>0?this.t("filesSelected",{count:i,defaultValue_one:"{{count}} file selected",defaultValue_other:"{{count}} files selected"}):this.t("noFilesSelected","No files selected")}
+                <span class="selected-count ${r>0?"has-selection":""}">
+                  ${r>0?this.t("itemsSelected",{count:r,defaultValue_one:"{{count}} item selected",defaultValue_other:"{{count}} items selected"}):this.t("noFilesSelected","No files selected")}
                 </span>
               </div>
               <button
                 class="add-btn"
-                ?disabled=${i===0}
+                ?disabled=${r===0||this._resolvingFolders}
                 @click=${this._onAddSelected}
               >
-                Add${i>0?` ${i}`:""} file${i===1?"":"s"}
+                ${r>0?this.t("addItems",{count:r,defaultValue_one:"Add {{count}} item",defaultValue_other:"Add {{count}} items"}):this.t("add","Add")}
+              </button>
+            </div>
+          `:s.nothing}
+
+      ${this._resolvingFolders?s.html`
+            <div class="busy-overlay">
+              <div class="spinner"></div>
+              <div class="busy-text">
+                ${this._resolveProgress>0?this.t("preparingFilesWithCount",{count:this._resolveProgress,defaultValue_one:"Preparing {{count}} file…",defaultValue_other:"Preparing {{count}} files…"}):this.t("preparingFiles","Preparing files…")}
+              </div>
+              <button class="busy-cancel-btn" @click=${this._cancelResolve}>
+                ${this.t("cancel","Cancel")}
               </button>
             </div>
           `:s.nothing}
@@ -164,19 +214,21 @@
           <svg class="crumb-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
           </svg>
-          Root
+          ${this.t("root","Root")}
         </button>
-        ${this._breadcrumbs.map((e,r)=>s.html`
+        ${this._breadcrumbs.map((e,t)=>s.html`
             <span class="crumb-sep">&rsaquo;</span>
-            ${r<this._breadcrumbs.length-1?s.html`<button class="crumb" @click=${()=>this._onBreadcrumbClick(r)}>${e.name}</button>`:s.html`<span class="crumb-current">${e.name}</span>`}
+            ${t<this._breadcrumbs.length-1?s.html`<button class="crumb" @click=${()=>this._onBreadcrumbClick(t)}>${e.name}</button>`:s.html`<span class="crumb-current">${e.name}</span>`}
           `)}
       </div>
-    `}};b.styles=s.css`
+    `}};k.styles=s.css`
     :host {
       display: flex;
       flex-direction: column;
+      position: relative;
+      flex: 1 1 0;
+      min-height: 0;
       height: 100%;
-      min-height: 300px;
       font-family: var(--sfx-up-font, 'Inter', system-ui, -apple-system, sans-serif);
       color: var(--sfx-up-text, #1e293b);
       background: var(--sfx-up-bg, #fff);
@@ -192,7 +244,8 @@
       flex-shrink: 0;
     }
 
-    .back-btn {
+    .back-btn,
+    .close-btn {
       width: 32px;
       height: 32px;
       border: none;
@@ -207,14 +260,26 @@
       flex-shrink: 0;
     }
 
-    .back-btn:hover {
+    .back-btn:hover:not(:disabled),
+    .close-btn:hover {
       background: var(--sfx-up-border, #e8edf5);
       color: var(--sfx-up-text, #1e293b);
     }
 
-    .back-btn svg {
+    .back-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    .back-btn svg,
+    .close-btn svg {
       width: 16px;
       height: 16px;
+    }
+
+    .close-btn svg {
+      width: 18px;
+      height: 18px;
     }
 
     .header-brand {
@@ -445,6 +510,54 @@
       margin-right: 2px;
     }
 
+    /* --- Column header --- */
+    .list-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 20px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--sfx-up-text-muted, #94a3b8);
+      border-bottom: 1px solid var(--sfx-up-border-light, #f1f5f9);
+      background: var(--sfx-up-border-light, #fafbfd);
+      flex-shrink: 0;
+    }
+
+    .list-header .col-check {
+      width: 16px;
+      flex-shrink: 0;
+    }
+
+    .list-header .col-thumb {
+      width: 38px;
+      flex-shrink: 0;
+    }
+
+    .list-header .col-name {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .list-header .col-modified {
+      width: 110px;
+      flex-shrink: 0;
+      text-align: right;
+    }
+
+    .file-modified {
+      width: 110px;
+      flex-shrink: 0;
+      text-align: right;
+      font-size: 12px;
+      color: var(--sfx-up-text-muted, #94a3b8);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     /* --- File list --- */
     .file-list {
       flex: 1;
@@ -463,6 +576,7 @@
       transition: all 0.15s;
       user-select: none;
       border: 1.5px solid transparent;
+      position: relative;
     }
 
     .file-item:hover {
@@ -486,6 +600,16 @@
       accent-color: var(--sfx-up-primary, #2563eb);
       flex-shrink: 0;
       cursor: pointer;
+    }
+
+    /* Invisible placeholder that reserves the same horizontal slot as the
+       checkbox. Used on folder rows in single-select mode so they line up
+       with file rows and the column header. */
+    .checkbox-spacer {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
     }
 
     .file-thumb {
@@ -544,18 +668,6 @@
       color: var(--sfx-up-text-muted, #94a3b8);
     }
 
-    .folder-arrow {
-      width: 16px;
-      height: 16px;
-      color: var(--sfx-up-text-muted, #94a3b8);
-      flex-shrink: 0;
-      opacity: 0;
-      transition: opacity 0.15s;
-    }
-
-    .file-item:hover .folder-arrow {
-      opacity: 1;
-    }
 
     /* --- Footer --- */
     .browser-footer {
@@ -788,6 +900,15 @@
       animation: shimmer 1.5s ease-in-out infinite;
     }
 
+    .skeleton-modified {
+      width: 70px;
+      height: 11px;
+      flex-shrink: 0;
+      border-radius: 6px;
+      background: var(--sfx-up-border-light, #f1f5f9);
+      animation: shimmer 1.5s ease-in-out infinite;
+    }
+
     .skeleton-row:nth-child(1) .skeleton-name { width: 65%; animation-delay: 0s; }
     .skeleton-row:nth-child(1) .skeleton-thumb { animation-delay: 0s; }
     .skeleton-row:nth-child(2) .skeleton-name { width: 45%; animation-delay: 0.1s; }
@@ -830,4 +951,63 @@
       .auth-logo { animation: none; }
       .auth-view { animation: none; }
     }
-  `;let n=b;h([d.property({attribute:!1})],n.prototype,"t");h([d.property({type:String})],n.prototype,"provider");h([d.property({type:String})],n.prototype,"companionUrl");h([d.property({type:Boolean})],n.prototype,"multi");h([d.property({type:Number})],n.prototype,"maxSelect");h([d.property({attribute:!1})],n.prototype,"transformThumbnail");h([d.state()],n.prototype,"_authenticated");h([d.state()],n.prototype,"_loading");h([d.state()],n.prototype,"_items");h([d.state()],n.prototype,"_selectedIds");h([d.state()],n.prototype,"_breadcrumbs");h([d.state()],n.prototype,"_nextPagePath");h([d.state()],n.prototype,"_error");h([d.state()],n.prototype,"_loadingMore");h([d.state()],n.prototype,"_username");function w(a){if(a===0)return"0 B";const e=["B","KB","MB","GB"],r=Math.min(Math.floor(Math.log(a)/Math.log(1024)),e.length-1);return`${(a/Math.pow(1024,r)).toFixed(r===0?0:1)} ${e[r]}`}exports.SfxProviderBrowser=n;
+
+    /* Hide the modified column on narrow viewports (mobile fullscreen). */
+    @media (max-width: 540px) {
+      .list-header .col-modified,
+      .file-modified,
+      .skeleton-modified {
+        display: none;
+      }
+    }
+
+    /* --- Folder-traversal busy overlay --- */
+    .busy-overlay {
+      position: absolute;
+      inset: 0;
+      /* Themed background with a translucent veil so the list shows through.
+         Safari < 15.4 needs the -webkit-backdrop-filter alias. */
+      background: color-mix(in srgb, var(--sfx-up-bg, #fff) 85%, transparent);
+      -webkit-backdrop-filter: blur(2px);
+      backdrop-filter: blur(2px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      z-index: 2;
+    }
+
+    /* color-mix() lands in Safari 16.4 / Firefox 113 / Chrome 111. Older
+       browsers ignore the rule above; this gives them a solid-ish veil. */
+    @supports not (background: color-mix(in srgb, red, blue)) {
+      .busy-overlay {
+        background: rgba(255, 255, 255, 0.85);
+      }
+    }
+
+    .busy-text {
+      font-size: 13px;
+      color: var(--sfx-up-text-secondary, #475569);
+      font-weight: 500;
+    }
+
+    .busy-cancel-btn {
+      height: 32px;
+      padding: 0 16px;
+      border: 1.5px solid var(--sfx-up-border, #e8edf5);
+      background: var(--sfx-up-bg, #fff);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--sfx-up-text-secondary, #475569);
+      transition: all 0.15s;
+    }
+
+    .busy-cancel-btn:hover {
+      background: var(--sfx-up-border-light, #f1f5f9);
+      color: var(--sfx-up-text, #1e293b);
+    }
+  `;let d=k;p([c.property({attribute:!1})],d.prototype,"t");p([c.property({type:String})],d.prototype,"provider");p([c.property({type:String})],d.prototype,"companionUrl");p([c.property({type:Boolean})],d.prototype,"multi");p([c.property({type:Number})],d.prototype,"maxSelect");p([c.property({attribute:!1})],d.prototype,"transformThumbnail");p([c.state()],d.prototype,"_authenticated");p([c.state()],d.prototype,"_loading");p([c.state()],d.prototype,"_items");p([c.state()],d.prototype,"_selectedIds");p([c.state()],d.prototype,"_breadcrumbs");p([c.state()],d.prototype,"_nextPagePath");p([c.state()],d.prototype,"_error");p([c.state()],d.prototype,"_loadingMore");p([c.state()],d.prototype,"_username");p([c.state()],d.prototype,"_resolvingFolders");p([c.state()],d.prototype,"_resolveProgress");function P(l){if(l===0)return"0 B";const e=["B","KB","MB","GB"],t=Math.min(Math.floor(Math.log(l)/Math.log(1024)),e.length-1);return`${(l/Math.pow(1024,t)).toFixed(t===0?0:1)} ${e[t]}`}function _(l,e){if(!l)return"";const t=Date.parse(l);if(Number.isNaN(t))return"";const r=Math.max(0,Date.now()-t),o=6e4,u=60*o,i=24*u,n=30*i,h=365*i,a=Math.round(r/o);if(a<1)return e("justNow","just now");if(a<60)return e("minutesAgo",{count:a,defaultValue_one:"{{count}} minute ago",defaultValue_other:"{{count}} minutes ago"});const g=Math.round(r/u);if(g<24)return e("hoursAgo",{count:g,defaultValue_one:"{{count}} hour ago",defaultValue_other:"{{count}} hours ago"});const f=Math.round(r/i);if(f<2)return e("yesterday","yesterday");if(f<30)return e("daysAgo",{count:f,defaultValue_one:"{{count}} day ago",defaultValue_other:"{{count}} days ago"});const b=Math.round(r/n);return b<12?e("monthsAgo",{count:b,defaultValue_one:"{{count}} month ago",defaultValue_other:"{{count}} months ago"}):e("yearsAgo",{count:Math.round(r/h),defaultValue_one:"{{count}} year ago",defaultValue_other:"{{count}} years ago"})}exports.SfxProviderBrowser=d;exports.formatRelativeDate=_;
