@@ -1,5 +1,6 @@
-import { LitElement, nothing } from 'lit';
+import { LitElement } from 'lit';
 import { MetadataField, MetadataConfig } from '../schema/schema.types';
+import { TaxonodeEntry } from '../taxonomies/taxonomies.types';
 /**
  * Read-only diff view showing what a bulk operation would change.
  * Renders color-coded chips for array fields, "old → new" for scalars.
@@ -9,9 +10,12 @@ export declare class SfxBulkMetaDiffView extends LitElement {
     field: MetadataField;
     oldValue: unknown;
     newValue: unknown;
+    oldTaxonomyEntry: TaxonodeEntry | null;
+    newTaxonomyEntry: TaxonodeEntry | null;
     config: MetadataConfig | null;
     private _renderArrayDiff;
     private _renderScalarDiff;
-    render(): typeof nothing | import('lit-html').TemplateResult<1>;
+    private _renderTaxonomyScalar;
+    render(): unknown;
 }
 //# sourceMappingURL=bulk-meta-diff-view.d.ts.map

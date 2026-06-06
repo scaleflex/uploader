@@ -11,6 +11,7 @@ export declare class SfxBulkMetadataModal extends LitElement {
     files: UploadFile[];
     config: MetadataConfig | null;
     autocomplete: unknown;
+    taxonomyService: unknown;
     /** When set, the modal opens with this field active instead of the first one. */
     initialFieldKey: string | null;
     private _activeFieldKey;
@@ -21,6 +22,8 @@ export declare class SfxBulkMetadataModal extends LitElement {
      * Split back into meta vs product changes on Save.
      */
     private _staged;
+    /** Per-file staged taxonomy entries, keyed by file id then field key. */
+    private _stagedTaxonodes;
     private _selected;
     private _sortAsc;
     private _pendingOp;
@@ -41,6 +44,8 @@ export declare class SfxBulkMetadataModal extends LitElement {
     private _initStaged;
     private _setStagedValue;
     private _setStagedBulk;
+    private _setStagedTaxonodeBulk;
+    private _setStagedTaxonodeSingle;
     private get _activeField();
     /**
      * Reads the original value for diff/fallback. For real metadata fields this
@@ -70,6 +75,7 @@ export declare class SfxBulkMetadataModal extends LitElement {
     private _onFieldSelect;
     private _onJumpToNextRequired;
     private _onBulkApply;
+    private _onRowTaxonomyEntry;
     private _onRowFieldChange;
     private _onRowToggle;
     private _onSelectAll;

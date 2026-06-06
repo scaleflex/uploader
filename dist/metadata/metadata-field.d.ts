@@ -1,11 +1,14 @@
 import { LitElement, nothing } from 'lit';
 import { MetadataField, MetadataConfig } from './schema/schema.types';
+import { TaxonodeEntry } from './taxonomies/taxonomies.types';
 export declare class SfxMetadataFieldEl extends LitElement {
     static styles: import('lit').CSSResult[];
     field: MetadataField;
     value: unknown;
     config: MetadataConfig | null;
     autocomplete: unknown;
+    taxonomyService: unknown;
+    taxonomyEntry: TaxonodeEntry | null;
     disabled: boolean;
     private _error;
     /** Flag to prevent re-entry when we re-dispatch field-blur. */

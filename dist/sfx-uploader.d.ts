@@ -4,6 +4,7 @@ import { UploadFile, UploadRestrictions, UploadResponse } from './store/store.ty
 import { AuthConfig } from './auth/auth.types';
 import { ConnectorConfig } from './connectors/connector.types';
 import { MetadataConfig } from './metadata/schema/schema.types';
+import { TaxonodeEntry } from './metadata/taxonomies/taxonomies.types';
 import { Product } from './product/product.types';
 export interface UploaderCallbacks {
     onFileAdded?: (file: UploadFile) => void;
@@ -335,6 +336,7 @@ export declare class SfxUploader extends LitElement {
      *  connectedCallback and updated when batches are saved/cleared. */
     private _hasStoredReview;
     private _metadataAutocomplete;
+    private _taxonomyService;
     private _videoBlobUrls;
     /** Persisted ETA — holds the last computed value so the display doesn't flicker when speed momentarily drops to 0. */
     private _lastEta;
@@ -391,6 +393,10 @@ export declare class SfxUploader extends LitElement {
         meta?: Record<string, unknown>;
         tags?: string[];
     }>): void;
+    /** Persist or clear the display-side taxonomy entry for one file/field. */
+    updateFileTaxonode(fileId: string, fieldKey: string, entry: TaxonodeEntry | null): void;
+    /** Batch version of {@link updateFileTaxonode} — same entry for many files. */
+    updateFilesTaxonode(fileIds: string[], fieldKey: string, entry: TaxonodeEntry | null): void;
     /**
      * Update product fields (ref + position) for a single file. The patch is
      * merged onto the existing `product` object. Passing `undefined` for a key
@@ -446,6 +452,8 @@ export declare class SfxUploader extends LitElement {
      * `file.product` via `updateFileProduct`; everything else lands in `meta`.
      */
     private _onPreviewMetadataBlur;
+    /** Handle taxonomy-entry-change from the preview metadata form. */
+    private _onPreviewTaxonomyEntry;
     /**
      * Build the meta-like dict the preview's `<sfx-metadata-form>` consumes,
      * merging product values under their synthetic keys so the same component
@@ -511,6 +519,7 @@ export declare class SfxUploader extends LitElement {
     private _onFileCopyCdn;
     private _onBulkMetadataSaveBatch;
     private _onBulkProductSaveBatch;
+    private _onBulkTaxonomySaveBatch;
     private _onBulkMetadataClose;
     private _onFileRetry;
     private _onFilePause;

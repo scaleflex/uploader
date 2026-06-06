@@ -48,10 +48,14 @@ export type MetadataFieldType = 'text' | 'textarea' | 'select-one' | 'multi-sele
 /**
  * Field types whose editor cannot run inside the uploader (they depend on
  * the asset already existing on the backend — file attachments need an asset
- * id, sibling-asset references need the new asset to exist first, ultratags /
- * taxonomy nodes need server-driven autocomplete trees, integer-list relies
- * on lookup data not available before ingest).
+ * id, sibling-asset references need the new asset to exist first, ultratags
+ * needs a per-asset autocomplete model, integer-list relies on lookup data
+ * not available before ingest).
  * Rendered read-only with a tooltip; excluded from bulk operations.
+ *
+ * `taxonomy-node` is supported during upload: the picker reads the taxonomy
+ * tree by `field.model.parameters.taxonomy_suid` and uses the existing
+ * `/v5/metadata/autocomplete` endpoint for search.
  */
 export declare const UNSUPPORTED_FIELD_TYPES: ReadonlySet<MetadataFieldType>;
 /**

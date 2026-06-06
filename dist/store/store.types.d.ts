@@ -1,5 +1,6 @@
 import { RemoteFileInfo } from '../connectors/connector.types';
 import { Product } from '../product/product.types';
+import { TaxonodeEntry } from '../metadata/taxonomies/taxonomies.types';
 export type FileStatus = 'idle' | 'queued' | 'uploading' | 'paused' | 'complete' | 'error' | 'retrying' | 'failed' | 'rejected' | 'cancelled';
 export interface UploadFile {
     id: string;
@@ -21,6 +22,7 @@ export interface UploadFile {
     addedAt: number;
     meta: Record<string, unknown>;
     tags: string[];
+    taxonodes?: Record<string, TaxonodeEntry | null>;
     product: Product;
     remoteInfo: RemoteFileInfo | null;
     relativeFolder: string;

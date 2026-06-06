@@ -1,5 +1,6 @@
 import { LitElement } from 'lit';
 import { MetadataField } from './schema/schema.types';
+import { TaxonodeEntry } from './taxonomies/taxonomies.types';
 /**
  * Thin dispatcher that renders the correct field editor based on field.type.
  * All field-change / field-blur / field-escape events bubble up from the
@@ -10,6 +11,8 @@ export declare class SfxMetadataFieldEdit extends LitElement {
     field: MetadataField;
     value: unknown;
     autocomplete: unknown;
+    taxonomyService: unknown;
+    taxonomyEntry: TaxonodeEntry | null;
     disabled: boolean;
     render(): import('lit-html').TemplateResult<1>;
 }

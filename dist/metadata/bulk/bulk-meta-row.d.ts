@@ -2,6 +2,7 @@ import { LitElement } from 'lit';
 import { MetadataField, MetadataConfig } from '../schema/schema.types';
 import { UploadFile } from '../../store/store.types';
 import { PendingOp } from './bulk-operations';
+import { TaxonodeEntry } from '../taxonomies/taxonomies.types';
 /**
  * Per-file row in the bulk metadata table.
  * Shows checkbox, thumbnail, file name, size, and the active field value.
@@ -15,14 +16,17 @@ export declare class SfxBulkMetaRow extends LitElement {
     file: UploadFile;
     field: MetadataField;
     value: unknown;
+    taxonomyEntry: TaxonodeEntry | null;
     selected: boolean;
     pendingOp: PendingOp | null;
     config: MetadataConfig | null;
     autocomplete: unknown;
+    taxonomyService: unknown;
     private _error;
     willUpdate(changed: Map<string, unknown>): void;
     private _onCheckboxChange;
     private _onFieldBlur;
+    private _onTaxonomyEntryChange;
     /** Compute what the value would become if the pending op were applied. */
     private _computePreviewValue;
     private _getExtension;

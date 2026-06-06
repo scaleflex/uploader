@@ -8,15 +8,18 @@ export declare class SfxBulkMetaOpBar extends LitElement {
     static styles: import('lit').CSSResult[];
     field: MetadataField;
     autocomplete: unknown;
+    taxonomyService: unknown;
     config: MetadataConfig | null;
     selectedCount: number;
     private _operation;
     private _value;
+    private _pendingTaxonode;
     private _opDropdownOpen;
     private _availableOps;
     private static _emptyValueForType;
     private get _effectiveValue();
     willUpdate(changed: Map<string, unknown>): void;
+    private _onTaxonomyEntryChange;
     private _onOpSelect;
     private _onOpToggle;
     private _onOpDropdownClose;

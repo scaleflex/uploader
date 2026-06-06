@@ -9,6 +9,9 @@ export declare class SfxMetadataPanel extends LitElement {
     bulkMode: boolean;
     config: MetadataConfig | null;
     autocomplete: unknown;
+    taxonomyService: unknown;
+    /** Local copy of the current file's taxonomy entries (single-file mode). */
+    private _localTaxonodes;
     /** Local copy of the current file's meta (single-file mode). */
     private _localMeta;
     /** Accumulated meta for bulk mode. */
@@ -24,6 +27,7 @@ export declare class SfxMetadataPanel extends LitElement {
     private get _activeMeta();
     private _dispatch;
     private _onFieldBlur;
+    private _onTaxonomyEntryChange;
     private _onClose;
     private _onDone;
     private _onApplyAll;
