@@ -563,6 +563,13 @@ export class SfxUploader extends LitElement {
       background: var(--sfx-up-bg, #fff);
       border-bottom: 1px solid var(--sfx-up-border, #e2e8f0);
       flex-shrink: 0;
+      /* Lift the header (and its overflowing children, e.g. the regional
+         settings dropdown) above the body. The body is position:relative,
+         so without this its subtree — including the "View last upload" pill
+         — would paint on top of the dropdown regardless of the dropdown's
+         own z-index. */
+      position: relative;
+      z-index: 2;
     }
 
     .header-icon {
