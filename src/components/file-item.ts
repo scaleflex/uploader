@@ -293,11 +293,11 @@ export class SfxFileItem extends LitElement {
       text-overflow: ellipsis;
     }
 
-    /* Collapse to icon-only the moment the side gap disappears: the cutoff is
-       the button width (160px) + a minimum of breathing room (~16px per side).
-       Wider than this → text labels with visible air on both sides; narrower →
-       icons only, so the button never sits cramped edge-to-edge with text. */
-    @container sfx-tile-media (max-width: 192px) {
+    /* Collapse to icon-only before the fixed 160px button ever looks cramped.
+       Cutoff = button width (160px) + a comfortable side margin (~24px per
+       side = 48px). Above this → text labels with clear air on both sides;
+       at/below → icons only, so the button never sits tight against the edges. */
+    @container sfx-tile-media (max-width: 208px) {
       /* Icon-only: lay the two square buttons side by side, not stacked —
          more compact and balanced when there's no text to align. */
       .center-actions {
