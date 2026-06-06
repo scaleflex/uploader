@@ -227,7 +227,9 @@ export class SfxDropZone extends LitElement {
       font-size: 20px;
       font-weight: 700;
       color: var(--sfx-up-text, #1e293b);
-      margin-bottom: 6px;
+      /* Match the icon's 24px bottom margin so the title has equal breathing
+         room above (icon → title) and below (title → divider). */
+      margin-bottom: 24px;
       transition:
         font-size 0.3s,
         margin 0.3s;
@@ -236,6 +238,19 @@ export class SfxDropZone extends LitElement {
     .title span {
       color: var(--sfx-up-primary, #2563eb);
       cursor: pointer;
+    }
+
+    /* "folder" link merged into the title — styled like the "browse" span. */
+    .title button {
+      background: none;
+      border: none;
+      padding: 0;
+      font: inherit;
+      color: var(--sfx-up-primary, #2563eb);
+      cursor: pointer;
+    }
+    .title button:hover {
+      color: var(--sfx-up-primary-hover, #1d4ed8);
     }
 
     .folder-pick {
@@ -405,7 +420,7 @@ export class SfxDropZone extends LitElement {
       gap: 10px;
       flex-wrap: wrap;
       width: 100%;
-      max-width: 700px;
+      max-width: 760px;
     }
 
     .compact .sources-cards {
@@ -420,7 +435,7 @@ export class SfxDropZone extends LitElement {
       /* restore flex item behaviour lost by display:contents on the wrapper */
       flex: 1;
       min-width: 88px;
-      max-width: 130px;
+      max-width: 140px;
     }
 
     .src-card {
@@ -429,7 +444,7 @@ export class SfxDropZone extends LitElement {
       align-items: center;
       justify-content: center;
       gap: 10px;
-      padding: 20px 12px 16px;
+      padding: 20px 8px 16px;
       border-radius: 16px;
       border: 1.5px solid rgba(226, 232, 240, 0.6);
       background: #fff;
@@ -437,7 +452,7 @@ export class SfxDropZone extends LitElement {
       transition: all 0.18s ease;
       flex: 1;
       min-width: 88px;
-      max-width: 130px;
+      max-width: 140px;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
       font-family: inherit;
     }
@@ -482,7 +497,7 @@ export class SfxDropZone extends LitElement {
     }
 
     .src-card .card-label {
-      font-size: 12px;
+      font-size: 10px;
       font-weight: 500;
       color: var(--sfx-up-text-secondary, #475569);
       white-space: nowrap;
@@ -1501,9 +1516,10 @@ export class SfxDropZone extends LitElement {
             </div>
           </div>
 
-          <div class="title">${this.t('dragAndDrop', 'Drag & Drop or click to')} <span>${this.t('browse', 'browse')}</span></div>
           ${!this.compact && this.directory && this.multi
-            ? html`<div class="folder-pick">
+            ? html`<div class="title">
+                ${this.t('dragDropClickTo', 'Drag & Drop, click to')}
+                <span>${this.t('browse', 'browse')}</span>
                 ${this.t('orUploadFolderPrefix', 'or upload a ')}<button
                   type="button"
                   @click=${(e: MouseEvent) => {
@@ -1512,10 +1528,7 @@ export class SfxDropZone extends LitElement {
                   }}
                 >${this.t('uploadFolder', 'folder')}</button>
               </div>`
-            : nothing}
-          ${!this.compact
-            ? html`<div class="subtitle">${this.t('dropFilesAnywhere', 'Drop files anywhere on this page')}</div>`
-            : nothing}
+            : html`<div class="title">${this.t('dragAndDrop', 'Drag & Drop or click to')} <span>${this.t('browse', 'browse')}</span></div>`}
           ${!this.compact && this.sources.length > 0
             ? html`
                 <div class="import-divider"><span>${this.t('orImportFrom', 'or import from')}</span></div>
