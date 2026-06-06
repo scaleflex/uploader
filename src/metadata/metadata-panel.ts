@@ -2,6 +2,7 @@ import { LitElement, html, css, nothing } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { cspStyle } from '../utils/csp-style';
 import type { MetadataSchema, MetadataConfig, MetadataField } from './schema/schema.types';
+import type { TaxonodeEntry } from './taxonomies/taxonomies.types';
 import type { UploadFile } from '../store/store.types';
 import { isAssetHasMetadataValue, isFieldRequired } from './schema/required-fields';
 import { metadataPanelStyles } from './metadata.styles';
@@ -31,6 +32,10 @@ export class SfxMetadataPanel extends LitElement {
   @property({ type: Boolean }) bulkMode = false;
   @property({ attribute: false }) config: MetadataConfig | null = null;
   @property({ attribute: false }) autocomplete: unknown = null;
+  @property({ attribute: false }) taxonomyService: unknown = null;
+
+  /** Local copy of the current file's taxonomy entries (single-file mode). */
+  @state() private _localTaxonodes: Record<string, TaxonodeEntry | null> = {};
 
   /** Local copy of the current file's meta (single-file mode). */
   @state() private _localMeta: Record<string, unknown> = {};
@@ -46,6 +51,7 @@ export class SfxMetadataPanel extends LitElement {
     // Sync local meta when file changes (single-file mode)
     if (changed.has('file') && !this.bulkMode && this.file) {
       this._localMeta = { ...this.file.meta };
+      this._localTaxonodes = { ...(this.file.taxonodes ?? {}) };
     }
   }
 
@@ -114,6 +120,14 @@ export class SfxMetadataPanel extends LitElement {
     } else {
       this._localMeta = { ...this._localMeta, [key]: value };
     }
+  }
+
+  private _onTaxonomyEntryChange(
+    e: CustomEvent<{ key: string; entry: TaxonodeEntry | null }>,
+  ) {
+    const { key, entry } = e.detail;
+    if (this.bulkMode) return;
+    this._localTaxonodes = { ...this._localTaxonodes, [key]: entry };
   }
 
   private _onClose() {
@@ -253,12 +267,15 @@ export class SfxMetadataPanel extends LitElement {
       <div
         class="panel-content"
         @field-blur=${this._onFieldBlur}
+        @taxonomy-entry-change=${this._onTaxonomyEntryChange}
       >
         <sfx-metadata-form
           .schema=${this.schema}
           .meta=${this._activeMeta}
           .config=${this.config}
           .autocomplete=${this.autocomplete}
+          .taxonomyService=${this.taxonomyService}
+          .taxonodes=${this._localTaxonodes}
         ></sfx-metadata-form>
       </div>
       ${this._renderFooter()}

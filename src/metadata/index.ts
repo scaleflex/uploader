@@ -7,6 +7,8 @@ export { mapValueToBackend, mapValueFromBackend } from './schema/value-transform
 export { validateField, isEmpty } from './schema/validation';
 export { isAssetHasMetadataValue, getFilesWithMissingRequired, deepMergeMeta } from './schema/required-fields';
 export { createTagsAutocomplete } from './tags/tags-autocomplete';
+export { createTaxonomyService } from './taxonomies/taxonomies-service';
+export type { TaxonomyService } from './taxonomies/taxonomies-service';
 
 export type {
   MetadataSchema,
@@ -17,6 +19,13 @@ export type {
   TagOption,
   GeoPoint,
 } from './schema/schema.types';
+
+export type {
+  TaxonomyNode,
+  TaxonomyNodesResponse,
+  TaxonomyAutocompleteTag,
+  TaxonodeEntry,
+} from './taxonomies/taxonomies.types';
 
 // Import infrastructure components to register custom elements (side effect)
 import './metadata-form';
@@ -32,6 +41,7 @@ import './fields/boolean-field';
 import './fields/number-field';
 import './fields/date-field';
 import './fields/geo-point-field';
+import './fields/taxonomy-node-field';
 import './fields/unsupported-field';
 
 // Import dispatcher components (side effect)

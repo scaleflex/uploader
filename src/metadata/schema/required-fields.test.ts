@@ -84,9 +84,9 @@ describe('isFieldRequired', () => {
     ).toBe(false);
   });
 
-  it('returns false for taxonomy-node even if required', () => {
+  it('honors required for taxonomy-node (supported during upload)', () => {
     const field = makeField({ type: 'taxonomy-node', required: true });
-    expect(isFieldRequired(field)).toBe(false);
+    expect(isFieldRequired(field)).toBe(true);
   });
 
   it('still honors required for supported types', () => {

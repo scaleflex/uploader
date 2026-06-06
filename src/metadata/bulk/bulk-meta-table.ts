@@ -4,6 +4,7 @@ import type { MetadataField, MetadataConfig } from '../schema/schema.types';
 import type { UploadFile } from '../../store/store.types';
 import type { PendingOp } from './bulk-operations';
 import { bulkTableStyles } from './bulk-metadata.styles';
+import type { TaxonodeEntry } from '../taxonomies/taxonomies.types';
 
 /**
  * Thin table container — maps files to `<sfx-bulk-meta-row>` elements.
@@ -14,15 +15,23 @@ export class SfxBulkMetaTable extends LitElement {
   @property({ attribute: false }) files: UploadFile[] = [];
   @property({ attribute: false }) field!: MetadataField;
   @property({ attribute: false }) staged: Map<string, Map<string, unknown>> = new Map();
+  @property({ attribute: false }) stagedTaxonodes: Map<string, Map<string, TaxonodeEntry | null>> = new Map();
   @property({ attribute: false }) selected: Set<string> = new Set();
   @property({ attribute: false }) pendingOp: PendingOp | null = null;
   @property({ attribute: false }) config: MetadataConfig | null = null;
   @property({ attribute: false }) autocomplete: unknown;
+  @property({ attribute: false }) taxonomyService: unknown;
 
   private _getEffectiveValue(file: UploadFile): unknown {
     const fileMap = this.staged.get(file.id);
     if (fileMap?.has(this.field.key)) return fileMap.get(this.field.key);
     return file.meta[this.field.key];
+  }
+
+  private _getTaxonodeEntry(file: UploadFile): TaxonodeEntry | null {
+    const fileMap = this.stagedTaxonodes.get(file.id);
+    if (fileMap?.has(this.field.key)) return fileMap.get(this.field.key) ?? null;
+    return file.taxonodes?.[this.field.key] ?? null;
   }
 
   render() {
@@ -33,10 +42,12 @@ export class SfxBulkMetaTable extends LitElement {
             .file=${file}
             .field=${this.field}
             .value=${this._getEffectiveValue(file)}
+            .taxonomyEntry=${this._getTaxonodeEntry(file)}
             .selected=${this.selected.has(file.id)}
             .pendingOp=${this.pendingOp}
             .config=${this.config}
             .autocomplete=${this.autocomplete}
+            .taxonomyService=${this.taxonomyService}
           ></sfx-bulk-meta-row>
         `,
       )}

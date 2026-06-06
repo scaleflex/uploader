@@ -1,5 +1,6 @@
 import type { RemoteFileInfo } from '../connectors/connector.types';
 import type { Product } from '../product/product.types';
+import type { TaxonodeEntry } from '../metadata/taxonomies/taxonomies.types';
 
 // --- File lifecycle states (spec §5.1) ---
 
@@ -53,6 +54,12 @@ export interface UploadFile {
   // Per-file metadata for the upload request
   meta: Record<string, unknown>;
   tags: string[];
+
+  // Display-side shadow of picked taxonomy-node entries, keyed by field key.
+  // The scalar id sits in `meta[key]`; the entry here carries the human path
+  // so the picker trigger and read-only cell can render the breadcrumb
+  // without re-fetching. Never sent in the upload payload.
+  taxonodes?: Record<string, TaxonodeEntry | null>;
 
   // Per-file product fields (admin v5 parity). Sent on upload when the project
   // has `products_enabled`. Always present; empty object when nothing is set.

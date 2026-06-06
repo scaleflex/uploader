@@ -58,6 +58,7 @@ import type {
   MetadataConfig,
   MetadataSchema,
 } from "./metadata/schema/schema.types";
+import type { TaxonodeEntry } from "./metadata/taxonomies/taxonomies.types";
 import {
   firstMissingRequiredFieldKey,
   isFieldRequired,
@@ -2432,6 +2433,7 @@ export class SfxUploader extends LitElement {
    *  connectedCallback and updated when batches are saved/cleared. */
   @state() private _hasStoredReview = false;
   private _metadataAutocomplete: any = null;
+  private _taxonomyService: any = null;
   private _videoBlobUrls = new Map<File, string>();
 
   /** Persisted ETA — holds the last computed value so the display doesn't flicker when speed momentarily drops to 0. */
@@ -2684,6 +2686,48 @@ export class SfxUploader extends LitElement {
       changed = true;
     }
 
+    if (changed) this._store.setState({ files: next });
+  }
+
+  /** Persist or clear the display-side taxonomy entry for one file/field. */
+  updateFileTaxonode(
+    fileId: string,
+    fieldKey: string,
+    entry: TaxonodeEntry | null,
+  ): void {
+    const current = this._store.getState().files;
+    const existing = current.get(fileId);
+    if (!existing || !SfxUploader._MODIFIABLE_STATUSES.has(existing.status))
+      return;
+
+    const nextTaxonodes = { ...(existing.taxonodes ?? {}) };
+    if (entry == null) delete nextTaxonodes[fieldKey];
+    else nextTaxonodes[fieldKey] = entry;
+
+    const next = new Map(current);
+    next.set(fileId, { ...existing, taxonodes: nextTaxonodes });
+    this._store.setState({ files: next });
+  }
+
+  /** Batch version of {@link updateFileTaxonode} — same entry for many files. */
+  updateFilesTaxonode(
+    fileIds: string[],
+    fieldKey: string,
+    entry: TaxonodeEntry | null,
+  ): void {
+    const current = this._store.getState().files;
+    const next = new Map(current);
+    let changed = false;
+    for (const fileId of fileIds) {
+      const existing = current.get(fileId);
+      if (!existing || !SfxUploader._MODIFIABLE_STATUSES.has(existing.status))
+        continue;
+      const nextTaxonodes = { ...(existing.taxonodes ?? {}) };
+      if (entry == null) delete nextTaxonodes[fieldKey];
+      else nextTaxonodes[fieldKey] = entry;
+      next.set(fileId, { ...existing, taxonodes: nextTaxonodes });
+      changed = true;
+    }
     if (changed) this._store.setState({ files: next });
   }
 
@@ -3196,7 +3240,7 @@ export class SfxUploader extends LitElement {
     if (!mc || !this._apiBase || !this._authHeaders) return;
 
     try {
-      const { fetchMetadataSchema, createTagsAutocomplete } = await import(
+      const { fetchMetadataSchema, createTagsAutocomplete, createTaxonomyService } = await import(
         "./metadata"
       );
       const baseSchema = await fetchMetadataSchema(
@@ -3205,6 +3249,19 @@ export class SfxUploader extends LitElement {
         mc.projectUuid,
         mc,
       );
+      // Construct the autocomplete + taxonomy services BEFORE assigning the
+      // schema. The schema is a `@state` property whose assignment triggers a
+      // re-render; the services are plain fields, so if we set them after,
+      // the render scheduled by the schema set reads them as `null` and
+      // child fields mount without a service.
+      this._metadataAutocomplete = createTagsAutocomplete(
+        this._apiBase,
+        this._authHeaders,
+      );
+      this._taxonomyService = createTaxonomyService(
+        this._apiBase,
+        this._authHeaders,
+      );
       // When products are enabled, splice the synthetic "Product" group into
       // the schema right after the last root group. The metadata-form (used in
       // both the preview sidebar and the bulk-edit sidebar) then renders the
@@ -3212,10 +3269,6 @@ export class SfxUploader extends LitElement {
       this._metadataSchema = baseSchema.productsEnabled
         ? injectProductGroup(baseSchema, this._storeCtrl.state.t)
         : baseSchema;
-      this._metadataAutocomplete = createTagsAutocomplete(
-        this._apiBase,
-        this._authHeaders,
-      );
       const requiredFieldKeys = this._metadataSchema.fields
         .filter((f) => isFieldRequired(f, mc))
         .map((f) => f.key);
@@ -3276,6 +3329,15 @@ export class SfxUploader extends LitElement {
     const next = new Map(this._store.getState().files);
     next.set(fileId, { ...existing, meta: { ...existing.meta, [key]: value } });
     this._store.setState({ files: next });
+  };
+
+  /** Handle taxonomy-entry-change from the preview metadata form. */
+  private _onPreviewTaxonomyEntry = (
+    e: CustomEvent<{ key: string; entry: TaxonodeEntry | null }>,
+  ) => {
+    const fileId = this._previewFileId;
+    if (!fileId) return;
+    this.updateFileTaxonode(fileId, e.detail.key, e.detail.entry);
   };
 
   /**
@@ -4219,6 +4281,32 @@ export class SfxUploader extends LitElement {
     const { changes } = e.detail;
     if (!changes.length) return;
     this.updateFilesProduct(changes);
+  };
+
+  private _onBulkTaxonomySaveBatch = (
+    e: CustomEvent<{
+      changes: Array<{
+        fileId: string;
+        taxonodes: Record<string, TaxonodeEntry | null>;
+      }>;
+    }>,
+  ) => {
+    const { changes } = e.detail;
+    if (!changes.length) return;
+    const current = this._store.getState().files;
+    const next = new Map(current);
+    for (const { fileId, taxonodes } of changes) {
+      const existing = current.get(fileId);
+      if (!existing || !SfxUploader._MODIFIABLE_STATUSES.has(existing.status))
+        continue;
+      const merged = { ...(existing.taxonodes ?? {}) };
+      for (const [k, v] of Object.entries(taxonodes)) {
+        if (v == null) delete merged[k];
+        else merged[k] = v;
+      }
+      next.set(fileId, { ...existing, taxonodes: merged });
+    }
+    this._store.setState({ files: next });
   };
 
   private _onBulkMetadataClose = () => {
@@ -5820,12 +5908,15 @@ export class SfxUploader extends LitElement {
                 <div
                   class="preview-metadata"
                   @field-blur=${this._onPreviewMetadataBlur}
+                  @taxonomy-entry-change=${this._onPreviewTaxonomyEntry}
                 >
                   <sfx-metadata-form
                     .schema=${this._metadataSchema}
                     .meta=${this._previewMeta(previewFile)}
                     .config=${this.config.metadataConfig}
                     .autocomplete=${this._metadataAutocomplete}
+                    .taxonomyService=${this._taxonomyService}
+                    .taxonodes=${previewFile.taxonodes ?? null}
                   ></sfx-metadata-form>
                 </div>
               `
@@ -6140,9 +6231,11 @@ export class SfxUploader extends LitElement {
                 )}
                 .config=${this.config?.metadataConfig ?? null}
                 .autocomplete=${this._metadataAutocomplete}
+                .taxonomyService=${this._taxonomyService}
                 .initialFieldKey=${this._bulkMetadataInitialFieldKey}
                 @metadata-save-batch=${this._onBulkMetadataSaveBatch}
                 @product-save-batch=${this._onBulkProductSaveBatch}
+                @taxonomy-save-batch=${this._onBulkTaxonomySaveBatch}
                 @metadata-close=${this._onBulkMetadataClose}
               ></sfx-bulk-metadata-modal>
             `

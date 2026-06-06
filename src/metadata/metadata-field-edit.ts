@@ -2,6 +2,7 @@ import { LitElement, html, css } from 'lit';
 import { property } from 'lit/decorators.js';
 import type { MetadataField } from './schema/schema.types';
 import { isUnsupportedField } from './schema/schema.types';
+import type { TaxonodeEntry } from './taxonomies/taxonomies.types';
 
 /**
  * Thin dispatcher that renders the correct field editor based on field.type.
@@ -16,6 +17,8 @@ export class SfxMetadataFieldEdit extends LitElement {
   @property({ attribute: false }) field!: MetadataField;
   @property({ attribute: false }) value: unknown;
   @property({ attribute: false }) autocomplete: unknown;
+  @property({ attribute: false }) taxonomyService: unknown;
+  @property({ attribute: false }) taxonomyEntry: TaxonodeEntry | null = null;
   @property({ type: Boolean }) disabled = false;
 
   render() {
@@ -43,6 +46,9 @@ export class SfxMetadataFieldEdit extends LitElement {
 
       case 'tags':
         return html`<sfx-meta-tags-field .field=${f} .value=${v} .autocomplete=${this.autocomplete} ?disabled=${d}></sfx-meta-tags-field>`;
+
+      case 'taxonomy-node':
+        return html`<sfx-meta-taxonomy-node-field .field=${f} .value=${v} .taxonomyService=${this.taxonomyService} .entry=${this.taxonomyEntry} ?disabled=${d}></sfx-meta-taxonomy-node-field>`;
 
       case 'boolean':
         return html`<sfx-meta-boolean-field .field=${f} .value=${v} ?disabled=${d}></sfx-meta-boolean-field>`;

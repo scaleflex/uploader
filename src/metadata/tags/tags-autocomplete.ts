@@ -2,6 +2,7 @@ import type { AuthHeaders } from '../../auth/auth.types';
 import type { TagOption } from '../schema/schema.types';
 
 export function createTagsAutocomplete(apiBase: string, headers: AuthHeaders) {
+  const base = apiBase.replace(/\/$/, '');
   let _timer: ReturnType<typeof setTimeout> | null = null;
   let _abortController: AbortController | null = null;
   let _cancelled = false;
@@ -20,7 +21,7 @@ export function createTagsAutocomplete(apiBase: string, headers: AuthHeaders) {
       _timer = setTimeout(async () => {
         _abortController = new AbortController();
         try {
-          const url = `${apiBase}/v5/metadata/autocomplete?q=${encodeURIComponent(query.trim())}&meta_key=_${encodeURIComponent(fieldCkey)}&limit=20`;
+          const url = `${base}/v5/metadata/autocomplete?q=${encodeURIComponent(query.trim())}&meta_key=_${encodeURIComponent(fieldCkey)}&limit=20`;
           const resp = await fetch(url, { headers, signal: _abortController.signal });
           if (_cancelled) return;
           if (!resp.ok) { callback([]); return; }

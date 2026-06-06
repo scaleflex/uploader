@@ -18,6 +18,7 @@ import { isEmpty } from '../schema/validation';
 import { missingRequiredFieldKeysInStaged } from '../schema/required-fields';
 import { computeBulkResult, isValueRequiredForPreview, type BulkOperation, type PendingOp } from './bulk-operations';
 import { bulkModalStyles } from './bulk-metadata.styles';
+import type { TaxonodeEntry } from '../taxonomies/taxonomies.types';
 
 /**
  * Full-screen overlay modal for bulk metadata editing.
@@ -31,6 +32,7 @@ export class SfxBulkMetadataModal extends LitElement {
   @property({ attribute: false }) files: UploadFile[] = [];
   @property({ attribute: false }) config: MetadataConfig | null = null;
   @property({ attribute: false }) autocomplete: unknown;
+  @property({ attribute: false }) taxonomyService: unknown;
   /** When set, the modal opens with this field active instead of the first one. */
   @property({ attribute: false }) initialFieldKey: string | null = null;
 
@@ -43,6 +45,8 @@ export class SfxBulkMetadataModal extends LitElement {
    * Split back into meta vs product changes on Save.
    */
   @state() private _staged: Map<string, Map<string, unknown>> = new Map();
+  /** Per-file staged taxonomy entries, keyed by file id then field key. */
+  @state() private _stagedTaxonodes: Map<string, Map<string, TaxonodeEntry | null>> = new Map();
   @state() private _selected: Set<string> = new Set();
   @state() private _sortAsc = true;
   @state() private _pendingOp: PendingOp | null = null;
@@ -102,6 +106,7 @@ export class SfxBulkMetadataModal extends LitElement {
 
   private _initStaged() {
     const staged = new Map<string, Map<string, unknown>>();
+    const stagedTaxonodes = new Map<string, Map<string, TaxonodeEntry | null>>();
     const selected = new Set<string>();
     const originals = new Map<string, UploadFile>();
     const productsEnabled = this.schema?.productsEnabled === true;
@@ -121,11 +126,18 @@ export class SfxBulkMetadataModal extends LitElement {
         if (p.position !== undefined) fileMap.set(PRODUCT_POSITION_FIELD_KEY, p.position);
       }
       staged.set(file.id, fileMap);
+      if (file.taxonodes) {
+        stagedTaxonodes.set(
+          file.id,
+          new Map(Object.entries(file.taxonodes)),
+        );
+      }
       selected.add(file.id);
       originals.set(file.id, file);
     }
 
     this._staged = staged;
+    this._stagedTaxonodes = stagedTaxonodes;
     this._selected = selected;
     this._originalFiles = originals;
 
@@ -158,6 +170,32 @@ export class SfxBulkMetadataModal extends LitElement {
       next.set(fileId, fileMap);
     }
     this._staged = next;
+  }
+
+  private _setStagedTaxonodeBulk(
+    fileIds: Iterable<string>,
+    fieldKey: string,
+    entry: TaxonodeEntry | null,
+  ): void {
+    const next = new Map(this._stagedTaxonodes);
+    for (const fileId of fileIds) {
+      const fileMap = new Map(next.get(fileId) ?? new Map());
+      fileMap.set(fieldKey, entry);
+      next.set(fileId, fileMap);
+    }
+    this._stagedTaxonodes = next;
+  }
+
+  private _setStagedTaxonodeSingle(
+    fileId: string,
+    fieldKey: string,
+    entry: TaxonodeEntry | null,
+  ): void {
+    const next = new Map(this._stagedTaxonodes);
+    const fileMap = new Map(next.get(fileId) ?? new Map());
+    fileMap.set(fieldKey, entry);
+    next.set(fileId, fileMap);
+    this._stagedTaxonodes = next;
   }
 
   // -----------------------------------------------------------------------
@@ -349,12 +387,16 @@ export class SfxBulkMetadataModal extends LitElement {
   };
 
   private _onBulkApply = (
-    e: CustomEvent<{ operation: BulkOperation; value: unknown }>,
+    e: CustomEvent<{
+      operation: BulkOperation;
+      value: unknown;
+      taxonomyEntry?: TaxonodeEntry | null;
+    }>,
   ) => {
     const field = this._activeField;
     if (!field) return;
 
-    const { operation, value: frontendValue } = e.detail;
+    const { operation, value: frontendValue, taxonomyEntry } = e.detail;
     const language = this.config?.language;
     const updates: Array<[string, string, unknown]> = [];
 
@@ -379,6 +421,17 @@ export class SfxBulkMetadataModal extends LitElement {
     }
 
     this._setStagedBulk(updates);
+
+    if (field.type === 'taxonomy-node' && taxonomyEntry !== undefined) {
+      this._setStagedTaxonodeBulk(this._selected, field.key, taxonomyEntry);
+    }
+  };
+
+  private _onRowTaxonomyEntry = (
+    e: CustomEvent<{ fileId: string; fieldKey: string; entry: TaxonodeEntry | null }>,
+  ) => {
+    const { fileId, fieldKey, entry } = e.detail;
+    this._setStagedTaxonodeSingle(fileId, fieldKey, entry);
   };
 
   private _onRowFieldChange = (
@@ -472,6 +525,38 @@ export class SfxBulkMetadataModal extends LitElement {
       this.dispatchEvent(
         new CustomEvent('product-save-batch', {
           detail: { changes: productChanges },
+          bubbles: true,
+          composed: true,
+        }),
+      );
+    }
+
+    const taxonomyChanges: Array<{
+      fileId: string;
+      taxonodes: Record<string, TaxonodeEntry | null>;
+    }> = [];
+    for (const [fileId, fileMap] of this._stagedTaxonodes) {
+      const originalFile = this._originalFiles.get(fileId);
+      if (!originalFile) continue;
+      const orig = originalFile.taxonodes ?? {};
+      const patch: Record<string, TaxonodeEntry | null> = {};
+      for (const [fieldKey, stagedEntry] of fileMap) {
+        const origEntry = orig[fieldKey] ?? null;
+        if (
+          JSON.stringify(stagedEntry ?? null) !==
+          JSON.stringify(origEntry ?? null)
+        ) {
+          patch[fieldKey] = stagedEntry ?? null;
+        }
+      }
+      if (Object.keys(patch).length > 0) {
+        taxonomyChanges.push({ fileId, taxonodes: patch });
+      }
+    }
+    if (taxonomyChanges.length > 0) {
+      this.dispatchEvent(
+        new CustomEvent('taxonomy-save-batch', {
+          detail: { changes: taxonomyChanges },
           bubbles: true,
           composed: true,
         }),
@@ -590,6 +675,7 @@ export class SfxBulkMetadataModal extends LitElement {
                     <sfx-bulk-meta-op-bar
                       .field=${field}
                       .autocomplete=${this.autocomplete}
+                      .taxonomyService=${this.taxonomyService}
                       .config=${this.config}
                       .selectedCount=${this._selected.size}
                       @bulk-apply=${this._onBulkApply}
@@ -625,12 +711,15 @@ export class SfxBulkMetadataModal extends LitElement {
                         .files=${sortedFiles}
                         .field=${field}
                         .staged=${this._staged}
+                        .stagedTaxonodes=${this._stagedTaxonodes}
                         .selected=${this._selected}
                         .pendingOp=${this._pendingOp}
                         .config=${this.config}
                         .autocomplete=${this.autocomplete}
+                        .taxonomyService=${this.taxonomyService}
                         @row-field-change=${this._onRowFieldChange}
                         @row-toggle=${this._onRowToggle}
+                        @row-taxonomy-entry=${this._onRowTaxonomyEntry}
                       ></sfx-bulk-meta-table>
                     `
                   : nothing}

@@ -9,10 +9,10 @@ describe('getAvailableOperations', () => {
   const arrayTypes: MetadataFieldType[] = ['multi-select', 'tags'];
   const textTypes: MetadataFieldType[] = ['text', 'textarea', 'attachment-uri'];
   const scalarTypes: MetadataFieldType[] = [
-    'numeric', 'decimal2', 'boolean', 'date', 'select-one', 'geopoint',
+    'numeric', 'decimal2', 'boolean', 'date', 'select-one', 'geopoint', 'taxonomy-node',
   ];
   const unsupportedTypes: MetadataFieldType[] = [
-    'asset-attachments', 'attachments-assets', 'integer-list', 'ultratags', 'taxonomy-node',
+    'asset-attachments', 'attachments-assets', 'integer-list', 'ultratags',
   ];
 
   it.each(unsupportedTypes)('returns [] for unsupported type %s', (type) => {

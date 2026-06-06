@@ -3,6 +3,7 @@ import { property } from 'lit/decorators.js';
 import type { MetadataField, GeoPoint, TagOption } from './schema/schema.types';
 import { isUnsupportedField } from './schema/schema.types';
 import { UNSUPPORTED_FIELD_MESSAGE } from './fields/unsupported-field';
+import type { TaxonodeEntry } from './taxonomies/taxonomies.types';
 
 export class SfxMetadataFieldView extends LitElement {
   static styles = css`
@@ -35,6 +36,7 @@ export class SfxMetadataFieldView extends LitElement {
 
   @property({ attribute: false }) field!: MetadataField;
   @property({ attribute: false }) value: unknown;
+  @property({ attribute: false }) taxonomyEntry: TaxonodeEntry | null = null;
 
   private _formatValue(): string | ReturnType<typeof html> {
     const v = this.value;
@@ -93,6 +95,13 @@ export class SfxMetadataFieldView extends LitElement {
       case 'tags': {
         if (!Array.isArray(v) || v.length === 0) return '';
         return (v as TagOption[]).map(t => t.label || t.value).join(', ');
+      }
+
+      case 'taxonomy-node': {
+        if (this.taxonomyEntry?.path) return this.taxonomyEntry.path;
+        if (this.taxonomyEntry?.name) return this.taxonomyEntry.name;
+        if (v == null || v === '') return '';
+        return String(v);
       }
 
       case 'geopoint': {

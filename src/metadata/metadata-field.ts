@@ -6,6 +6,7 @@ import { validateField } from './schema/validation';
 import { isFieldRequired } from './schema/required-fields';
 import { mapValueToBackend, mapValueFromBackend } from './schema/value-transforms';
 import { metadataFieldStyles } from './metadata.styles';
+import type { TaxonodeEntry } from './taxonomies/taxonomies.types';
 
 export class SfxMetadataFieldEl extends LitElement {
   static styles = [metadataFieldStyles];
@@ -14,6 +15,8 @@ export class SfxMetadataFieldEl extends LitElement {
   @property({ attribute: false }) value: unknown;
   @property({ attribute: false }) config: MetadataConfig | null = null;
   @property({ attribute: false }) autocomplete: unknown;
+  @property({ attribute: false }) taxonomyService: unknown;
+  @property({ attribute: false }) taxonomyEntry: TaxonodeEntry | null = null;
   @property({ type: Boolean }) disabled = false;
 
   @state() private _error: string | null = null;
@@ -83,6 +86,8 @@ export class SfxMetadataFieldEl extends LitElement {
         return html`<sfx-meta-multi-select-field .field=${f} .value=${v} ?disabled=${d}></sfx-meta-multi-select-field>`;
       case 'tags':
         return html`<sfx-meta-tags-field .field=${f} .value=${v} .autocomplete=${this.autocomplete} ?disabled=${d}></sfx-meta-tags-field>`;
+      case 'taxonomy-node':
+        return html`<sfx-meta-taxonomy-node-field .field=${f} .value=${v} .taxonomyService=${this.taxonomyService} .entry=${this.taxonomyEntry} ?disabled=${d}></sfx-meta-taxonomy-node-field>`;
       case 'boolean':
         return html`<sfx-meta-boolean-field .field=${f} .value=${v} ?disabled=${d}></sfx-meta-boolean-field>`;
       case 'numeric':

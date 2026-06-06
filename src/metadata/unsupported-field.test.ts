@@ -41,7 +41,6 @@ const unsupportedTypes: MetadataFieldType[] = [
   'attachments-assets',
   'integer-list',
   'ultratags',
-  'taxonomy-node',
 ];
 
 const unsupportedCkeyCases: Array<[MetadataFieldType, string]> = [
