@@ -266,6 +266,8 @@ export class SfxActionsBar extends LitElement {
   @property({ type: Boolean }) selectMode = false;
   /** Number of images currently picked for the similarity check. */
   @property({ type: Number }) selectedCount = 0;
+  /** Max images selectable for a similarity check (0 = no cap shown). */
+  @property({ type: Number }) maxSelection = 0;
 
   private _clear() {
     this.dispatchEvent(
@@ -468,7 +470,9 @@ export class SfxActionsBar extends LitElement {
         <div class="left">
           <span class="select-count">
             ${n > 0
-              ? this.t('imagesSelected', '{{count}} selected', { count: n })
+              ? this.maxSelection > 0
+                ? this.t('imagesSelectedMax', '{{count}}/{{max}} selected', { count: n, max: this.maxSelection })
+                : this.t('imagesSelected', '{{count}} selected', { count: n })
               : this.t('noImagesSelected', 'No images selected')}
           </span>
         </div>

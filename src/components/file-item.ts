@@ -178,8 +178,12 @@ export class SfxFileItem extends LitElement {
       z-index: 10;
     }
 
+    /* Reveal on hover or KEYBOARD focus only (:has(:focus-visible)) — a mouse
+       click sets :focus but not :focus-visible, so actions don't linger/stick
+       after clicking the tile. */
     .tile:hover .actions,
-    .tile:focus-within .actions {
+    .tile:focus-visible .actions,
+    .tile:has(:focus-visible) .actions {
       opacity: 1;
     }
 
@@ -242,7 +246,8 @@ export class SfxFileItem extends LitElement {
     }
 
     .tile:hover .center-actions,
-    .tile:focus-within .center-actions {
+    .tile:focus-visible .center-actions,
+    .tile:has(:focus-visible) .center-actions {
       opacity: 1;
     }
 
@@ -304,6 +309,16 @@ export class SfxFileItem extends LitElement {
       background: var(--sfx-up-primary, #2563eb);
       border-color: var(--sfx-up-primary, #2563eb);
       transform: scale(1.05);
+    }
+
+    /* "No similar found" — muted/neutral, NOT an action to re-run; clicking it
+       just opens the panel's empty-state message. */
+    .check-similar-btn.no-similar,
+    .check-similar-btn.no-similar:hover {
+      background: var(--sfx-up-bg, #fff);
+      border-color: var(--sfx-up-border, #e2e8f0);
+      color: var(--sfx-up-text-muted, #94a3b8);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
     }
 
     .preview-btn svg,
@@ -370,6 +385,12 @@ export class SfxFileItem extends LitElement {
 
     .similar-cb.checked svg { opacity: 1; }
 
+    /* Selection cap reached: unselected checkboxes are muted + not clickable. */
+    .similar-cb.disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
     /* --- Similarity search loading states --- */
     /* Queued (waiting its turn): just dimmed, no badge. */
     .tile.sim-queued { opacity: 0.55; transition: opacity 0.15s ease; }
@@ -431,9 +452,11 @@ export class SfxFileItem extends LitElement {
       border: 1px solid var(--sfx-up-border, #e2e8f0);
       box-shadow: none;
     }
-    /* Hide the resting badge on hover so it doesn't clash with the centered
-       Details / View-similar buttons. */
-    .tile:hover .sim-result-badge { opacity: 0; }
+    /* Hide the resting badge whenever the centered Details / View-similar
+       buttons show (hover OR keyboard focus) so they never overlap. */
+    .tile:hover .sim-result-badge,
+    .tile:focus-visible .sim-result-badge,
+    .tile:has(:focus-visible) .sim-result-badge { opacity: 0; }
 
     /* Review-pick tile (results modal left list): plain selectable card. */
     .tile.review-pick { cursor: pointer; }
@@ -787,6 +810,10 @@ export class SfxFileItem extends LitElement {
   @property({ type: Boolean }) selectMode = false;
   /** Whether this tile is currently picked in selection mode. */
   @property({ type: Boolean }) isSelected = false;
+  /** Selection has reached the max — unselected tiles can't be picked. */
+  @property({ type: Boolean }) selectionFull = false;
+  /** The preview side-panel is open — suppress the hover similar popover. */
+  @property({ type: Boolean }) previewOpen = false;
   /** Similarity-search status for this tile: '' | 'searching' | 'queued'. */
   @property({ type: String }) similarStatus: '' | 'searching' | 'queued' = '';
   /** Number of similar assets found once checked (-1 = not checked yet → no badge). */
@@ -884,6 +911,8 @@ export class SfxFileItem extends LitElement {
   /** Toggle this image's selection while in similar-image selection mode. */
   private _toggleSimilar(e: Event) {
     e.stopPropagation();
+    // Can't add beyond the selection cap (FRA-10365); deselecting is fine.
+    if (this.selectionFull && !this.isSelected) return;
     this._emit('similar-toggle');
   }
 
@@ -902,6 +931,8 @@ export class SfxFileItem extends LitElement {
   /** Show the hover preview popover, positioned beside the tile (flips left
    *  when there isn't room on the right; clamped vertically to the viewport). */
   private _simPopoverShow = () => {
+    // Suppressed while the preview side-panel is open (it already shows similar).
+    if (this.previewOpen) return;
     if (!this.similarResults.length) return;
     this._simCancelHide();
     if (this._simPopover) return;
@@ -982,6 +1013,11 @@ export class SfxFileItem extends LitElement {
     const isImage = category === 'image' && !isBrowserUnrenderableImage(f.type);
     // Similar-image selection applies only to selectable images (upload mode).
     const inSelectMode = this.selectMode && isImage && !isReview;
+    // Already-checked images (have a results entry) are "done" — no checkbox, so
+    // selection (and "Select all") naturally targets the not-yet-checked ones.
+    const alreadyChecked = this.similarCount >= 0;
+    const canSelectSimilar =
+      inSelectMode && !alreadyChecked && this.similarStatus === '';
     // Centered hover actions (Details + optional Check similar) show only on a
     // normal, not-yet-uploaded tile and not while picking images.
     const showCenterActions =
@@ -1000,8 +1036,8 @@ export class SfxFileItem extends LitElement {
       isPaused ? 'paused' : '',
       isRejected ? 'rejected' : '',
       isReview ? 'review' : '',
-      inSelectMode ? 'selectable' : '',
-      inSelectMode && this.isSelected ? 'selected' : '',
+      canSelectSimilar ? 'selectable' : '',
+      canSelectSimilar && this.isSelected ? 'selected' : '',
       this.selectMode && !isImage && !isReview ? 'select-dimmed' : '',
       csOverlay ? 'cs-overlay' : '',
       this.similarStatus === 'queued' ? 'sim-queued' : '',
@@ -1013,7 +1049,7 @@ export class SfxFileItem extends LitElement {
       <div
         class=${tileClass}
         tabindex="0"
-        @click=${this.reviewPick ? this._reviewSelect : inSelectMode ? this._toggleSimilar : undefined}
+        @click=${this.reviewPick ? this._reviewSelect : canSelectSimilar ? this._toggleSimilar : undefined}
       >
         <!-- Preview area -->
         <div class="preview">
@@ -1064,14 +1100,15 @@ export class SfxFileItem extends LitElement {
               : html`<span class="sim-result-badge none">${this.t('noSimilar', 'No similar')}</span>`
             : nothing}
 
-          <!-- Similar-image selection checkbox (selection mode, images only) -->
-          ${inSelectMode
+          <!-- Similar-image selection checkbox (selection mode, unchecked images only) -->
+          ${canSelectSimilar
             ? html`
                 <span
-                  class="similar-cb ${this.isSelected ? 'checked' : ''}"
+                  class="similar-cb ${this.isSelected ? 'checked' : ''} ${this.selectionFull && !this.isSelected ? 'disabled' : ''}"
                   @click=${this._toggleSimilar}
                   role="checkbox"
                   aria-checked=${this.isSelected ? 'true' : 'false'}
+                  aria-disabled=${this.selectionFull && !this.isSelected ? 'true' : 'false'}
                   aria-label=${this.t('selectImage', 'Select image')}
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
@@ -1104,17 +1141,27 @@ export class SfxFileItem extends LitElement {
                           ${this.t('viewNSimilar', 'View {{count}} similar', { count: this.similarCount })}
                         </button>
                       `
-                    : this.showCheckSimilar && isImage
+                    : this.similarCount === 0
                       ? html`
-                          <button class="check-similar-btn" @click=${this._checkSimilarSingle} aria-label=${this.t('checkSimilar', 'Check similar')}>
+                          <button class="check-similar-btn no-similar" @click=${this._openResults} aria-label=${this.t('noSimilarFound', 'No similar assets found')}>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
                               <circle cx="11" cy="11" r="7"/>
                               <line x1="21" y1="21" x2="16.65" y2="16.65"/>
                             </svg>
-                            ${this.t('checkSimilar', 'Check similar')}
+                            ${this.t('noSimilar', 'No similar')}
                           </button>
                         `
-                      : nothing}
+                      : this.showCheckSimilar && isImage
+                        ? html`
+                            <button class="check-similar-btn" @click=${this._checkSimilarSingle} aria-label=${this.t('checkSimilar', 'Check similar')}>
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+                                <circle cx="11" cy="11" r="7"/>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                              </svg>
+                              ${this.t('checkSimilar', 'Check similar')}
+                            </button>
+                          `
+                        : nothing}
                 </div>
               `
             : nothing}

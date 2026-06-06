@@ -105,6 +105,26 @@ export class SfxFileList extends LitElement {
       color: #5b6e82;
     }
 
+    .similar-select-count {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 40px;
+      height: 24px;
+      padding: 0 8px;
+      border-radius: 999px;
+      background: var(--sfx-up-surface, #eef2ff);
+      color: var(--sfx-up-primary, #2563eb);
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .similar-select-count.full {
+      background: var(--sfx-up-primary, #2563eb);
+      color: #fff;
+    }
+
     .similar-select-all {
       display: inline-flex;
       align-items: center;
@@ -591,6 +611,12 @@ export class SfxFileList extends LitElement {
   @property({ attribute: false }) selectedIds: Set<string> = new Set();
   /** Whether every selectable image is currently picked (for "Select all"). */
   @property({ type: Boolean }) allSelected = false;
+  /** Selection has hit the cap — unselected tiles can't be picked. */
+  @property({ type: Boolean }) selectionFull = false;
+  /** Max images selectable for a similarity check (0 = no cap shown). */
+  @property({ type: Number }) maxSelection = 0;
+  /** Preview side-panel is open — tiles suppress their hover similar popover. */
+  @property({ type: Boolean }) previewOpen = false;
   /** Ids of all images in the active similarity-search run (empty = no search). */
   @property({ attribute: false }) searchRunIds: string[] = [];
   /** Ids currently being searched (spinner). */
@@ -862,7 +888,7 @@ export class SfxFileList extends LitElement {
     const searchPct = searchTotal ? Math.round((searchDone / searchTotal) * 100) : 0;
     const allDone = searchTotal > 0 && searchDone === searchTotal;
     return html`
-      ${searchTotal > 1
+      ${searchTotal > 1 && !this.previewOpen
         ? html`
             <div class="similar-banner search">
               ${allDone
@@ -892,8 +918,13 @@ export class SfxFileList extends LitElement {
               </span>
               <div class="similar-banner-txt">
                 <b>${this.t('selectImagesToCheck', 'Select images to check for similar assets')}</b>
-                <span>${this.t('selectImagesHint', 'Pick one or more, then click Check')}</span>
+                <span>${this.maxSelection > 0
+                  ? this.t('selectImagesHintMax', 'Pick up to {{max}}, then click Check', { max: this.maxSelection })
+                  : this.t('selectImagesHint', 'Pick one or more, then click Check')}</span>
               </div>
+              ${this.maxSelection > 0
+                ? html`<span class="similar-select-count ${this.selectionFull ? 'full' : ''}">${this.selectedIds.size}/${this.maxSelection}</span>`
+                : nothing}
               <label class="similar-select-all">
                 <input
                   type="checkbox"
@@ -908,7 +939,7 @@ export class SfxFileList extends LitElement {
       <div class="grid">
         ${this.showDropTile && this.mode !== 'review' && !this.selectMode ? this._renderDropTile() : nothing}
         ${this.files.map(
-          (f, i) => html`<sfx-file-item .t=${this.t} .file=${f} .mode=${this.mode} .showLocateButton=${this.showLocateButton} .showCopyCdnButton=${this.showCopyCdnButton} .showCheckSimilar=${this.showCheckSimilar} .selectMode=${this.selectMode} .isSelected=${this.selectedIds.has(f.id)} .similarStatus=${this._statusFor(f.id)} .similarCount=${this.searchResults.get(f.id)?.length ?? -1} .similarResults=${this.searchResults.get(f.id) ?? []} ${cspStyle({ '--tile-index': String(i) })}></sfx-file-item>`,
+          (f, i) => html`<sfx-file-item .t=${this.t} .file=${f} .mode=${this.mode} .showLocateButton=${this.showLocateButton} .showCopyCdnButton=${this.showCopyCdnButton} .showCheckSimilar=${this.showCheckSimilar} .selectMode=${this.selectMode} .isSelected=${this.selectedIds.has(f.id)} .selectionFull=${this.selectionFull} .previewOpen=${this.previewOpen} .similarStatus=${this._statusFor(f.id)} .similarCount=${this.searchResults.get(f.id)?.length ?? -1} .similarResults=${this.searchResults.get(f.id) ?? []} ${cspStyle({ '--tile-index': String(i) })}></sfx-file-item>`,
         )}
       </div>
     `;

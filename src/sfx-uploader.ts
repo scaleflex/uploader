@@ -166,6 +166,9 @@ export interface SimilarAsset {
   height?: number;
 }
 
+/** Max images that can be selected for a single similarity check (FRA-10365). */
+const SIMILAR_MAX_SELECTION = 10;
+
 export interface UploaderConfig {
   auth: AuthConfig;
   targetFolder?: string;
@@ -1075,6 +1078,236 @@ export class SfxUploader extends LitElement {
     .preview-panel-header button svg {
       width: 16px;
       height: 16px;
+    }
+
+    /* --- Details / Similar tab switcher (preview side-panel) --- */
+    .preview-tabs {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 8px 16px 0;
+      flex-shrink: 0;
+      border-bottom: 1px solid var(--sfx-up-border-light, #f1f5f9);
+    }
+    /* Discard "this image" lives at the right edge of the tab row (secondary,
+       subordinate to the primary Upload action). */
+    .preview-tab-discard {
+      margin-left: auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 28px;
+      padding: 0 10px;
+      border: none;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--sfx-up-error, #dc2626);
+      font-family: inherit;
+      font-size: 12.5px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .preview-tab-discard:hover {
+      background: #fef2f2;
+    }
+    .preview-tab-discard svg {
+      width: 14px;
+      height: 14px;
+    }
+    .preview-tab {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 30px;
+      padding: 0 12px;
+      border: none;
+      background: none;
+      border-bottom: 2px solid transparent;
+      color: var(--sfx-up-text-muted, #5b6e82);
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .preview-tab:hover {
+      color: var(--sfx-up-text, #37414b);
+    }
+    .preview-tab.active {
+      color: var(--sfx-up-primary, #2563eb);
+      border-bottom-color: var(--sfx-up-primary, #2563eb);
+    }
+    .preview-tab-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 16px;
+      height: 16px;
+      padding: 0 5px;
+      border-radius: 999px;
+      /* Light/compact: muted neutral by default; brand-colored on the active tab. */
+      background: var(--sfx-up-surface, #f1f5f9);
+      color: var(--sfx-up-text-muted, #94a3b8);
+      font-size: 10.5px;
+      font-weight: 600;
+    }
+    .preview-tab.active .preview-tab-count {
+      color: var(--sfx-up-primary, #2563eb);
+    }
+
+    /* --- Similar-assets panel body --- */
+    /* Match the left file grid exactly: same min column, gap, tile chrome. */
+    .psim-body {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 4px 16px 16px;
+      display: grid;
+      grid-template-columns: repeat(
+        auto-fill,
+        minmax(var(--sfx-up-grid-min, 200px), 1fr)
+      );
+      grid-auto-rows: max-content;
+      gap: 12px;
+      align-content: start;
+    }
+    /* Identical to .tile in file-item.ts. */
+    .psim-card {
+      border-radius: 10px;
+      background: var(--sfx-up-bg, #fff);
+      border: 1px solid #dde3ed;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.06);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: box-shadow 0.15s;
+    }
+    .psim-card:hover {
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06), 0 6px 16px rgba(0, 0, 0, 0.08);
+    }
+    /* Identical to .preview in file-item.ts (checker bg + 16/10). */
+    .psim-iw {
+      position: relative;
+      aspect-ratio: 16 / 10;
+      flex-shrink: 0;
+      overflow: hidden;
+      border-radius: 10px 10px 0 0;
+      background-color: var(--sfx-up-checker-bg, #fff);
+      background-image:
+        linear-gradient(45deg, var(--sfx-up-checker-tile, #f0f0f0) 25%, transparent 25%),
+        linear-gradient(-45deg, var(--sfx-up-checker-tile, #f0f0f0) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, var(--sfx-up-checker-tile, #f0f0f0) 75%),
+        linear-gradient(-45deg, transparent 75%, var(--sfx-up-checker-tile, #f0f0f0) 75%);
+      background-size: 16px 16px;
+      background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+    }
+    .psim-iw img {
+      position: absolute;
+      inset: 0;
+      margin: auto;
+      display: block;
+      max-width: 100%;
+      max-height: 100%;
+    }
+    .psim-score {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      z-index: 2;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.95);
+      color: var(--sfx-up-primary, #2563eb);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+    .psim-score.high {
+      color: var(--sfx-up-success, #15803d);
+    }
+    .psim-open {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      z-index: 2;
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      border: none;
+      background: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+      color: var(--sfx-up-primary, #2563eb);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      /* Revealed on card hover (keyboard focus also reveals it). */
+      opacity: 0;
+      transform: scale(0.92);
+      transition: opacity 0.15s ease, transform 0.15s ease;
+    }
+    .psim-card:hover .psim-open,
+    .psim-open:focus-visible {
+      opacity: 1;
+      transform: scale(1);
+    }
+    .psim-open svg {
+      width: 13px;
+      height: 13px;
+    }
+    /* Identical to .info in file-item.ts. */
+    .psim-foot {
+      padding: 8px 12px;
+      min-width: 0;
+      overflow: hidden;
+    }
+    .psim-foot-name {
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--sfx-up-text, #111827);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .psim-foot-meta {
+      font-size: 11px;
+      color: var(--sfx-up-text-muted, #5b6e82);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 2px;
+    }
+    .psim-empty {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      color: var(--sfx-up-text-muted, #94a3b8);
+      padding: 40px;
+      text-align: center;
+    }
+    .psim-empty-ic {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--sfx-up-surface, #f8fafc);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .psim-empty-ic svg {
+      width: 22px;
+      height: 22px;
+    }
+    .psim-empty b {
+      color: var(--sfx-up-text-secondary, #475569);
+      font-size: 14px;
+    }
+    .psim-empty span {
+      font-size: 12px;
     }
 
     .preview-doc-wrap {
@@ -2348,8 +2581,8 @@ export class SfxUploader extends LitElement {
   /** Similarity results per checked image id (presence = checked). The badge
    *  shows the count ("N similar" / "No similar"); accumulates across runs. */
   @state() private _similarResults = new Map<string, SimilarAsset[]>();
-  /** Id of the image whose similar results are open in the review panel. */
-  @state() private _similarReviewId: string | null = null;
+  /** Which tab the preview side-panel shows: file details or similar assets. */
+  @state() private _previewPanelTab: "details" | "similar" = "details";
   /** Pending timers for the simulated search progression (demo only). */
   private _similarSimTimers: number[] = [];
   /** Counter to vary the mock similar count across ad-hoc single checks. */
@@ -4008,6 +4241,8 @@ export class SfxUploader extends LitElement {
     const file = this._store.getState().files.get(e.detail.fileId);
     if (!file) return;
     this._previewFileId = file.id;
+    // Opening via the "Details" action always lands on the Details tab.
+    this._previewPanelTab = "details";
     this._dispatchPublic(PublicEvents.FILE_PREVIEW, { file });
     this.config?.callbacks?.onFilePreview?.(file);
   };
@@ -4037,6 +4272,12 @@ export class SfxUploader extends LitElement {
     );
   }
 
+  /** Eligible images not yet checked — the selectable pool. Already-checked
+   *  images are "done", so selection/"Select all" skips them. */
+  private _similarUncheckedFiles(): UploadFile[] {
+    return this._similarImageFiles().filter((f) => !this._similarResults.has(f.id));
+  }
+
   private _onCheckSimilarEnter = () => {
     this._similarSelectedIds = new Set();
     this._similarSelectMode = true;
@@ -4051,14 +4292,25 @@ export class SfxUploader extends LitElement {
     const id = e.detail.fileId;
     // Reassign the Set (don't mutate) so Lit detects the change and re-renders.
     const next = new Set(this._similarSelectedIds);
-    if (next.has(id)) next.delete(id);
-    else next.add(id);
+    if (next.has(id)) {
+      next.delete(id);
+    } else {
+      // Cap selection at SIMILAR_MAX_SELECTION (FRA-10365 reviewer feedback).
+      if (next.size >= SIMILAR_MAX_SELECTION) return;
+      next.add(id);
+    }
     this._similarSelectedIds = next;
   };
 
   private _onSimilarSelectAll = (e: CustomEvent<{ selected: boolean }>) => {
+    // "Select all" picks the next batch of up to SIMILAR_MAX_SELECTION images
+    // that haven't been checked yet (so it never re-selects the done ones).
     this._similarSelectedIds = e.detail.selected
-      ? new Set(this._similarImageFiles().map((f) => f.id))
+      ? new Set(
+          this._similarUncheckedFiles()
+            .slice(0, SIMILAR_MAX_SELECTION)
+            .map((f) => f.id),
+        )
       : new Set();
   };
 
@@ -4123,7 +4375,6 @@ export class SfxUploader extends LitElement {
    */
   private _runSimilarityCheck(files: UploadFile[]) {
     this._clearSimilarRun();
-    this._similarReviewId = null;
     if (!files.length) return;
     this._similarRunIds = files.map((f) => f.id);
 
@@ -4131,10 +4382,20 @@ export class SfxUploader extends LitElement {
     let i = 0;
     const step = () => {
       if (i >= files.length) {
-        // Run finished: auto-dismiss the progress banner after a short pause so
-        // it doesn't linger (and can't get stuck when files are later discarded).
+        // Run finished: surface the results in the side-panel for the first
+        // checked image that has matches (unless the user is already viewing a
+        // preview), then auto-dismiss the progress banner after a short pause.
         // TODO(dev): clear the run (this._clearSimilarRun) when the real batch
         // of requests completes.
+        if (!this._previewFileId) {
+          const firstWithResults = files.find(
+            (f) => (this._similarResults.get(f.id)?.length ?? 0) > 0,
+          );
+          if (firstWithResults) {
+            this._previewFileId = firstWithResults.id;
+            this._previewPanelTab = "similar";
+          }
+        }
         const done = window.setTimeout(() => this._clearSimilarRun(), 1500);
         this._similarSimTimers.push(done);
         return;
@@ -4167,10 +4428,21 @@ export class SfxUploader extends LitElement {
   private _mockSimilarAssets(file: UploadFile, index: number): SimilarAsset[] {
     // Vary count so all cases show: 0 (none), 1 (few), several, many (+N).
     const count = [3, 1, 0, 12, 0, 24, 2][index % 7];
+    const dot = file.name.lastIndexOf(".");
+    const base = dot > 0 ? file.name.slice(0, dot) : file.name;
+    const ext = dot > 0 ? file.name.slice(dot + 1).toLowerCase() : "jpg";
     return Array.from({ length: count }, (_, k) => ({
       uuid: `${file.id}-sim-${k}`,
       score: Math.max(0.6, 0.99 - k * 0.04),
+      // Demo reuses the source preview so a real image shows; the real BE
+      // returns the similar asset's own CDN url (filename lives in that url).
       url: file.previewUrl || "",
+      // TODO(dev): drop these — the BE response carries the asset's own url
+      // (name is extracted from it) and, when available, size/dimensions.
+      name: `${base}-match-${k + 1}.${ext}`,
+      size: file.size ? Math.round(file.size * (0.6 + (k % 5) * 0.1)) : undefined,
+      width: 1920,
+      height: 1080,
     }));
   }
 
@@ -4209,50 +4481,58 @@ export class SfxUploader extends LitElement {
     }
   }
 
-  /** Checked images that HAVE similar matches, for the review panel. Images
-   *  with no similar are excluded — there is nothing to review for them. */
-  private _similarReviewImages() {
-    const files = [...this._store.getState().files.values()];
-    return files
-      .filter((f) => (this._similarResults.get(f.id)?.length ?? 0) > 0)
-      .map((f) => ({
-        id: f.id,
-        name: f.name,
-        previewUrl: f.previewUrl,
-        file: f,
-        results: this._similarResults.get(f.id) ?? [],
-      }));
-  }
-
-  /** Open the similar-results review panel for an image (from its badge). */
+  /** Open the similar results for an image (from its tile badge) in the side
+   *  panel: switch to its preview and select the "Similar" tab. */
   private _onSimilarOpenResults = (e: CustomEvent<{ fileId: string }>) => {
-    this._similarReviewId = e.detail.fileId;
-  };
-
-  /** Switch the review panel to another checked image. */
-  private _onSimilarResultsSelect = (e: CustomEvent<{ fileId: string }>) => {
-    this._similarReviewId = e.detail.fileId;
+    this._previewFileId = e.detail.fileId;
+    this._previewPanelTab = "similar";
   };
 
   /** Open a similar asset in a new window. */
-  private _onSimilarResultsOpen = (e: CustomEvent<{ url: string }>) => {
-    if (e.detail.url) window.open(e.detail.url, "_blank", "noopener,noreferrer");
-  };
+  private _openSimilarAsset(url: string) {
+    if (url) window.open(url, "_blank", "noopener,noreferrer");
+  }
 
-  /** Discard the reviewed image from the upload; move to the next checked one. */
-  private _onSimilarResultsDiscard = (e: CustomEvent<{ fileId: string }>) => {
-    const id = e.detail.fileId;
-    const matched = this._similarReviewImages().map((im) => im.id);
-    const idx = matched.indexOf(id);
-    const nextId = matched[idx + 1] ?? matched[idx - 1] ?? null;
+  /** Discard the previewed image from the upload; move to the next file (so the
+   *  side panel stays open) or close the preview when none remain. */
+  private _discardPreviewFile() {
+    const id = this._previewFileId;
+    if (!id) return;
+    const files = [...this._store.getState().files.values()];
+    const idx = files.findIndex((f) => f.id === id);
+    const nextId = files[idx + 1]?.id ?? files[idx - 1]?.id ?? null;
     // _removeFile purges results/run/selection for this id.
     this._removeFile(id);
-    this._similarReviewId = nextId;
-  };
+    this._previewFileId = nextId;
+  }
 
-  private _onSimilarResultsClose = () => {
-    this._similarReviewId = null;
-  };
+  /** Display name for a similar asset: the filename extracted from its URL
+   *  (decoded, query stripped), falling back to an explicit name or the uuid. */
+  private _simAssetName(r: SimilarAsset): string {
+    let fromUrl = "";
+    if (r.url) {
+      const raw = r.url.split("?")[0].split("/").pop() || "";
+      try {
+        fromUrl = decodeURIComponent(raw);
+      } catch {
+        fromUrl = raw;
+      }
+    }
+    return r.name || fromUrl || r.uuid;
+  }
+
+  /** Meta line for a similar asset card: format · size · resolution. Excludes the
+   *  name itself — only a real file extension counts (avoids echoing the name). */
+  private _simAssetMeta(r: SimilarAsset): string {
+    const name = this._simAssetName(r);
+    const dot = name.lastIndexOf(".");
+    const ext = dot > 0 ? name.slice(dot + 1).toUpperCase() : "";
+    const parts: string[] = [];
+    if (ext && ext.length <= 5) parts.push(ext);
+    if (r.size) parts.push(formatFileSize(r.size));
+    if (r.width && r.height) parts.push(`${r.width}×${r.height}`);
+    return parts.join(" · ");
+  }
 
   private _onRequireMetadata = () => {
     const t = this._storeCtrl.state.t;
@@ -4347,10 +4627,10 @@ export class SfxUploader extends LitElement {
   private _onClearAll = () => {
     const callbacks = this.config?.callbacks;
 
-    // Reset similarity-check state (run + results + review panel).
+    // Reset similarity-check state (run + results + panel tab).
     this._clearSimilarRun();
     this._similarResults = new Map();
-    this._similarReviewId = null;
+    this._previewPanelTab = "details";
     this._similarSelectMode = false;
     this._similarSelectedIds = new Set();
 
@@ -5570,12 +5850,27 @@ export class SfxUploader extends LitElement {
     // Mirror the similarity-check wiring of the main grid so selection works
     // in the preview (split) layout too.
     const similarityEnabled = !!this.config?.similarityCheck?.enabled;
-    const similarImageIds = files
-      .filter((f) => getFileCategory(f) === "image" && !isBrowserUnrenderableImage(f.type))
+    const similarUncheckedIds = files
+      .filter(
+        (f) =>
+          getFileCategory(f) === "image" &&
+          !isBrowserUnrenderableImage(f.type) &&
+          !this._similarResults.has(f.id),
+      )
       .map((f) => f.id);
+    const similarCappedCount = Math.min(
+      similarUncheckedIds.length,
+      SIMILAR_MAX_SELECTION,
+    );
     const allSimilarSelected =
-      similarImageIds.length > 0 &&
-      similarImageIds.every((id) => this._similarSelectedIds.has(id));
+      similarCappedCount > 0 &&
+      this._similarSelectedIds.size >= similarCappedCount;
+    const similarSelectionFull =
+      this._similarSelectedIds.size >= SIMILAR_MAX_SELECTION;
+    // Similar-results for the previewed file (presence = it has been checked).
+    const previewSimilar = this._similarResults.get(previewFile.id);
+    const hasSimilarTab = previewSimilar !== undefined;
+    const panelTab = hasSimilarTab ? this._previewPanelTab : "details";
     return html`
       <div class="preview-topbar"></div>
       <div class="preview-layout">
@@ -5600,6 +5895,9 @@ export class SfxUploader extends LitElement {
             .selectMode=${this._similarSelectMode}
             .selectedIds=${this._similarSelectedIds}
             .allSelected=${allSimilarSelected}
+            .selectionFull=${similarSelectionFull}
+            .maxSelection=${SIMILAR_MAX_SELECTION}
+            .previewOpen=${true}
             .searchRunIds=${this._similarRunIds}
             .searchActiveIds=${this._similarActiveIds}
             .searchResults=${this._similarResults}
@@ -5696,6 +5994,48 @@ export class SfxUploader extends LitElement {
               </button>
             </div>
           </div>
+          ${hasSimilarTab
+            ? html`
+                <div class="preview-tabs" role="tablist">
+                  <button
+                    class="preview-tab ${panelTab === "details" ? "active" : ""}"
+                    role="tab"
+                    aria-selected=${panelTab === "details"}
+                    @click=${() => {
+                      this._previewPanelTab = "details";
+                    }}
+                  >
+                    ${t('details', 'Details')}
+                  </button>
+                  <button
+                    class="preview-tab ${panelTab === "similar" ? "active" : ""}"
+                    role="tab"
+                    aria-selected=${panelTab === "similar"}
+                    @click=${() => {
+                      this._previewPanelTab = "similar";
+                    }}
+                  >
+                    ${t('similarTab', 'Similar')}
+                    ${previewSimilar && previewSimilar.length > 0
+                      ? html`<span class="preview-tab-count"
+                          >${previewSimilar.length}</span
+                        >`
+                      : nothing}
+                  </button>
+                  <button
+                    class="preview-tab-discard"
+                    @click=${() => this._discardPreviewFile()}
+                    aria-label=${t('discardThisImage', 'Discard this image')}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                    ${t('discardThisImage', 'Discard this image')}
+                  </button>
+                </div>
+              `
+            : nothing}
+          ${panelTab === "similar"
+            ? this._renderSimilarPanel(previewFile, previewSimilar ?? [])
+            : html`
           ${previewFile.type.startsWith("video/") && previewFile.file
             ? html`
                 <div class="preview-media-area">
@@ -5914,7 +6254,51 @@ export class SfxUploader extends LitElement {
                   </div>
                 </div>
               `}
+              `}
         </div>
+      </div>
+    `;
+  }
+
+  /** "Similar" tab body of the preview side-panel: the similar-asset cards for
+   *  the previewed image, plus a discard action. Empty state when none. */
+  private _renderSimilarPanel(file: UploadFile, results: SimilarAsset[]) {
+    const t = this._storeCtrl.state.t;
+    if (results.length === 0) {
+      return html`
+        <div class="psim-empty">
+          <span class="psim-empty-ic"
+            ><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg
+          ></span>
+          <b>${t('noSimilarFound', 'No similar assets found')}</b>
+          <span>${t('noSimilarHint', 'This image looks unique in your library.')}</span>
+        </div>
+      `;
+    }
+    return html`
+      <div class="psim-body">
+        ${results.map((r) => {
+          const pct = Math.round(r.score * 100);
+          return html`
+            <div class="psim-card">
+              <div class="psim-iw">
+                <span class="psim-score ${r.score >= 0.9 ? "high" : ""}">${pct}%</span>
+                <button
+                  class="psim-open"
+                  @click=${() => this._openSimilarAsset(r.url)}
+                  title=${t('openInNewWindow', 'Open in new window')}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                </button>
+                ${r.url ? html`<img src=${r.url} alt="" />` : nothing}
+              </div>
+              <div class="psim-foot">
+                <div class="psim-foot-name">${this._simAssetName(r)}</div>
+                <div class="psim-foot-meta">${this._simAssetMeta(r)}</div>
+              </div>
+            </div>
+          `;
+        })}
       </div>
     `;
   }
@@ -5947,13 +6331,26 @@ export class SfxUploader extends LitElement {
     const accept = buildAcceptString(s.restrictions);
     const hasFiles = files.length > 0;
     const similarityEnabled = !!this.config?.similarityCheck?.enabled;
-    // "Select all" reflects whether every selectable image is already picked.
-    const similarImageIds = files
-      .filter((f) => getFileCategory(f) === "image" && !isBrowserUnrenderableImage(f.type))
+    // Selection targets only not-yet-checked images. "Select all" reflects
+    // whether that pool (capped at the max) is fully picked; selection is full
+    // at SIMILAR_MAX_SELECTION.
+    const similarUncheckedIds = files
+      .filter(
+        (f) =>
+          getFileCategory(f) === "image" &&
+          !isBrowserUnrenderableImage(f.type) &&
+          !this._similarResults.has(f.id),
+      )
       .map((f) => f.id);
+    const similarCappedCount = Math.min(
+      similarUncheckedIds.length,
+      SIMILAR_MAX_SELECTION,
+    );
     const allSimilarSelected =
-      similarImageIds.length > 0 &&
-      similarImageIds.every((id) => this._similarSelectedIds.has(id));
+      similarCappedCount > 0 &&
+      this._similarSelectedIds.size >= similarCappedCount;
+    const similarSelectionFull =
+      this._similarSelectedIds.size >= SIMILAR_MAX_SELECTION;
 
     return html`
       <div
@@ -5981,10 +6378,6 @@ export class SfxUploader extends LitElement {
         @similar-select-all=${this._onSimilarSelectAll}
         @check-similar-search-cancel=${this._onSimilarSearchCancel}
         @similar-open-results=${this._onSimilarOpenResults}
-        @similar-results-select=${this._onSimilarResultsSelect}
-        @similar-results-open=${this._onSimilarResultsOpen}
-        @similar-results-discard=${this._onSimilarResultsDiscard}
-        @similar-results-close=${this._onSimilarResultsClose}
         @upload-start=${this._onUploadStart}
         @upload-more=${this._onUploadMore}
         @primary-action=${this._onPrimaryAction}
@@ -6107,6 +6500,8 @@ export class SfxUploader extends LitElement {
                           .selectMode=${this._similarSelectMode}
                           .selectedIds=${this._similarSelectedIds}
                           .allSelected=${allSimilarSelected}
+                          .selectionFull=${similarSelectionFull}
+                          .maxSelection=${SIMILAR_MAX_SELECTION}
                           .searchRunIds=${this._similarRunIds}
                           .searchActiveIds=${this._similarActiveIds}
                           .searchResults=${this._similarResults}
@@ -6138,15 +6533,9 @@ export class SfxUploader extends LitElement {
                 .showCheckSimilar=${similarityEnabled}
                 .selectMode=${this._similarSelectMode}
                 .selectedCount=${this._similarSelectedIds.size}
+                .maxSelection=${SIMILAR_MAX_SELECTION}
               ></sfx-actions-bar>
             `
-          : nothing}
-        ${this._similarReviewId && this._similarReviewImages().length > 0
-          ? html`<sfx-similar-results
-              .t=${t}
-              .images=${this._similarReviewImages()}
-              .selectedId=${this._similarReviewId}
-            ></sfx-similar-results>`
           : nothing}
         ${this._showUrlDialog
           ? html`<sfx-url-dialog .t=${t}></sfx-url-dialog>`
