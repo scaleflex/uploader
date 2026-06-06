@@ -34,12 +34,18 @@ import {
   getFileCategory,
   getFileTypeIconUrl,
   getDefaultFileTypeIconUrl,
+  isSystemFile,
 } from "./utils/file-utils";
 import {
   validateFile,
   validateFileInfo,
   buildAcceptString,
 } from "./utils/validate";
+import {
+  getRelativePath,
+  relativeFolderFromPath,
+  extractFilesFromDataTransfer,
+} from "./utils/folder-traversal";
 import type {
   ProviderId,
   ConnectorConfig,
@@ -353,10 +359,38 @@ export interface UploaderConfig {
    * Wordplex CDN; English defaults are shown for any untranslated keys.
    */
   locale?: string;
+  /**
+   * Preserve nested folder hierarchy when a user drags a folder onto the drop
+   * zone or selects a directory in the file picker. When `true` (default),
+   * each file's path relative to the dropped/selected root is captured and
+   * appended to `targetFolder` on upload — so dropping `photos/2026/jan/x.png`
+   * into a `targetFolder` of `assets` uploads to `assets/photos/2026/jan`.
+   *
+   * Set to `false` to flatten everything into `targetFolder`, ignoring the
+   * source structure (legacy behavior). Drag-drop of a folder still ingests
+   * the files in either mode; only the destination path differs.
+   *
+   * Also surfaces a small "or upload a folder" affordance next to the
+   * "browse" link, letting users pick a folder from the OS picker (in
+   * addition to the existing file picker). Folder picking from the OS
+   * dialog requires browser support for `webkitdirectory` (all modern
+   * Chromium/WebKit/Firefox builds).
+   *
+   * Default: `true`.
+   */
+  preserveFolderStructure?: boolean;
 }
 
-/** Default tus-related fields for new UploadFile objects. */
-const TUS_DEFAULTS = { isTus: false, tusUploadUrl: null } as const;
+/**
+ * Default tus-related fields and the empty `relativeFolder` for new UploadFile
+ * objects. Folder structure (when a user drags or selects a directory) is
+ * applied by overriding `relativeFolder` after this spread.
+ */
+const TUS_DEFAULTS = {
+  isTus: false,
+  tusUploadUrl: null,
+  relativeFolder: '',
+} as const;
 
 export type UploaderPhase = "empty" | "ready" | "uploading" | "complete";
 
@@ -1608,6 +1642,11 @@ export class SfxUploader extends LitElement {
       color: #ef4444;
     }
 
+    .float-icon.info {
+      background: var(--sfx-up-info-bg, rgba(0, 144, 228, 0.08));
+      color: var(--sfx-up-info, #0090e4);
+    }
+
     .float-title {
       font-size: 13px;
       font-weight: 600;
@@ -1781,6 +1820,37 @@ export class SfxUploader extends LitElement {
       height: 12px;
     }
 
+    .float-item-done.info {
+      background: var(--sfx-up-info-bg, rgba(0, 144, 228, 0.08));
+      color: var(--sfx-up-info, #0090e4);
+    }
+
+    .float-item-done.info svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .float-info-note {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 14px 10px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      box-shadow: inset 0 0 0 1px var(--sfx-up-info-border, rgba(0, 144, 228, 0.20));
+      background: var(--sfx-up-info-bg, rgba(0, 144, 228, 0.04));
+      color: var(--sfx-up-info-text, #024a71);
+      font-size: 12px;
+      line-height: 16px;
+    }
+
+    .float-info-note svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+      color: var(--sfx-up-info, #0090e4);
+    }
+
     .float-item-spinner {
       width: 16px;
       height: 16px;
@@ -1893,10 +1963,10 @@ export class SfxUploader extends LitElement {
         0 28px 80px var(--sfx-up-shadow, rgba(0, 0, 0, 0.18)),
         0 4px 16px oklch(0 0 0 / 0.06);
       width: 100%;
-      max-width: 520px;
-      height: 75vh;
-      max-height: 640px;
-      min-height: 400px;
+      max-width: 760px;
+      height: 78vh;
+      max-height: 720px;
+      min-height: 420px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
@@ -2716,6 +2786,7 @@ export class SfxUploader extends LitElement {
       [data-sfx-upload-float] .float-icon.done { background:#f0fdf4; color:#22c55e; }
       [data-sfx-upload-float] .float-icon.warn { background:#fffbeb; color:#f59e0b; }
       [data-sfx-upload-float] .float-icon.error { background:#fef2f2; color:#ef4444; }
+      [data-sfx-upload-float] .float-icon.info { background:var(--sfx-up-info-bg, rgba(0,144,228,0.08)); color:var(--sfx-up-info, #0090e4); }
       [data-sfx-upload-float] .float-title { font-size:13px; font-weight:600; color:#1e293b; }
       [data-sfx-upload-float] .float-subtitle { font-size:11px; color:#94a3b8; }
       [data-sfx-upload-float] .float-actions { display:flex; gap:4px; }
@@ -2744,6 +2815,10 @@ export class SfxUploader extends LitElement {
       [data-sfx-upload-float] .float-item-size { font-size:11px; color:#94a3b8; }
       [data-sfx-upload-float] .float-item-done { width:18px; height:18px; border-radius:50%; background:#f0fdf4; color:#22c55e; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
       [data-sfx-upload-float] .float-item-done svg { width:12px; height:12px; }
+      [data-sfx-upload-float] .float-item-done.info { background:var(--sfx-up-info-bg, rgba(0,144,228,0.08)); color:var(--sfx-up-info, #0090e4); }
+      [data-sfx-upload-float] .float-item-done.info svg { width:14px; height:14px; }
+      [data-sfx-upload-float] .float-info-note { display:flex; align-items:center; gap:8px; margin:0 14px 10px; padding:6px 10px; border-radius:8px; box-shadow:inset 0 0 0 1px var(--sfx-up-info-border, rgba(0,144,228,0.20)); background:var(--sfx-up-info-bg, rgba(0,144,228,0.04)); color:var(--sfx-up-info-text, #024a71); font-size:12px; line-height:16px; }
+      [data-sfx-upload-float] .float-info-note svg { width:14px; height:14px; flex-shrink:0; color:var(--sfx-up-info, #0090e4); }
       [data-sfx-upload-float] .float-item-spinner { width:16px; height:16px; border:2px solid #e8edf5; border-top-color:#2563eb; border-radius:50%; animation:sfxSpin .8s linear infinite; flex-shrink:0; }
       [data-sfx-upload-float] .float-item-status { display:flex; flex-direction:row; align-items:center; gap:4px; flex-shrink:0; }
       [data-sfx-upload-float] .float-item-error-wrap { position:relative; display:flex; align-items:center; flex-shrink:0; }
@@ -2769,6 +2844,7 @@ export class SfxUploader extends LitElement {
       [data-sfx-upload-float] .float-collapsed-icon.done { color:#22c55e; }
       [data-sfx-upload-float] .float-collapsed-icon.warn { color:#f59e0b; }
       [data-sfx-upload-float] .float-collapsed-icon.error { color:#ef4444; }
+      [data-sfx-upload-float] .float-collapsed-icon.info { color:var(--sfx-up-info, #0090e4); }
       [data-sfx-upload-float] .float-collapsed-text { font-size:13px; font-weight:500; color:#1e293b; white-space:nowrap; }
       [data-sfx-upload-float] .float-collapsed-pct { font-size:13px; font-weight:600; color:#2563eb; }
       [data-sfx-upload-float] .float-collapsed-actions { display:flex; gap:4px; }
@@ -3058,6 +3134,17 @@ export class SfxUploader extends LitElement {
     if (this.config?.forceName != null) return false;
     const remaining = this._remainingSlots;
     return remaining === null || remaining > 1;
+  }
+
+  /**
+   * Whether the drop-zone / drop-tile should expose the "browse folder"
+   * affordance and render a `webkitdirectory` input. True when:
+   *   - the host hasn't disabled it via `preserveFolderStructure: false`, and
+   *   - multi-select is allowed (single-asset slots can't accept a folder).
+   */
+  private get _allowFolderUpload(): boolean {
+    if (this.config?.preserveFolderStructure === false) return false;
+    return this._allowMulti;
   }
 
   /**
@@ -3556,15 +3643,33 @@ export class SfxUploader extends LitElement {
       this._reviewFiles = [];
     }
 
+    // Resolved once per call so the config reads are stable across the loop.
+    const preserveFolders = this.config?.preserveFolderStructure !== false;
+
     for (const file of rawFiles) {
+      // Silently skip OS-generated metadata files (.DS_Store, Thumbs.db, …) — never user-intended.
+      if (isSystemFile(file.name)) continue;
+
+      // Capture the file's path within a dropped/selected folder tree (set by
+      // drop-zone via `_sfxRelativePath` or by the browser's directory input
+      // via `webkitRelativePath`). Empty when the file was added flat. When
+      // the host opts out via `preserveFolderStructure: false` we ignore the
+      // path so uploads stay flat under `targetFolder`.
+      const relativeFolder = preserveFolders
+        ? relativeFolderFromPath(getRelativePath(file))
+        : '';
+
       // Re-read state each iteration so maxNumberOfFiles validation sees previously added files
       const s = this._store.getState();
 
-      // Skip duplicate files (same name + size already in queue)
+      // Skip duplicate files (same name + size + relativeFolder already in
+      // queue). The folder is part of the identity so that two files named
+      // `image.png` in different subfolders both get uploaded.
       const isDuplicate = [...s.files.values()].some(
         (f) =>
           f.name === file.name &&
           f.size === file.size &&
+          f.relativeFolder === relativeFolder &&
           f.status !== "rejected" &&
           f.status !== "cancelled",
       );
@@ -3608,6 +3713,7 @@ export class SfxUploader extends LitElement {
           product: {},
           remoteInfo: null,
           ...TUS_DEFAULTS,
+          relativeFolder,
         };
         addFile(this._store, uploadFile);
         this._dispatchPublic(PublicEvents.FILE_REJECTED, {
@@ -3662,6 +3768,7 @@ export class SfxUploader extends LitElement {
         product: {},
         remoteInfo: null,
         ...TUS_DEFAULTS,
+        relativeFolder,
       };
 
       addFile(this._store, uploadFile);
@@ -3797,6 +3904,9 @@ export class SfxUploader extends LitElement {
 
     const type = guessMimeType(name);
     const isImage = type.startsWith("image/");
+
+    // Silently skip OS-generated metadata files (.DS_Store, Thumbs.db, …) — never user-intended.
+    if (isSystemFile(name)) return;
 
     // Validate against restrictions (size=0 for URL imports, so size checks are skipped)
     const s = this._store.getState();
@@ -4187,15 +4297,24 @@ export class SfxUploader extends LitElement {
     e: CustomEvent<{ files: RemoteFileInfo[] }>,
   ) => {
     const callbacks = this.config?.callbacks;
+    // Folder hierarchy from connector selection is only preserved when the
+    // host hasn't opted out, mirroring the local drag/drop behavior.
+    const preserveFolders = this.config?.preserveFolderStructure !== false;
     for (const info of e.detail.files) {
+      // Silently skip OS-generated metadata files (.DS_Store, Thumbs.db, …) — never user-intended.
+      if (isSystemFile(info.name)) continue;
+
+      const relativeFolder = preserveFolders ? (info.relativeFolder ?? '') : '';
+
       // Re-read state each iteration so maxNumberOfFiles sees previously added files
       const s = this._store.getState();
 
-      // Skip duplicate files (same name + size already in queue)
+      // Skip duplicate files (same name + size + relativeFolder already in queue)
       const isDuplicate = [...s.files.values()].some(
         (f) =>
           f.name === info.name &&
           f.size === info.size &&
+          f.relativeFolder === relativeFolder &&
           f.status !== "rejected" &&
           f.status !== "cancelled",
       );
@@ -4236,6 +4355,7 @@ export class SfxUploader extends LitElement {
           product: {},
           remoteInfo: info,
           ...TUS_DEFAULTS,
+          relativeFolder,
         };
         addFile(this._store, rejFile);
         this._dispatchPublic(PublicEvents.FILE_REJECTED, {
@@ -4268,6 +4388,7 @@ export class SfxUploader extends LitElement {
         product: {},
         remoteInfo: info,
         ...TUS_DEFAULTS,
+        relativeFolder,
       };
       addFile(this._store, uploadFile);
       this._dispatchPublic(PublicEvents.FILE_ADDED, { file: uploadFile });
@@ -4421,12 +4542,19 @@ export class SfxUploader extends LitElement {
     }
     this._bodyDragOver = false;
 
-    const files = Array.from(e.dataTransfer?.files ?? []);
-    if (files.length > 0) {
-      this._onFilesSelected(
-        new CustomEvent("files-selected", { detail: { files } }),
-      );
-    }
+    const dataTransfer = e.dataTransfer;
+    if (!dataTransfer) return;
+
+    // Recursively expand any dropped folders so nested files arrive with
+    // their relative paths attached. Falls back to the flat file list when
+    // the entries API isn't available or the drop has no directories.
+    extractFilesFromDataTransfer(dataTransfer).then((files) => {
+      if (files.length > 0) {
+        this._onFilesSelected(
+          new CustomEvent("files-selected", { detail: { files } }),
+        );
+      }
+    });
   };
 
   private _onKeyDown = (e: KeyboardEvent) => {
@@ -4825,6 +4953,13 @@ export class SfxUploader extends LitElement {
     const isDone = this._phase === "complete";
     const completed = files.filter((f) => f.status === "complete").length;
     const failed = files.filter((f) => f.status === "failed").length;
+    const alreadyExistedCount = files.filter(
+      (f) => f.status === "complete" && f.alreadyExisted,
+    ).length;
+    // Every successful file already existed on the server — show as info state
+    // (matches success-card).
+    const allAlreadyExisted =
+      completed > 0 && failed === 0 && alreadyExistedCount >= completed;
 
     // Collapsed pill — compact white bar
     if (this._isPillExpanded === false) {
@@ -4864,17 +4999,32 @@ export class SfxUploader extends LitElement {
                         <line x1="12" y1="16" x2="12.01" y2="16" />
                       </svg>
                     </div>`
-                : html`<div class="float-collapsed-icon done">
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2.5"
-                      stroke-linecap="round"
-                    >
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  </div>`
+                : allAlreadyExisted
+                  ? html`<div class="float-collapsed-icon info">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="16" x2="12" y2="12" />
+                        <line x1="12" y1="8" x2="12.01" y2="8" />
+                      </svg>
+                    </div>`
+                  : html`<div class="float-collapsed-icon done">
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.5"
+                        stroke-linecap="round"
+                      >
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                    </div>`
               : html`<div class="float-collapsed-spinner"></div>`}
             <span class="float-collapsed-text"
               >${isDone
@@ -4882,7 +5032,9 @@ export class SfxUploader extends LitElement {
                   ? completed > 0
                     ? t('partiallyUploaded', 'Partially uploaded')
                     : t('uploadFailed', 'Upload failed')
-                  : t('uploadComplete', 'Upload complete')
+                  : allAlreadyExisted
+                    ? t('alreadyInLibrary', { count: alreadyExistedCount, defaultValue_one: '{{count}} file was already in your library', defaultValue_other: '{{count}} files were already in your library' })
+                    : t('uploadComplete', 'Upload complete')
                 : t('uploadingFiles', { count: files.length, defaultValue_one: 'Uploading {{count}} file', defaultValue_other: 'Uploading {{count}} files' })}</span
             >
             ${!isDone
@@ -4944,7 +5096,9 @@ export class SfxUploader extends LitElement {
                   ? completed > 0
                     ? "warn"
                     : "error"
-                  : "done"
+                  : allAlreadyExisted
+                    ? "info"
+                    : "done"
                 : ""}"
             >
               ${isDone
@@ -4976,15 +5130,28 @@ export class SfxUploader extends LitElement {
                         <line x1="12" y1="8" x2="12" y2="12" />
                         <line x1="12" y1="16" x2="12.01" y2="16" />
                       </svg>`
-                  : html`<svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2.5"
-                      stroke-linecap="round"
-                    >
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>`
+                  : allAlreadyExisted
+                    ? html`<svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="16" x2="12" y2="12" />
+                        <line x1="12" y1="8" x2="12.01" y2="8" />
+                      </svg>`
+                    : html`<svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2.5"
+                        stroke-linecap="round"
+                      >
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>`
                 : html`<svg
                     viewBox="0 0 24 24"
                     fill="none"
@@ -5004,12 +5171,16 @@ export class SfxUploader extends LitElement {
                     ? completed > 0
                       ? t('partiallyUploaded', 'Partially uploaded')
                       : t('uploadFailed', 'Upload failed')
-                    : t('uploadComplete', 'Upload complete')
+                    : allAlreadyExisted
+                      ? t('alreadyInLibrary', { count: alreadyExistedCount, defaultValue_one: '{{count}} file was already in your library', defaultValue_other: '{{count}} files were already in your library' })
+                      : t('uploadComplete', 'Upload complete')
                   : t('uploadingFiles', { count: files.length, defaultValue_one: 'Uploading {{count}} file', defaultValue_other: 'Uploading {{count}} files' })}
               </div>
               <div class="float-subtitle">
                 ${isDone
-                  ? `${t('filesUploaded', { count: completed, defaultValue_one: '{{count}} file uploaded', defaultValue_other: '{{count}} files uploaded' })}${failed > 0 ? `, ${t('nFailed', '{{count}} failed', { count: failed })}` : ""}`
+                  ? allAlreadyExisted
+                    ? t('alreadyInLibrarySubtitle', { count: alreadyExistedCount, defaultValue_one: 'It’s ready to use — nothing new to upload', defaultValue_other: 'They’re ready to use — nothing new to upload' })
+                    : `${t('filesUploaded', { count: completed, defaultValue_one: '{{count}} file uploaded', defaultValue_other: '{{count}} files uploaded' })}${failed > 0 ? `, ${t('nFailed', '{{count}} failed', { count: failed })}` : ""}`
                   : `${t('nOfNComplete', '{{completed}} of {{total}} complete', { completed, total: files.length })}${this._lastEta > 0 ? ` · ${t('etaLeft', '~{{eta}} left', { eta: formatEta(this._lastEta) })}` : ""}`}
               </div>
             </div>
@@ -5082,6 +5253,16 @@ export class SfxUploader extends LitElement {
             ></div>
           </div>
         </div>
+        ${isDone && alreadyExistedCount > 0 && !allAlreadyExisted
+          ? html`<div class="float-info-note" role="status">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="16" x2="12" y2="12" />
+                <line x1="12" y1="8" x2="12.01" y2="8" />
+              </svg>
+              <span>${t('alreadyInLibrary', { count: alreadyExistedCount, defaultValue_one: '{{count}} file was already in your library', defaultValue_other: '{{count}} files were already in your library' })}</span>
+            </div>`
+          : nothing}
         <div class="float-items">
           ${files.map((f) => {
             const isFailed = f.status === "failed" || f.status === "error";
@@ -5126,17 +5307,35 @@ export class SfxUploader extends LitElement {
                               </svg>
                             </button>`
                           : nothing}
-                        <div class="float-item-done">
-                        <svg
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2.5"
-                          stroke-linecap="round"
-                        >
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                      </div>`
+                        ${f.alreadyExisted
+                          ? html`<div
+                              class="float-item-done info"
+                              title=${t('alreadyUploaded', 'Already uploaded')}
+                            >
+                              <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                              >
+                                <circle cx="12" cy="12" r="10" />
+                                <line x1="12" y1="16" x2="12" y2="12" />
+                                <line x1="12" y1="8" x2="12.01" y2="8" />
+                              </svg>
+                            </div>`
+                          : html`<div class="float-item-done">
+                              <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2.5"
+                                stroke-linecap="round"
+                              >
+                                <polyline points="20 6 9 17 4 12" />
+                              </svg>
+                            </div>`}`
                     : isFailed
                     ? html` <div class="float-item-error-wrap">
                           <svg
@@ -5315,6 +5514,7 @@ export class SfxUploader extends LitElement {
             .sources=${this._mergedSources}
             .accept=${buildAcceptString(this._storeCtrl.state.restrictions)}
             .multi=${this._allowMulti}
+            .directory=${this._allowFolderUpload}
             ?drag-active=${this._bodyDragOver}
             @source-click=${this._onDropTileSourceClick}
           ></sfx-file-list>
@@ -5763,6 +5963,7 @@ export class SfxUploader extends LitElement {
                         .sourcesLayout=${this.config?.sourcesLayout ?? "pills"}
                         .mode=${this.config?.mode ?? "modal"}
                         .multi=${this._allowMulti}
+                        .directory=${this._allowFolderUpload}
                       ></sfx-drop-zone>
                       ${this._hasStoredReview
                         ? html`<button
@@ -5795,6 +5996,7 @@ export class SfxUploader extends LitElement {
                           .sources=${this._mergedSources}
                           .accept=${accept}
                           .multi=${this._allowMulti}
+                          .directory=${this._allowFolderUpload}
                           ?drag-active=${this._bodyDragOver}
                           @source-click=${this._onDropTileSourceClick}
                         ></sfx-file-list>

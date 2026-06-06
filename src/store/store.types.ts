@@ -61,6 +61,13 @@ export interface UploadFile {
   // Companion connector metadata (set for files from cloud providers)
   remoteInfo: RemoteFileInfo | null;
 
+  // Subfolder (relative to `targetFolder`) the file came from when it was
+  // dropped/selected as part of a directory tree. Empty string when the file
+  // was added flat. The upload engine joins this with `targetFolder` so the
+  // backend receives `targetFolder + '/' + relativeFolder`, preserving the
+  // original folder hierarchy on Filerobot.
+  relativeFolder: string;
+
   // tus resumable upload state
   isTus: boolean;
   tusUploadUrl: string | null;

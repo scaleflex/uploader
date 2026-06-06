@@ -19,9 +19,14 @@ export async function initI18n(locale = 'en'): Promise<{ i18n: i18n; isNew: bool
     fallbackLng: 'en',
     ns: [I18N_NAMESPACE],
     defaultNS: I18N_NAMESPACE,
-    saveMissing: true, // enables missingKey event; no auto-send because no missingKeyHandler backend is wired
+    saveMissing: true, // enables missingKey event consumed by missingKeysHelper
     missingKeyNoValueFallbackToKey: false,
     backend: {
+      // Disable the http-backend's auto-POST of missing keys. Default addPath
+      // is `/locales/add/{{lng}}/{{ns}}`, which would hit the host site for
+      // every missing key — pure noise. We collect missing keys via the
+      // i18next 'missingKey' event instead (see missing-keys-helper).
+      addPath: '',
       // The grid has no namespace in Wordplex; the CDN response format is:
       // { lng: { __without_namespace: { key: value, ... } } }
       loadPath: `${I18N_CDN_URL}/api/export/grid/f2/${I18N_GRID_UUID}?langs={{lng}}&separator=+&response_format=i18next_multi`,

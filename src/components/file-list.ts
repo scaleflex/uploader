@@ -7,6 +7,7 @@ import { brandIcon } from '../utils/brand-icon';
 import type { UploadFile, TFunction } from '../store/store.types';
 import type { SourceDef } from '../types/source.types';
 import { getPortalTarget } from '../utils/portal-target';
+import { attachRelativePath } from '../utils/folder-traversal';
 
 const tileDropdownSheet = new CSSStyleSheet();
 tileDropdownSheet.replaceSync(`
@@ -204,6 +205,23 @@ export class SfxFileList extends LitElement {
     .drop-tile-text span {
       color: var(--sfx-up-primary, #2563eb);
       font-weight: 600;
+    }
+
+    .drop-tile-folder-pick {
+      font-size: clamp(11px, 3cqi, 13px);
+      color: var(--sfx-up-text-muted, #94a3b8);
+      text-align: center;
+      margin-top: 2px;
+    }
+    .drop-tile-folder-pick button {
+      background: none;
+      border: none;
+      padding: 0;
+      font: inherit;
+      color: var(--sfx-up-primary, #2563eb);
+      cursor: pointer;
+      text-decoration: underline;
+      text-underline-offset: 2px;
     }
 
     .drop-tile-sources {
@@ -431,6 +449,8 @@ export class SfxFileList extends LitElement {
   @property({ type: String }) accept = '';
   /** Whether the drop-tile file picker allows multiple selection. */
   @property({ type: Boolean }) multi = true;
+  /** When true, the drop-tile renders both a file picker and a `webkitdirectory` folder picker. */
+  @property({ type: Boolean }) directory = false;
   /** 'upload' (default): full controls; 'review': read-only post-upload review
    *  with status badges, Open links, and a Local-edit pill on edited files. */
   @property({ type: String }) mode: 'upload' | 'review' = 'upload';
@@ -452,13 +472,30 @@ export class SfxFileList extends LitElement {
   };
 
   private _onDropTileClick() {
-    const input = this.renderRoot.querySelector('input[type="file"]') as HTMLInputElement;
+    const input = this.renderRoot.querySelector(
+      'input[data-sfx-fl-files]',
+    ) as HTMLInputElement | null;
+    input?.click();
+  }
+
+  private _onDropTileFolderClick(e: Event) {
+    e.stopPropagation();
+    const input = this.renderRoot.querySelector(
+      'input[data-sfx-fl-folder]',
+    ) as HTMLInputElement | null;
     input?.click();
   }
 
   private _onFileInput(e: Event) {
     const input = e.target as HTMLInputElement;
     const files = Array.from(input.files ?? []);
+    // Promote `webkitRelativePath` (set by directory-mode inputs) to the
+    // shared `_sfxRelativePath` shape used by drop-zone + sfx-uploader.
+    for (const file of files) {
+      const webkit = (file as File & { webkitRelativePath?: string })
+        .webkitRelativePath;
+      if (webkit) attachRelativePath(file, webkit);
+    }
     if (files.length > 0) {
       this.dispatchEvent(new CustomEvent('files-selected', { detail: { files }, bubbles: true, composed: true }));
     }
@@ -642,6 +679,14 @@ export class SfxFileList extends LitElement {
         </div>
         <div class="drop-tile-info">
           <div class="drop-tile-text">${this.t('dropOrClickTo', 'Drop or click to')} <span>${this.t('browse', 'browse')}</span></div>
+          ${this.directory && this.multi
+            ? html`<div class="drop-tile-folder-pick">
+                ${this.t('orUploadFolderPrefix', 'or upload a ')}<button
+                  type="button"
+                  @click=${this._onDropTileFolderClick}
+                >${this.t('uploadFolder', 'folder')}</button>
+              </div>`
+            : nothing}
           ${visibleSources.length > 0 ? html`
             <div class="drop-tile-sources">
               ${visibleSources.map((s) => html`
@@ -664,7 +709,10 @@ export class SfxFileList extends LitElement {
             </div>
           ` : nothing}
         </div>
-        <input type="file" ?multiple=${this.multi} accept=${this.accept || nothing} @change=${this._onFileInput} />
+        <input data-sfx-fl-files type="file" ?multiple=${this.multi} accept=${this.accept || nothing} @change=${this._onFileInput} />
+        ${this.directory && this.multi
+          ? html`<input data-sfx-fl-folder type="file" multiple webkitdirectory directory @change=${this._onFileInput} />`
+          : nothing}
       </div>
     `;
   }

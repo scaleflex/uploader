@@ -39,6 +39,8 @@ export interface CompanionItem {
   thumbnail: string | null;
   size: number;
   requestPath: string;
+  /** ISO timestamp from the provider — present on Google Drive / Dropbox / OneDrive listings. */
+  modifiedDate?: string;
 }
 
 /** Response from GET /{provider}/list/{directory}. */
@@ -77,4 +79,10 @@ export interface RemoteFileInfo {
   mimeType: string;
   size: number;
   thumbnail: string | null;
+  /**
+   * Folder path relative to the top-level folder the user selected. Empty for
+   * flat selections. Used to preserve folder hierarchy when the user picks
+   * one or more entire folders from a connector (e.g. `"myFolder/sub"`).
+   */
+  relativeFolder?: string;
 }
