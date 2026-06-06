@@ -1062,9 +1062,19 @@ export class SfxDropZone extends LitElement {
     // Recursively walk any dropped directories so nested files come through
     // with their relative paths intact. Falls back to the flat file list when
     // the entries API isn't available or the drop contains no directories.
-    extractFilesFromDataTransfer(dataTransfer).then((files) => {
+    // The util never rejects — per-entry errors are caught internally — so
+    // there's no `.catch` here.
+    extractFilesFromDataTransfer(dataTransfer).then(({ files, hadDirectories }) => {
       if (files.length > 0) {
-        this._emitFiles(files);
+        this._emitFiles(files, hadDirectories);
+      } else if (hadDirectories) {
+        // User dropped a folder that produced zero usable files (empty, or
+        // only hidden/system contents that were filtered out). Surface as a
+        // distinct event so sfx-uploader can show a friendly "folder is
+        // empty" toast.
+        this.dispatchEvent(
+          new CustomEvent('folder-empty', { bubbles: true, composed: true }),
+        );
       }
     });
   };
@@ -1144,10 +1154,10 @@ export class SfxDropZone extends LitElement {
     );
   }
 
-  private _emitFiles(files: File[]) {
+  private _emitFiles(files: File[], hadDirectories = false) {
     this.dispatchEvent(
       new CustomEvent("files-selected", {
-        detail: { files },
+        detail: { files, hadDirectories },
         bubbles: true,
         composed: true,
       }),
@@ -1570,7 +1580,6 @@ export class SfxDropZone extends LitElement {
               type="file"
               multiple
               webkitdirectory
-              directory
               @change=${this._onFileChange}
             />`
           : nothing}

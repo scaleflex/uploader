@@ -40,6 +40,7 @@ import {
   validateFile,
   validateFileInfo,
   buildAcceptString,
+  isMaxFilesError,
 } from "./utils/validate";
 import {
   getRelativePath,
@@ -3646,9 +3647,22 @@ export class SfxUploader extends LitElement {
     // Resolved once per call so the config reads are stable across the loop.
     const preserveFolders = this.config?.preserveFolderStructure !== false;
 
+    // Folder drops can blow past `maxNumberOfFiles` — once we hit the cap we
+    // tally the rest into a single aggregate toast instead of flooding the
+    // queue with N rejection cards.
+    let overflowCount = 0;
+    let hitOverflow = false;
+
     for (const file of rawFiles) {
       // Silently skip OS-generated metadata files (.DS_Store, Thumbs.db, …) — never user-intended.
       if (isSystemFile(file.name)) continue;
+
+      // Once the cap is hit, the limit can't lift mid-loop — tally and skip
+      // without creating per-file rejection entries.
+      if (hitOverflow) {
+        overflowCount++;
+        continue;
+      }
 
       // Capture the file's path within a dropped/selected folder tree (set by
       // drop-zone via `_sfxRelativePath` or by the browser's directory input
@@ -3686,6 +3700,13 @@ export class SfxUploader extends LitElement {
         s.files,
       );
       if (error) {
+        if (isMaxFilesError(error)) {
+          // First overflow hit — switch to aggregate mode for the rest of
+          // the batch. Don't create a rejected entry for this one.
+          hitOverflow = true;
+          overflowCount++;
+          continue;
+        }
         // Create a rejected file entry so the user sees the error
         const rejectedPreview =
           effectiveType.startsWith("image/") && !isBrowserUnrenderableImage(effectiveType)
@@ -3811,6 +3832,23 @@ export class SfxUploader extends LitElement {
       }
     }
 
+    // One aggregate notice for files dropped past the cap — beats N rejection
+    // cards when a 500-file folder is dropped into a 5-slot uploader.
+    if (overflowCount > 0) {
+      const t = this._storeCtrl.state.t;
+      const max =
+        this._store.getState().restrictions.maxNumberOfFiles ?? 0;
+      this._showToast(
+        t('tooManyFilesSkipped', {
+          count: overflowCount,
+          max,
+          defaultValue_one: 'Skipped {{count}} file — limit is {{max}}',
+          defaultValue_other: 'Skipped {{count}} files — limit is {{max}}',
+        }),
+        'warning',
+      );
+    }
+
     // Auto-proceed if configured
     if (this._store.getState().queueConfig.autoProceed) {
       this.upload();
@@ -3819,9 +3857,29 @@ export class SfxUploader extends LitElement {
 
   // --- Event handlers ---
 
-  private _onFilesSelected = (e: CustomEvent<{ files: File[] }>) => {
-    this._processIncomingFiles(e.detail.files);
+  private _onFilesSelected = (
+    e: CustomEvent<{ files: File[]; hadDirectories?: boolean }>,
+  ) => {
+    const { files, hadDirectories } = e.detail;
+    if (files.length === 0 && hadDirectories) {
+      this._showEmptyFolderToast();
+      return;
+    }
+    this._processIncomingFiles(files);
   };
+
+  private _onFolderEmpty = () => {
+    this._showEmptyFolderToast();
+  };
+
+  /** Surface the "dropped folder is empty" hint once per drop. */
+  private _showEmptyFolderToast() {
+    const t = this._storeCtrl.state.t;
+    this._showToast(
+      t('emptyFolderDrop', 'The dropped folder is empty — no files were added'),
+      'info',
+    );
+  }
 
   private _onDropTileSourceClick = (e: CustomEvent<{ source: SourceDef }>) => {
     e.stopPropagation();
@@ -4546,14 +4604,16 @@ export class SfxUploader extends LitElement {
     if (!dataTransfer) return;
 
     // Recursively expand any dropped folders so nested files arrive with
-    // their relative paths attached. Falls back to the flat file list when
-    // the entries API isn't available or the drop has no directories.
-    extractFilesFromDataTransfer(dataTransfer).then((files) => {
-      if (files.length > 0) {
-        this._onFilesSelected(
-          new CustomEvent("files-selected", { detail: { files } }),
-        );
+    // their relative paths attached. The util never rejects — per-entry
+    // errors are caught internally — so there's no `.catch` here.
+    extractFilesFromDataTransfer(dataTransfer).then(({ files, hadDirectories }) => {
+      if (files.length === 0) {
+        if (hadDirectories) this._showEmptyFolderToast();
+        return;
       }
+      this._onFilesSelected(
+        new CustomEvent("files-selected", { detail: { files, hadDirectories } }),
+      );
     });
   };
 
@@ -5863,6 +5923,7 @@ export class SfxUploader extends LitElement {
       <div
         class="content"
         @files-selected=${this._onFilesSelected}
+        @folder-empty=${this._onFolderEmpty}
         @source-click=${this._onSourceClick}
         @file-remove=${this._onFileRemove}
         @file-preview=${this._onFilePreview}

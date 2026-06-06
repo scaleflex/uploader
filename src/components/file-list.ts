@@ -222,6 +222,10 @@ export class SfxFileList extends LitElement {
       cursor: pointer;
       text-decoration: underline;
       text-underline-offset: 2px;
+      transition: color 0.15s;
+    }
+    .drop-tile-folder-pick button:hover {
+      color: var(--sfx-up-primary-hover, #1d4ed8);
     }
 
     .drop-tile-sources {
@@ -711,7 +715,7 @@ export class SfxFileList extends LitElement {
         </div>
         <input data-sfx-fl-files type="file" ?multiple=${this.multi} accept=${this.accept || nothing} @change=${this._onFileInput} />
         ${this.directory && this.multi
-          ? html`<input data-sfx-fl-folder type="file" multiple webkitdirectory directory @change=${this._onFileInput} />`
+          ? html`<input data-sfx-fl-folder type="file" multiple webkitdirectory @change=${this._onFileInput} />`
           : nothing}
       </div>
     `;

@@ -833,4 +833,124 @@ describe('UploadEngine', () => {
       expect(resolver).toHaveBeenCalledTimes(2);
     });
   });
+
+  describe('per-file folder structure', () => {
+    it('passes targetFolder unchanged when relativeFolder is empty', () => {
+      const file = makeUploadFile({
+        id: 'flat',
+        status: 'queued',
+        relativeFolder: '',
+      });
+      const { engine } = createEngine({
+        files: new Map([['flat', file]]),
+        targetFolder: 'assets',
+      });
+
+      engine.start();
+
+      expect(xhrUploadFile).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ folder: 'assets' }),
+      );
+    });
+
+    it('joins targetFolder with the file relativeFolder for nested xhr uploads', () => {
+      const file = makeUploadFile({
+        id: 'nested',
+        status: 'queued',
+        relativeFolder: 'photos/2026/jan',
+      });
+      const { engine } = createEngine({
+        files: new Map([['nested', file]]),
+        targetFolder: 'assets',
+      });
+
+      engine.start();
+
+      expect(xhrUploadFile).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ folder: 'assets/photos/2026/jan' }),
+      );
+    });
+
+    it('joins per-file folder for tus uploads above the size threshold', () => {
+      const big = new File(['x'.repeat(20 * 1024 * 1024)], 'big.mp4', {
+        type: 'video/mp4',
+      });
+      const file = makeUploadFile({
+        id: 'tus',
+        status: 'queued',
+        file: big,
+        size: big.size,
+        type: big.type,
+        relativeFolder: 'videos/raw',
+      });
+      const { engine } = createEngine(
+        {
+          files: new Map([['tus', file]]),
+          targetFolder: 'assets',
+        },
+        { tusConfig: {} },
+      );
+
+      engine.start();
+
+      expect(tusUploadFile).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ folder: 'assets/videos/raw' }),
+      );
+    });
+
+    it('joins per-file folder for connector (Companion) uploads', () => {
+      const file = makeUploadFile({
+        id: 'remote',
+        status: 'queued',
+        file: null,
+        relativeFolder: 'imports/2026',
+        // Real RemoteFileInfo shape — `startUpload` branches on truthiness,
+        // but the typed literal keeps the fixture honest if the type evolves.
+        remoteInfo: {
+          companionUrl: 'https://companion.test',
+          provider: 'google-drive',
+          token: 'tok',
+          requestPath: 'files/abc',
+          fileId: 'abc',
+          name: 'doc.pdf',
+          mimeType: 'application/pdf',
+          size: 1234,
+          thumbnail: null,
+        },
+      });
+      const { engine } = createEngine({
+        files: new Map([['remote', file]]),
+        targetFolder: 'assets',
+      });
+
+      engine.start();
+
+      expect(companionUploadFile).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ folder: 'assets/imports/2026' }),
+      );
+    });
+
+    it('normalises a leading-slash relativeFolder when joining', () => {
+      const file = makeUploadFile({
+        id: 'slashy',
+        status: 'queued',
+        relativeFolder: '/nested/path',
+      });
+      const { engine } = createEngine({
+        files: new Map([['slashy', file]]),
+        targetFolder: 'assets',
+      });
+
+      engine.start();
+
+      expect(xhrUploadFile).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ folder: 'assets/nested/path' }),
+      );
+    });
+  });
 });
