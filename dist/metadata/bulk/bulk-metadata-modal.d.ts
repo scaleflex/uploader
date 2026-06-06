@@ -12,6 +12,8 @@ export declare class SfxBulkMetadataModal extends LitElement {
     config: MetadataConfig | null;
     autocomplete: unknown;
     taxonomyService: unknown;
+    ultratags: unknown;
+    defaultLanguage?: string;
     /** When set, the modal opens with this field active instead of the first one. */
     initialFieldKey: string | null;
     private _activeFieldKey;
@@ -47,6 +49,12 @@ export declare class SfxBulkMetadataModal extends LitElement {
     private _setStagedTaxonodeBulk;
     private _setStagedTaxonodeSingle;
     private get _activeField();
+    /**
+     * Union of ultratag items currently present on the selected files for the
+     * active ultratags field. Feeds the op-bar's `restrictToItems` so the bulk
+     * Delete dropdown only suggests tags actually present on the selection.
+     */
+    private get _ultratagsPresentOnSelection();
     /**
      * Reads the original value for diff/fallback. For real metadata fields this
      * is `file.meta[key]`; for synthetic product fields it's `file.product[pk]`.

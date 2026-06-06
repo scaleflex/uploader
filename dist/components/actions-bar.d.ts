@@ -17,12 +17,27 @@ export declare class SfxActionsBar extends LitElement {
     requireMetadataFirst: boolean;
     completedCount: number;
     uploadProgress: number;
+    /** Show the "Check similar" button (gated by config.similarityCheck.enabled). */
+    showCheckSimilar: boolean;
+    /** When true, the bar shows the similar-image selection toolbar instead. */
+    selectMode: boolean;
+    /** Number of images currently picked for the similarity check. */
+    selectedCount: number;
+    /** Max images selectable for a similarity check (0 = no cap shown). */
+    maxSelection: number;
+    /** Whether all selectable images are currently picked (drives "Select all"). */
+    allSelected: boolean;
     private _clear;
     private _addMore;
     private _fillMetadata;
     private _upload;
     private _retryAll;
+    private _checkSimilarEnter;
+    private _checkSimilarCancel;
+    private _checkSimilarRun;
+    private _similarSelectAll;
     render(): import('lit-html').TemplateResult<1>;
+    private _renderSelectToolbar;
     private _renderUploadButton;
 }
 //# sourceMappingURL=actions-bar.d.ts.map

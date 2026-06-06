@@ -10,6 +10,8 @@ export declare class SfxMetadataPanel extends LitElement {
     config: MetadataConfig | null;
     autocomplete: unknown;
     taxonomyService: unknown;
+    ultratags: unknown;
+    defaultLanguage?: string;
     /** Local copy of the current file's taxonomy entries (single-file mode). */
     private _localTaxonodes;
     /** Local copy of the current file's meta (single-file mode). */

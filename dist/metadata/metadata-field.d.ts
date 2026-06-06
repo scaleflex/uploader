@@ -1,6 +1,7 @@
 import { LitElement, nothing } from 'lit';
-import { MetadataField, MetadataConfig } from './schema/schema.types';
+import { MetadataField, MetadataConfig, RegionalVariantsGroup } from './schema/schema.types';
 import { TaxonodeEntry } from './taxonomies/taxonomies.types';
+import { UltratagsValueItem } from './ultratags/ultratags.types';
 export declare class SfxMetadataFieldEl extends LitElement {
     static styles: import('lit').CSSResult[];
     field: MetadataField;
@@ -9,6 +10,14 @@ export declare class SfxMetadataFieldEl extends LitElement {
     autocomplete: unknown;
     taxonomyService: unknown;
     taxonomyEntry: TaxonodeEntry | null;
+    ultratags: unknown;
+    defaultLanguage?: string;
+    ultratagsRestrictToItems: UltratagsValueItem[] | null;
+    /**
+     * Schema's regional-variants groups, used to render the per-field hint
+     * label ("Languages: English"). Optional — when omitted, no hint is shown.
+     */
+    regionalVariantsGroups: RegionalVariantsGroup[];
     disabled: boolean;
     private _error;
     /** Flag to prevent re-entry when we re-dispatch field-blur. */

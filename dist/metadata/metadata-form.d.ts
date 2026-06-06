@@ -8,6 +8,8 @@ export declare class SfxMetadataForm extends LitElement {
     config: MetadataConfig | null;
     autocomplete: unknown;
     taxonomyService: unknown;
+    ultratags: unknown;
+    defaultLanguage?: string;
     taxonodes: Record<string, TaxonodeEntry | null> | null;
     disabled: boolean;
     private _collapsed;

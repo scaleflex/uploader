@@ -17,6 +17,8 @@ export declare class SfxBulkMetaTable extends LitElement {
     config: MetadataConfig | null;
     autocomplete: unknown;
     taxonomyService: unknown;
+    ultratags: unknown;
+    defaultLanguage?: string;
     private _getEffectiveValue;
     private _getTaxonodeEntry;
     render(): import('lit-html').TemplateResult<1>;

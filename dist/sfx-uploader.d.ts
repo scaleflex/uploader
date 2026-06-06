@@ -61,6 +61,30 @@ export interface RemoteThumbnailContext {
     /** Provider id when `source === 'connector'`. */
     providerId?: import('./connectors/connector.types').ProviderId;
 }
+/** One similar asset returned by the embedding/similarity endpoint. */
+export interface SimilarAsset {
+    uuid: string;
+    /** Similarity score 0..1. */
+    score: number;
+    /** CDN url of the similar asset (preview + open target). */
+    url: string;
+    /** Display name (defaults to the filename derived from `url`). */
+    name?: string;
+    /** File size in bytes. */
+    size?: number;
+    /** Pixel dimensions. */
+    width?: number;
+    height?: number;
+}
+/** Resolution options for the video-transcode setting (Upload settings panel).
+ *  Mirrors admin v5's vocabulary (`auto / mobile / tablet / desktop / hq / sample`).
+ *  The selected value is forwarded as the `video-resolution` query param. */
+declare const SETTINGS_RESOLUTIONS: readonly ["auto", "mobile", "tablet", "desktop", "hq", "sample"];
+type SettingsResolution = (typeof SETTINGS_RESOLUTIONS)[number];
+/** Streaming protocols available for video transcoding. Currently HLS only —
+ *  DASH was removed for parity with admin v5 (FRA-5131: DASH transcoding broken). */
+declare const SETTINGS_PROTOCOLS: readonly ["hls"];
+type SettingsProtocol = (typeof SETTINGS_PROTOCOLS)[number];
 export interface UploaderConfig {
     auth: AuthConfig;
     targetFolder?: string;
@@ -82,6 +106,53 @@ export interface UploaderConfig {
     connectors?: ConnectorConfig;
     /** Show "Fill Metadata" button in the actions bar. */
     showFillMetadata?: boolean;
+    /**
+     * Enable the "Check similar assets" feature (gated). When enabled, a
+     * "Check similar" button appears in the actions bar and on image tiles,
+     * letting the user check uploaded images against similar assets in the
+     * library. The settings screen and similarity-confidence docs are handled
+     * separately; `confidence` maps to the backend similarity threshold.
+     */
+    similarityCheck?: {
+        enabled: boolean;
+        confidence?: "low" | "mid" | "high";
+    };
+    /**
+     * The "Upload settings" panel — a gear button in the header opens a global
+     * settings panel in the preview side area, letting the user configure image
+     * resizing, video transcoding and (optionally) resumable (tus) uploads
+     * before uploading. The selected values are wired into the upload flow:
+     *
+     *   - `resize` + `maxWidth`/`maxHeight` → `&resize={w},{h}` (image / PDF)
+     *   - `transcode` + `resolution` + `protocol` → `&postprocess=transcode&
+     *     video-resolution={res}&video_protocols={proto}` (video)
+     *   - `resumable` → toggles the resumable (tus) upload path on/off
+     *
+     * Pass `uploadSettings: false` to disable the panel entirely (the gear
+     * button never appears). Otherwise the gear shows whenever the queue
+     * contains processable files (images, PDFs, or videos). The resumable
+     * switcher is hidden by default and only appears when
+     * `showResumableSwitcher` is true (mirrors admin v5).
+     * See mockups/FRA-10365-dev-handoff.md.
+     */
+    uploadSettings?: false | {
+        /** Show the gear icon that opens the settings panel. Default true.
+         *  Pass `uploadSettings: false` as shorthand to disable entirely. */
+        enabled?: boolean;
+        /** Show the "Resume uploads" (tus) switcher inside the panel.
+         *  Mirrors admin v5's `showResumableUploadSwitcher`. Default false. */
+        showResumableSwitcher?: boolean;
+        /** Initial values for the panel controls. */
+        defaults?: {
+            resize?: boolean;
+            maxWidth?: number;
+            maxHeight?: number;
+            transcode?: boolean;
+            resolution?: SettingsResolution;
+            protocol?: SettingsProtocol;
+            resumable?: boolean;
+        };
+    };
     /** Metadata editing configuration. When provided, enables the built-in metadata form. */
     metadataConfig?: MetadataConfig;
     /** Layout for the import-from sources section: horizontal pills (default) or cards grid. */
@@ -297,10 +368,39 @@ export declare class SfxUploader extends LitElement {
     private _showUrlDialog;
     private _showCameraDialog;
     private _showScreenCastDialog;
+    /** "Check similar assets": whether the image-selection mode is active. */
+    private _similarSelectMode;
+    /** "Check similar assets": ids of images picked for the similarity check. */
+    private _similarSelectedIds;
+    /** Similarity search: all ids in the active run (empty = no search running). */
+    private _similarRunIds;
+    /** Similarity search: ids currently being searched (spinner). */
+    private _similarActiveIds;
+    /** Similarity results per checked image id (presence = checked). The badge
+     *  shows the count ("N similar" / "No similar"); accumulates across runs. */
+    private _similarResults;
+    /** Which tab the preview side-panel shows: file details or similar assets. */
+    private _previewPanelTab;
+    /** Pending timers for the simulated search progression (demo only). */
+    private _similarSimTimers;
+    /** Counter to vary the mock similar count across ad-hoc single checks. */
+    private _simMockCounter;
     private _previewFileId;
     private _previewDims;
     private _fileInfoOpen;
     private _splitPct;
+    /** Whether the global Upload settings panel is showing in the side area. */
+    private _showSettings;
+    private _setResize;
+    private _setMaxW;
+    private _setMaxH;
+    private _setTranscode;
+    private _setResolution;
+    /** Whether the resolution custom-select dropdown is open. */
+    private _setResolutionOpen;
+    private _setProtocol;
+    /** Resumable (tus) uploads toggle — maps to `tusConfig`. */
+    private _setResumable;
     private _isResizing;
     private _splitRafId;
     /** Has the default split (3/8 panel) been applied for the current preview session? */
@@ -320,6 +420,15 @@ export declare class SfxUploader extends LitElement {
     private _isMinimized;
     private _isPillExpanded;
     private _metadataSchema;
+    /**
+     * Currently active variant per regional-variants group, keyed by group
+     * UUID. Mirrors admin v5's `metadataRegionalFilters` slice. Lets a single
+     * project mix LANGUAGES, CURRENCIES, and CUSTOM groups — each field is
+     * wrapped/unwrapped under `regionalFilters[field.regional_variants_group_uuid]`.
+     * Defaults are seeded from the schema (first variant of each group) and
+     * the user can change any group via the regional-settings selector.
+     */
+    private _regionalFilters;
     private _bulkMetadataOpen;
     /** When non-null, the bulk modal opens with this field active. */
     private _bulkMetadataInitialFieldKey;
@@ -337,6 +446,37 @@ export declare class SfxUploader extends LitElement {
     private _hasStoredReview;
     private _metadataAutocomplete;
     private _taxonomyService;
+    private _ultratagsService;
+    /**
+     * Default language for ultratags label fallback — first variant of the
+     * regional-variants "LANGUAGES" group from the metadata schema, mirroring
+     * admin's `selectMetadataRegionalVariantLanguagesGroup`. When no LANGUAGES
+     * group is defined or the user hasn't set `config.language`, the field
+     * component falls back to 'en'.
+     */
+    private get _metadataDefaultLanguage();
+    /**
+     * Effective per-group active variants: schema defaults (first variant of
+     * each group) merged with user picks from `_regionalFilters`. Built fresh
+     * on each access so newly-loaded schemas immediately seed defaults.
+     */
+    private get _effectiveRegionalFilters();
+    /**
+     * Backward-compat single-language getter. Returns the active LANGUAGES-group
+     * variant if any, falling back to `config.metadataConfig.language`.
+     * Preserves call sites that still think in terms of a single "current
+     * editing language" — new code should use `_effectiveRegionalFilters` instead.
+     */
+    private get _activeLanguage();
+    /**
+     * `metadataConfig` with `regionalFilters` populated from the active
+     * per-group picks and `language` mirrored from the active LANGUAGES-group
+     * variant (when any). Passed to `<sfx-metadata-form>` and
+     * `<sfx-bulk-metadata-modal>`; field components resolve their own slot key
+     * via `resolveFieldRegionalKey(field, config)`.
+     */
+    private get _effectiveMetadataConfig();
+    private _onRegionalChange;
     private _videoBlobUrls;
     /** Persisted ETA — holds the last computed value so the display doesn't flicker when speed momentarily drops to 0. */
     private _lastEta;
@@ -436,9 +576,13 @@ export declare class SfxUploader extends LitElement {
      */
     private get _allowFolderUpload();
     /**
-     * Build the per-file upload-params resolver from `forceName` and
-     * `getUploadParams`. Host-supplied `getUploadParams` keys win on collision.
-     * Returns `undefined` when neither is configured.
+     * Build the per-file upload-params resolver. Layers four sources, with
+     * later sources winning on key collision:
+     *   1. Upload settings panel (resize / transcode) — wired here.
+     *   2. `forceName` → `opt_force_name`.
+     *   3. Host-supplied `getUploadParams(file)` — always wins so hosts can
+     *      override anything the panel chose.
+     * Returns `undefined` when no source contributed any params for the file.
      */
     private _buildUploadParamsResolver;
     private _ensureEngine;
@@ -513,6 +657,69 @@ export declare class SfxUploader extends LitElement {
     private _onFileRemove;
     private _onFilePreview;
     private _onFillMetadata;
+    /** Images eligible for the similarity check (renderable images only). */
+    private _similarImageFiles;
+    /** Eligible images not yet checked — the selectable pool. Already-checked
+     *  images are "done", so selection/"Select all" skips them. */
+    private _similarUncheckedFiles;
+    private _onCheckSimilarEnter;
+    private _onCheckSimilarCancel;
+    private _onSimilarToggle;
+    private _onSimilarSelectAll;
+    private _onCheckSimilarRun;
+    private _onCheckSimilarSingle;
+    /**
+     * Single (per-tile) check: processes one image independently and
+     * accumulatively — clicking several tiles spins them all, no click cancels
+     * another, and there is no batch progress banner (that's only for the
+     * select-all-and-Check batch).
+     *
+     * TODO(dev): replace the simulated timeout with the real per-image API call
+     * (render w=300 → POST embedding). Multiple of these may run concurrently;
+     * add a sensible concurrency limit if needed.
+     */
+    private _checkSimilarSingleFile;
+    /**
+     * Runs the similarity check for the given images and drives the loading UI
+     * (per-tile spinner + batch progress banner).
+     *
+     * TODO(dev): replace the simulated per-image progression below with the real
+     * request. For each image: render a w=300 version, POST it to the embedding
+     * endpoint (https://ai.scaleflex.com/images/embedding/...) with the threshold
+     * derived from `this.config?.similarityCheck?.confidence` (low 0.60 / mid 0.75
+     * / high 0.90), collect the returned `similar_assets`, and mark the image done.
+     * Then surface the results in a panel (Open in new window / Discard from
+     * upload) — that screen is the next step. The loading UI, selection mode,
+     * per-tile button and events are already wired; only the network call and the
+     * results rendering remain.
+     */
+    private _runSimilarityCheck;
+    /**
+     * TODO(dev): remove. Generates fake similar_assets for the demo so the
+     * results UI is visible. Replace with the real `similar_assets` from the
+     * embedding endpoint response.
+     */
+    private _mockSimilarAssets;
+    /** Clears only the current run (timers, run/active ids). Keeps the persistent
+     *  checked set so finished images stay marked. Used by Cancel / Done. */
+    private _clearSimilarRun;
+    private _onSimilarSearchCancel;
+    /** Remove all similarity-check references to a file id (on file removal). */
+    private _purgeSimilarState;
+    /** Open the similar results for an image (from its tile badge) in the side
+     *  panel: switch to its preview and select the "Similar" tab. */
+    private _onSimilarOpenResults;
+    /** Open a similar asset in a new window. */
+    private _openSimilarAsset;
+    /** Discard the previewed image from the upload; move to the next file (so the
+     *  side panel stays open) or close the preview when none remain. */
+    private _discardPreviewFile;
+    /** Display name for a similar asset: the filename extracted from its URL
+     *  (decoded, query stripped), falling back to an explicit name or the uuid. */
+    private _simAssetName;
+    /** Meta line for a similar asset card: format · size · resolution. Excludes the
+     *  name itself — only a real file extension counts (avoids echoing the name). */
+    private _simAssetMeta;
     private _onRequireMetadata;
     private _locateFile;
     private _onFileLocate;
@@ -578,6 +785,15 @@ export declare class SfxUploader extends LitElement {
     private _onSplitPointerMove;
     private _onSplitPointerUp;
     private _renderPreviewLayout;
+    /** "Similar" tab body of the preview side-panel: the similar-asset cards for
+     *  the previewed image, plus a discard action. Empty state when none. */
+    private _renderSimilarPanel;
+    /** Global "Upload settings" view shown in the preview side-panel when the
+     *  header gear is active. Captures image/video/resumable upload preferences
+     *  and forwards them to the upload flow (image resize → `&resize=w,h`,
+     *  transcode → `&postprocess=transcode&video-resolution=…&video_protocols=…`,
+     *  resumable → toggles the tus path on/off). See mockups/FRA-10365-dev-handoff.md. */
+    private _renderSettingsPanel;
     private _navigatePreview;
     private _renderBody;
     private _onFsToggleZoom;
@@ -598,4 +814,5 @@ declare global {
         "sfx-uploader": SfxUploader;
     }
 }
+export {};
 //# sourceMappingURL=sfx-uploader.d.ts.map

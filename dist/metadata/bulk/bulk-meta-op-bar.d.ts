@@ -1,5 +1,6 @@
 import { LitElement, nothing } from 'lit';
 import { MetadataField, MetadataConfig } from '../schema/schema.types';
+import { UltratagsValueItem } from '../ultratags/ultratags.types';
 /**
  * Operation bar for bulk metadata editing.
  * Operation dropdown + value input + Apply button.
@@ -9,6 +10,15 @@ export declare class SfxBulkMetaOpBar extends LitElement {
     field: MetadataField;
     autocomplete: unknown;
     taxonomyService: unknown;
+    ultratags: unknown;
+    defaultLanguage?: string;
+    /**
+     * Union of ultratag items currently set on the selected files. Passed to
+     * the ultratags editor as `restrictToItems` when the user picks the Delete
+     * operation, so the dropdown only suggests tags actually present on the
+     * selection (admin parity).
+     */
+    ultratagsPresentOnSelection: UltratagsValueItem[];
     config: MetadataConfig | null;
     selectedCount: number;
     private _operation;

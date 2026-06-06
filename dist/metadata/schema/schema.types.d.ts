@@ -48,14 +48,16 @@ export type MetadataFieldType = 'text' | 'textarea' | 'select-one' | 'multi-sele
 /**
  * Field types whose editor cannot run inside the uploader (they depend on
  * the asset already existing on the backend — file attachments need an asset
- * id, sibling-asset references need the new asset to exist first, ultratags
- * needs a per-asset autocomplete model, integer-list relies on lookup data
- * not available before ingest).
+ * id, sibling-asset references need the new asset to exist first, integer-list
+ * relies on lookup data not available before ingest).
  * Rendered read-only with a tooltip; excluded from bulk operations.
  *
  * `taxonomy-node` is supported during upload: the picker reads the taxonomy
  * tree by `field.model.parameters.taxonomy_suid` and uses the existing
  * `/v5/metadata/autocomplete` endpoint for search.
+ *
+ * `ultratags` is supported during upload via the dedicated `/v5/meta/ultratags`
+ * vocabulary endpoint (search, create with `mode: 'upsert'`, resolve by SID).
  */
 export declare const UNSUPPORTED_FIELD_TYPES: ReadonlySet<MetadataFieldType>;
 /**
@@ -94,10 +96,16 @@ export interface MetadataSchema {
      */
     productsEnabled: boolean;
 }
+/**
+ * Group type string returned by the BE. The wire values are `FTYPE_LANGUAGES`,
+ * `FTYPE_CURRENCIES`, `FTYPE_CUSTOM` (mirrors admin v5's `REGIONAL_VARIANT_TYPE`).
+ * The `(string & {})` keeps IDE completions for the known values while still
+ * accepting any string the BE might add in the future.
+ */
 export interface RegionalVariantsGroup {
     uuid: string;
     label: string;
-    type: 'LANGUAGES' | 'CURRENCIES' | 'CUSTOM';
+    type: 'FTYPE_LANGUAGES' | 'FTYPE_CURRENCIES' | 'FTYPE_CUSTOM' | (string & {});
     icon?: string;
     isRoot: boolean;
     variants: RegionalVariant[];
@@ -162,7 +170,20 @@ export interface MetadataConfig {
      */
     enforceRequiredBeforeUpload?: boolean | 'auto';
     showTags?: boolean;
+    /**
+     * User locale — drives ultratags label fallback and is used as the default
+     * key when reading/writing regional-variant fields whose group has no entry
+     * in `regionalFilters`.
+     */
     language?: string;
+    /**
+     * Currently-active variant value per regional-variants group, keyed by
+     * group UUID. Mirrors admin v5's `metadataRegionalFilters` slice. Lets a
+     * single project mix LANGUAGES, CURRENCIES, and CUSTOM groups — each field
+     * is wrapped/unwrapped under `regionalFilters[field.regional_variants_group_uuid]`.
+     * When unset for a given group, falls back to `language`, then `'en'`.
+     */
+    regionalFilters?: Record<string, string>;
     defaults?: Record<string, unknown>;
     /**
      * Force-enable the hardcoded "Product" fields section (ref + position).

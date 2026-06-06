@@ -22,6 +22,8 @@ export declare class SfxBulkMetaRow extends LitElement {
     config: MetadataConfig | null;
     autocomplete: unknown;
     taxonomyService: unknown;
+    ultratags: unknown;
+    defaultLanguage?: string;
     private _error;
     willUpdate(changed: Map<string, unknown>): void;
     private _onCheckboxChange;

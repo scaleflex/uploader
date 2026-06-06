@@ -6,6 +6,8 @@ export { isAssetHasMetadataValue, getFilesWithMissingRequired, deepMergeMeta } f
 export { createTagsAutocomplete } from './tags/tags-autocomplete';
 export { createTaxonomyService } from './taxonomies/taxonomies-service';
 export type { TaxonomyService } from './taxonomies/taxonomies-service';
+export { createUltratagsService } from './ultratags/ultratags-service';
+export type { UltratagEntry, UltratagsServiceLike, UltratagsValue, UltratagsValueItem, } from './ultratags/ultratags.types';
 export type { MetadataSchema, MetadataConfig, MetadataField, MetadataGroup, RawMetadata, TagOption, GeoPoint, } from './schema/schema.types';
 export type { TaxonomyNode, TaxonomyNodesResponse, TaxonomyAutocompleteTag, TaxonodeEntry, } from './taxonomies/taxonomies.types';
 export { SfxBulkMetadataModal } from './bulk/index';

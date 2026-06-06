@@ -6,6 +6,8 @@ export declare class SfxMetadataFieldView extends LitElement {
     field: MetadataField;
     value: unknown;
     taxonomyEntry: TaxonodeEntry | null;
+    language?: string;
+    defaultLanguage?: string;
     private _formatValue;
     render(): import('lit-html').TemplateResult<1>;
 }
