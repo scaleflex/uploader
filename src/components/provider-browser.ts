@@ -1,6 +1,5 @@
 import { LitElement, html, css, nothing } from 'lit';
 import { property, state } from 'lit/decorators.js';
-import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { cspStyle } from '../utils/csp-style';
 import { brandIcon } from '../utils/brand-icon';
 import type { ProviderId, CompanionItem, RemoteFileInfo } from '../connectors/connector.types';
@@ -376,6 +375,7 @@ export class SfxProviderBrowser extends LitElement {
       transition: all 0.15s;
       user-select: none;
       border: 1.5px solid transparent;
+      position: relative;
     }
 
     .file-item:hover {
@@ -399,6 +399,16 @@ export class SfxProviderBrowser extends LitElement {
       accent-color: var(--sfx-up-primary, #2563eb);
       flex-shrink: 0;
       cursor: pointer;
+    }
+
+    /* Invisible placeholder that reserves the same horizontal slot as the
+       checkbox. Used on folder rows in single-select mode so they line up
+       with file rows and the column header. */
+    .checkbox-spacer {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
     }
 
     .file-thumb {
@@ -457,18 +467,6 @@ export class SfxProviderBrowser extends LitElement {
       color: var(--sfx-up-text-muted, #94a3b8);
     }
 
-    .folder-arrow {
-      width: 16px;
-      height: 16px;
-      color: var(--sfx-up-text-muted, #94a3b8);
-      flex-shrink: 0;
-      opacity: 0;
-      transition: opacity 0.15s;
-    }
-
-    .file-item:hover .folder-arrow {
-      opacity: 1;
-    }
 
     /* --- Footer --- */
     .browser-footer {
@@ -701,6 +699,15 @@ export class SfxProviderBrowser extends LitElement {
       animation: shimmer 1.5s ease-in-out infinite;
     }
 
+    .skeleton-modified {
+      width: 70px;
+      height: 11px;
+      flex-shrink: 0;
+      border-radius: 6px;
+      background: var(--sfx-up-border-light, #f1f5f9);
+      animation: shimmer 1.5s ease-in-out infinite;
+    }
+
     .skeleton-row:nth-child(1) .skeleton-name { width: 65%; animation-delay: 0s; }
     .skeleton-row:nth-child(1) .skeleton-thumb { animation-delay: 0s; }
     .skeleton-row:nth-child(2) .skeleton-name { width: 45%; animation-delay: 0.1s; }
@@ -747,7 +754,8 @@ export class SfxProviderBrowser extends LitElement {
     /* Hide the modified column on narrow viewports (mobile fullscreen). */
     @media (max-width: 540px) {
       .list-header .col-modified,
-      .file-modified {
+      .file-modified,
+      .skeleton-modified {
         display: none;
       }
     }
@@ -756,7 +764,10 @@ export class SfxProviderBrowser extends LitElement {
     .busy-overlay {
       position: absolute;
       inset: 0;
-      background: rgba(255, 255, 255, 0.85);
+      /* Themed background with a translucent veil so the list shows through.
+         Safari < 15.4 needs the -webkit-backdrop-filter alias. */
+      background: color-mix(in srgb, var(--sfx-up-bg, #fff) 85%, transparent);
+      -webkit-backdrop-filter: blur(2px);
       backdrop-filter: blur(2px);
       display: flex;
       flex-direction: column;
@@ -766,10 +777,37 @@ export class SfxProviderBrowser extends LitElement {
       z-index: 2;
     }
 
+    /* color-mix() lands in Safari 16.4 / Firefox 113 / Chrome 111. Older
+       browsers ignore the rule above; this gives them a solid-ish veil. */
+    @supports not (background: color-mix(in srgb, red, blue)) {
+      .busy-overlay {
+        background: rgba(255, 255, 255, 0.85);
+      }
+    }
+
     .busy-text {
       font-size: 13px;
       color: var(--sfx-up-text-secondary, #475569);
       font-weight: 500;
+    }
+
+    .busy-cancel-btn {
+      height: 32px;
+      padding: 0 16px;
+      border: 1.5px solid var(--sfx-up-border, #e8edf5);
+      background: var(--sfx-up-bg, #fff);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--sfx-up-text-secondary, #475569);
+      transition: all 0.15s;
+    }
+
+    .busy-cancel-btn:hover {
+      background: var(--sfx-up-border-light, #f1f5f9);
+      color: var(--sfx-up-text, #1e293b);
     }
   `;
 
@@ -824,14 +862,19 @@ export class SfxProviderBrowser extends LitElement {
   }
 
   private _reset() {
+    this._resolveAbort?.abort();
+    this._resolveAbort = null;
     this._authenticated = false;
     this._loading = false;
     this._items = [];
     this._selectedIds = new Set();
+    this._lastClickedIndex = null;
     this._breadcrumbs = [];
     this._nextPagePath = null;
     this._error = null;
     this._username = null;
+    this._resolvingFolders = false;
+    this._resolveProgress = 0;
   }
 
   private _checkAuth() {
@@ -854,6 +897,21 @@ export class SfxProviderBrowser extends LitElement {
   // --- Auth ---
 
   private _handleConnect = () => {
+    // If a previous popup is still open (user double-clicked or the previous
+    // attempt was never completed), focus it instead of opening a second one
+    // and leaking the old auth listener. Wrap in try/catch because cross-origin
+    // navigation in the popup can make `closed` / `focus()` throw a
+    // SecurityError on some browsers.
+    try {
+      if (this._authWindow && !this._authWindow.closed) {
+        this._authWindow.focus();
+        return;
+      }
+    } catch {
+      // Treat as "no usable window" and open a fresh popup below.
+      this._authWindow = null;
+    }
+
     const url = getAuthUrl(this.companionUrl, this.provider);
 
     // Must open popup synchronously in click handler to avoid popup blockers
@@ -975,9 +1033,10 @@ export class SfxProviderBrowser extends LitElement {
       return;
     }
 
-    // For shift-range selection we only consider files (folders aren't part
-    // of the range because they can't be selected in single mode and mixing
-    // them confuses the index).
+    // Shift-range only walks the file subset: folder rows have their own
+    // semantics (clicking a folder navigates into it, recursive resolve later)
+    // so mixing them into a range would surprise the user. The row click for
+    // folders never reaches this method anyway — the checkbox does.
     const files = this._items.filter((i) => !i.isFolder);
     const currentIndex = files.findIndex((f) => f.id === item.id);
     const atFileLimit =
@@ -1063,11 +1122,14 @@ export class SfxProviderBrowser extends LitElement {
     }));
 
     if (selectedFolders.length > 0) {
-      this._resolvingFolders = true;
-      this._resolveProgress = 0;
       this._resolveAbort?.abort();
       this._resolveAbort = new AbortController();
       const signal = this._resolveAbort.signal;
+      this._resolvingFolders = true;
+      this._resolveProgress = 0;
+      // Count only files discovered inside folders here — loose pre-selected
+      // files weren't "prepared" by this walk, so they'd inflate the badge.
+      let discovered = 0;
       try {
         for (const folder of selectedFolders) {
           const items = await listFolderRecursive(
@@ -1092,23 +1154,30 @@ export class SfxProviderBrowser extends LitElement {
               thumbnail: it.thumbnail,
               relativeFolder: it.relativeFolder,
             });
-            this._resolveProgress = out.length;
           }
+          discovered += items.length;
+          // Surface progress between folders rather than per file — one write
+          // per folder is plenty for visual feedback and avoids a render burst
+          // on large directories.
+          this._resolveProgress = discovered;
         }
       } catch (err) {
         if (signal.aborted) return;
+        this._resolvingFolders = false;
         if (err instanceof AuthExpiredError) {
           removeToken(this.provider);
           this._authenticated = false;
-          this._resolvingFolders = false;
           return;
         }
         this._error =
           err instanceof Error
             ? err.message
-            : this.t('failedToLoadFiles', 'Failed to load files');
-        this._resolvingFolders = false;
+            : this.t('failedToReadFolder', 'Failed to read folder contents');
         return;
+      } finally {
+        if (this._resolveAbort?.signal === signal) {
+          this._resolveAbort = null;
+        }
       }
       this._resolvingFolders = false;
     }
@@ -1227,16 +1296,18 @@ export class SfxProviderBrowser extends LitElement {
           </div>
         </div>
         <div class="auth-content">
-          <div class="auth-title">Connect ${this._providerLabel}</div>
+          <div class="auth-title">
+            ${this.t('connectProvider', 'Connect {{provider}}', { provider: this._providerLabel })}
+          </div>
           <div class="auth-text">
-            Sign in to browse and select files from your ${this._providerLabel} account
+            ${this.t('connectProviderHint', 'Sign in to browse and select files from your {{provider}} account', { provider: this._providerLabel })}
           </div>
         </div>
         <button class="connect-btn" @click=${this._handleConnect}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3"/>
           </svg>
-          Sign in to ${this._providerLabel}
+          ${this.t('signInToProvider', 'Sign in to {{provider}}', { provider: this._providerLabel })}
         </button>
       </div>
     `;
@@ -1254,6 +1325,7 @@ export class SfxProviderBrowser extends LitElement {
               <div class="skeleton-name"></div>
               <div class="skeleton-size"></div>
             </div>
+            <div class="skeleton-modified"></div>
           </div>
         `)}
       </div>
@@ -1275,7 +1347,7 @@ export class SfxProviderBrowser extends LitElement {
           const last = this._breadcrumbs[this._breadcrumbs.length - 1];
           this._loadFolder(last?.path ?? '');
         }}>
-          Try again
+          ${this.t('tryAgain', 'Try again')}
         </button>
       </div>
     `;
@@ -1335,7 +1407,7 @@ export class SfxProviderBrowser extends LitElement {
                     @click=${(e: Event) => e.stopPropagation()}
                     @change=${() => this._toggleSelect(item)}
                   />`
-                : nothing}
+                : html`<span class="checkbox-spacer" aria-hidden="true"></span>`}
               <div class="file-thumb folder-thumb">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                   <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" />
@@ -1344,10 +1416,7 @@ export class SfxProviderBrowser extends LitElement {
               <div class="file-info">
                 <div class="file-name">${item.name}</div>
               </div>
-              <span class="file-modified">${formatDate(item.modifiedDate)}</span>
-              <svg class="folder-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
+              <span class="file-modified">${formatRelativeDate(item.modifiedDate, this.t)}</span>
             </div>
           `;
         })}
@@ -1388,7 +1457,7 @@ export class SfxProviderBrowser extends LitElement {
                     : nothing}
                 </div>
               </div>
-              <span class="file-modified">${formatDate(item.modifiedDate)}</span>
+              <span class="file-modified">${formatRelativeDate(item.modifiedDate, this.t)}</span>
             </div>
           `;
         })}
@@ -1421,10 +1490,16 @@ export class SfxProviderBrowser extends LitElement {
               </div>
               <button
                 class="add-btn"
-                ?disabled=${selectedCount === 0}
+                ?disabled=${selectedCount === 0 || this._resolvingFolders}
                 @click=${this._onAddSelected}
               >
-                ${this.t('add', 'Add')}${selectedCount > 0 ? ` ${selectedCount}` : ''}
+                ${selectedCount > 0
+                  ? this.t('addItems', {
+                      count: selectedCount,
+                      defaultValue_one: 'Add {{count}} item',
+                      defaultValue_other: 'Add {{count}} items',
+                    })
+                  : this.t('add', 'Add')}
               </button>
             </div>
           `
@@ -1443,11 +1518,21 @@ export class SfxProviderBrowser extends LitElement {
                     })
                   : this.t('preparingFiles', 'Preparing files…')}
               </div>
+              <button class="busy-cancel-btn" @click=${this._cancelResolve}>
+                ${this.t('cancel', 'Cancel')}
+              </button>
             </div>
           `
         : nothing}
     `;
   }
+
+  private _cancelResolve = () => {
+    this._resolveAbort?.abort();
+    this._resolveAbort = null;
+    this._resolvingFolders = false;
+    this._resolveProgress = 0;
+  };
 
   private _renderBreadcrumbs() {
     if (this._breadcrumbs.length === 0) return nothing;
@@ -1458,7 +1543,7 @@ export class SfxProviderBrowser extends LitElement {
           <svg class="crumb-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
           </svg>
-          Root
+          ${this.t('root', 'Root')}
         </button>
         ${this._breadcrumbs.map(
           (crumb, i) => html`
@@ -1483,42 +1568,63 @@ function formatSize(bytes: number): string {
 
 /**
  * Render an ISO timestamp from Companion as a relative duration ("3 months ago",
- * "yesterday") to match how the old DAM browser displays it. Falls back to a
- * localized date for inputs older than a year, and to an empty string for
- * missing/unparseable values.
+ * "yesterday") via the host's translation function so locale rules apply.
+ * Returns '' for missing/unparseable inputs.
+ *
+ * The unit is escalated when the rounded count would hit the next unit's
+ * boundary — so 59.6 minutes shows as "1 hour ago", not "60 minutes ago",
+ * and 11.6 months shows as "1 year ago", not "12 months ago".
  */
-function formatDate(iso: string | undefined): string {
+export function formatRelativeDate(iso: string | undefined, t: TFunction): string {
   if (!iso) return '';
   const ts = Date.parse(iso);
   if (Number.isNaN(ts)) return '';
-  const now = Date.now();
-  const diff = Math.max(0, now - ts);
-  const minute = 60 * 1000;
+  const diff = Math.max(0, Date.now() - ts);
+  const minute = 60_000;
   const hour = 60 * minute;
   const day = 24 * hour;
   const month = 30 * day;
   const year = 365 * day;
 
-  if (diff < minute) return 'just now';
-  if (diff < hour) {
-    const n = Math.round(diff / minute);
-    return `${n} min ago`;
+  const minutes = Math.round(diff / minute);
+  if (minutes < 1) return t('justNow', 'just now');
+  if (minutes < 60) {
+    return t('minutesAgo', {
+      count: minutes,
+      defaultValue_one: '{{count}} minute ago',
+      defaultValue_other: '{{count}} minutes ago',
+    });
   }
-  if (diff < day) {
-    const n = Math.round(diff / hour);
-    return n === 1 ? '1 hour ago' : `${n} hours ago`;
+  const hours = Math.round(diff / hour);
+  if (hours < 24) {
+    return t('hoursAgo', {
+      count: hours,
+      defaultValue_one: '{{count}} hour ago',
+      defaultValue_other: '{{count}} hours ago',
+    });
   }
-  if (diff < 2 * day) return 'yesterday';
-  if (diff < month) {
-    const n = Math.round(diff / day);
-    return `${n} days ago`;
+  const days = Math.round(diff / day);
+  if (days < 2) return t('yesterday', 'yesterday');
+  if (days < 30) {
+    return t('daysAgo', {
+      count: days,
+      defaultValue_one: '{{count}} day ago',
+      defaultValue_other: '{{count}} days ago',
+    });
   }
-  if (diff < year) {
-    const n = Math.round(diff / month);
-    return n === 1 ? '1 month ago' : `${n} months ago`;
+  const months = Math.round(diff / month);
+  if (months < 12) {
+    return t('monthsAgo', {
+      count: months,
+      defaultValue_one: '{{count}} month ago',
+      defaultValue_other: '{{count}} months ago',
+    });
   }
-  const n = Math.round(diff / year);
-  return n === 1 ? '1 year ago' : `${n} years ago`;
+  return t('yearsAgo', {
+    count: Math.round(diff / year),
+    defaultValue_one: '{{count}} year ago',
+    defaultValue_other: '{{count}} years ago',
+  });
 }
 
 declare global {

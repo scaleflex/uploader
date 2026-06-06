@@ -491,7 +491,12 @@ export class SfxSearchProviderBrowser extends LitElement {
   private _renderHeader() {
     return html`
       <div class="browser-header">
-        <button class="back-btn" @click=${this._onClose}>
+        <button
+          class="back-btn"
+          @click=${this._onClose}
+          title=${this.t('close', 'Close')}
+          aria-label=${this.t('close', 'Close')}
+        >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <polyline points="15 18 9 12 15 6" />
           </svg>
@@ -517,7 +522,7 @@ export class SfxSearchProviderBrowser extends LitElement {
           ?disabled=${!this._searchQuery.trim() || this._loading}
           @click=${() => this._doSearch()}
         >
-          Search
+          ${this.t('search', 'Search')}
         </button>
       </div>
     `;
@@ -535,7 +540,7 @@ export class SfxSearchProviderBrowser extends LitElement {
     return html`
       <div class="error-view">
         <div class="error-text">${this._error}</div>
-        <button class="retry-btn" @click=${() => this._doSearch()}>Retry</button>
+        <button class="retry-btn" @click=${() => this._doSearch()}>${this.t('retry', 'Retry')}</button>
       </div>
     `;
   }
@@ -546,7 +551,7 @@ export class SfxSearchProviderBrowser extends LitElement {
     if (!this._searched) {
       return html`
         <div class="empty-state">
-          <div class="empty-text">Enter text to search for images</div>
+          <div class="empty-text">${this.t('enterSearchHint', 'Enter text to search for images')}</div>
         </div>
       `;
     }
@@ -554,7 +559,7 @@ export class SfxSearchProviderBrowser extends LitElement {
     if (this._items.length === 0) {
       return html`
         <div class="empty-state">
-          <div class="empty-text">No results found</div>
+          <div class="empty-text">${this.t('noSearchResults', 'No results found')}</div>
         </div>
       `;
     }

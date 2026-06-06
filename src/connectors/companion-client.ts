@@ -55,6 +55,7 @@ export async function listFiles(
   provider: ProviderId,
   token: string,
   directory = '',
+  signal?: AbortSignal,
 ): Promise<CompanionListResponse> {
   const base = stripSlash(companionUrl);
   const path = directory ? `/${directory}` : '';
@@ -63,6 +64,7 @@ export async function listFiles(
     method: 'GET',
     headers: buildHeaders(token),
     credentials: 'same-origin',
+    signal,
   });
 
   if (res.status === 401) {
@@ -83,12 +85,14 @@ export async function listNextPage(
   companionUrl: string,
   token: string,
   nextPagePath: string,
+  signal?: AbortSignal,
 ): Promise<CompanionListResponse> {
   const base = stripSlash(companionUrl);
   const res = await fetch(`${base}/${nextPagePath}`, {
     method: 'GET',
     headers: buildHeaders(token),
     credentials: 'same-origin',
+    signal,
   });
 
   if (res.status === 401) {
@@ -128,11 +132,12 @@ export async function listFolderRecursive(
     do {
       if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
       const res: CompanionListResponse = firstPage
-        ? await listFiles(companionUrl, provider, token, path)
-        : await listNextPage(companionUrl, token, nextPagePath as string);
+        ? await listFiles(companionUrl, provider, token, path, signal)
+        : await listNextPage(companionUrl, token, nextPagePath as string, signal);
       firstPage = false;
       nextPagePath = res.nextPagePath;
       for (const item of res.items) {
+        if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
         if (item.isFolder) {
           const childFolder = relativeFolder
             ? `${relativeFolder}/${item.name}`
