@@ -1,4 +1,4 @@
-import { noChange as It, html as u, LitElement as de, css as ne, svg as Pe, render as Ue, nothing as S } from "lit";
+import { noChange as It, html as u, LitElement as de, css as ne, svg as Pe, render as Ue, nothing as $ } from "lit";
 import { property as O, state as z, query as ui } from "lit/decorators.js";
 import { directive as Eo, Directive as Uo, PartType as Ro } from "lit/directive.js";
 import { unsafeSVG as we } from "lit/directives/unsafe-svg.js";
@@ -10,11 +10,11 @@ const D = (r) => typeof r == "string", Ge = () => {
     r = i, e = o;
   });
   return t.resolve = r, t.reject = e, t;
-}, Bi = (r) => r == null ? "" : String(r), Fo = (r, e, t) => {
+}, Bi = (r) => r == null ? "" : String(r), To = (r, e, t) => {
   r.forEach((i) => {
     e[i] && (t[i] = e[i]);
   });
-}, To = /###/g, Ni = (r) => r && r.includes("###") ? r.replace(To, ".") : r, Hi = (r) => !r || D(r), tt = (r, e, t) => {
+}, Fo = /###/g, Ni = (r) => r && r.includes("###") ? r.replace(Fo, ".") : r, Hi = (r) => !r || D(r), tt = (r, e, t) => {
   const i = D(e) ? e.split(".") : e;
   let o = 0;
   for (; o < i.length - 1; ) {
@@ -159,7 +159,7 @@ class Ct {
   }
 }
 var he = new Ct();
-class Tt {
+class Ft {
   constructor() {
     this.observers = {};
   }
@@ -195,7 +195,7 @@ class Tt {
     });
   }
 }
-class Vi extends Tt {
+class Vi extends Ft {
   constructor(e, t = {
     ns: ["translation"],
     defaultNS: "translation"
@@ -298,9 +298,9 @@ function Me(r, e) {
   return t.join(i);
 }
 const At = (r) => !D(r) && typeof r != "boolean" && typeof r != "number";
-class Pt extends Tt {
+class Pt extends Ft {
   constructor(e, t = {}) {
-    super(), Fo(["resourceStore", "languageUtils", "pluralResolver", "interpolator", "backendConnector", "i18nFormat", "utils"], e, this), this.options = t, this.options.keySeparator === void 0 && (this.options.keySeparator = "."), this.logger = he.create("translator"), this.checkedLoadedFor = {};
+    super(), To(["resourceStore", "languageUtils", "pluralResolver", "interpolator", "backendConnector", "i18nFormat", "utils"], e, this), this.options = t, this.options.keySeparator === void 0 && (this.options.keySeparator = "."), this.logger = he.create("translator"), this.checkedLoadedFor = {};
   }
   changeLanguage(e) {
     e && (this.language = e);
@@ -348,10 +348,10 @@ class Pt extends Tt {
     typeof e == "function" && (e = Me(e, {
       ...this.options,
       ...o
-    })), Array.isArray(e) || (e = [String(e)]), e = e.map((F) => typeof F == "function" ? Me(F, {
+    })), Array.isArray(e) || (e = [String(e)]), e = e.map((T) => typeof T == "function" ? Me(T, {
       ...this.options,
       ...o
-    }) : String(F));
+    }) : String(T));
     const s = o.returnDetails !== void 0 ? o.returnDetails : this.options.returnDetails, n = o.keySeparator !== void 0 ? o.keySeparator : this.options.keySeparator, {
       key: a,
       namespaces: l
@@ -380,22 +380,22 @@ class Pt extends Tt {
     const _ = (w == null ? void 0 : w.usedKey) || a, P = (w == null ? void 0 : w.exactUsedKey) || a, A = ["[object Number]", "[object Function]", "[object RegExp]"], k = o.joinArrays !== void 0 ? o.joinArrays : this.options.joinArrays, v = !this.i18nFormat || this.i18nFormat.handleAsObject, y = o.count !== void 0 && !D(o.count), m = Pt.hasDefaultValue(o), R = y ? this.pluralResolver.getSuffix(p, o.count, o) : "", U = o.ordinal && y ? this.pluralResolver.getSuffix(p, o.count, {
       ordinal: !1
     }) : "", I = y && !o.ordinal && o.count === 0, L = I && o[`defaultValue${this.options.pluralSeparator}zero`] || o[`defaultValue${R}`] || o[`defaultValue${U}`] || o.defaultValue;
-    let T = b;
-    v && !b && m && (T = L);
-    const W = At(T), xe = Object.prototype.toString.apply(T);
-    if (v && T && W && !A.includes(xe) && !(D(k) && Array.isArray(T))) {
+    let F = b;
+    v && !b && m && (F = L);
+    const W = At(F), xe = Object.prototype.toString.apply(F);
+    if (v && F && W && !A.includes(xe) && !(D(k) && Array.isArray(F))) {
       if (!o.returnObjects && !this.options.returnObjects) {
         this.options.returnedObjectHandler || this.logger.warn("accessing an object - but returnObjects options is not enabled!");
-        const F = this.options.returnedObjectHandler ? this.options.returnedObjectHandler(_, T, {
+        const T = this.options.returnedObjectHandler ? this.options.returnedObjectHandler(_, F, {
           ...o,
           ns: l
         }) : `key '${a} (${this.language})' returned an object instead of string.`;
-        return s ? (w.res = F, w.usedParams = this.getUsedParamsDetails(o), w) : F;
+        return s ? (w.res = T, w.usedParams = this.getUsedParamsDetails(o), w) : T;
       }
       if (n) {
-        const F = Array.isArray(T), Y = F ? [] : {}, fe = F ? P : _;
-        for (const x in T)
-          if (Object.prototype.hasOwnProperty.call(T, x)) {
+        const T = Array.isArray(F), Y = T ? [] : {}, fe = T ? P : _;
+        for (const x in F)
+          if (Object.prototype.hasOwnProperty.call(F, x)) {
             const h = `${fe}${n}${x}`;
             m && !b ? Y[x] = this.translate(h, {
               ...o,
@@ -406,43 +406,43 @@ class Pt extends Tt {
               ...o,
               joinArrays: !1,
               ns: l
-            }), Y[x] === h && (Y[x] = T[x]);
+            }), Y[x] === h && (Y[x] = F[x]);
           }
         b = Y;
       }
     } else if (v && D(k) && Array.isArray(b))
       b = b.join(k), b && (b = this.extendTranslation(b, e, o, i));
     else {
-      let F = !1, Y = !1;
-      !this.isValidLookup(b) && m && (F = !0, b = L), this.isValidLookup(b) || (Y = !0, b = a);
+      let T = !1, Y = !1;
+      !this.isValidLookup(b) && m && (T = !0, b = L), this.isValidLookup(b) || (Y = !0, b = a);
       const x = (o.missingKeyNoValueFallbackToKey || this.options.missingKeyNoValueFallbackToKey) && Y ? void 0 : b, h = m && L !== b && this.options.updateMissing;
-      if (Y || F || h) {
+      if (Y || T || h) {
         if (this.logger.log(h ? "updateKey" : "missingKey", p, c, y && !h ? `${a}${this.pluralResolver.getSuffix(p, o.count, o)}` : a, h ? L : b), n) {
-          const $ = this.resolve(a, {
+          const S = this.resolve(a, {
             ...o,
             keySeparator: !1
           });
-          $ && $.res && this.logger.warn("Seems the loaded translations were in flat JSON format instead of nested. Either set keySeparator: false on init or make sure your translations are published in nested format.");
+          S && S.res && this.logger.warn("Seems the loaded translations were in flat JSON format instead of nested. Either set keySeparator: false on init or make sure your translations are published in nested format.");
         }
         let g = [];
         const C = this.languageUtils.getFallbackCodes(this.options.fallbackLng, o.lng || this.language);
         if (this.options.saveMissingTo === "fallback" && C && C[0])
-          for (let $ = 0; $ < C.length; $++)
-            g.push(C[$]);
+          for (let S = 0; S < C.length; S++)
+            g.push(C[S]);
         else this.options.saveMissingTo === "all" ? g = this.languageUtils.toResolveHierarchy(o.lng || this.language) : g.push(o.lng || this.language);
-        const E = ($, j, H) => {
+        const E = (S, j, H) => {
           var Q;
           const q = m && H !== b ? H : x;
-          this.options.missingKeyHandler ? this.options.missingKeyHandler($, c, j, q, h, o) : (Q = this.backendConnector) != null && Q.saveMissing && this.backendConnector.saveMissing($, c, j, q, h, o), this.emit("missingKey", $, c, j, b);
+          this.options.missingKeyHandler ? this.options.missingKeyHandler(S, c, j, q, h, o) : (Q = this.backendConnector) != null && Q.saveMissing && this.backendConnector.saveMissing(S, c, j, q, h, o), this.emit("missingKey", S, c, j, b);
         };
-        this.options.saveMissing && (this.options.saveMissingPlurals && y ? g.forEach(($) => {
-          const j = this.pluralResolver.getSuffixes($, o);
+        this.options.saveMissing && (this.options.saveMissingPlurals && y ? g.forEach((S) => {
+          const j = this.pluralResolver.getSuffixes(S, o);
           I && o[`defaultValue${this.options.pluralSeparator}zero`] && !j.includes(`${this.options.pluralSeparator}zero`) && j.push(`${this.options.pluralSeparator}zero`), j.forEach((H) => {
-            E([$], a + H, o[`defaultValue${H}`] || L);
+            E([S], a + H, o[`defaultValue${H}`] || L);
           });
         }) : E(g, a, L));
       }
-      b = this.extendTranslation(b, e, o, w, i), Y && b === a && this.options.appendNamespaceToMissingKey && (b = `${c}${d}${a}`), (Y || F) && this.options.parseMissingKeyHandler && (b = this.options.parseMissingKeyHandler(this.options.appendNamespaceToMissingKey ? `${c}${d}${a}` : a, F ? b : void 0, o));
+      b = this.extendTranslation(b, e, o, w, i), Y && b === a && this.options.appendNamespaceToMissingKey && (b = `${c}${d}${a}`), (Y || T) && this.options.parseMissingKeyHandler && (b = this.options.parseMissingKeyHandler(this.options.appendNamespaceToMissingKey ? `${c}${d}${a}` : a, T ? b : void 0, o));
     }
     return s ? (w.res = b, w.usedParams = this.getUsedParamsDetails(o), w) : b;
   }
@@ -514,8 +514,8 @@ class Pt extends Tt {
             f && (U = this.pluralResolver.getSuffix(v, t.count, t));
             const I = `${this.options.pluralSeparator}zero`, L = `${this.options.pluralSeparator}ordinal${this.options.pluralSeparator}`;
             if (f && (t.ordinal && U.startsWith(L) && y.push(d + U.replace(L, this.options.pluralSeparator)), y.push(d + U), w && y.push(d + I)), b) {
-              const T = `${d}${this.options.contextSeparator || "_"}${t.context}`;
-              y.push(T), f && (t.ordinal && U.startsWith(L) && y.push(T + U.replace(L, this.options.pluralSeparator)), y.push(T + U), w && y.push(T + I));
+              const F = `${d}${this.options.contextSeparator || "_"}${t.context}`;
+              y.push(F), f && (t.ordinal && U.startsWith(L) && y.push(F + U.replace(L, this.options.pluralSeparator)), y.push(F + U), w && y.push(F + I));
             }
           }
           let m;
@@ -917,7 +917,7 @@ class Yo {
 const Wo = (r, e) => {
   r.pending[e] !== void 0 && (delete r.pending[e], r.pendingCount--);
 };
-class Go extends Tt {
+class Go extends Ft {
   constructor(e, t, i, o = {}) {
     var s, n;
     super(), this.backend = e, this.store = t, this.services = i, this.languageUtils = i.languageUtils, this.options = o, this.logger = he.create("backendConnector"), this.waitingReads = [], this.maxParallelReads = o.maxParallelReads || 10, this.readingCalls = 0, this.maxRetries = o.maxRetries >= 0 ? o.maxRetries : 5, this.retryTimeout = o.retryTimeout >= 1 ? o.retryTimeout : 350, this.state = {}, this.queue = [], (n = (s = this.backend) == null ? void 0 : s.init) == null || n.call(s, i, o.backend, o);
@@ -1111,7 +1111,7 @@ const Dt = () => ({
     typeof r[t] == "function" && (r[t] = r[t].bind(r));
   });
 };
-class it extends Tt {
+class it extends Ft {
   constructor(e = {}, t) {
     if (super(), this.options = Zi(e), this.services = {}, this.logger = he, this.modules = {
       external: []
@@ -1853,10 +1853,10 @@ function fi(r, e) {
   };
 }
 const Kr = /[!#$%^&*()=+{}\[\];"<>\\,\/?~\t\n\r\s`]/;
-function Fl(r) {
+function Tl(r) {
   return r == null || r === "" ? null : typeof r != "string" || Kr.test(r) ? "productRefInvalid" : null;
 }
-function Tl(r) {
+function Fl(r) {
   if (r == null || r === "") return null;
   const e = typeof r == "number" ? r : Number(r);
   return !Number.isFinite(e) || !Number.isInteger(e) ? "productPositionInvalid" : null;
@@ -2277,11 +2277,11 @@ function Xt(r) {
 function Os(r, e, t) {
   return Object.defineProperty(r, "prototype", { writable: !1 }), r;
 }
-function Fs(r, e) {
+function Ts(r, e) {
   if (!(r instanceof e))
     throw new TypeError("Cannot call a class as a function");
 }
-function Ts(r, e, t) {
+function Fs(r, e, t) {
   return e = st(e), Ls(r, xi() ? Reflect.construct(e, t || [], st(r).constructor) : e.apply(r, t));
 }
 function Ls(r, e) {
@@ -2354,7 +2354,7 @@ function st(r) {
 var Je = /* @__PURE__ */ (function(r) {
   function e(t) {
     var i, o = arguments.length > 1 && arguments[1] !== void 0 ? arguments[1] : null, s = arguments.length > 2 && arguments[2] !== void 0 ? arguments[2] : null, n = arguments.length > 3 && arguments[3] !== void 0 ? arguments[3] : null;
-    if (Fs(this, e), i = Ts(this, e, [t]), i.originalRequest = s, i.originalResponse = n, i.causingError = o, o != null && (t += ", caused by ".concat(o.toString())), s != null) {
+    if (Ts(this, e), i = Fs(this, e, [t]), i.originalRequest = s, i.originalResponse = n, i.causingError = o, o != null && (t += ", caused by ".concat(o.toString())), s != null) {
       var a = s.getHeader("X-Request-ID") || "n/a", l = s.getMethod(), c = s.getURL(), d = n ? n.getStatus() : "n/a", p = n ? n.getBody() || "" : "n/a";
       t += ", originated from request (method: ".concat(l, ", url: ").concat(c, ", response code: ").concat(d, ", response text: ").concat(p, ", request id: ").concat(a, ")");
     }
@@ -2653,15 +2653,15 @@ function nn() {
   function _(k, v, y) {
     if (k = l(k), k = k.replace(i, ""), !(this instanceof _))
       return new _(k, v, y);
-    var m, R, U, I, L, T, W = c.slice(), xe = typeof v, F = this, Y = 0;
-    for (xe !== "object" && xe !== "string" && (y = v, v = null), y && typeof y != "function" && (y = e.parse), v = p(v), R = w(k || "", v), m = !R.protocol && !R.slashes, F.slashes = R.slashes || m && v.slashes, F.protocol = R.protocol || v.protocol || "", k = R.rest, (R.protocol === "file:" && (R.slashesCount !== 2 || a.test(k)) || !R.slashes && (R.protocol || R.slashesCount < 2 || !f(F.protocol))) && (W[3] = [/(.*)/, "pathname"]); Y < W.length; Y++) {
+    var m, R, U, I, L, F, W = c.slice(), xe = typeof v, T = this, Y = 0;
+    for (xe !== "object" && xe !== "string" && (y = v, v = null), y && typeof y != "function" && (y = e.parse), v = p(v), R = w(k || "", v), m = !R.protocol && !R.slashes, T.slashes = R.slashes || m && v.slashes, T.protocol = R.protocol || v.protocol || "", k = R.rest, (R.protocol === "file:" && (R.slashesCount !== 2 || a.test(k)) || !R.slashes && (R.protocol || R.slashesCount < 2 || !f(T.protocol))) && (W[3] = [/(.*)/, "pathname"]); Y < W.length; Y++) {
       if (I = W[Y], typeof I == "function") {
-        k = I(k, F);
+        k = I(k, T);
         continue;
       }
-      U = I[0], T = I[1], U !== U ? F[T] = k : typeof U == "string" ? (L = U === "@" ? k.lastIndexOf(U) : k.indexOf(U), ~L && (typeof I[2] == "number" ? (F[T] = k.slice(0, L), k = k.slice(L + I[2])) : (F[T] = k.slice(L), k = k.slice(0, L)))) : (L = U.exec(k)) && (F[T] = L[1], k = k.slice(0, L.index)), F[T] = F[T] || m && I[3] && v[T] || "", I[4] && (F[T] = F[T].toLowerCase());
+      U = I[0], F = I[1], U !== U ? T[F] = k : typeof U == "string" ? (L = U === "@" ? k.lastIndexOf(U) : k.indexOf(U), ~L && (typeof I[2] == "number" ? (T[F] = k.slice(0, L), k = k.slice(L + I[2])) : (T[F] = k.slice(L), k = k.slice(0, L)))) : (L = U.exec(k)) && (T[F] = L[1], k = k.slice(0, L.index)), T[F] = T[F] || m && I[3] && v[F] || "", I[4] && (T[F] = T[F].toLowerCase());
     }
-    y && (F.query = y(F.query)), m && v.slashes && F.pathname.charAt(0) !== "/" && (F.pathname !== "" || v.pathname !== "") && (F.pathname = b(F.pathname, v.pathname)), F.pathname.charAt(0) !== "/" && f(F.protocol) && (F.pathname = "/" + F.pathname), r(F.port, F.protocol) || (F.host = F.hostname, F.port = ""), F.username = F.password = "", F.auth && (L = F.auth.indexOf(":"), ~L ? (F.username = F.auth.slice(0, L), F.username = encodeURIComponent(decodeURIComponent(F.username)), F.password = F.auth.slice(L + 1), F.password = encodeURIComponent(decodeURIComponent(F.password))) : F.username = encodeURIComponent(decodeURIComponent(F.auth)), F.auth = F.password ? F.username + ":" + F.password : F.username), F.origin = F.protocol !== "file:" && f(F.protocol) && F.host ? F.protocol + "//" + F.host : "null", F.href = F.toString();
+    y && (T.query = y(T.query)), m && v.slashes && T.pathname.charAt(0) !== "/" && (T.pathname !== "" || v.pathname !== "") && (T.pathname = b(T.pathname, v.pathname)), T.pathname.charAt(0) !== "/" && f(T.protocol) && (T.pathname = "/" + T.pathname), r(T.port, T.protocol) || (T.host = T.hostname, T.port = ""), T.username = T.password = "", T.auth && (L = T.auth.indexOf(":"), ~L ? (T.username = T.auth.slice(0, L), T.username = encodeURIComponent(decodeURIComponent(T.username)), T.password = T.auth.slice(L + 1), T.password = encodeURIComponent(decodeURIComponent(T.password))) : T.username = encodeURIComponent(decodeURIComponent(T.auth)), T.auth = T.password ? T.username + ":" + T.password : T.username), T.origin = T.protocol !== "file:" && f(T.protocol) && T.host ? T.protocol + "//" + T.host : "null", T.href = T.toString();
   }
   function P(k, v, y) {
     var m = this;
@@ -2739,8 +2739,8 @@ function ei() {
     };
   }
   function d(x, h, g, C) {
-    var E = h && h.prototype instanceof A ? h : A, $ = Object.create(E.prototype), j = new Y(C || []);
-    return o($, "_invoke", { value: T(x, g, j) }), $;
+    var E = h && h.prototype instanceof A ? h : A, S = Object.create(E.prototype), j = new Y(C || []);
+    return o(S, "_invoke", { value: F(x, g, j) }), S;
   }
   function p(x, h, g) {
     try {
@@ -2772,8 +2772,8 @@ function ei() {
     });
   }
   function L(x, h) {
-    function g(E, $, j, H) {
-      var q = p(x[E], x, $);
+    function g(E, S, j, H) {
+      var q = p(x[E], x, S);
       if (q.type !== "throw") {
         var Q = q.arg, te = Q.value;
         return te && Oe(te) == "object" && i.call(te, "__await") ? h.resolve(te.__await).then(function(se) {
@@ -2789,24 +2789,24 @@ function ei() {
       H(q.arg);
     }
     var C;
-    o(this, "_invoke", { value: function($, j) {
+    o(this, "_invoke", { value: function(S, j) {
       function H() {
         return new h(function(q, Q) {
-          g($, j, q, Q);
+          g(S, j, q, Q);
         });
       }
       return C = C ? C.then(H, H) : H();
     } });
   }
-  function T(x, h, g) {
+  function F(x, h, g) {
     var C = f;
-    return function(E, $) {
+    return function(E, S) {
       if (C === b) throw Error("Generator is already running");
       if (C === _) {
-        if (E === "throw") throw $;
+        if (E === "throw") throw S;
         return { value: r, done: !0 };
       }
-      for (g.method = E, g.arg = $; ; ) {
+      for (g.method = E, g.arg = S; ; ) {
         var j = g.delegate;
         if (j) {
           var H = W(j, g);
@@ -2835,14 +2835,14 @@ function ei() {
     if (C === r) return h.delegate = null, g === "throw" && x.iterator.return && (h.method = "return", h.arg = r, W(x, h), h.method === "throw") || g !== "return" && (h.method = "throw", h.arg = new TypeError("The iterator does not provide a '" + g + "' method")), P;
     var E = p(C, x.iterator, h.arg);
     if (E.type === "throw") return h.method = "throw", h.arg = E.arg, h.delegate = null, P;
-    var $ = E.arg;
-    return $ ? $.done ? (h[x.resultName] = $.value, h.next = x.nextLoc, h.method !== "return" && (h.method = "next", h.arg = r), h.delegate = null, P) : $ : (h.method = "throw", h.arg = new TypeError("iterator result is not an object"), h.delegate = null, P);
+    var S = E.arg;
+    return S ? S.done ? (h[x.resultName] = S.value, h.next = x.nextLoc, h.method !== "return" && (h.method = "next", h.arg = r), h.delegate = null, P) : S : (h.method = "throw", h.arg = new TypeError("iterator result is not an object"), h.delegate = null, P);
   }
   function xe(x) {
     var h = { tryLoc: x[0] };
     1 in x && (h.catchLoc = x[1]), 2 in x && (h.finallyLoc = x[2], h.afterLoc = x[3]), this.tryEntries.push(h);
   }
-  function F(x) {
+  function T(x) {
     var h = x.completion || {};
     h.type = "normal", delete h.arg, x.completion = h;
   }
@@ -2875,9 +2875,9 @@ function ei() {
     return this;
   }), e.AsyncIterator = L, e.async = function(x, h, g, C, E) {
     E === void 0 && (E = Promise);
-    var $ = new L(d(x, h, g, C), E);
-    return e.isGeneratorFunction(h) ? $ : $.next().then(function(j) {
-      return j.done ? j.value : $.next();
+    var S = new L(d(x, h, g, C), E);
+    return e.isGeneratorFunction(h) ? S : S.next().then(function(j) {
+      return j.done ? j.value : S.next();
     });
   }, I(U), c(U, l, "Generator"), c(U, n, function() {
     return this;
@@ -2888,13 +2888,13 @@ function ei() {
     for (var C in h) g.push(C);
     return g.reverse(), function E() {
       for (; g.length; ) {
-        var $ = g.pop();
-        if ($ in h) return E.value = $, E.done = !1, E;
+        var S = g.pop();
+        if (S in h) return E.value = S, E.done = !1, E;
       }
       return E.done = !0, E;
     };
   }, e.values = fe, Y.prototype = { constructor: Y, reset: function(h) {
-    if (this.prev = 0, this.next = 0, this.sent = this._sent = r, this.done = !1, this.delegate = null, this.method = "next", this.arg = r, this.tryEntries.forEach(F), !h) for (var g in this) g.charAt(0) === "t" && i.call(this, g) && !isNaN(+g.slice(1)) && (this[g] = r);
+    if (this.prev = 0, this.next = 0, this.sent = this._sent = r, this.done = !1, this.delegate = null, this.method = "next", this.arg = r, this.tryEntries.forEach(T), !h) for (var g in this) g.charAt(0) === "t" && i.call(this, g) && !isNaN(+g.slice(1)) && (this[g] = r);
   }, stop: function() {
     this.done = !0;
     var h = this.tryEntries[0].completion;
@@ -2907,18 +2907,18 @@ function ei() {
       return j.type = "throw", j.arg = h, g.next = Q, te && (g.method = "next", g.arg = r), !!te;
     }
     for (var E = this.tryEntries.length - 1; E >= 0; --E) {
-      var $ = this.tryEntries[E], j = $.completion;
-      if ($.tryLoc === "root") return C("end");
-      if ($.tryLoc <= this.prev) {
-        var H = i.call($, "catchLoc"), q = i.call($, "finallyLoc");
+      var S = this.tryEntries[E], j = S.completion;
+      if (S.tryLoc === "root") return C("end");
+      if (S.tryLoc <= this.prev) {
+        var H = i.call(S, "catchLoc"), q = i.call(S, "finallyLoc");
         if (H && q) {
-          if (this.prev < $.catchLoc) return C($.catchLoc, !0);
-          if (this.prev < $.finallyLoc) return C($.finallyLoc);
+          if (this.prev < S.catchLoc) return C(S.catchLoc, !0);
+          if (this.prev < S.finallyLoc) return C(S.finallyLoc);
         } else if (H) {
-          if (this.prev < $.catchLoc) return C($.catchLoc, !0);
+          if (this.prev < S.catchLoc) return C(S.catchLoc, !0);
         } else {
           if (!q) throw Error("try statement without catch or finally");
-          if (this.prev < $.finallyLoc) return C($.finallyLoc);
+          if (this.prev < S.finallyLoc) return C(S.finallyLoc);
         }
       }
     }
@@ -2926,20 +2926,20 @@ function ei() {
     for (var C = this.tryEntries.length - 1; C >= 0; --C) {
       var E = this.tryEntries[C];
       if (E.tryLoc <= this.prev && i.call(E, "finallyLoc") && this.prev < E.finallyLoc) {
-        var $ = E;
+        var S = E;
         break;
       }
     }
-    $ && (h === "break" || h === "continue") && $.tryLoc <= g && g <= $.finallyLoc && ($ = null);
-    var j = $ ? $.completion : {};
-    return j.type = h, j.arg = g, $ ? (this.method = "next", this.next = $.finallyLoc, P) : this.complete(j);
+    S && (h === "break" || h === "continue") && S.tryLoc <= g && g <= S.finallyLoc && (S = null);
+    var j = S ? S.completion : {};
+    return j.type = h, j.arg = g, S ? (this.method = "next", this.next = S.finallyLoc, P) : this.complete(j);
   }, complete: function(h, g) {
     if (h.type === "throw") throw h.arg;
     return h.type === "break" || h.type === "continue" ? this.next = h.arg : h.type === "return" ? (this.rval = this.arg = h.arg, this.method = "return", this.next = "end") : h.type === "normal" && g && (this.next = g), P;
   }, finish: function(h) {
     for (var g = this.tryEntries.length - 1; g >= 0; --g) {
       var C = this.tryEntries[g];
-      if (C.finallyLoc === h) return this.complete(C.completion, C.afterLoc), F(C), P;
+      if (C.finallyLoc === h) return this.complete(C.completion, C.afterLoc), T(C), P;
     }
   }, catch: function(h) {
     for (var g = this.tryEntries.length - 1; g >= 0; --g) {
@@ -2947,10 +2947,10 @@ function ei() {
       if (C.tryLoc === h) {
         var E = C.completion;
         if (E.type === "throw") {
-          var $ = E.arg;
-          F(C);
+          var S = E.arg;
+          T(C);
         }
-        return $;
+        return S;
       }
     }
     throw Error("illegal catch attempt");
@@ -3816,13 +3816,13 @@ function Rn(r, e) {
 function On(r, e) {
   for (var t = 0; t < e.length; t++) {
     var i = e[t];
-    i.enumerable = i.enumerable || !1, i.configurable = !0, "value" in i && (i.writable = !0), Object.defineProperty(r, Tn(i.key), i);
+    i.enumerable = i.enumerable || !1, i.configurable = !0, "value" in i && (i.writable = !0), Object.defineProperty(r, Fn(i.key), i);
   }
 }
-function Fn(r, e, t) {
+function Tn(r, e, t) {
   return e && On(r.prototype, e), Object.defineProperty(r, "prototype", { writable: !1 }), r;
 }
-function Tn(r) {
+function Fn(r) {
   var e = Ln(r, "string");
   return lt(e) == "symbol" ? e : e + "";
 }
@@ -3856,7 +3856,7 @@ var In = /* @__PURE__ */ (function() {
   function r(e) {
     Rn(this, r), this._buffer = void 0, this._bufferOffset = 0, this._reader = e, this._done = !1;
   }
-  return Fn(r, [{
+  return Tn(r, [{
     key: "slice",
     value: function(t, i) {
       return t < this._bufferOffset ? Promise.reject(new Error("Requested data is before the reader's current offset")) : this._readUntilEnoughDataOrDone(t, i);
@@ -3891,13 +3891,13 @@ var In = /* @__PURE__ */ (function() {
     }
   }]);
 })();
-function Fe(r) {
+function Te(r) {
   "@babel/helpers - typeof";
-  return Fe = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(e) {
+  return Te = typeof Symbol == "function" && typeof Symbol.iterator == "symbol" ? function(e) {
     return typeof e;
   } : function(e) {
     return e && typeof Symbol == "function" && e.constructor === Symbol && e !== Symbol.prototype ? "symbol" : typeof e;
-  }, Fe(r);
+  }, Te(r);
 }
 function ii() {
   /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */
@@ -3918,8 +3918,8 @@ function ii() {
     };
   }
   function d(x, h, g, C) {
-    var E = h && h.prototype instanceof A ? h : A, $ = Object.create(E.prototype), j = new Y(C || []);
-    return o($, "_invoke", { value: T(x, g, j) }), $;
+    var E = h && h.prototype instanceof A ? h : A, S = Object.create(E.prototype), j = new Y(C || []);
+    return o(S, "_invoke", { value: F(x, g, j) }), S;
   }
   function p(x, h, g) {
     try {
@@ -3951,11 +3951,11 @@ function ii() {
     });
   }
   function L(x, h) {
-    function g(E, $, j, H) {
-      var q = p(x[E], x, $);
+    function g(E, S, j, H) {
+      var q = p(x[E], x, S);
       if (q.type !== "throw") {
         var Q = q.arg, te = Q.value;
-        return te && Fe(te) == "object" && i.call(te, "__await") ? h.resolve(te.__await).then(function(se) {
+        return te && Te(te) == "object" && i.call(te, "__await") ? h.resolve(te.__await).then(function(se) {
           g("next", se, j, H);
         }, function(se) {
           g("throw", se, j, H);
@@ -3968,24 +3968,24 @@ function ii() {
       H(q.arg);
     }
     var C;
-    o(this, "_invoke", { value: function($, j) {
+    o(this, "_invoke", { value: function(S, j) {
       function H() {
         return new h(function(q, Q) {
-          g($, j, q, Q);
+          g(S, j, q, Q);
         });
       }
       return C = C ? C.then(H, H) : H();
     } });
   }
-  function T(x, h, g) {
+  function F(x, h, g) {
     var C = f;
-    return function(E, $) {
+    return function(E, S) {
       if (C === b) throw Error("Generator is already running");
       if (C === _) {
-        if (E === "throw") throw $;
+        if (E === "throw") throw S;
         return { value: r, done: !0 };
       }
-      for (g.method = E, g.arg = $; ; ) {
+      for (g.method = E, g.arg = S; ; ) {
         var j = g.delegate;
         if (j) {
           var H = W(j, g);
@@ -4014,14 +4014,14 @@ function ii() {
     if (C === r) return h.delegate = null, g === "throw" && x.iterator.return && (h.method = "return", h.arg = r, W(x, h), h.method === "throw") || g !== "return" && (h.method = "throw", h.arg = new TypeError("The iterator does not provide a '" + g + "' method")), P;
     var E = p(C, x.iterator, h.arg);
     if (E.type === "throw") return h.method = "throw", h.arg = E.arg, h.delegate = null, P;
-    var $ = E.arg;
-    return $ ? $.done ? (h[x.resultName] = $.value, h.next = x.nextLoc, h.method !== "return" && (h.method = "next", h.arg = r), h.delegate = null, P) : $ : (h.method = "throw", h.arg = new TypeError("iterator result is not an object"), h.delegate = null, P);
+    var S = E.arg;
+    return S ? S.done ? (h[x.resultName] = S.value, h.next = x.nextLoc, h.method !== "return" && (h.method = "next", h.arg = r), h.delegate = null, P) : S : (h.method = "throw", h.arg = new TypeError("iterator result is not an object"), h.delegate = null, P);
   }
   function xe(x) {
     var h = { tryLoc: x[0] };
     1 in x && (h.catchLoc = x[1]), 2 in x && (h.finallyLoc = x[2], h.afterLoc = x[3]), this.tryEntries.push(h);
   }
-  function F(x) {
+  function T(x) {
     var h = x.completion || {};
     h.type = "normal", delete h.arg, x.completion = h;
   }
@@ -4041,7 +4041,7 @@ function ii() {
         return C.next = C;
       }
     }
-    throw new TypeError(Fe(x) + " is not iterable");
+    throw new TypeError(Te(x) + " is not iterable");
   }
   return k.prototype = v, o(U, "constructor", { value: v, configurable: !0 }), o(v, "constructor", { value: k, configurable: !0 }), k.displayName = c(v, l, "GeneratorFunction"), e.isGeneratorFunction = function(x) {
     var h = typeof x == "function" && x.constructor;
@@ -4054,9 +4054,9 @@ function ii() {
     return this;
   }), e.AsyncIterator = L, e.async = function(x, h, g, C, E) {
     E === void 0 && (E = Promise);
-    var $ = new L(d(x, h, g, C), E);
-    return e.isGeneratorFunction(h) ? $ : $.next().then(function(j) {
-      return j.done ? j.value : $.next();
+    var S = new L(d(x, h, g, C), E);
+    return e.isGeneratorFunction(h) ? S : S.next().then(function(j) {
+      return j.done ? j.value : S.next();
     });
   }, I(U), c(U, l, "Generator"), c(U, n, function() {
     return this;
@@ -4067,13 +4067,13 @@ function ii() {
     for (var C in h) g.push(C);
     return g.reverse(), function E() {
       for (; g.length; ) {
-        var $ = g.pop();
-        if ($ in h) return E.value = $, E.done = !1, E;
+        var S = g.pop();
+        if (S in h) return E.value = S, E.done = !1, E;
       }
       return E.done = !0, E;
     };
   }, e.values = fe, Y.prototype = { constructor: Y, reset: function(h) {
-    if (this.prev = 0, this.next = 0, this.sent = this._sent = r, this.done = !1, this.delegate = null, this.method = "next", this.arg = r, this.tryEntries.forEach(F), !h) for (var g in this) g.charAt(0) === "t" && i.call(this, g) && !isNaN(+g.slice(1)) && (this[g] = r);
+    if (this.prev = 0, this.next = 0, this.sent = this._sent = r, this.done = !1, this.delegate = null, this.method = "next", this.arg = r, this.tryEntries.forEach(T), !h) for (var g in this) g.charAt(0) === "t" && i.call(this, g) && !isNaN(+g.slice(1)) && (this[g] = r);
   }, stop: function() {
     this.done = !0;
     var h = this.tryEntries[0].completion;
@@ -4086,18 +4086,18 @@ function ii() {
       return j.type = "throw", j.arg = h, g.next = Q, te && (g.method = "next", g.arg = r), !!te;
     }
     for (var E = this.tryEntries.length - 1; E >= 0; --E) {
-      var $ = this.tryEntries[E], j = $.completion;
-      if ($.tryLoc === "root") return C("end");
-      if ($.tryLoc <= this.prev) {
-        var H = i.call($, "catchLoc"), q = i.call($, "finallyLoc");
+      var S = this.tryEntries[E], j = S.completion;
+      if (S.tryLoc === "root") return C("end");
+      if (S.tryLoc <= this.prev) {
+        var H = i.call(S, "catchLoc"), q = i.call(S, "finallyLoc");
         if (H && q) {
-          if (this.prev < $.catchLoc) return C($.catchLoc, !0);
-          if (this.prev < $.finallyLoc) return C($.finallyLoc);
+          if (this.prev < S.catchLoc) return C(S.catchLoc, !0);
+          if (this.prev < S.finallyLoc) return C(S.finallyLoc);
         } else if (H) {
-          if (this.prev < $.catchLoc) return C($.catchLoc, !0);
+          if (this.prev < S.catchLoc) return C(S.catchLoc, !0);
         } else {
           if (!q) throw Error("try statement without catch or finally");
-          if (this.prev < $.finallyLoc) return C($.finallyLoc);
+          if (this.prev < S.finallyLoc) return C(S.finallyLoc);
         }
       }
     }
@@ -4105,20 +4105,20 @@ function ii() {
     for (var C = this.tryEntries.length - 1; C >= 0; --C) {
       var E = this.tryEntries[C];
       if (E.tryLoc <= this.prev && i.call(E, "finallyLoc") && this.prev < E.finallyLoc) {
-        var $ = E;
+        var S = E;
         break;
       }
     }
-    $ && (h === "break" || h === "continue") && $.tryLoc <= g && g <= $.finallyLoc && ($ = null);
-    var j = $ ? $.completion : {};
-    return j.type = h, j.arg = g, $ ? (this.method = "next", this.next = $.finallyLoc, P) : this.complete(j);
+    S && (h === "break" || h === "continue") && S.tryLoc <= g && g <= S.finallyLoc && (S = null);
+    var j = S ? S.completion : {};
+    return j.type = h, j.arg = g, S ? (this.method = "next", this.next = S.finallyLoc, P) : this.complete(j);
   }, complete: function(h, g) {
     if (h.type === "throw") throw h.arg;
     return h.type === "break" || h.type === "continue" ? this.next = h.arg : h.type === "return" ? (this.rval = this.arg = h.arg, this.method = "return", this.next = "end") : h.type === "normal" && g && (this.next = g), P;
   }, finish: function(h) {
     for (var g = this.tryEntries.length - 1; g >= 0; --g) {
       var C = this.tryEntries[g];
-      if (C.finallyLoc === h) return this.complete(C.completion, C.afterLoc), F(C), P;
+      if (C.finallyLoc === h) return this.complete(C.completion, C.afterLoc), T(C), P;
     }
   }, catch: function(h) {
     for (var g = this.tryEntries.length - 1; g >= 0; --g) {
@@ -4126,10 +4126,10 @@ function ii() {
       if (C.tryLoc === h) {
         var E = C.completion;
         if (E.type === "throw") {
-          var $ = E.arg;
-          F(C);
+          var S = E.arg;
+          T(C);
         }
-        return $;
+        return S;
       }
     }
     throw Error("illegal catch attempt");
@@ -4176,14 +4176,14 @@ function Mn(r, e, t) {
 }
 function Bn(r) {
   var e = Nn(r, "string");
-  return Fe(e) == "symbol" ? e : e + "";
+  return Te(e) == "symbol" ? e : e + "";
 }
 function Nn(r, e) {
-  if (Fe(r) != "object" || !r) return r;
+  if (Te(r) != "object" || !r) return r;
   var t = r[Symbol.toPrimitive];
   if (t !== void 0) {
     var i = t.call(r, e);
-    if (Fe(i) != "object") return i;
+    if (Te(i) != "object") return i;
     throw new TypeError("@@toPrimitive must return a primitive value.");
   }
   return String(r);
@@ -4859,7 +4859,7 @@ function Oa(r) {
     o();
   });
 }
-class Fa {
+class Ta {
   constructor(e, t) {
     this.activeUploads = /* @__PURE__ */ new Map(), this.pausedUploads = /* @__PURE__ */ new Map(), this.retryTimers = /* @__PURE__ */ new Map(), this.unsubscribe = null, this.store = e, this.config = t;
   }
@@ -5127,7 +5127,7 @@ function si(r) {
 function ki(r) {
   return `https://api.filerobot.com/${r}`;
 }
-async function Ta(r, e) {
+async function Fa(r, e) {
   const t = `${ki(r)}/key/${encodeURIComponent(e)}`, i = new AbortController(), o = setTimeout(() => i.abort(), 3e4);
   try {
     const s = await fetch(t, { signal: i.signal });
@@ -5160,7 +5160,7 @@ function ni(r, e) {
 async function La(r) {
   const e = ki(r.container);
   if (r.mode === "security-template") {
-    const t = await Ta(r.container, r.securityTemplateId);
+    const t = await Fa(r.container, r.securityTemplateId);
     return { apiBase: e, headers: ni(r, t), sassKey: t };
   }
   return { apiBase: e, headers: ni(r) };
@@ -5666,13 +5666,13 @@ Ui.styles = ne`
       stroke-width: 0;
     }
   `;
-let Ft = Ui;
+let Tt = Ui;
 So([
   O({ attribute: !1 })
-], Ft.prototype, "t");
+], Tt.prototype, "t");
 So([
   O({ type: Array })
-], Ft.prototype, "sources");
+], Tt.prototype, "sources");
 const li = {
   LANGUAGES: "FTYPE_LANGUAGES"
 };
@@ -5950,7 +5950,7 @@ var pl = Object.defineProperty, le = (r, e, t, i) => {
     (n = r[s]) && (o = n(e, t, o) || o);
   return o && pl(e, t, o), o;
 };
-const Fr = 3, di = new CSSStyleSheet();
+const Tr = 3, di = new CSSStyleSheet();
 di.replaceSync(`
   [data-sfx-more-dropdown] { position:absolute; top:0; left:0; width:0; height:0; overflow:visible; pointer-events:none; }
   [data-sfx-more-dropdown] .sfx-more-dropdown { position:fixed; background:#fff; border-radius:12px; box-shadow:0 12px 40px rgba(0,0,0,0.14),0 2px 8px rgba(0,0,0,0.06); border:1px solid #e8edf5; padding:6px; min-width:210px; max-height:340px; overflow-y:auto; z-index:99999; opacity:0; visibility:hidden; pointer-events:none; transition:opacity .18s ease,visibility .18s ease,transform .18s ease; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; }
@@ -5967,7 +5967,7 @@ di.replaceSync(`
 var _e;
 const oe = (_e = class extends de {
   constructor() {
-    super(...arguments), this.t = (e, t) => typeof t == "string" ? t : e, this.compact = !1, this.externalDragOver = !1, this.accept = "", this.multi = !0, this.directory = !1, this.sources = [], this.sourcesLayout = "pills", this.mode = "modal", this._resizeObserver = null, this._dragOver = !1, this._moreOpen = !1, this._visiblePills = Fr, this._dragCounter = 0, this._onDragEnter = (e) => {
+    super(...arguments), this.t = (e, t) => typeof t == "string" ? t : e, this.compact = !1, this.externalDragOver = !1, this.accept = "", this.multi = !0, this.directory = !1, this.sources = [], this.sourcesLayout = "pills", this.mode = "modal", this._resizeObserver = null, this._dragOver = !1, this._moreOpen = !1, this._visiblePills = Tr, this._dragCounter = 0, this._onDragEnter = (e) => {
       e.preventDefault(), this._dragCounter++, this._dragCounter === 1 && (this._dragOver = !0);
     }, this._onDragOver = (e) => {
       e.preventDefault();
@@ -6080,7 +6080,7 @@ const oe = (_e = class extends de {
         </div>`,
         this._portalContainer
       ), requestAnimationFrame(() => this._positionDropdown());
-    } else this._portalContainer && (Ue(S, this._portalContainer), this._portalContainer.remove(), this._portalContainer = null);
+    } else this._portalContainer && (Ue($, this._portalContainer), this._portalContainer.remove(), this._portalContainer = null);
   }
   _injectDropdownStyles() {
     var t;
@@ -6106,7 +6106,7 @@ const oe = (_e = class extends de {
   }
   _updateVisiblePills() {
     const e = window.innerWidth;
-    this.sourcesLayout === "cards" ? e <= 480 ? this._visiblePills = 2 : e <= 768 ? this._visiblePills = 3 : this._visiblePills = 5 : e <= 768 ? this._visiblePills = 1 : this._visiblePills = Fr;
+    this.sourcesLayout === "cards" ? e <= 480 ? this._visiblePills = 2 : e <= 768 ? this._visiblePills = 3 : this._visiblePills = 5 : e <= 768 ? this._visiblePills = 1 : this._visiblePills = Tr;
   }
   connectedCallback() {
     super.connectedCallback(), document.addEventListener("paste", this._onPaste), document.addEventListener("click", this._onDocClick), document.addEventListener("keydown", this._onDocKeyDown), window.addEventListener("scroll", this._onScrollOrResize, !0), window.addEventListener("resize", this._onScrollOrResize), this._updateVisiblePills(), typeof ResizeObserver < "u" && (this._resizeObserver = new ResizeObserver((e) => {
@@ -6119,7 +6119,7 @@ const oe = (_e = class extends de {
     super.updated(e), e.has("sourcesLayout") && this._updateVisiblePills(), e.has("t") && this._moreOpen && this._updateDropdownPortal();
   }
   disconnectedCallback() {
-    super.disconnectedCallback(), document.removeEventListener("paste", this._onPaste), document.removeEventListener("click", this._onDocClick), document.removeEventListener("keydown", this._onDocKeyDown), window.removeEventListener("scroll", this._onScrollOrResize, !0), window.removeEventListener("resize", this._onScrollOrResize), this._resizeTimer && clearTimeout(this._resizeTimer), this._resizeObserver && (this._resizeObserver.disconnect(), this._resizeObserver = null), this._portalContainer && (Ue(S, this._portalContainer), this._portalContainer.remove(), this._portalContainer = null);
+    super.disconnectedCallback(), document.removeEventListener("paste", this._onPaste), document.removeEventListener("click", this._onDocClick), document.removeEventListener("keydown", this._onDocKeyDown), window.removeEventListener("scroll", this._onScrollOrResize, !0), window.removeEventListener("resize", this._onScrollOrResize), this._resizeTimer && clearTimeout(this._resizeTimer), this._resizeObserver && (this._resizeObserver.disconnect(), this._resizeObserver = null), this._portalContainer && (Ue($, this._portalContainer), this._portalContainer.remove(), this._portalContainer = null);
   }
   _renderPill(e) {
     return u`
@@ -6233,30 +6233,30 @@ const oe = (_e = class extends de {
             </div>
           </div>
 
-          <div class="title">${this.t("dragAndDrop", "Drag & Drop or click to")} <span>${this.t("browse", "browse")}</span></div>
-          ${!this.compact && this.directory && this.multi ? u`<div class="folder-pick">
+          ${!this.compact && this.directory && this.multi ? u`<div class="title">
+                ${this.t("dragDropClickTo", "Drag & Drop, click to")}
+                <span>${this.t("browse", "browse")}</span>
                 ${this.t("orUploadFolderPrefix", "or upload a ")}<button
                   type="button"
                   @click=${(o) => {
       o.stopPropagation(), this.browse("folder");
     }}
                 >${this.t("uploadFolder", "folder")}</button>
-              </div>` : S}
-          ${this.compact ? S : u`<div class="subtitle">${this.t("dropFilesAnywhere", "Drop files anywhere on this page")}</div>`}
+              </div>` : u`<div class="title">${this.t("dragAndDrop", "Drag & Drop or click to")} <span>${this.t("browse", "browse")}</span></div>`}
           ${!this.compact && this.sources.length > 0 ? u`
                 <div class="import-divider"><span>${this.t("orImportFrom", "or import from")}</span></div>
                 ${this.sourcesLayout === "cards" ? u`
                       <div class="sources-cards">
                         ${t.map((o) => this._renderCard(o))}
-                        ${i.length > 0 ? this._renderMoreCard() : S}
+                        ${i.length > 0 ? this._renderMoreCard() : $}
                       </div>
                     ` : u`
                       <div class="sources-grid">
                         ${t.map((o) => this._renderPill(o))}
-                        ${i.length > 0 ? this._renderMoreDropdown() : S}
+                        ${i.length > 0 ? this._renderMoreDropdown() : $}
                       </div>
                     `}
-              ` : S}
+              ` : $}
           ${this.compact && this.sources.length > 0 ? u`
                 <div class="sources-row">
                   ${this.sources.map(
@@ -6275,7 +6275,7 @@ const oe = (_e = class extends de {
                     `
     )}
                 </div>
-              ` : S}
+              ` : $}
 
           <div class="ripple"></div>
         </div>
@@ -6283,7 +6283,7 @@ const oe = (_e = class extends de {
           data-sfx-dz-files
           type="file"
           ?multiple=${this.multi}
-          accept=${this.accept || S}
+          accept=${this.accept || $}
           @change=${this._onFileChange}
         />
         ${this.directory && this.multi ? u`<input
@@ -6292,7 +6292,7 @@ const oe = (_e = class extends de {
               multiple
               webkitdirectory
               @change=${this._onFileChange}
-            />` : S}
+            />` : $}
       </div>
     `;
   }
@@ -6491,7 +6491,9 @@ const oe = (_e = class extends de {
       font-size: 20px;
       font-weight: 700;
       color: var(--sfx-up-text, #1e293b);
-      margin-bottom: 6px;
+      /* Match the icon's 24px bottom margin so the title has equal breathing
+         room above (icon → title) and below (title → divider). */
+      margin-bottom: 24px;
       transition:
         font-size 0.3s,
         margin 0.3s;
@@ -6500,6 +6502,19 @@ const oe = (_e = class extends de {
     .title span {
       color: var(--sfx-up-primary, #2563eb);
       cursor: pointer;
+    }
+
+    /* "folder" link merged into the title — styled like the "browse" span. */
+    .title button {
+      background: none;
+      border: none;
+      padding: 0;
+      font: inherit;
+      color: var(--sfx-up-primary, #2563eb);
+      cursor: pointer;
+    }
+    .title button:hover {
+      color: var(--sfx-up-primary-hover, #1d4ed8);
     }
 
     .folder-pick {
@@ -6669,7 +6684,7 @@ const oe = (_e = class extends de {
       gap: 10px;
       flex-wrap: wrap;
       width: 100%;
-      max-width: 700px;
+      max-width: 760px;
     }
 
     .compact .sources-cards {
@@ -6684,7 +6699,7 @@ const oe = (_e = class extends de {
       /* restore flex item behaviour lost by display:contents on the wrapper */
       flex: 1;
       min-width: 88px;
-      max-width: 130px;
+      max-width: 140px;
     }
 
     .src-card {
@@ -6693,7 +6708,7 @@ const oe = (_e = class extends de {
       align-items: center;
       justify-content: center;
       gap: 10px;
-      padding: 20px 12px 16px;
+      padding: 20px 8px 16px;
       border-radius: 16px;
       border: 1.5px solid rgba(226, 232, 240, 0.6);
       background: #fff;
@@ -6701,7 +6716,7 @@ const oe = (_e = class extends de {
       transition: all 0.18s ease;
       flex: 1;
       min-width: 88px;
-      max-width: 130px;
+      max-width: 140px;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
       font-family: inherit;
     }
@@ -6746,7 +6761,7 @@ const oe = (_e = class extends de {
     }
 
     .src-card .card-label {
-      font-size: 12px;
+      font-size: 10px;
       font-weight: 500;
       color: var(--sfx-up-text-secondary, #475569);
       white-space: nowrap;
@@ -7314,7 +7329,7 @@ Ri.styles = ne`
       white-space: nowrap;
     }
   `;
-let Tr = Ri;
+let Fr = Ri;
 var ul = Object.defineProperty, G = (r, e, t, i) => {
   for (var o = void 0, s = r.length - 1, n; s >= 0; s--)
     (n = r[s]) && (o = n(e, t, o) || o);
@@ -7421,7 +7436,7 @@ const Oi = class Oi extends de {
     d = Math.max(8, Math.min(d, window.innerWidth - n - 8)), t.style.left = `${d}px`;
   }
   _closePortal() {
-    this._portalContainer && (Ue(S, this._portalContainer), this._portalContainer.remove(), this._portalContainer = null);
+    this._portalContainer && (Ue($, this._portalContainer), this._portalContainer.remove(), this._portalContainer = null);
   }
   _injectTileDropdownStyles() {
     var t;
@@ -7461,7 +7476,7 @@ const Oi = class Oi extends de {
                   type="button"
                   @click=${this._onDropTileFolderClick}
                 >${this.t("uploadFolder", "folder")}</button>
-              </div>` : S}
+              </div>` : $}
           ${t.length > 0 ? u`
             <div class="drop-tile-sources">
               ${t.map((o) => u`
@@ -7478,12 +7493,12 @@ const Oi = class Oi extends de {
                 <div class="drop-tile-more-wrap">
                   <button class="drop-tile-more" title=${this.t("moreSources", "More sources")} @click=${(o) => this._toggleMore(o)}>···</button>
                 </div>
-              ` : S}
+              ` : $}
             </div>
-          ` : S}
+          ` : $}
         </div>
-        <input data-sfx-fl-files type="file" ?multiple=${this.multi} accept=${this.accept || S} @change=${this._onFileInput} />
-        ${this.directory && this.multi ? u`<input data-sfx-fl-folder type="file" multiple webkitdirectory @change=${this._onFileInput} />` : S}
+        <input data-sfx-fl-files type="file" ?multiple=${this.multi} accept=${this.accept || $} @change=${this._onFileInput} />
+        ${this.directory && this.multi ? u`<input data-sfx-fl-folder type="file" multiple webkitdirectory @change=${this._onFileInput} />` : $}
       </div>
     `;
   }
@@ -7522,9 +7537,9 @@ const Oi = class Oi extends de {
                 ${o ? this.t("done", "Done") : this.t("cancel", "Cancel")}
               </button>
             </div>
-          ` : S}
+          ` : $}
       <div class="grid">
-        ${this.showDropTile && this.mode !== "review" ? this._renderDropTile() : S}
+        ${this.showDropTile && this.mode !== "review" ? this._renderDropTile() : $}
         ${this.files.map(
       (s, n) => {
         var a;
@@ -8200,7 +8215,7 @@ var fl = Object.defineProperty, ee = (r, e, t, i) => {
     (n = r[s]) && (o = n(e, t, o) || o);
   return o && fl(e, t, o), o;
 };
-const Fi = class Fi extends de {
+const Ti = class Ti extends de {
   constructor() {
     super(...arguments), this.t = (e, t) => typeof t == "string" ? t : e, this.mode = "upload", this.showLocateButton = !1, this.showCopyCdnButton = !1, this.showCheckSimilar = !1, this.selectMode = !1, this.isSelected = !1, this.selectionActive = !1, this.selectionFull = !1, this.previewOpen = !1, this.similarStatus = "", this.similarCount = -1, this.similarResults = [], this.reviewPick = !1, this._dims = "", this._simPopover = !1, this._simPopLeft = 0, this._simPopTop = 0, this._simPopTimer = null, this._simHideTimer = null, this._copied = !1, this._copiedTimer = null, this._simPopoverShow = () => {
       if (this.previewOpen || !this.similarResults.length || (this._simCancelHide(), this._simPopover)) return;
@@ -8300,7 +8315,7 @@ const Fi = class Fi extends de {
   render() {
     var A, k;
     const e = this.file;
-    if (!e) return S;
+    if (!e) return $;
     const t = pe(e), i = e.status === "complete", o = e.status === "uploading", s = e.status === "paused", n = e.status === "error" || e.status === "failed", a = e.status === "rejected", l = this.mode === "review", c = Da(e.name), d = t === "image" && !ve(e.type), p = this.selectMode && d && !l, f = this.similarCount >= 0, w = p && !f && this.similarStatus === "", b = !l && !i && !o && !s && !n && e.status !== "rejected" && this.similarStatus !== "searching" && !this.reviewPick, _ = b, P = [
       "tile",
       i ? "done" : "",
@@ -8345,7 +8360,7 @@ const Fi = class Fi extends de {
                   <div class="sim-spinner"></div>
                   <div class="sim-label">${this.t("searching", "Searching…")}</div>
                 </div>
-              ` : S}
+              ` : $}
 
           <!-- Similarity result badge once checked: "N similar" (click to open
                results) or "No similar". Replaces the green check. -->
@@ -8357,7 +8372,7 @@ const Fi = class Fi extends de {
                     </svg>
                     ${this.t("nSimilar", "{{count}} similar", { count: this.similarCount })}
                   </span>
-                ` : u`<span class="sim-result-badge none">${this.t("noSimilar", "No similar")}</span>` : S}
+                ` : u`<span class="sim-result-badge none">${this.t("noSimilar", "No similar")}</span>` : $}
 
           <!-- Similar-image selection checkbox (selection mode, unchecked images only) -->
           ${w ? u`
@@ -8373,7 +8388,7 @@ const Fi = class Fi extends de {
                     <polyline points="20 6 9 17 4 12" />
                   </svg>
                 </span>
-              ` : S}
+              ` : $}
 
           <!-- Centered hover actions: Details + (optional) Check similar.
                Not in review mode (review uses Locate / Copy CDN) and hidden
@@ -8411,9 +8426,9 @@ const Fi = class Fi extends de {
                               </svg>
                               <span class="cs-label">${this.t("checkSimilar", "Check similar")}</span>
                             </button>
-                          ` : S}
+                          ` : $}
                 </div>
-              ` : S}
+              ` : $}
 
           <!-- Review-mode hover actions: Locate (deep-link to the asset
                in the admin DAM) + Copy CDN (copy CDN URL to clipboard).
@@ -8427,13 +8442,13 @@ const Fi = class Fi extends de {
                   ${this.showLocateButton && e.response.file.uuid ? u`<button class="review-action secondary" @click=${this._locate} aria-label=${this.t("locate", "Locate")}>
                         <svg viewBox="0 0 24 24"><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><circle cx="12" cy="12" r="7"/></svg>
                         ${this.t("locate", "Locate")}
-                      </button>` : S}
+                      </button>` : $}
                   ${this.showCopyCdnButton && ((k = e.response.file.url) != null && k.cdn) ? u`<button class="review-action primary ${this._copied ? "copied" : ""}" @click=${this._copyCdn} title=${this.t("copyCdn", "Copy CDN")} aria-label=${this.t("copyCdnLink", "Copy CDN link to clipboard")}>
                         ${this._copied ? u`<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>` : u`<svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`}
                         ${this._copied ? this.t("copied", "Copied") : this.t("copyCdn", "Copy CDN")}
-                      </button>` : S}
+                      </button>` : $}
                 </div>
-              ` : S}
+              ` : $}
 
           <!-- Spinner overlay (uploading = spinner, paused = pause icon) -->
           <div class="spinner-overlay">
@@ -8451,7 +8466,7 @@ const Fi = class Fi extends de {
                 <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round">
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
-              </div>` : S}
+              </div>` : $}
 
           <!-- Failed badge (review mode only — failed files get a visible status) -->
           ${l && n ? u`<div class="failed-badge" title=${e.error || this.t("uploadFailed", "Upload failed")}>
@@ -8459,17 +8474,17 @@ const Fi = class Fi extends de {
                   <line x1="6" y1="6" x2="18" y2="18"/>
                   <line x1="18" y1="6" x2="6" y2="18"/>
                 </svg>
-              </div>` : S}
+              </div>` : $}
 
           <!-- Progress bar (visible during upload and when paused; not in review mode) -->
           ${!l && (e.status === "uploading" || e.status === "paused") ? u`
                 <div class="progress">
                   <div class="progress-fill" ${Z({ transform: `scaleX(${Math.min(e.progress, 100) / 100})` })}></div>
                 </div>
-              ` : S}
+              ` : $}
 
           <!-- Error / rejected text overlay (suppressed in review mode — failed-badge takes over) -->
-          ${(n || a) && e.error && !l ? u`<div class="error-badge" title=${e.error}>${e.error}</div>` : S}
+          ${(n || a) && e.error && !l ? u`<div class="error-badge" title=${e.error}>${e.error}</div>` : $}
 
           <!-- "Already uploaded" note (same content already on the server —
                neutral, not an error). Shown for completed files in both the
@@ -8477,15 +8492,15 @@ const Fi = class Fi extends de {
           ${i && e.alreadyExisted ? u`<div class="exists-badge" title=${this.t("alreadyUploaded", "Already uploaded")}>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
                 <span>${this.t("alreadyUploaded", "Already uploaded")}</span>
-              </div>` : S}
+              </div>` : $}
 
           <!-- Video duration badge (hidden when error badge or exists badge is shown to avoid overlap) -->
-          ${!(n || a) && !(i && e.alreadyExisted) && e.duration != null && e.duration > 0 ? u`<div class="duration-badge">${this._formatDuration(e.duration)}</div>` : S}
+          ${!(n || a) && !(i && e.alreadyExisted) && e.duration != null && e.duration > 0 ? u`<div class="duration-badge">${this._formatDuration(e.duration)}</div>` : $}
         </div>
 
         <!-- Action buttons (hidden in review mode and the standalone results-
              pick mode — files are read-only there) -->
-        ${l || this.reviewPick ? S : u`
+        ${l || this.reviewPick ? $ : u`
         <div class="actions">
           ${o && e.isTus ? u`
                 <button class="act-btn pause" @click=${this._pause} title=${this.t("pause", "Pause")} aria-label=${this.t("pauseUpload", "Pause upload")}>
@@ -8494,14 +8509,14 @@ const Fi = class Fi extends de {
                     <rect x="14" y="4" width="4" height="16" rx="1" />
                   </svg>
                 </button>
-              ` : S}
+              ` : $}
           ${s ? u`
                 <button class="act-btn resume" @click=${this._resume} title=${this.t("resume", "Resume")} aria-label=${this.t("resumeUpload", "Resume upload")}>
                   <svg viewBox="0 0 24 24" fill="currentColor">
                     <polygon points="5,3 19,12 5,21" />
                   </svg>
                 </button>
-              ` : S}
+              ` : $}
           ${n ? u`
                 <button class="act-btn retry" @click=${this._retry} title=${this.t("retry", "Retry")} aria-label=${this.t("retryUpload", "Retry upload")}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
@@ -8509,7 +8524,7 @@ const Fi = class Fi extends de {
                     <path d="M20.49 15a9 9 0 11-2.12-9.36L23 10" />
                   </svg>
                 </button>
-              ` : S}
+              ` : $}
           <button class="act-btn del" @click=${this._remove} title=${this.t("remove", "Remove")} aria-label=${this.t("removeFile", "Remove file")}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="3 6 5 6 21 6" />
@@ -8527,7 +8542,7 @@ const Fi = class Fi extends de {
           <input class="name-input" type="text" .value=${e.name} title=${e.name}
             aria-label=${this.t("fileName", "File name")}
             ?readonly=${l || this.reviewPick}
-            @change=${l || this.reviewPick ? S : this._rename} @click=${(v) => v.stopPropagation()} />
+            @change=${l || this.reviewPick ? $ : this._rename} @click=${(v) => v.stopPropagation()} />
           <div class="meta">${c || ""}${e.size ? ` · ${ye(e.size)}` : ""}${this._dims ? ` · ${this._dims}` : ""}</div>
         </div>
       </div>
@@ -8536,7 +8551,7 @@ const Fi = class Fi extends de {
   }
   /** Hover preview popover (variant C: best match large + the rest stacked). */
   _renderSimPopover() {
-    if (!this._simPopover || !this.similarResults.length) return S;
+    if (!this._simPopover || !this.similarResults.length) return $;
     const e = [...this.similarResults].sort((l, c) => c.score - l.score), t = e[0], i = e.length, o = e.slice(1), s = o.slice(0, 3), n = o.length - s.length, a = Math.round(t.score * 100);
     return u`
       <div
@@ -8547,7 +8562,7 @@ const Fi = class Fi extends de {
         ${Z({ left: `${this._simPopLeft}px`, top: `${this._simPopTop}px` })}
       >
         <div class="pop-hero">
-          ${t.url ? u`<img src=${t.url} alt="" />` : S}
+          ${t.url ? u`<img src=${t.url} alt="" />` : $}
           <span class="pop-best ${t.score >= 0.9 ? "high" : ""}">${this.t("bestMatch", "{{pct}}% best match", { pct: a })}</span>
         </div>
         <div class="pop-body">
@@ -8557,7 +8572,7 @@ const Fi = class Fi extends de {
         <div class="pop-foot">
           ${o.length ? u`<div class="pop-thumbs">
                 ${s.map((l) => u`<img src=${l.url} alt="" />`)}
-                ${n > 0 ? u`<span class="pop-more">+${n}</span>` : S}
+                ${n > 0 ? u`<span class="pop-more">+${n}</span>` : $}
               </div>` : u`<span></span>`}
           <span class="pop-open">
             ${i === 1 ? this.t("open", "Open") : this.t("openAllN", "Open all {{count}}", { count: i })}
@@ -8572,7 +8587,7 @@ const Fi = class Fi extends de {
     return `${t}:${i.toString().padStart(2, "0")}`;
   }
 };
-Fi.styles = ne`
+Ti.styles = ne`
     :host {
       display: block;
     }
@@ -8854,7 +8869,11 @@ Fi.styles = ne`
     }
 
     .cs-label {
-      flex: 1 1 auto;
+      /* Don't grow: keep the label at its natural width so the icon + text sit
+         together as one group, centered in the button (rather than the icon
+         pinned left with the text floating). Still shrinks + ellipsizes in
+         narrow tiles. */
+      flex: 0 1 auto;
       min-width: 0;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -9413,7 +9432,7 @@ Fi.styles = ne`
       .spin-ring { animation: none; }
     }
   `;
-let J = Fi;
+let J = Ti;
 ee([
   O({ attribute: !1 })
 ], J.prototype, "t");
@@ -9548,7 +9567,7 @@ var hl = Object.defineProperty, me = (r, e, t, i) => {
     (n = r[s]) && (o = n(e, t, o) || o);
   return o && hl(e, t, o), o;
 };
-const Lr = 7, gl = 4, Ti = class Ti extends de {
+const Lr = 7, gl = 4, Fi = class Fi extends de {
   constructor() {
     super(...arguments), this.t = (e, t) => typeof t == "string" ? t : e, this.fileCount = 0, this.totalSize = 0, this.thumbnails = [], this.primaryLabel = "Done", this.failedFiles = [], this.alreadyExistedCount = 0, this.showMinimize = !1, this._maxThumbs = Lr, this._updateMaxThumbs = () => {
       const e = window.innerWidth <= 768 ? gl : Lr;
@@ -9601,7 +9620,7 @@ const Lr = 7, gl = 4, Ti = class Ti extends de {
     return u`
       ${this.showMinimize ? u`<button class="minimize-btn" title=${this.t("minimizeAndContinue", "Minimize & continue in background")} @click=${this._minimize}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="12" x2="18" y2="12"/></svg>
-          </button>` : S}
+          </button>` : $}
       <button class="close-btn" title=${this.t("close", "Close")} @click=${this._close}>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
       </button>
@@ -9625,16 +9644,16 @@ const Lr = 7, gl = 4, Ti = class Ti extends de {
                 ${e.map(
       (l) => u`<img class="thumb" src=${l} alt="" />`
     )}
-                ${t > 0 ? u`<div class="thumb-more">+${t}</div>` : S}
+                ${t > 0 ? u`<div class="thumb-more">+${t}</div>` : $}
               </div>
-            ` : S}
+            ` : $}
 
-        ${i && !n ? u`<div class="summary">${this.t("uploadedSize", "{{size}} uploaded", { size: ye(this.totalSize) })}</div>` : S}
+        ${i && !n ? u`<div class="summary">${this.t("uploadedSize", "{{size}} uploaded", { size: ye(this.totalSize) })}</div>` : $}
 
         ${this.alreadyExistedCount > 0 && !n ? u`<div class="info-note">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
               <span>${this.t("alreadyInLibrary", { count: this.alreadyExistedCount, defaultValue_one: "{{count}} file was already in your library", defaultValue_other: "{{count}} files were already in your library" })}</span>
-            </div>` : S}
+            </div>` : $}
 
         ${o ? u`
             <div class="failed-list">
@@ -9651,19 +9670,19 @@ const Lr = 7, gl = 4, Ti = class Ti extends de {
                 </div>
               `)}
             </div>
-          ` : S}
+          ` : $}
 
         <div class="actions">
           <button class="btn-ghost" @click=${this._uploadMore}>${this.t("uploadMore", "Upload more")}</button>
-          ${i || o ? u`<button class="btn-ghost" @click=${this._reviewFiles}>${this.t("reviewFiles", "Review files ({{count}})", { count: this.fileCount + this.failedFiles.length })}</button>` : S}
-          ${o ? u`<button class="btn-retry-all" @click=${this._retryAll}>${this.t("retryAll", "Retry all ({{count}})", { count: this.failedFiles.length })}</button>` : S}
+          ${i || o ? u`<button class="btn-ghost" @click=${this._reviewFiles}>${this.t("reviewFiles", "Review files ({{count}})", { count: this.fileCount + this.failedFiles.length })}</button>` : $}
+          ${o ? u`<button class="btn-retry-all" @click=${this._retryAll}>${this.t("retryAll", "Retry all ({{count}})", { count: this.failedFiles.length })}</button>` : $}
           <button class="btn-primary" @click=${this._primaryAction}>${this.primaryLabel}</button>
         </div>
       </div>
     `;
   }
 };
-Ti.styles = [ft, ht, ne`
+Fi.styles = [ft, ht, ne`
     :host {
       display: flex;
       flex: 1;
@@ -10043,7 +10062,7 @@ Ti.styles = [ft, ht, ne`
       .icon { animation: none; }
     }
   `];
-let ue = Ti;
+let ue = Fi;
 me([
   O({ attribute: !1 })
 ], ue.prototype, "t");
@@ -10113,7 +10132,7 @@ const Li = class Li extends de {
           </button>
           ${this._failedCount > 0 ? u`<button class="chip ${this._filter === "failed" ? "active" : ""}" @click=${this._setFilter("failed")}>
                 ✗ ${this.t("failed", "Failed")} (${this._failedCount})
-              </button>` : S}
+              </button>` : $}
           <button class="clear-btn" @click=${this._onClear} title=${this.t("clearLastUpload", "Clear last upload from this browser")}>${this.t("clear", "Clear")}</button>
         </div>
       </div>
@@ -10366,7 +10385,7 @@ const zi = class zi extends de {
                 >${this.completedCount}/${this.fileCount} ${this.t("files", "files")}</span
               >
             </div>
-          ` : S}
+          ` : $}
       <div class="buttons-row">
         <div class="left">
           ${this.showFillMetadata && this.uploadState === "idle" ? u`
@@ -10393,7 +10412,7 @@ const zi = class zi extends de {
                   </svg>
                   <span class="btn-label">${this.t("fillMetadata", "Fill Metadata")}</span>
                 </button>
-              ` : S}
+              ` : $}
           ${this.showCheckSimilar && this.uploadState === "idle" ? u`
                 <button
                   class="btn-sec"
@@ -10412,7 +10431,7 @@ const zi = class zi extends de {
                   </svg>
                   <span class="btn-label">${this.t("checkSimilar", "Check similar")}</span>
                 </button>
-              ` : S}
+              ` : $}
         </div>
         <div class="right">
           <button class="btn-ghost" @click=${this._clear} aria-label=${this.t("clear", "Clear")}>
@@ -10463,7 +10482,7 @@ const zi = class zi extends de {
                   </svg>
                   <span class="btn-label">${this.t("retryAll", "Retry all ({{count}})", { count: this.failedCount })}</span>
                 </button>
-              ` : S}
+              ` : $}
           ${this._renderUploadButton()}
         </div>
       </div>
@@ -10489,7 +10508,7 @@ const zi = class zi extends de {
           ${t > 0 ? u`<span
                 class="count-pill ${i ? "full" : ""}"
                 aria-label=${this.t("countSelected", "{{count}} of {{max}} selected", { count: e, max: t })}
-              >${e}/${t}</span>` : S}
+              >${e}/${t}</span>` : $}
           <button class="select-all" type="button" @click=${this._similarSelectAll}>
             ${this.allSelected ? this.t("deselectAll", "Deselect all") : this.t("selectAll", "Select all")}
           </button>
@@ -11375,22 +11394,22 @@ Ai.styles = [ft, ht, ne`
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes slideUp { from { transform: translateY(18px) scale(0.97); } to { transform: translateY(0) scale(1); } }
   `];
-let Te = Ai;
+let Fe = Ai;
 mt([
   O({ attribute: !1 })
-], Te.prototype, "t");
+], Fe.prototype, "t");
 mt([
   z()
-], Te.prototype, "_stream");
+], Fe.prototype, "_stream");
 mt([
   z()
-], Te.prototype, "_error");
+], Fe.prototype, "_error");
 mt([
   z()
-], Te.prototype, "_captured");
+], Fe.prototype, "_captured");
 mt([
   z()
-], Te.prototype, "_previewUrl");
+], Fe.prototype, "_previewUrl");
 var wl = Object.defineProperty, We = (r, e, t, i) => {
   for (var o = void 0, s = r.length - 1, n; s >= 0; s--)
     (n = r[s]) && (o = n(e, t, o) || o);
@@ -11869,14 +11888,14 @@ const B = (V = class extends de {
       if ((((s = (o = this.config) == null ? void 0 : o.connectors) == null ? void 0 : s.providers) ?? []).includes(e)) {
         if (zr.has(e)) {
           if (!customElements.get("sfx-search-provider-browser")) {
-            const { SfxSearchProviderBrowser: a } = await import("./search-provider-browser-BYihwRSW.js");
+            const { SfxSearchProviderBrowser: a } = await import("./search-provider-browser-COQkcP5I.js");
             customElements.define(
               "sfx-search-provider-browser",
               a
             );
           }
         } else if (!customElements.get("sfx-provider-browser")) {
-          const { SfxProviderBrowser: a } = await import("./provider-browser-DVdYw49z.js");
+          const { SfxProviderBrowser: a } = await import("./provider-browser-Jd8G0FEn.js");
           customElements.define("sfx-provider-browser", a);
         }
         this._activeConnector = e;
@@ -12658,7 +12677,7 @@ const B = (V = class extends de {
       this._portalContainer || (this._portalContainer = document.createElement("div"), this._portalContainer.setAttribute("data-sfx-upload-float", ""), document.body.appendChild(this._portalContainer)), this._syncPortalOffsetVars(), Ue(this._renderFloatingPill(e), this._portalContainer), t && !this._floatShownDispatched && (this._floatShownDispatched = !0, requestAnimationFrame(() => {
         this._dispatchPublic(M.PANEL_SHOWN, this._measureFloatGeometry());
       }));
-    } else this._portalContainer && (Ue(S, this._portalContainer), this._portalContainer.remove(), this._portalContainer = null, this._floatShownDispatched = !1);
+    } else this._portalContainer && (Ue($, this._portalContainer), this._portalContainer.remove(), this._portalContainer = null, this._floatShownDispatched = !1);
   }
   connectedCallback() {
     super.connectedCallback(), document.addEventListener("keydown", this._onKeyDown), this._prevStoreState = this._store.getState(), this._unsubStoreEvents = this._store.subscribe(() => this._onStoreChange());
@@ -12824,7 +12843,7 @@ const B = (V = class extends de {
   }
   _ensureEngine() {
     var e, t;
-    !this._engine && this._apiBase && this._authHeaders && (this._engine = new Fa(this._store, {
+    !this._engine && this._apiBase && this._authHeaders && (this._engine = new Ta(this._store, {
       apiBase: this._apiBase,
       authHeaders: this._authHeaders,
       tusConfig: this._normalizeTusConfig(),
@@ -12838,7 +12857,7 @@ const B = (V = class extends de {
     const t = e.metadataConfig;
     if (!(!t || !this._apiBase || !this._authHeaders))
       try {
-        const { fetchMetadataSchema: i, createTagsAutocomplete: o, createTaxonomyService: s, createUltratagsService: n } = await import("./index-9-jJkWgF.js"), a = await i(
+        const { fetchMetadataSchema: i, createTagsAutocomplete: o, createTaxonomyService: s, createUltratagsService: n } = await import("./index-BIqfhjXQ.js"), a = await i(
           this._apiBase,
           this._authHeaders,
           t.projectUuid,
@@ -13329,15 +13348,6 @@ const B = (V = class extends de {
   _openSimilarAsset(e) {
     e && window.open(e, "_blank", "noopener,noreferrer");
   }
-  /** Discard the previewed image from the upload; move to the next file (so the
-   *  side panel stays open) or close the preview when none remain. */
-  _discardPreviewFile() {
-    var s, n;
-    const e = this._previewFileId;
-    if (!e) return;
-    const t = [...this._store.getState().files.values()], i = t.findIndex((a) => a.id === e), o = ((s = t[i + 1]) == null ? void 0 : s.id) ?? ((n = t[i - 1]) == null ? void 0 : n.id) ?? null;
-    this._removeFile(e), this._previewFileId = o;
-  }
   /** Display name for a similar asset: the filename extracted from its URL
    *  (decoded, query stripped), falling back to an explicit name or the uuid. */
   _simAssetName(e) {
@@ -13371,7 +13381,7 @@ const B = (V = class extends de {
     );
     if ((n = (s = (o = this.config) == null ? void 0 : o.callbacks) == null ? void 0 : s.onFileLocate) == null || n.call(s, e), !t) return;
     const i = gs(e, this.config ?? void 0);
-    i && window.open(i, "_blank", "noopener,noreferrer");
+    i && window.location.assign(i);
   }
   // --- Render ---
   render() {
@@ -13385,7 +13395,7 @@ const B = (V = class extends de {
                   <sfx-toast .t=${i}></sfx-toast>
                 </div>
               </div>
-            ` : S}
+            ` : $}
         ${this._renderFsOverlay()}
       ` : u`
       <div class="inline ${t.length === 0 ? "no-files" : ""}">
@@ -13403,7 +13413,7 @@ const B = (V = class extends de {
       their position:fixed always resolves to the viewport, even if some
       ancestor of fs-overlay establishes a containing block on first paint. */
   _renderFsOverlay() {
-    if (!this._fullscreenPreviewUrl && !this._fullscreenVideoFile) return S;
+    if (!this._fullscreenPreviewUrl && !this._fullscreenVideoFile) return $;
     const e = this._storeCtrl.state.t, t = [...this._store.getState().files.values()].filter(
       (o) => o.previewUrl || o.type.startsWith("video/") && o.file
     ), i = t.findIndex((o) => o.id === this._previewFileId);
@@ -13450,19 +13460,19 @@ const B = (V = class extends de {
                   <div class="accent-line"></div>
                   <span>${e.accent}</span>
                 </div>
-              ` : S}
-          ${e.title ? u`<h2 class="inline-header-title">${e.title}</h2>` : S}
+              ` : $}
+          ${e.title ? u`<h2 class="inline-header-title">${e.title}</h2>` : $}
         </div>
-        ${e.description ? u`<div class="inline-header-desc">${e.description}</div>` : S}
+        ${e.description ? u`<div class="inline-header-desc">${e.description}</div>` : $}
       </div>
     `;
   }
   _renderHeader() {
     var P, A, k, v, y, m;
-    if (this._phase === "complete") return S;
+    if (this._phase === "complete") return $;
     const e = this._storeCtrl.state.t, t = ((P = this.config) == null ? void 0 : P.mode) ?? "modal";
     if (this._phase === "uploading") {
-      const I = [...this._storeCtrl.state.files.values()].filter((W) => W.status !== "rejected" && W.status !== "cancelled"), L = I.length, T = I.filter((W) => W.status === "complete").length;
+      const I = [...this._storeCtrl.state.files.values()].filter((W) => W.status !== "rejected" && W.status !== "cancelled"), L = I.length, F = I.filter((W) => W.status === "complete").length;
       return u`
         <div class="header upload-header">
           <div class="float-header-left">
@@ -13484,16 +13494,16 @@ const B = (V = class extends de {
                 ${e("uploadingFiles", { count: L, defaultValue_one: "Uploading {{count}} file", defaultValue_other: "Uploading {{count}} files" })}
               </div>
               <div class="float-subtitle">
-                ${e("nOfNComplete", "{{completed}} of {{total}} complete", { completed: T, total: L })}${this._lastEta > 0 ? ` · ${e("etaLeft", "~{{eta}} left", { eta: qt(this._lastEta) })}` : ""}
+                ${e("nOfNComplete", "{{completed}} of {{total}} complete", { completed: F, total: L })}${this._lastEta > 0 ? ` · ${e("etaLeft", "~{{eta}} left", { eta: qt(this._lastEta) })}` : ""}
               </div>
             </div>
           </div>
         </div>
       `;
     }
-    if (t === "inline" && ((A = this.config) != null && A.inlineHeader)) return S;
+    if (t === "inline" && ((A = this.config) != null && A.inlineHeader)) return $;
     const i = ((k = this.config) == null ? void 0 : k.header) ?? (t === "modal" ? "close" : !0);
-    if (i === !1) return S;
+    if (i === !1) return $;
     const o = t === "modal" ? this._onModalDismiss : this._onInlineDismiss, s = i === "back" ? u`<button
             class="header-btn header-btn-back"
             aria-label="Back to Asset Picker"
@@ -13509,7 +13519,7 @@ const B = (V = class extends de {
             >
               <polyline points="15 18 9 12 15 6" />
             </svg>
-          </button>` : S, n = (v = this.config) == null ? void 0 : v.uploadSettings, a = n !== !1 && (n == null || n.enabled !== !1), l = [...this._storeCtrl.state.files.values()], c = l.some(
+          </button>` : $, n = (v = this.config) == null ? void 0 : v.uploadSettings, a = n !== !1 && (n == null || n.enabled !== !1), l = [...this._storeCtrl.state.files.values()], c = l.some(
       (R) => pe(R) === "image" && !ve(R.type)
     ), d = l.some((R) => pe(R) === "pdf"), p = l.some((R) => pe(R) === "vid"), w = a && (c || d || p) ? u`<button
             class="header-btn header-btn-settings ${this._showSettings ? "on" : ""}"
@@ -13532,12 +13542,12 @@ const B = (V = class extends de {
                 d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
               />
             </svg>
-          </button>` : S, b = (m = (y = this._metadataSchema) == null ? void 0 : y.regionalVariantsGroups) != null && m.length ? u`<sfx-regional-settings
+          </button>` : $, b = (m = (y = this._metadataSchema) == null ? void 0 : y.regionalVariantsGroups) != null && m.length ? u`<sfx-regional-settings
           class="header-regional"
           .groups=${this._metadataSchema.regionalVariantsGroups}
           .selectedFilters=${this._effectiveRegionalFilters}
           @regional-change=${this._onRegionalChange}
-        ></sfx-regional-settings>` : S, _ = i === "close" ? u`<button
+        ></sfx-regional-settings>` : $, _ = i === "close" ? u`<button
             class="header-btn header-btn-close"
             aria-label="Close"
             @click=${o}
@@ -13552,7 +13562,7 @@ const B = (V = class extends de {
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
-          </button>` : S;
+          </button>` : $;
     return u`
       <div class="header">
         ${s}
@@ -13568,7 +13578,7 @@ const B = (V = class extends de {
                 <line x1="12" y1="12" x2="12" y2="21" />
                 <path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3" />
               </svg>
-            </div>` : S}
+            </div>` : $}
         <div class="header-title">${e("uploadFiles", "Upload Files")}</div>
         ${b}
         ${w}
@@ -13597,11 +13607,11 @@ const B = (V = class extends de {
         <div class="upload-overlay-title">
           ${i("uploadingFiles", { count: n, defaultValue_one: "Uploading {{count}} file", defaultValue_other: "Uploading {{count}} files" })}
         </div>
-        ${c.length > 0 ? u`<div class="upload-overlay-subtitle">${c.join(" · ")}</div>` : S}
+        ${c.length > 0 ? u`<div class="upload-overlay-subtitle">${c.join(" · ")}</div>` : $}
         ${n > 1 ? u`<div class="upload-overlay-bar">
               <div class="upload-overlay-bar-fill" ${Z({ width: `${o}%` })}></div>
-            </div>` : S}
-        ${l.length > 0 ? this._renderOverlayFiles(l, i) : S}
+            </div>` : $}
+        ${l.length > 0 ? this._renderOverlayFiles(l, i) : $}
         <div class="upload-overlay-actions">
           <button
             class="upload-overlay-cancel"
@@ -13614,7 +13624,7 @@ const B = (V = class extends de {
                 @click=${this._onMinimize}
               >
                 ${i("minimizeAndContinue", "Minimize & continue in background")}
-              </button>` : S}
+              </button>` : $}
         </div>
       </div>
     `;
@@ -13654,7 +13664,7 @@ const B = (V = class extends de {
                           <rect x="14" y="4" width="4" height="16" rx="1" />
                         </svg>
                       </button>
-                    ` : S}
+                    ` : $}
                 ${o ? u`
                       <button
                         class="upload-overlay-file-btn paused"
@@ -13669,7 +13679,7 @@ const B = (V = class extends de {
                           <polygon points="5,3 19,12 5,21" />
                         </svg>
                       </button>
-                    ` : S}
+                    ` : $}
                 <button
                   class="upload-overlay-file-btn del"
                   title=${t("remove", "Remove")}
@@ -13753,7 +13763,7 @@ const B = (V = class extends de {
             <span class="float-collapsed-text"
               >${s ? a > 0 ? n > 0 ? i("partiallyUploaded", "Partially uploaded") : i("uploadFailed", "Upload failed") : c ? i("alreadyInLibrary", { count: l, defaultValue_one: "{{count}} file was already in your library", defaultValue_other: "{{count}} files were already in your library" }) : i("uploadComplete", "Upload complete") : i("uploadingFiles", { count: e.length, defaultValue_one: "Uploading {{count}} file", defaultValue_other: "Uploading {{count}} files" })}</span
             >
-            ${s ? S : u`<span class="float-collapsed-pct">${o}%</span>`}
+            ${s ? $ : u`<span class="float-collapsed-pct">${o}%</span>`}
           </div>
           <div class="float-collapsed-actions">
             <button title=${i("openUploader", "Open uploader")} @click=${this._onPillExpand}>
@@ -13930,7 +13940,7 @@ const B = (V = class extends de {
                 <line x1="12" y1="8" x2="12.01" y2="8" />
               </svg>
               <span>${i("alreadyInLibrary", { count: l, defaultValue_one: "{{count}} file was already in your library", defaultValue_other: "{{count}} files were already in your library" })}</span>
-            </div>` : S}
+            </div>` : $}
         <div class="float-items">
           ${e.map((d) => {
       var f, w, b;
@@ -13941,7 +13951,7 @@ const B = (V = class extends de {
                   class="float-item-thumb"
                   ${Z(d.previewUrl ? { "background-image": `url(${d.previewUrl})`, "background-size": "cover", "background-position": "center" } : null)}
                 >
-                  ${d.previewUrl ? S : u`<svg
+                  ${d.previewUrl ? $ : u`<svg
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
@@ -13970,7 +13980,7 @@ const B = (V = class extends de {
                                 <line x1="12" y1="19" x2="12" y2="22" />
                                 <circle cx="12" cy="12" r="7" />
                               </svg>
-                            </button>` : S}
+                            </button>` : $}
                         ${d.alreadyExisted ? u`<div
                               class="float-item-done info"
                               title=${i("alreadyUploaded", "Already uploaded")}
@@ -14077,7 +14087,7 @@ const B = (V = class extends de {
                                 <rect x="6" y="4" width="4" height="16" rx="1" />
                                 <rect x="14" y="4" width="4" height="16" rx="1" />
                               </svg>
-                            </button>` : S}
+                            </button>` : $}
                         ${d.status === "uploading" || d.status === "queued" || d.status === "retrying" ? u`<button
                               class="float-item-act del"
                               title=${i("remove", "Remove")}
@@ -14091,7 +14101,7 @@ const B = (V = class extends de {
                                 <line x1="10" y1="11" x2="10" y2="17" />
                                 <line x1="14" y1="11" x2="14" y2="17" />
                               </svg>
-                            </button>` : S}
+                            </button>` : $}
                       `}
                 </div>
               </div>
@@ -14103,7 +14113,7 @@ const B = (V = class extends de {
   }
   _renderPreviewLayout(e) {
     var b, _, P, A, k, v, y;
-    if (e.length === 0) return S;
+    if (e.length === 0) return $;
     const t = this._storeCtrl.state.t, i = e.find((m) => m.id === this._previewFileId) ?? e[0], o = ((b = i.name.split(".").pop()) == null ? void 0 : b.toUpperCase()) || "";
     new Date(i.addedAt).toLocaleDateString(
       "en-US",
@@ -14119,7 +14129,7 @@ const B = (V = class extends de {
       <div class="preview-topbar"></div>
       <div class="preview-layout">
         <div class="file-grid-side" ${Z({ flex: String(this._splitPct) })}>
-          ${((A = this.config) == null ? void 0 : A.mode) === "inline" && ((k = this.config) != null && k.inlineHeader) ? this._renderInlineHeader(this.config.inlineHeader) : S}
+          ${((A = this.config) == null ? void 0 : A.mode) === "inline" && ((k = this.config) != null && k.inlineHeader) ? this._renderInlineHeader(this.config.inlineHeader) : $}
           <div class="file-grid-header">
             <span class="file-grid-header-text"
               >${e.length} ${e.length === 1 ? "asset" : "assets"} ·
@@ -14203,7 +14213,7 @@ const B = (V = class extends de {
                         <line x1="3" y1="21" x2="10" y2="14" />
                       </svg>
                     </button>
-                  ` : S}
+                  ` : $}
               <button
                 @click=${() => {
       this._previewFileId = null;
@@ -14243,18 +14253,10 @@ const B = (V = class extends de {
       this._previewPanelTab = "similar";
     }}
                   >
-                    <span>${t("similarTab", "Similar")}</span>${p && p.length > 0 ? u`<span class="preview-tab-count">${p.length}</span>` : S}
-                  </button>
-                  <button
-                    class="preview-tab-discard"
-                    @click=${() => this._discardPreviewFile()}
-                    aria-label=${t("discardThisImage", "Discard this image")}
-                    title=${t("discardThisImage", "Discard this image")}
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                    <span>${t("similarTab", "Similar")}</span>${p && p.length > 0 ? u`<span class="preview-tab-count">${p.length}</span>` : $}
                   </button>
                 </div>
-              ` : S}
+              ` : $}
           ${w === "similar" ? this._renderSimilarPanel(i, p ?? []) : u`
           ${i.type.startsWith("video/") && i.file ? u`
                 <div class="preview-media-area">
@@ -14386,7 +14388,7 @@ const B = (V = class extends de {
                 <div class="preview-file-info">
                   ${o}${i.size ? ` · ${ye(i.size)}` : ""}${this._previewDims !== "—" ? ` · ${this._previewDims}` : ""}
                 </div>
-              </div>` : S}
+              </div>` : $}
           ${this._metadataSchema && ((y = this.config) != null && y.metadataConfig) ? u`
                 <div
                   class="preview-metadata"
@@ -14443,7 +14445,7 @@ const B = (V = class extends de {
                               ${ye(i.size)}
                             </div>
                           </div>
-                        ` : S}
+                        ` : $}
                     ${this._previewDims !== "—" ? u`
                           <div class="preview-file-info-row">
                             <div class="preview-file-info-key">${t("dimensions", "Dimensions")}</div>
@@ -14451,7 +14453,7 @@ const B = (V = class extends de {
                               ${this._previewDims}
                             </div>
                           </div>
-                        ` : S}
+                        ` : $}
                   </div>
                 </div>
               `}
@@ -14488,7 +14490,7 @@ const B = (V = class extends de {
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
                 </button>
-                ${o.url ? u`<img src=${o.url} alt="" />` : S}
+                ${o.url ? u`<img src=${o.url} alt="" />` : $}
               </div>
               <div class="psim-foot">
                 <div class="psim-foot-name">${this._simAssetName(o)}</div>
@@ -14598,7 +14600,7 @@ const B = (V = class extends de {
                   </div>
                 </div>
               </div>
-            ` : S}
+            ` : $}
 
         ${s ? u`
               <!-- Video settings (only when the queue contains a video) -->
@@ -14644,12 +14646,12 @@ const B = (V = class extends de {
       }}
                             >
                               ${l(f)}
-                              ${f === this._setResolution ? u`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>` : S}
+                              ${f === this._setResolution ? u`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>` : $}
                             </div>
                           `
     )}
                       </div>
-                    ` : S}
+                    ` : $}
               </div>
               <div class="sfield sfield-block sfield-radios ${this._setTranscode ? "" : "dep-off"}">
                 <label>${e("protocols", "Protocols")}</label>
@@ -14667,7 +14669,7 @@ const B = (V = class extends de {
                   `
     )}
               </div>
-            ` : S}
+            ` : $}
 
         ${a ? u`
               <!-- Resume uploads (resumable / tus) -->
@@ -14689,7 +14691,7 @@ const B = (V = class extends de {
     }}
                 ></button>
               </div>
-            ` : S}
+            ` : $}
       </div>
     `;
   }
@@ -14706,10 +14708,10 @@ const B = (V = class extends de {
   _renderBody() {
     var w, b, _, P, A, k, v, y, m, R, U, I, L;
     const e = this._storeCtrl.state, t = e.t, i = [...e.files.values()], o = i.filter(
-      (T) => T.status === "idle" || T.status === "queued" || T.status === "error" || T.status === "failed"
+      (F) => F.status === "idle" || F.status === "queued" || F.status === "error" || F.status === "failed"
     ), s = this._phase, n = Rr(e.restrictions), a = i.length > 0, l = !!((b = (w = this.config) == null ? void 0 : w.similarityCheck) != null && b.enabled), c = i.filter(
-      (T) => pe(T) === "image" && !ve(T.type) && !this._similarResults.has(T.id)
-    ).map((T) => T.id), d = Math.min(
+      (F) => pe(F) === "image" && !ve(F.type) && !this._similarResults.has(F.id)
+    ).map((F) => F.id), d = Math.min(
       c.length,
       be
     ), p = d > 0 && this._similarSelectedIds.size >= d, f = this._similarSelectedIds.size >= be;
@@ -14754,12 +14756,12 @@ const B = (V = class extends de {
       >
         <div
           class="body ${a ? "has-files" : ""} ${this._bodyDragOver ? "body-drag-over" : ""} ${this._previewFileId || this._showSettings ? "has-preview" : ""}"
-          @dragenter=${a ? this._onBodyDragEnter : S}
-          @dragover=${a ? this._onBodyDragOver : S}
-          @dragleave=${a ? this._onBodyDragLeave : S}
-          @drop=${a ? this._onBodyDrop : S}
+          @dragenter=${a ? this._onBodyDragEnter : $}
+          @dragover=${a ? this._onBodyDragOver : $}
+          @dragleave=${a ? this._onBodyDragLeave : $}
+          @drop=${a ? this._onBodyDrop : $}
         >
-          ${((_ = this.config) == null ? void 0 : _.mode) === "inline" && ((P = this.config) != null && P.inlineHeader) && !this._previewFileId && s !== "uploading" && s !== "complete" && !this._isReviewing ? this._renderInlineHeader(this.config.inlineHeader) : S}
+          ${((_ = this.config) == null ? void 0 : _.mode) === "inline" && ((P = this.config) != null && P.inlineHeader) && !this._previewFileId && s !== "uploading" && s !== "complete" && !this._isReviewing ? this._renderInlineHeader(this.config.inlineHeader) : $}
           ${this._isReviewing ? u`
                 <sfx-last-upload-review
                   .t=${t}
@@ -14773,16 +14775,16 @@ const B = (V = class extends de {
                 <sfx-success-card
                   .t=${t}
                   .primaryLabel=${t("done", "Done")}
-                  .fileCount=${i.filter((T) => T.status === "complete").length}
-                  .totalSize=${i.filter((T) => T.status === "complete" && !T.alreadyExisted).reduce((T, W) => T + (W.size || 0), 0)}
-                  .thumbnails=${i.filter((T) => T.status === "complete" && T.previewUrl).map((T) => T.previewUrl)}
-                  .failedFiles=${i.filter((T) => T.status === "failed").map((T) => ({
-      id: T.id,
-      name: T.name,
-      error: T.error || "Upload failed"
+                  .fileCount=${i.filter((F) => F.status === "complete").length}
+                  .totalSize=${i.filter((F) => F.status === "complete" && !F.alreadyExisted).reduce((F, W) => F + (W.size || 0), 0)}
+                  .thumbnails=${i.filter((F) => F.status === "complete" && F.previewUrl).map((F) => F.previewUrl)}
+                  .failedFiles=${i.filter((F) => F.status === "failed").map((F) => ({
+      id: F.id,
+      name: F.name,
+      error: F.error || "Upload failed"
     }))}
                   .alreadyExistedCount=${i.filter(
-      (T) => T.status === "complete" && T.alreadyExisted
+      (F) => F.status === "complete" && F.alreadyExisted
     ).length}
                   .showMinimize=${!!((v = this.config) != null && v.minimizeOnUpload) && ((y = this.config) == null ? void 0 : y.mode) !== "inline"}
                   @close-uploader=${this._onSuccessCardClose}
@@ -14792,7 +14794,7 @@ const B = (V = class extends de {
                   @review-files=${this._onEnterReview}
                 ></sfx-success-card>
               ` : s === "uploading" ? this._renderUploadOverlay(i) : u`
-                ${a ? S : u`<sfx-drop-zone
+                ${a ? $ : u`<sfx-drop-zone
                         .t=${t}
                         .compact=${a}
                         .externalDragOver=${this._bodyDragOver}
@@ -14813,13 +14815,13 @@ const B = (V = class extends de {
                               <circle cx="12" cy="12" r="10" />
                             </svg>
                             ${t("viewLastUpload", "View last upload")}
-                          </button>` : S}`}
+                          </button>` : $}`}
                 ${a ? this._previewFileId || this._showSettings ? this._renderPreviewLayout(i) : u`
                         <div class="asset-count">
                           ${i.length}
                           ${i.length === 1 ? "file" : "files"} ·
                           ${ye(
-      i.reduce((T, W) => T + (W.size || 0), 0)
+      i.reduce((F, W) => F + (W.size || 0), 0)
     )}
                         </div>
                         <sfx-file-list
@@ -14842,7 +14844,7 @@ const B = (V = class extends de {
                           ?drag-active=${this._bodyDragOver}
                           @source-click=${this._onDropTileSourceClick}
                         ></sfx-file-list>
-                      ` : S}
+                      ` : $}
               `}
         </div>
 
@@ -14851,11 +14853,11 @@ const B = (V = class extends de {
                 .t=${t}
                 .uploadState=${"idle"}
                 .fileCount=${o.length}
-                .totalSize=${o.reduce((T, W) => T + (W.size || 0), 0)}
+                .totalSize=${o.reduce((F, W) => F + (W.size || 0), 0)}
                 .failedCount=${i.filter(
-      (T) => T.status === "failed" || T.status === "error"
+      (F) => F.status === "failed" || F.status === "error"
     ).length}
-                .completedCount=${i.filter((T) => T.status === "complete").length}
+                .completedCount=${i.filter((F) => F.status === "complete").length}
                 .uploadProgress=${e.totalProgress ?? 0}
                 .showFillMetadata=${!!(((U = this.config) == null ? void 0 : U.showFillMetadata) ?? ((I = this.config) == null ? void 0 : I.metadataConfig))}
                 .requireMetadataFirst=${this._hasUnfilledRequiredMetadata}
@@ -14865,10 +14867,10 @@ const B = (V = class extends de {
                 .maxSelection=${d}
                 .allSelected=${p}
               ></sfx-actions-bar>
-            ` : S}
-        ${this._showUrlDialog ? u`<sfx-url-dialog .t=${t}></sfx-url-dialog>` : S}
-        ${this._showCameraDialog ? u`<sfx-camera-dialog .t=${t}></sfx-camera-dialog>` : S}
-        ${this._showScreenCastDialog ? u`<sfx-screen-cast-dialog .t=${t}></sfx-screen-cast-dialog>` : S}
+            ` : $}
+        ${this._showUrlDialog ? u`<sfx-url-dialog .t=${t}></sfx-url-dialog>` : $}
+        ${this._showCameraDialog ? u`<sfx-camera-dialog .t=${t}></sfx-camera-dialog>` : $}
+        ${this._showScreenCastDialog ? u`<sfx-screen-cast-dialog .t=${t}></sfx-screen-cast-dialog>` : $}
         ${this._activeConnector && ((L = this.config) != null && L.connectors) ? u`
               <div
                 class="connector-modal-backdrop"
@@ -14896,12 +14898,12 @@ const B = (V = class extends de {
                       `}
                 </div>
               </div>
-            ` : S}
+            ` : $}
         ${this._bulkMetadataOpen && this._metadataSchema ? u`
               <sfx-bulk-metadata-modal
                 .schema=${this._metadataSchema}
                 .files=${[...this._store.getState().files.values()].filter(
-      (T) => V._MODIFIABLE_STATUSES.has(T.status)
+      (F) => V._MODIFIABLE_STATUSES.has(F.status)
     )}
                 .config=${this._effectiveMetadataConfig}
                 .autocomplete=${this._metadataAutocomplete}
@@ -14915,7 +14917,7 @@ const B = (V = class extends de {
                 @metadata-close=${this._onBulkMetadataClose}
                 @regional-change=${this._onRegionalChange}
               ></sfx-bulk-metadata-modal>
-            ` : S}
+            ` : $}
       </div>
     `;
   }
@@ -15020,6 +15022,13 @@ const B = (V = class extends de {
       background: var(--sfx-up-bg, #fff);
       border-bottom: 1px solid var(--sfx-up-border, #e2e8f0);
       flex-shrink: 0;
+      /* Lift the header (and its overflowing children, e.g. the regional
+         settings dropdown) above the body. The body is position:relative,
+         so without this its subtree — including the "View last upload" pill
+         — would paint on top of the dropdown regardless of the dropdown's
+         own z-index. */
+      position: relative;
+      z-index: 2;
     }
 
     .header-icon {
@@ -15692,35 +15701,6 @@ const B = (V = class extends de {
       padding: 8px 16px;
       flex-shrink: 0;
       border-bottom: 1px solid var(--sfx-up-border-light, #f1f5f9);
-      /* Query container so the Discard button can drop its label when the row
-         (i.e. the panel) gets too narrow for the text to fit on one line. */
-      container-type: inline-size;
-      container-name: sfx-sim-tabs;
-    }
-    /* Discard "this image" lives at the right edge of the tab row (secondary,
-       subordinate to the primary Upload action). Icon-only — text is in the
-       title/aria-label. */
-    .preview-tab-discard {
-      margin-left: auto;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 30px;
-      height: 30px;
-      padding: 0;
-      border: none;
-      border-radius: 6px;
-      background: transparent;
-      color: var(--sfx-up-error, #dc2626);
-      cursor: pointer;
-      transition: background 0.15s ease;
-    }
-    .preview-tab-discard:hover {
-      background: #fef2f2;
-    }
-    .preview-tab-discard svg {
-      width: 16px;
-      height: 16px;
     }
     .preview-tab {
       display: inline-flex;
@@ -17671,7 +17651,7 @@ export {
   _o as R,
   re as S,
   ko as T,
-  Fa as U,
+  Ta as U,
   ye as V,
   ql as W,
   Nl as X,
@@ -17680,24 +17660,24 @@ export {
   Vl as b,
   J as c,
   K as d,
-  Tr as e,
-  Ft as f,
+  Fr as e,
+  Tt as f,
   ue as g,
   Kl as h,
   ms as i,
   ni as j,
   xs as k,
-  Ta as l,
+  Fa as l,
   ki as m,
   Va as n,
-  Fl as o,
+  Tl as o,
   Ve as p,
-  Te as q,
+  Fe as q,
   La as r,
   Se as s,
   Il as t,
   Ll as u,
-  Tl as v,
+  Fl as v,
   zl as w,
   Al as x,
   ks as y,

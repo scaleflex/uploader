@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `MetadataConfig.regionalFilters?: Record<string, string>` — per-group active variant, keyed by group UUID. Defaults are seeded from the schema (first variant of each group); user picks via the selector override them.
 - New `regional-variants/` module: `<sfx-regional-settings>` element, `resolveFieldRegionalKey` + `getFieldRegionalVariantHint` + `buildDefaultRegionalFilters` helpers, and a `REGIONAL_VARIANT_TYPE` constant (`{ LANGUAGES: 'FTYPE_LANGUAGES', CURRENCIES: 'FTYPE_CURRENCIES', CUSTOM: 'FTYPE_CUSTOM' }`) that mirrors admin v5's wire values.
 
+### Fixed
+
+- The "Locate" button (progress/floating panel and review screen) now navigates the current tab to the asset's library deep-link instead of opening a new browser tab — so the file is revealed inside the already-loaded widget/admin. Hosts can still `preventDefault()` the cancelable `sfx-file-locate` event to route it themselves.
+
 ### Changed
 
 - The LANGUAGES regional-variants group now defaults to the variant matching the user's profile language (`metadataConfig.language`, falling back to `config.locale`) instead of always the first variant — so a French profile lands on the French variant on first open. Matches case-insensitively and accepts BCP 47 base/region pairs in either direction (`fr-FR` ↔ `fr`); falls back to the first variant when no match exists. Non-LANGUAGES groups (CURRENCIES, CUSTOM) keep the first-variant default.

@@ -714,9 +714,6 @@ export declare class SfxUploader extends LitElement {
     private _onSimilarOpenResults;
     /** Open a similar asset in a new window. */
     private _openSimilarAsset;
-    /** Discard the previewed image from the upload; move to the next file (so the
-     *  side panel stays open) or close the preview when none remain. */
-    private _discardPreviewFile;
     /** Display name for a similar asset: the filename extracted from its URL
      *  (decoded, query stripped), falling back to an explicit name or the uuid. */
     private _simAssetName;
