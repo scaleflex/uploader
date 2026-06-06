@@ -298,7 +298,18 @@ export class SfxMetaTaxonomyNodeField extends MetadataFieldBase {
     if (seq !== this._searchSeq) return;
     this._currentNodes = resp.nodes;
     this._loading = false;
-    this._activeIndex = -1;
+    // Highlight + scroll-to the currently selected node when it lives in this
+    // level (e.g. after the drill-stack was pre-positioned to the parent on
+    // reopen). Falls back to no highlight when the selected node isn't in
+    // sight (different branch, root level, or unset field).
+    const selected = this._selectedScalar;
+    const selectedIdx = selected
+      ? this._currentNodes.findIndex(
+          (n) => n.uuid === selected || n.slug === selected,
+        )
+      : -1;
+    this._activeIndex = selectedIdx;
+    if (selectedIdx >= 0) this._scrollActive();
   }
 
   private _onSearchInput(e: Event) {
@@ -335,6 +346,13 @@ export class SfxMetaTaxonomyNodeField extends MetadataFieldBase {
   }
 
   private _buildTreeEntry(node: TaxonomyNode): TaxonodeEntry {
+    // The admin v5 app gets the full taxonode info (name, path, lineage) back
+    // from the BE in the PATCH /file response, then caches it on
+    // `file.taxonodes`. The uploader runs *before* the file exists on the BE,
+    // so there's no PATCH and no server-side taxonode to read. We synthesise
+    // the same shape locally from the `/v5/taxonomy/{uuid}/nodes` responses
+    // we've already cached during drilling: ancestor names come from the
+    // drill stack, the leaf comes from the node itself.
     const parents = this._drillStack
       .filter((c) => c.uuid !== ROOT_CRUMB.uuid)
       .map((c) => c.name);
