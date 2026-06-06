@@ -288,7 +288,11 @@ export class SfxFileItem extends LitElement {
     }
 
     .cs-label {
-      flex: 1 1 auto;
+      /* Don't grow: keep the label at its natural width so the icon + text sit
+         together as one group, centered in the button (rather than the icon
+         pinned left with the text floating). Still shrinks + ellipsizes in
+         narrow tiles. */
+      flex: 0 1 auto;
       min-width: 0;
       overflow: hidden;
       text-overflow: ellipsis;

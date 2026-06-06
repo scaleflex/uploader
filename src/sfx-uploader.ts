@@ -1235,35 +1235,6 @@ export class SfxUploader extends LitElement {
       padding: 8px 16px;
       flex-shrink: 0;
       border-bottom: 1px solid var(--sfx-up-border-light, #f1f5f9);
-      /* Query container so the Discard button can drop its label when the row
-         (i.e. the panel) gets too narrow for the text to fit on one line. */
-      container-type: inline-size;
-      container-name: sfx-sim-tabs;
-    }
-    /* Discard "this image" lives at the right edge of the tab row (secondary,
-       subordinate to the primary Upload action). Icon-only — text is in the
-       title/aria-label. */
-    .preview-tab-discard {
-      margin-left: auto;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 30px;
-      height: 30px;
-      padding: 0;
-      border: none;
-      border-radius: 6px;
-      background: transparent;
-      color: var(--sfx-up-error, #dc2626);
-      cursor: pointer;
-      transition: background 0.15s ease;
-    }
-    .preview-tab-discard:hover {
-      background: #fef2f2;
-    }
-    .preview-tab-discard svg {
-      width: 16px;
-      height: 16px;
     }
     .preview-tab {
       display: inline-flex;
@@ -5342,19 +5313,6 @@ export class SfxUploader extends LitElement {
     if (url) window.open(url, "_blank", "noopener,noreferrer");
   }
 
-  /** Discard the previewed image from the upload; move to the next file (so the
-   *  side panel stays open) or close the preview when none remain. */
-  private _discardPreviewFile() {
-    const id = this._previewFileId;
-    if (!id) return;
-    const files = [...this._store.getState().files.values()];
-    const idx = files.findIndex((f) => f.id === id);
-    const nextId = files[idx + 1]?.id ?? files[idx - 1]?.id ?? null;
-    // _removeFile purges results/run/selection for this id.
-    this._removeFile(id);
-    this._previewFileId = nextId;
-  }
-
   /** Display name for a similar asset: the filename extracted from its URL
    *  (decoded, query stripped), falling back to an explicit name or the uuid. */
   private _simAssetName(r: SimilarAsset): string {
@@ -7052,14 +7010,6 @@ export class SfxUploader extends LitElement {
                     <span>${t('similarTab', 'Similar')}</span>${previewSimilar && previewSimilar.length > 0
                       ? html`<span class="preview-tab-count">${previewSimilar.length}</span>`
                       : nothing}
-                  </button>
-                  <button
-                    class="preview-tab-discard"
-                    @click=${() => this._discardPreviewFile()}
-                    aria-label=${t('discardThisImage', 'Discard this image')}
-                    title=${t('discardThisImage', 'Discard this image')}
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
                   </button>
                 </div>
               `
