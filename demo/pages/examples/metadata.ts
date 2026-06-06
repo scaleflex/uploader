@@ -139,6 +139,16 @@ const page: Page = {
           <li>When required fields are missing, clicking <strong>Upload</strong> opens the bulk metadata editor positioned on the first missing field, and the "Fill Metadata" button is promoted to primary. Enforcement is on by default (<code>enforceRequiredBeforeUpload: 'auto'</code>) whenever a field has <code>required: 1</code>, the API sets <code>force_filling_metadata_on_upload</code>, or you pass an explicit <code>requiredFields</code> list. Set it to <code>false</code> to opt out.</li>
           <li>Metadata is included in the upload request automatically &mdash; no changes to the upload flow needed.</li>
         </ol>
+        <h3 style="margin-top: 16px;">Regional variants</h3>
+        <p style="font-size: 14px; color: #475569; margin-bottom: 8px;">
+          If the project schema defines <code>regional_variants_groups</code> (LANGUAGES, CURRENCIES, or CUSTOM types — wire values <code>FTYPE_LANGUAGES</code>, <code>FTYPE_CURRENCIES</code>, <code>FTYPE_CUSTOM</code>), a Globe-icon <strong>Regional settings</strong> dropdown automatically appears in the uploader header (between the gear and the close button) and inside the bulk-metadata modal topbar. The user can switch the active variant for every multi-variant group:
+        </p>
+        <ul style="font-size: 14px; line-height: 1.8; color: #475569; padding-left: 20px;">
+          <li>Each regional metadata field is wrapped under its group's active variant when saved &mdash; e.g. a LANGUAGES-keyed text field saves as <code>{ en: 'Hello', fr: 'Bonjour' }</code>. Switching language flips which slot the user edits while the others are preserved.</li>
+          <li>Picking the LANGUAGES variant also drives the ultratags label rendering &mdash; the dropdown and chips render the <code>i18n[lang]</code> value (with <code>~LANG</code> regional fallback and <code>defaultLang</code> fallback chain).</li>
+          <li>A small inline hint below each regional field's input shows which group + variant is currently active (e.g. <em>Languages: English</em>, <em>Currencies: USD</em>).</li>
+          <li>You can pre-seed the selection by passing <code>metadataConfig.regionalFilters: { [groupUuid]: 'fr', … }</code>. Otherwise the uploader defaults each group to its first variant.</li>
+        </ul>
         <div style="margin-top: 12px; padding: 12px 16px; background: #eff6ff; border-radius: 8px; font-size: 13px; color: #1e40af;">
           <strong>Finding your project UUID:</strong> In the Filerobot Hub, the project UUID is available from the session data
           at <code>session_company.projects_roles[].project_uuid</code>.
@@ -220,7 +230,13 @@ const page: Page = {
               <td style="padding: 8px 12px;"><code>language</code></td>
               <td style="padding: 8px 12px;"><code>string</code></td>
               <td style="padding: 8px 12px;"><code>'en'</code></td>
-              <td style="padding: 8px 12px;">Language key for tags and regional variants.</td>
+              <td style="padding: 8px 12px;">User locale &mdash; drives ultratags label fallback and is used as the default slot key when reading/writing regional-variant fields whose group is not listed in <code>regionalFilters</code>.</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #f1f5f9;">
+              <td style="padding: 8px 12px;"><code>regionalFilters</code></td>
+              <td style="padding: 8px 12px;"><code>Record&lt;string, string&gt;</code></td>
+              <td style="padding: 8px 12px;">auto from schema</td>
+              <td style="padding: 8px 12px;">Currently-active variant per regional-variants group, keyed by group UUID (e.g. <code>{ '4cf3a9c7-…': 'fr', 'b1d28e…': 'EUR' }</code>). When the schema defines <code>regional_variants_groups</code> the uploader seeds defaults from each group's first variant; the in-header <strong>Regional settings</strong> dropdown lets the user override them. Each field is wrapped/unwrapped under <code>regionalFilters[field.regional_variants_group_uuid]</code>.</td>
             </tr>
             <tr style="border-bottom: 1px solid #f1f5f9;">
               <td style="padding: 8px 12px;"><code>defaults</code></td>
