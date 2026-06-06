@@ -2730,16 +2730,21 @@ export class SfxUploader extends LitElement {
 
   // --- Lifecycle ---
 
-  updated(changed: Map<string, unknown>) {
+  willUpdate(changed: Map<string, unknown>) {
+    // Run state mutations BEFORE render so they fold into the current update
+    // cycle. Mutating reactive @state in `updated()` schedules a second
+    // render and trips Lit's change-in-update warning.
+
     if (changed.has("config") && this.config) {
       this._applyConfig(this.config);
     }
 
-    // Resolve image dimensions when preview file changes
+    // Preview file changes: clear/resolve dimensions display.
     if (changed.has("_previewFileId") && this._previewFileId) {
       const targetId = this._previewFileId;
       const file = this._store.getState().files.get(targetId);
       if (file) {
+        // Async — fine; mutation lands in a later cycle, not this one.
         this._getImageDimensions(file).then((dims) => {
           if (this._previewFileId !== targetId) return; // stale
           this._previewDims = dims ? `${dims.w} × ${dims.h}` : "—";
@@ -2748,30 +2753,26 @@ export class SfxUploader extends LitElement {
         this._previewDims = "—";
       }
     }
-    this._applyDefaultPreviewWidth();
-    // Render floating card portal in document.body
-    this._updateFloatingPortal();
+
+    // Preview layout default width: the panel opens at 3/8 (~37.5%) on first
+    // appearance, giving the grid 5/8. Apply once; the user's drag wins after.
+    // Preview layout only renders when `_previewFileId` is set, so we use that
+    // as the trigger instead of a DOM measurement in `updated()`.
+    if (this._previewFileId) {
+      if (!this._previewDefaultApplied) {
+        this._splitPct = 62.5;
+        this._previewDefaultApplied = true;
+      }
+    } else if (this._previewDefaultApplied) {
+      this._previewDefaultApplied = false;
+    }
   }
 
-  /**
-   * The preview panel opens at 3/8 (~37.5%) of the modal width by default,
-   * giving the grid 5/8. On first appearance of the preview layout we set
-   * _splitPct once; after that the user's own divider drag wins until the
-   * preview layout is dismissed.
-   */
-  private _applyDefaultPreviewWidth() {
-    const layout =
-      this.shadowRoot?.querySelector<HTMLElement>(".preview-layout");
-    if (!layout) {
-      this._previewDefaultApplied = false;
-      return;
-    }
-    if (this._previewDefaultApplied) return;
-    const width = layout.getBoundingClientRect().width;
-    if (width <= 0) return;
-    // Preview panel takes 3/8 (~37.5%) of the modal by default → grid gets 5/8.
-    this._splitPct = 62.5;
-    this._previewDefaultApplied = true;
+  updated(_changed: Map<string, unknown>) {
+    // Render floating card portal in document.body. This touches non-reactive
+    // fields (`_portalContainer`, `_floatShownDispatched`) and external DOM
+    // outside the shadow root, so it belongs after the host has updated.
+    this._updateFloatingPortal();
   }
 
   private _injectFloatStyles() {

@@ -26,8 +26,9 @@ export class SfxProviderBrowser extends LitElement {
       display: flex;
       flex-direction: column;
       position: relative;
+      flex: 1 1 0;
+      min-height: 0;
       height: 100%;
-      min-height: 300px;
       font-family: var(--sfx-up-font, 'Inter', system-ui, -apple-system, sans-serif);
       color: var(--sfx-up-text, #1e293b);
       background: var(--sfx-up-bg, #fff);
@@ -854,8 +855,11 @@ export class SfxProviderBrowser extends LitElement {
     this._resolveAbort = null;
   }
 
-  updated(changed: Map<string, unknown>) {
-    if (changed.has('provider')) {
+  willUpdate(changed: Map<string, unknown>) {
+    // Skip on first update (previous value is undefined) — connectedCallback
+    // already handled initial auth. Running in willUpdate (not updated) folds
+    // the synchronous state changes into the current render cycle.
+    if (changed.has('provider') && changed.get('provider') !== undefined) {
       this._reset();
       this._checkAuth();
     }
@@ -919,7 +923,11 @@ export class SfxProviderBrowser extends LitElement {
 
     this._cleanupAuthListener?.();
     this._cleanupAuthListener = listenForAuthToken(this._authWindow, (token) => {
-      this._authWindow?.close();
+      // Don't call `this._authWindow.close()` here: after the OAuth redirect
+      // the popup is on Companion's origin, so Cross-Origin-Opener-Policy
+      // severs the opener relationship and blocks the close (and logs a
+      // console warning). Companion's auth-callback page closes itself
+      // after posting the token, so the popup goes away anyway.
       this._authWindow = null;
       this._cleanupAuthListener?.();
       this._cleanupAuthListener = null;
