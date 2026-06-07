@@ -1,4 +1,4 @@
-import{b as i}from"./index-DvQFj97E.js";import{r}from"./code-block-C_3oxnLY.js";import{i as a}from"./custom-select-CZ_fVHDR.js";let o=3;function n(){const e=document.getElementById("code-container");e&&(e.innerHTML="",r("#code-container",[{label:"JavaScript",lang:"javascript",code:`
+import{b as i}from"./index-D5m9BdgE.js";import{r}from"./code-block-C_3oxnLY.js";import{i as a}from"./custom-select-CZ_fVHDR.js";let o=3;function n(){const e=document.getElementById("code-container");e&&(e.innerHTML="",r("#code-container",[{label:"JavaScript",lang:"javascript",code:`
 uploader.config = {
   auth: { /* ... */ },
   concurrency: ${o}, // max parallel uploads

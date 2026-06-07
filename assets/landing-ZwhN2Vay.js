@@ -1,4 +1,4 @@
-import{b as f}from"./index-DvQFj97E.js";const d={render(){return`
+import{b as f}from"./index-D5m9BdgE.js";const d={render(){return`
       <section class="hero">
         <div class="hero-inner">
           <div class="hero-badge">@scaleflex/uploader</div>

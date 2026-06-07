@@ -161,9 +161,10 @@ export interface UploaderConfig {
      *
      * Pass `uploadSettings: false` to disable the panel entirely (the gear
      * button never appears). Otherwise the gear shows whenever the queue
-     * contains processable files (images, PDFs, or videos). The resumable
-     * switcher is hidden by default and only appears when
-     * `showResumableSwitcher` is true (mirrors admin v5).
+     * contains processable files (images, PDFs, or videos), or whenever the
+     * host opted into `showResumableSwitcher: true` (which applies to any
+     * file type). The resumable switcher is hidden by default and only
+     * appears when `showResumableSwitcher` is true (mirrors admin v5).
      * See mockups/FRA-10365-dev-handoff.md.
      */
     uploadSettings?: false | {
