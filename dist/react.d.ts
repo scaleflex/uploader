@@ -38,6 +38,13 @@ export interface UploaderProps {
     onUploadError?: (file: UploadFile, error: Error) => void;
     onUploadRetry?: (file: UploadFile, attempt: number) => void;
     onAllComplete?: (successful: UploadFile[], failed: UploadFile[]) => void;
+    /**
+     * Fires once per dropped/picked folder when every file inside it has
+     * reached a terminal status. Useful for incrementally refreshing a folder
+     * view without waiting for `onAllComplete`. Root-level files (empty
+     * relativeFolder) do not trigger this — listen to `onUploadComplete`.
+     */
+    onFolderComplete?: (folder: string, successful: UploadFile[], failed: UploadFile[]) => void;
     onTotalProgress?: (percentage: number, speed: number, eta: number) => void;
     onOpen?: () => void;
     onClose?: () => void;
@@ -46,7 +53,12 @@ export interface UploaderProps {
     onFilePreview?: (file: UploadFile) => void;
     onFillMetadata?: (files: UploadFile[]) => void;
     onCompleteAction?: () => void;
-    onFileLocate?: (file: UploadFile) => void;
+    /**
+     * Locate-button click handler. Return `false` to suppress the uploader's
+     * default full-page navigation to `url` and route it yourself (e.g.
+     * `router.push(url)`).
+     */
+    onFileLocate?: (file: UploadFile, url: string | null) => boolean | void;
     onFileCopyCdn?: (file: UploadFile, cdnUrl: string) => void;
     className?: string;
     style?: CSSProperties;

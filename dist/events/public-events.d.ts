@@ -10,6 +10,7 @@ export declare const PublicEvents: {
     readonly UPLOAD_PAUSED: "sfx-upload-paused";
     readonly UPLOAD_RESUMED: "sfx-upload-resumed";
     readonly ALL_COMPLETE: "sfx-all-complete";
+    readonly FOLDER_COMPLETE: "sfx-folder-complete";
     readonly TOTAL_PROGRESS: "sfx-total-progress";
     readonly BEFORE_UPLOAD: "sfx-before-upload";
     readonly OPEN: "sfx-open";

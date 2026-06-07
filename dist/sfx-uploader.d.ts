@@ -18,6 +18,22 @@ export interface UploaderCallbacks {
     onUploadPaused?: (file: UploadFile) => void;
     onUploadResumed?: (file: UploadFile) => void;
     onAllComplete?: (successful: UploadFile[], failed: UploadFile[]) => void;
+    /**
+     * Fires once per dropped/picked folder when every file inside that folder
+     * has reached a terminal status (complete / failed / cancelled / rejected).
+     * Useful for incrementally refreshing a folder view in the host app
+     * without waiting for the whole batch (`onAllComplete`) to finish.
+     *
+     * `folder` is the file's `relativeFolder` value — the path relative to the
+     * uploader's `targetFolder` (e.g. `"myFolder/sub"`). Root-level files
+     * (empty `relativeFolder`) never trigger this callback; use
+     * `onUploadComplete` for those.
+     *
+     * Fires at most once per `(folder, upload batch)` pair. A fresh batch (i.e.
+     * the user clicking "Upload more" or starting a new upload after reset)
+     * re-arms it so the same folder path can fire again later.
+     */
+    onFolderComplete?: (folder: string, successful: UploadFile[], failed: UploadFile[]) => void;
     onTotalProgress?: (percentage: number, speed: number, eta: number) => void;
     onBeforeUpload?: (files: UploadFile[]) => boolean | void;
     onOpen?: () => void;
@@ -30,7 +46,22 @@ export interface UploaderCallbacks {
     onFilePreview?: (file: UploadFile) => void;
     onFillMetadata?: (files: UploadFile[]) => void;
     onCompleteAction?: () => void;
-    onFileLocate?: (file: UploadFile) => void;
+    /**
+     * Locate-button click handler. Fires before the uploader navigates to the
+     * resolved Locate URL — return `false` to suppress that navigation and
+     * route the user yourself (e.g. via your SPA router) so the page does not
+     * reload. The resolved `url` is the same value the uploader would have
+     * navigated to (see `getLocateUrl` / `adminUrl`); it may be `null` when the
+     * file has no UUID yet, in which case the uploader would have done
+     * nothing.
+     *
+     * @example
+     * onFileLocate: (file, url) => {
+     *   if (url) router.push(url); // your client-side router
+     *   return false;              // skip uploader's full-page navigate
+     * }
+     */
+    onFileLocate?: (file: UploadFile, url: string | null) => boolean | void;
     onFileCopyCdn?: (file: UploadFile, cdnUrl: string) => void;
 }
 export interface InlineHeaderConfig {
@@ -166,9 +197,10 @@ export interface UploaderConfig {
      * uploader is running in a browser and the file has a UUID.
      *
      * To suppress the auto-navigation even when a URL would be resolved
-     * (e.g. open it via the host's client-side router instead of a new
-     * tab), call `event.preventDefault()` on the `sfx-file-locate` public
-     * event.
+     * (e.g. route the URL through the host's SPA router instead of doing
+     * a full-page navigation), either call `event.preventDefault()` on
+     * the cancelable `sfx-file-locate` public event or return `false`
+     * from the `onFileLocate(file, url)` callback.
      *
      * Pairs with `showLocateButton: true`.
      *
@@ -197,10 +229,13 @@ export interface UploaderConfig {
      *   - As a full-width labelled button on the review-screen tile.
      *   - As a compact icon in the floating-panel per-file row, next to
      *     the success checkmark.
-     * When clicked, fires the `sfx-file-locate` event and the `onFileLocate`
-     * callback, then opens the resolved Locate URL (see `getLocateUrl` /
-     * `adminUrl`) in a new tab unless the event's default is prevented or
-     * the file has no UUID to deep-link to.
+     * When clicked, fires the `sfx-file-locate` event (detail
+     * `{ file, url }`) and the `onFileLocate(file, url)` callback, then
+     * navigates the current tab to the resolved Locate URL (see
+     * `getLocateUrl` / `adminUrl`). Hosts can suppress the navigation by
+     * calling `event.preventDefault()` on the event or returning `false`
+     * from `onFileLocate`, and route the URL themselves (e.g. via their
+     * SPA router) to avoid the full-page reload.
      * Default: false (hidden).
      */
     showLocateButton?: boolean;
@@ -495,6 +530,13 @@ export declare class SfxUploader extends LitElement {
     private _authResolveId;
     private _prevStoreState;
     private _unsubStoreEvents;
+    /**
+     * Relative-folder paths for which `sfx-folder-complete` has already fired
+     * during the current upload batch. Cleared at the start of each new batch
+     * (isUploading false → true) so the same folder path can fire again if the
+     * user uploads it a second time.
+     */
+    private _firedFolders;
     constructor();
     /** Open the uploader (modal mode). */
     open(): void;
@@ -638,6 +680,14 @@ export declare class SfxUploader extends LitElement {
      * for file status transitions.
      */
     private _onStoreChange;
+    /**
+     * Fire `sfx-folder-complete` for `folder` if every file in it has reached
+     * a terminal status. No-op when the folder still has in-flight files, when
+     * it has already been announced this batch, or when no file in it succeeded
+     * or failed (purely cancelled/rejected — nothing meaningful to announce,
+     * mirrors the `onAllComplete` guard).
+     */
+    private _maybeDispatchFolderComplete;
     /** Reserved source IDs that cannot be overridden by custom sources. */
     private static readonly _RESERVED_IDS;
     private get _mergedSources();

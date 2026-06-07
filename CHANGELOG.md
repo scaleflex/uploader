@@ -7,8 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `onFileLocate(file, url)` callback now receives the resolved Locate URL as a second argument and can return `false` to suppress the uploader's default current-tab navigation — mirrors the `onBeforeUpload` pattern. Hosts running inside a SPA can route to `url` via their own client-side router (e.g. `router.push(url)`) to avoid a full-page reload. The cancelable `sfx-file-locate` event detail now also includes `url`. Existing callbacks that ignore the new argument and return nothing keep working unchanged.
+  - **Heads-up for analytics-style notifiers.** Only an explicit `=== false` return suppresses navigation (`undefined`/`null`/`0`/`""` do not), but if your existing single-expression arrow callback's tail call happens to return `false` you will lose Locate navigation. Example: `onFileLocate: (file) => analytics.track('locate', file.id)` — if `track()` returns `false`, that now cancels navigation. Wrap the body in `{ … }` and don't return, or explicitly `return true`, to keep the previous behaviour.
+
 ### Added
 
+- `onFolderComplete(folder, successful, failed)` callback + matching `sfx-folder-complete` CustomEvent. Fires per dropped/picked folder when every file inside that folder reaches a terminal status (`complete` / `failed` / `cancelled` / `rejected`) — earlier than `onAllComplete`, so a host can incrementally refresh its folder view as each folder finishes rather than waiting for the whole batch. `folder` is the file's `relativeFolder` value (path relative to the configured `targetFolder`, e.g. `"myFolder/sub"`). Root-level files (empty `relativeFolder`) do not trigger this — use `onUploadComplete` for those. Fires once per folder per "round": a fresh upload batch (start of `uploadAll`) or new files added to an already-announced folder mid-batch (e.g. with `autoProceed`) both re-arm it.
 - **Regional variants language selector** — a Globe-icon "Regional settings" dropdown in the header lets users switch the active variant for every regional-variants group in the schema (LANGUAGES, CURRENCIES, CUSTOM). Mirrors admin v5's `RegionalFiltersDropdown`. Picking French flips ultratags labels to the `fr` i18n value and wraps regional metadata fields under the right slot key.
   - Multi-group dropdown with section headers; keyboard nav (arrow keys / Enter / Escape).
   - Mounted in the host header (between the gear and the close button) and inside the bulk-metadata modal topbar. Both share the host's `_regionalFilters` state via a `regional-change` event.
