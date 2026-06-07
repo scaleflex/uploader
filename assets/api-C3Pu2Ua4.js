@@ -55,6 +55,7 @@ uploader.addEventListener('sfx-all-complete', (e) => {
             <tr><td><code>sfx-upload-paused</code></td><td><code>{ file }</code></td><td>A tus upload was paused</td></tr>
             <tr><td><code>sfx-upload-resumed</code></td><td><code>{ file }</code></td><td>A paused tus upload was resumed</td></tr>
             <tr><td><code>sfx-all-complete</code></td><td><code>{ successful, failed }</code></td><td>All uploads finished</td></tr>
+            <tr><td><code>sfx-folder-complete</code></td><td><code>{ folder, successful, failed }</code></td><td>A dropped/picked folder finished — every file with that <code>relativeFolder</code> has reached a terminal status. Fires before <code>sfx-all-complete</code>, once per folder per round (re-arms on new files added to the same folder mid-batch). Root-level files do not trigger this — use <code>sfx-upload-complete</code> for those.</td></tr>
             <tr><td><code>sfx-total-progress</code></td><td><code>{ percentage, speed, eta }</code></td><td>Aggregate progress across all files</td></tr>
             <tr><td><code>sfx-open</code></td><td>—</td><td>Uploader was opened</td></tr>
             <tr><td><code>sfx-close</code></td><td>—</td><td>Uploader was closed</td></tr>
@@ -85,6 +86,11 @@ uploader.addEventListener('sfx-all-complete', (e) => {
     onUploadRetry: (file, attempt) => console.log('Retry #' + attempt),
     onAllComplete: (successful, failed) => {
       console.log(\`Done: \${successful.length} ok, \${failed.length} failed\`);
+    },
+    onFolderComplete: (folder, successful, failed) => {
+      // Fires as each dropped folder finishes — refresh the matching
+      // node in your asset/folder tree without waiting for the whole batch.
+      console.log(\`Folder "\${folder}" done: \${successful.length} ok, \${failed.length} failed\`);
     },
     onTotalProgress: (percentage, speed, eta) => {
       console.log(\`Total: \${percentage}% — ETA \${eta}s\`);
@@ -130,6 +136,7 @@ uploader.addEventListener('sfx-all-complete', (e) => {
             <tr><td><code>onUploadPaused</code></td><td><code>(file) =&gt; void</code></td><td>Tus upload paused by user</td></tr>
             <tr><td><code>onUploadResumed</code></td><td><code>(file) =&gt; void</code></td><td>Paused tus upload resumed</td></tr>
             <tr><td><code>onAllComplete</code></td><td><code>(successful, failed) =&gt; void</code></td><td>All uploads finished callback</td></tr>
+            <tr><td><code>onFolderComplete</code></td><td><code>(folder, successful, failed) =&gt; void</code></td><td>A dropped/picked folder finished — fires per <code>relativeFolder</code> as soon as every file in it reaches a terminal status, before <code>onAllComplete</code>. Useful for incrementally refreshing a folder/asset tree. Root-level files (empty <code>relativeFolder</code>) don't trigger this.</td></tr>
             <tr><td><code>onTotalProgress</code></td><td><code>(percentage, speed, eta) =&gt; void</code></td><td>Aggregate progress callback</td></tr>
             <tr><td><code>onOpen</code></td><td><code>() =&gt; void</code></td><td>Uploader opened callback</td></tr>
             <tr><td><code>onClose</code></td><td><code>() =&gt; void</code></td><td>Uploader closed callback</td></tr>
