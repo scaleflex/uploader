@@ -5104,14 +5104,14 @@ class La {
   }
   updateTotalProgress() {
     const { files: e } = this.store.getState();
-    let t = 0, i = 0, o = 0;
-    for (const s of e.values())
-      (s.status === "queued" || s.status === "uploading" || s.status === "paused" || s.status === "retrying" || s.status === "complete" || s.status === "failed") && (t += s.size, i += s.status === "complete" ? s.size : Math.min(s.bytesUploaded, s.size)), s.status === "uploading" && (o += s.speed);
+    let t = 0, i = 0, o = 0, s = 0, n = 0;
+    for (const a of e.values())
+      a.status === "rejected" || a.status === "cancelled" || (n++, t += a.size, i += a.status === "complete" ? a.size : Math.min(a.bytesUploaded, a.size), s += a.status === "complete" ? 100 : a.progress, a.status === "uploading" && (o += a.speed));
     this.store.setState({
       totalBytes: t,
       totalBytesUploaded: i,
       totalSpeed: o,
-      totalProgress: t > 0 ? Math.min(i / t * 100, 100) : 0
+      totalProgress: n > 0 ? Math.min(s / n, 100) : 0
     });
   }
   checkAllComplete() {
@@ -11895,14 +11895,14 @@ const B = (V = class extends pe {
       if ((((s = (o = this.config) == null ? void 0 : o.connectors) == null ? void 0 : s.providers) ?? []).includes(e)) {
         if (zr.has(e)) {
           if (!customElements.get("sfx-search-provider-browser")) {
-            const { SfxSearchProviderBrowser: a } = await import("./search-provider-browser-4q95rj4B.js");
+            const { SfxSearchProviderBrowser: a } = await import("./search-provider-browser-Cdt0pphC.js");
             customElements.define(
               "sfx-search-provider-browser",
               a
             );
           }
         } else if (!customElements.get("sfx-provider-browser")) {
-          const { SfxProviderBrowser: a } = await import("./provider-browser-MR2j8F2t.js");
+          const { SfxProviderBrowser: a } = await import("./provider-browser-BODfmtuW.js");
           customElements.define("sfx-provider-browser", a);
         }
         this._activeConnector = e;
@@ -12864,7 +12864,7 @@ const B = (V = class extends pe {
     const t = e.metadataConfig;
     if (!(!t || !this._apiBase || !this._authHeaders))
       try {
-        const { fetchMetadataSchema: i, createTagsAutocomplete: o, createTaxonomyService: s, createUltratagsService: n } = await import("./index-CRjuC8Wf.js"), a = await i(
+        const { fetchMetadataSchema: i, createTagsAutocomplete: o, createTaxonomyService: s, createUltratagsService: n } = await import("./index-BP1rIYTM.js"), a = await i(
           this._apiBase,
           this._authHeaders,
           t.projectUuid,
@@ -13410,7 +13410,7 @@ const B = (V = class extends pe {
         detail: { file: e, url: t }
       })
     ), o = (a = (n = (s = this.config) == null ? void 0 : s.callbacks) == null ? void 0 : n.onFileLocate) == null ? void 0 : a.call(n, e, t);
-    !i || o === !1 || t && window.location.assign(t);
+    this._onMinimize(), !(!i || o === !1) && t && window.location.assign(t);
   }
   // --- Render ---
   render() {
@@ -15233,7 +15233,12 @@ const B = (V = class extends pe {
       min-height: 0;
       min-width: 0;
       background: var(--sfx-up-bg, #fff);
+      /* Establish a stacking context so descendants like the
+         .last-upload-pill (z-index: 10) stay contained beneath the
+         header (z-index: 2) instead of leaking into the modal-level
+         stack and painting over the regional-settings dropdown. */
       position: relative;
+      z-index: 0;
     }
 
     .file-grid-side {

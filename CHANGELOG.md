@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - The "Locate" button (progress/floating panel and review screen) now navigates the current tab to the asset's library deep-link instead of opening a new browser tab — so the file is revealed inside the already-loaded widget/admin. Hosts can still `preventDefault()` the cancelable `sfx-file-locate` event to route it themselves.
+- Clicking "Locate" now collapses the uploader to its floating pill — previously the modal stayed open and blocked the host's interface while the asset was being revealed in the surrounding DAM/library widget. Hosts that intercept Locate (via `event.preventDefault()` or returning `false` from `onFileLocate`) get the same behaviour, so SPA-routed reveals are no longer hidden behind the open modal. The `onMinimize` callback / `sfx-minimize` event fire as usual.
 
 ### Changed
 

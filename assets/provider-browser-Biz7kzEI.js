@@ -1,7 +1,7 @@
-"use strict";Object.defineProperty(exports,Symbol.toStringTag,{value:"Module"});const s=require("lit"),c=require("lit/decorators.js"),x=require("./sfx-uploader-SXVno7eF.cjs"),y="sfx-uploader-token:";function m(l){try{return localStorage.getItem(`${y}${l}`)}catch{return null}}function w(l,e){try{localStorage.setItem(`${y}${l}`,e)}catch{}}function v(l){try{localStorage.removeItem(`${y}${l}`)}catch{}}function $(l,e){const t=r=>{if(l&&r.source!==l)return;const o=typeof r.data=="string"?S(r.data):r.data;o!=null&&o.token&&e(o.token)};return window.addEventListener("message",t),()=>window.removeEventListener("message",t)}function S(l){try{return JSON.parse(l)}catch{return null}}var F=Object.defineProperty,p=(l,e,t,r)=>{for(var o=void 0,u=l.length-1,i;u>=0;u--)(i=l[u])&&(o=i(e,t,o)||o);return o&&F(e,t,o),o};const k=class k extends s.LitElement{constructor(){super(...arguments),this.t=(e,t)=>typeof t=="string"?t:e,this.provider="google-drive",this.companionUrl="",this.multi=!0,this.maxSelect=null,this.transformThumbnail=e=>e,this._authenticated=!1,this._loading=!1,this._items=[],this._selectedIds=new Set,this._breadcrumbs=[],this._nextPagePath=null,this._error=null,this._loadingMore=!1,this._username=null,this._resolvingFolders=!1,this._resolveProgress=0,this._cleanupAuthListener=null,this._authWindow=null,this._resolveAbort=null,this._handleConnect=()=>{var t;try{if(this._authWindow&&!this._authWindow.closed){this._authWindow.focus();return}}catch{this._authWindow=null}const e=x.getAuthUrl(this.companionUrl,this.provider);this._authWindow=window.open(e,"_blank","width=600,height=600"),(t=this._cleanupAuthListener)==null||t.call(this),this._cleanupAuthListener=$(this._authWindow,r=>{var o;this._authWindow=null,(o=this._cleanupAuthListener)==null||o.call(this),this._cleanupAuthListener=null,w(this.provider,r),this._authenticated=!0,this._loadFolder("")})},this._lastClickedIndex=null,this._toggleSelectAll=()=>{if(this._items.every(t=>this._selectedIds.has(t.id)))this._selectedIds=new Set;else{const t=new Set;let r=0;for(const o of this._items)o.isFolder?t.add(o.id):(this.maxSelect===null||r<this.maxSelect)&&(t.add(o.id),r++);this._selectedIds=t}},this._onAddSelected=async()=>{var u,i;const e=m(this.provider);if(!e)return;const t=this._items.filter(n=>!n.isFolder&&this._selectedIds.has(n.id)),r=this._items.filter(n=>n.isFolder&&this._selectedIds.has(n.id)),o=t.map(n=>({companionUrl:this.companionUrl,provider:this.provider,token:e,requestPath:n.requestPath,fileId:n.id,name:n.name,mimeType:n.mimeType,size:n.size,thumbnail:n.thumbnail}));if(r.length>0){(u=this._resolveAbort)==null||u.abort(),this._resolveAbort=new AbortController;const n=this._resolveAbort.signal;this._resolvingFolders=!0,this._resolveProgress=0;let h=0;try{for(const a of r){const g=await x.listFolderRecursive(this.companionUrl,this.provider,e,a.requestPath,a.name,n);if(n.aborted)return;for(const f of g)o.push({companionUrl:this.companionUrl,provider:this.provider,token:e,requestPath:f.requestPath,fileId:f.id,name:f.name,mimeType:f.mimeType,size:f.size,thumbnail:f.thumbnail,relativeFolder:f.relativeFolder});h+=g.length,this._resolveProgress=h}}catch(a){if(n.aborted)return;if(this._resolvingFolders=!1,a instanceof x.AuthExpiredError){v(this.provider),this._authenticated=!1;return}this._error=a instanceof Error?a.message:this.t("failedToReadFolder","Failed to read folder contents");return}finally{((i=this._resolveAbort)==null?void 0:i.signal)===n&&(this._resolveAbort=null)}this._resolvingFolders=!1}this.dispatchEvent(new CustomEvent("connector-files-selected",{detail:{files:o},bubbles:!0,composed:!0}))},this._onClose=()=>{this.dispatchEvent(new CustomEvent("connector-close",{bubbles:!0,composed:!0}))},this._handleLogout=async()=>{const e=m(this.provider);if(e){try{await x.logout(this.companionUrl,this.provider,e)}catch{}v(this.provider)}this._reset()},this._onBack=()=>{this._breadcrumbs.length!==0&&this._onBreadcrumbClick(this._breadcrumbs.length-2)},this._cancelResolve=()=>{var e;(e=this._resolveAbort)==null||e.abort(),this._resolveAbort=null,this._resolvingFolders=!1,this._resolveProgress=0}}connectedCallback(){super.connectedCallback(),this._checkAuth()}disconnectedCallback(){var e,t;super.disconnectedCallback(),(e=this._cleanupAuthListener)==null||e.call(this),this._cleanupAuthListener=null,(t=this._resolveAbort)==null||t.abort(),this._resolveAbort=null}willUpdate(e){e.has("provider")&&e.get("provider")!==void 0&&(this._reset(),this._checkAuth())}_reset(){var e;(e=this._resolveAbort)==null||e.abort(),this._resolveAbort=null,this._authenticated=!1,this._loading=!1,this._items=[],this._selectedIds=new Set,this._lastClickedIndex=null,this._breadcrumbs=[],this._nextPagePath=null,this._error=null,this._username=null,this._resolvingFolders=!1,this._resolveProgress=0}_checkAuth(){m(this.provider)&&(this._authenticated=!0,this._loadFolder(""))}get _providerDef(){return x.getProviderSources([this.provider])[0]??null}get _providerLabel(){var e;return((e=this._providerDef)==null?void 0:e.label)??this.provider}async _loadFolder(e){const t=m(this.provider);if(!t){this._authenticated=!1;return}this.offsetHeight>0&&(this.style.minHeight=`${this.offsetHeight}px`),this._loading=!0,this._error=null,this._items=[],this._selectedIds=new Set,this._lastClickedIndex=null,this._nextPagePath=null;try{const r=await x.listFiles(this.companionUrl,this.provider,t,e);this._items=r.items,this._nextPagePath=r.nextPagePath,r.username&&(this._username=r.username)}catch(r){r instanceof x.AuthExpiredError?(v(this.provider),this._authenticated=!1):this._error=r instanceof Error?r.message:this.t("failedToLoadFiles","Failed to load files")}finally{this._loading=!1}}_onFolderClick(e){this._breadcrumbs=[...this._breadcrumbs,{name:e.name,path:e.requestPath}],this._loadFolder(e.requestPath)}_onBreadcrumbClick(e){if(e<0)this._breadcrumbs=[],this._loadFolder("");else{const t=this._breadcrumbs[e];this._breadcrumbs=this._breadcrumbs.slice(0,e+1),this._loadFolder(t.path)}}async _onLoadMore(){const e=m(this.provider);if(!(!e||!this._nextPagePath)){this._loadingMore=!0;try{const t=await x.listNextPage(this.companionUrl,e,this._nextPagePath);this._items=[...this._items,...t.items],this._nextPagePath=t.nextPagePath}catch(t){t instanceof x.AuthExpiredError&&(v(this.provider),this._authenticated=!1)}finally{this._loadingMore=!1}}}get _selectedFileCount(){return this._items.filter(e=>!e.isFolder&&this._selectedIds.has(e.id)).length}_toggleSelect(e,t){if(!this.multi){if(e.isFolder)return;this._selectedIds=this._selectedIds.has(e.id)?new Set:new Set([e.id]);const n=this._items.filter(h=>!h.isFolder).findIndex(h=>h.id===e.id);n!==-1&&(this._lastClickedIndex=n);return}const r=this._items.filter(i=>!i.isFolder),o=r.findIndex(i=>i.id===e.id),u=this.maxSelect!==null&&this._selectedFileCount>=this.maxSelect;if(!e.isFolder&&(t!=null&&t.shiftKey)&&this._lastClickedIndex!==null&&o!==-1){const i=Math.min(this._lastClickedIndex,o),n=Math.max(this._lastClickedIndex,o),h=new Set(this._selectedIds);for(let a=i;a<=n;a++)h.has(r[a].id)||this.maxSelect!==null&&[...h].filter(f=>r.some(b=>b.id===f)).length>=this.maxSelect||h.add(r[a].id);this._selectedIds=h}else{const i=new Set(this._selectedIds);i.has(e.id)?i.delete(e.id):(e.isFolder||!u)&&i.add(e.id),this._selectedIds=i}o!==-1&&(this._lastClickedIndex=o)}render(){return s.html`
+import{i as S,d as z,l as P,e as y,f as C,a as A,g as I,h as M,j as B,c as n,A as f,k as $,m as L,n as g,r as x}from"./index-B7SMNQEG.js";const k="sfx-uploader-token:";function m(l){try{return localStorage.getItem(`${k}${l}`)}catch{return null}}function V(l,e){try{localStorage.setItem(`${k}${l}`,e)}catch{}}function _(l){try{localStorage.removeItem(`${k}${l}`)}catch{}}function H(l,e){const t=r=>{if(l&&r.source!==l)return;const s=typeof r.data=="string"?T(r.data):r.data;s!=null&&s.token&&e(s.token)};return window.addEventListener("message",t),()=>window.removeEventListener("message",t)}function T(l){try{return JSON.parse(l)}catch{return null}}var j=Object.defineProperty,h=(l,e,t,r)=>{for(var s=void 0,u=l.length-1,i;u>=0;u--)(i=l[u])&&(s=i(e,t,s)||s);return s&&j(e,t,s),s};const w=class w extends S{constructor(){super(...arguments),this.t=(e,t)=>typeof t=="string"?t:e,this.provider="google-drive",this.companionUrl="",this.multi=!0,this.maxSelect=null,this.transformThumbnail=e=>e,this._authenticated=!1,this._loading=!1,this._items=[],this._selectedIds=new Set,this._breadcrumbs=[],this._nextPagePath=null,this._error=null,this._loadingMore=!1,this._username=null,this._resolvingFolders=!1,this._resolveProgress=0,this._cleanupAuthListener=null,this._authWindow=null,this._resolveAbort=null,this._handleConnect=()=>{var t;try{if(this._authWindow&&!this._authWindow.closed){this._authWindow.focus();return}}catch{this._authWindow=null}const e=z(this.companionUrl,this.provider);this._authWindow=window.open(e,"_blank","width=600,height=600"),(t=this._cleanupAuthListener)==null||t.call(this),this._cleanupAuthListener=H(this._authWindow,r=>{var s;this._authWindow=null,(s=this._cleanupAuthListener)==null||s.call(this),this._cleanupAuthListener=null,V(this.provider,r),this._authenticated=!0,this._loadFolder("")})},this._lastClickedIndex=null,this._toggleSelectAll=()=>{if(this._items.every(t=>this._selectedIds.has(t.id)))this._selectedIds=new Set;else{const t=new Set;let r=0;for(const s of this._items)s.isFolder?t.add(s.id):(this.maxSelect===null||r<this.maxSelect)&&(t.add(s.id),r++);this._selectedIds=t}},this._onAddSelected=async()=>{var u,i;const e=m(this.provider);if(!e)return;const t=this._items.filter(o=>!o.isFolder&&this._selectedIds.has(o.id)),r=this._items.filter(o=>o.isFolder&&this._selectedIds.has(o.id)),s=t.map(o=>({companionUrl:this.companionUrl,provider:this.provider,token:e,requestPath:o.requestPath,fileId:o.id,name:o.name,mimeType:o.mimeType,size:o.size,thumbnail:o.thumbnail}));if(r.length>0){(u=this._resolveAbort)==null||u.abort(),this._resolveAbort=new AbortController;const o=this._resolveAbort.signal;this._resolvingFolders=!0,this._resolveProgress=0;let c=0;try{for(const a of r){const b=await P(this.companionUrl,this.provider,e,a.requestPath,a.name,o);if(o.aborted)return;for(const p of b)s.push({companionUrl:this.companionUrl,provider:this.provider,token:e,requestPath:p.requestPath,fileId:p.id,name:p.name,mimeType:p.mimeType,size:p.size,thumbnail:p.thumbnail,relativeFolder:p.relativeFolder});c+=b.length,this._resolveProgress=c}}catch(a){if(o.aborted)return;if(this._resolvingFolders=!1,a instanceof y){_(this.provider),this._authenticated=!1;return}this._error=a instanceof Error?a.message:this.t("failedToReadFolder","Failed to read folder contents");return}finally{((i=this._resolveAbort)==null?void 0:i.signal)===o&&(this._resolveAbort=null)}this._resolvingFolders=!1}this.dispatchEvent(new CustomEvent("connector-files-selected",{detail:{files:s},bubbles:!0,composed:!0}))},this._onClose=()=>{this.dispatchEvent(new CustomEvent("connector-close",{bubbles:!0,composed:!0}))},this._handleLogout=async()=>{const e=m(this.provider);if(e){try{await C(this.companionUrl,this.provider,e)}catch{}_(this.provider)}this._reset()},this._onBack=()=>{this._breadcrumbs.length!==0&&this._onBreadcrumbClick(this._breadcrumbs.length-2)},this._cancelResolve=()=>{var e;(e=this._resolveAbort)==null||e.abort(),this._resolveAbort=null,this._resolvingFolders=!1,this._resolveProgress=0}}connectedCallback(){super.connectedCallback(),this._checkAuth()}disconnectedCallback(){var e,t;super.disconnectedCallback(),(e=this._cleanupAuthListener)==null||e.call(this),this._cleanupAuthListener=null,(t=this._resolveAbort)==null||t.abort(),this._resolveAbort=null}willUpdate(e){e.has("provider")&&e.get("provider")!==void 0&&(this._reset(),this._checkAuth())}_reset(){var e;(e=this._resolveAbort)==null||e.abort(),this._resolveAbort=null,this._authenticated=!1,this._loading=!1,this._items=[],this._selectedIds=new Set,this._lastClickedIndex=null,this._breadcrumbs=[],this._nextPagePath=null,this._error=null,this._username=null,this._resolvingFolders=!1,this._resolveProgress=0}_checkAuth(){m(this.provider)&&(this._authenticated=!0,this._loadFolder(""))}get _providerDef(){return I([this.provider])[0]??null}get _providerLabel(){var e;return((e=this._providerDef)==null?void 0:e.label)??this.provider}async _loadFolder(e){const t=m(this.provider);if(!t){this._authenticated=!1;return}this.offsetHeight>0&&(this.style.minHeight=`${this.offsetHeight}px`),this._loading=!0,this._error=null,this._items=[],this._selectedIds=new Set,this._lastClickedIndex=null,this._nextPagePath=null;try{const r=await M(this.companionUrl,this.provider,t,e);this._items=r.items,this._nextPagePath=r.nextPagePath,r.username&&(this._username=r.username)}catch(r){r instanceof y?(_(this.provider),this._authenticated=!1):this._error=r instanceof Error?r.message:this.t("failedToLoadFiles","Failed to load files")}finally{this._loading=!1}}_onFolderClick(e){this._breadcrumbs=[...this._breadcrumbs,{name:e.name,path:e.requestPath}],this._loadFolder(e.requestPath)}_onBreadcrumbClick(e){if(e<0)this._breadcrumbs=[],this._loadFolder("");else{const t=this._breadcrumbs[e];this._breadcrumbs=this._breadcrumbs.slice(0,e+1),this._loadFolder(t.path)}}async _onLoadMore(){const e=m(this.provider);if(!(!e||!this._nextPagePath)){this._loadingMore=!0;try{const t=await B(this.companionUrl,e,this._nextPagePath);this._items=[...this._items,...t.items],this._nextPagePath=t.nextPagePath}catch(t){t instanceof y&&(_(this.provider),this._authenticated=!1)}finally{this._loadingMore=!1}}}get _selectedFileCount(){return this._items.filter(e=>!e.isFolder&&this._selectedIds.has(e.id)).length}_toggleSelect(e,t){if(!this.multi){if(e.isFolder)return;this._selectedIds=this._selectedIds.has(e.id)?new Set:new Set([e.id]);const o=this._items.filter(c=>!c.isFolder).findIndex(c=>c.id===e.id);o!==-1&&(this._lastClickedIndex=o);return}const r=this._items.filter(i=>!i.isFolder),s=r.findIndex(i=>i.id===e.id),u=this.maxSelect!==null&&this._selectedFileCount>=this.maxSelect;if(!e.isFolder&&(t!=null&&t.shiftKey)&&this._lastClickedIndex!==null&&s!==-1){const i=Math.min(this._lastClickedIndex,s),o=Math.max(this._lastClickedIndex,s),c=new Set(this._selectedIds);for(let a=i;a<=o;a++)c.has(r[a].id)||this.maxSelect!==null&&[...c].filter(p=>r.some(v=>v.id===p)).length>=this.maxSelect||c.add(r[a].id);this._selectedIds=c}else{const i=new Set(this._selectedIds);i.has(e.id)?i.delete(e.id):(e.isFolder||!u)&&i.add(e.id),this._selectedIds=i}s!==-1&&(this._lastClickedIndex=s)}render(){return n`
       ${this._renderHeader()}
       ${this._authenticated?this._loading?this._renderLoading():this._error?this._renderError():this._renderBrowser():this._renderAuthView()}
-    `}_renderHeader(){const e=this._providerDef,t=this._authenticated&&this._breadcrumbs.length>0;return s.html`
+    `}_renderHeader(){const e=this._providerDef,t=this._authenticated&&this._breadcrumbs.length>0;return n`
       <div class="browser-header">
         <button
           class="back-btn"
@@ -15,14 +15,14 @@
           </svg>
         </button>
         <div class="header-brand">
-          ${e!=null&&e.brandHtml?s.html`<div class="header-logo">${x.brandIcon(e)}</div>`:s.nothing}
+          ${e!=null&&e.brandHtml?n`<div class="header-logo">${$(e)}</div>`:f}
 
           <div class="header-title-group">
             <span class="browser-title">${this._providerLabel}</span>
-            ${this._authenticated&&this._username?s.html`<span class="header-username">${this._username}</span>`:s.nothing}
+            ${this._authenticated&&this._username?n`<span class="header-username">${this._username}</span>`:f}
           </div>
         </div>
-        ${this._authenticated?s.html`<button class="logout-btn" @click=${this._handleLogout}>${this.t("signOut","Sign out")}</button>`:s.nothing}
+        ${this._authenticated?n`<button class="logout-btn" @click=${this._handleLogout}>${this.t("signOut","Sign out")}</button>`:f}
         <button
           class="close-btn"
           @click=${this._onClose}
@@ -35,13 +35,13 @@
           </svg>
         </button>
       </div>
-    `}_renderAuthView(){const e=this._providerDef;return s.html`
+    `}_renderAuthView(){const e=this._providerDef;return n`
       <div class="auth-view">
         <div class="auth-glow"></div>
         <div class="auth-logo-wrap">
           <div class="auth-ring">
             <div class="auth-logo">
-              ${e!=null&&e.brandHtml?s.html`<span ${x.cspStyle({display:"flex","align-items":"center","justify-content":"center",transform:"scale(2.2)"})}>${x.brandIcon(e)}</span>`:s.html`<svg viewBox="0 0 24 24" fill="none" stroke="var(--sfx-up-primary, #2563eb)" stroke-width="1.5"><path d="M12 2a5 5 0 015 5v3h1a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2v-8a2 2 0 012-2h1V7a5 5 0 015-5zm3 8H9v-3a3 3 0 016 0v3z" fill="var(--sfx-up-primary, #2563eb)"/></svg>`}
+              ${e!=null&&e.brandHtml?n`<span ${L({display:"flex","align-items":"center","justify-content":"center",transform:"scale(2.2)"})}>${$(e)}</span>`:n`<svg viewBox="0 0 24 24" fill="none" stroke="var(--sfx-up-primary, #2563eb)" stroke-width="1.5"><path d="M12 2a5 5 0 015 5v3h1a2 2 0 012 2v8a2 2 0 01-2 2H6a2 2 0 01-2-2v-8a2 2 0 012-2h1V7a5 5 0 015-5zm3 8H9v-3a3 3 0 016 0v3z" fill="var(--sfx-up-primary, #2563eb)"/></svg>`}
             </div>
           </div>
         </div>
@@ -60,9 +60,9 @@
           ${this.t("signInToProvider","Sign in to {{provider}}",{provider:this._providerLabel})}
         </button>
       </div>
-    `}_renderLoading(){const e=[1,2,3,4,5,6,7];return s.html`
+    `}_renderLoading(){return n`
       <div class="skeleton-list">
-        ${e.map(()=>s.html`
+        ${[1,2,3,4,5,6,7].map(()=>n`
           <div class="skeleton-row">
             <div class="skeleton-check"></div>
             <div class="skeleton-thumb"></div>
@@ -74,7 +74,7 @@
           </div>
         `)}
       </div>
-    `}_renderError(){return s.html`
+    `}_renderError(){return n`
       <div class="error-view">
         <div class="error-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -88,20 +88,20 @@
           ${this.t("tryAgain","Try again")}
         </button>
       </div>
-    `}_renderBrowser(){const e=this._items.filter(i=>!i.isFolder),t=this._items.filter(i=>i.isFolder),r=this._selectedIds.size,o=this.maxSelect!==null&&this._selectedFileCount>=this.maxSelect,u=this._items.length>0&&this._items.every(i=>this._selectedIds.has(i.id));return s.html`
+    `}_renderBrowser(){const e=this._items.filter(i=>!i.isFolder),t=this._items.filter(i=>i.isFolder),r=this._selectedIds.size,s=this.maxSelect!==null&&this._selectedFileCount>=this.maxSelect,u=this._items.length>0&&this._items.every(i=>this._selectedIds.has(i.id));return n`
       ${this._renderBreadcrumbs()}
 
-      ${this._items.length>0?s.html`
+      ${this._items.length>0?n`
             <div class="list-header">
               <div class="col-check"></div>
               <div class="col-thumb"></div>
               <div class="col-name">${this.t("name","Name")}</div>
               <div class="col-modified">${this.t("lastModified","Last modified")}</div>
             </div>
-          `:s.nothing}
+          `:f}
 
       <div class="file-list">
-        ${t.length===0&&e.length===0?s.html`
+        ${t.length===0&&e.length===0?n`
               <div class="empty-state">
                 <div class="empty-icon">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
@@ -111,20 +111,20 @@
                 </div>
                 <div class="empty-text">${this.t("folderEmpty","This folder is empty")}</div>
               </div>
-            `:s.nothing}
+            `:f}
 
-        ${t.map(i=>{const n=this._selectedIds.has(i.id);return s.html`
+        ${t.map(i=>{const o=this._selectedIds.has(i.id);return n`
             <div
-              class="file-item ${n?"selected":""}"
+              class="file-item ${o?"selected":""}"
               @click=${()=>this._onFolderClick(i)}
             >
-              ${this.multi?s.html`<input
+              ${this.multi?n`<input
                     type="checkbox"
-                    .checked=${n}
+                    .checked=${o}
                     aria-label=${this.t("selectFolder","Select folder")}
-                    @click=${h=>h.stopPropagation()}
+                    @click=${c=>c.stopPropagation()}
                     @change=${()=>this._toggleSelect(i)}
-                  />`:s.html`<span class="checkbox-spacer" aria-hidden="true"></span>`}
+                  />`:n`<span class="checkbox-spacer" aria-hidden="true"></span>`}
               <div class="file-thumb folder-thumb">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                   <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z" />
@@ -133,13 +133,13 @@
               <div class="file-info">
                 <div class="file-name">${i.name}</div>
               </div>
-              <span class="file-modified">${_(i.modifiedDate,this.t)}</span>
+              <span class="file-modified">${F(i.modifiedDate,this.t)}</span>
             </div>
           `})}
 
-        ${e.map(i=>{const n=this._selectedIds.has(i.id),h=!n&&o;return s.html`
+        ${e.map(i=>{const o=this._selectedIds.has(i.id);return n`
             <div
-              class="file-item ${n?"selected":""} ${h?"disabled":""}"
+              class="file-item ${o?"selected":""} ${!o&&s?"disabled":""}"
               @click=${a=>this._toggleSelect(i,a)}
             >
               <input
@@ -149,9 +149,9 @@
                 @change=${()=>this._toggleSelect(i)}
               />
               <div class="file-thumb">
-                ${i.thumbnail?s.html`<img src=${this.transformThumbnail(i.thumbnail)} alt="" loading="lazy" referrerpolicy="no-referrer"
-                      @error=${a=>{const g=a.target;g.style.display="none",g.parentElement.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'}}
-                    />`:s.html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                ${i.thumbnail?n`<img src=${this.transformThumbnail(i.thumbnail)} alt="" loading="lazy" referrerpolicy="no-referrer"
+                      @error=${a=>{const b=a.target;b.style.display="none",b.parentElement.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'}}
+                    />`:n`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
                       <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
                       <polyline points="14 2 14 8 20 8" />
                     </svg>`}
@@ -159,14 +159,14 @@
               <div class="file-info">
                 <div class="file-name">${i.name}</div>
                 <div class="file-meta">
-                  ${i.size?s.html`<span class="file-size">${P(i.size)}</span>`:s.nothing}
+                  ${i.size?n`<span class="file-size">${E(i.size)}</span>`:f}
                 </div>
               </div>
-              <span class="file-modified">${_(i.modifiedDate,this.t)}</span>
+              <span class="file-modified">${F(i.modifiedDate,this.t)}</span>
             </div>
           `})}
 
-        ${this._nextPagePath?s.html`
+        ${this._nextPagePath?n`
               <button
                 class="load-more-btn"
                 ?disabled=${this._loadingMore}
@@ -174,15 +174,15 @@
               >
                 ${this._loadingMore?this.t("loading","Loading"):this.t("loadMore","Load more")}
               </button>
-            `:s.nothing}
+            `:f}
       </div>
 
-      ${this._items.length>0||r>0?s.html`
+      ${this._items.length>0||r>0?n`
             <div class="browser-footer">
               <div class="footer-left">
-                ${this.multi?s.html`<button class="select-all-btn" @click=${this._toggleSelectAll}>
+                ${this.multi?n`<button class="select-all-btn" @click=${this._toggleSelectAll}>
                   ${u?this.t("deselectAll","Deselect all"):this.t("selectAll","Select all")}
-                </button>`:s.nothing}
+                </button>`:f}
                 <span class="selected-count ${r>0?"has-selection":""}">
                   ${r>0?this.t("itemsSelected",{count:r,defaultValue_one:"{{count}} item selected",defaultValue_other:"{{count}} items selected"}):this.t("noFilesSelected","No files selected")}
                 </span>
@@ -195,9 +195,9 @@
                 ${r>0?this.t("addItems",{count:r,defaultValue_one:"Add {{count}} item",defaultValue_other:"Add {{count}} items"}):this.t("add","Add")}
               </button>
             </div>
-          `:s.nothing}
+          `:f}
 
-      ${this._resolvingFolders?s.html`
+      ${this._resolvingFolders?n`
             <div class="busy-overlay">
               <div class="spinner"></div>
               <div class="busy-text">
@@ -207,8 +207,8 @@
                 ${this.t("cancel","Cancel")}
               </button>
             </div>
-          `:s.nothing}
-    `}_renderBreadcrumbs(){return this._breadcrumbs.length===0?s.nothing:s.html`
+          `:f}
+    `}_renderBreadcrumbs(){return this._breadcrumbs.length===0?f:n`
       <div class="breadcrumbs">
         <button class="crumb" @click=${()=>this._onBreadcrumbClick(-1)}>
           <svg class="crumb-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -216,12 +216,12 @@
           </svg>
           ${this.t("root","Root")}
         </button>
-        ${this._breadcrumbs.map((e,t)=>s.html`
+        ${this._breadcrumbs.map((e,t)=>n`
             <span class="crumb-sep">&rsaquo;</span>
-            ${t<this._breadcrumbs.length-1?s.html`<button class="crumb" @click=${()=>this._onBreadcrumbClick(t)}>${e.name}</button>`:s.html`<span class="crumb-current">${e.name}</span>`}
+            ${t<this._breadcrumbs.length-1?n`<button class="crumb" @click=${()=>this._onBreadcrumbClick(t)}>${e.name}</button>`:n`<span class="crumb-current">${e.name}</span>`}
           `)}
       </div>
-    `}};k.styles=s.css`
+    `}};w.styles=A`
     :host {
       display: flex;
       flex-direction: column;
@@ -1010,4 +1010,4 @@
       background: var(--sfx-up-border-light, #f1f5f9);
       color: var(--sfx-up-text, #1e293b);
     }
-  `;let d=k;p([c.property({attribute:!1})],d.prototype,"t");p([c.property({type:String})],d.prototype,"provider");p([c.property({type:String})],d.prototype,"companionUrl");p([c.property({type:Boolean})],d.prototype,"multi");p([c.property({type:Number})],d.prototype,"maxSelect");p([c.property({attribute:!1})],d.prototype,"transformThumbnail");p([c.state()],d.prototype,"_authenticated");p([c.state()],d.prototype,"_loading");p([c.state()],d.prototype,"_items");p([c.state()],d.prototype,"_selectedIds");p([c.state()],d.prototype,"_breadcrumbs");p([c.state()],d.prototype,"_nextPagePath");p([c.state()],d.prototype,"_error");p([c.state()],d.prototype,"_loadingMore");p([c.state()],d.prototype,"_username");p([c.state()],d.prototype,"_resolvingFolders");p([c.state()],d.prototype,"_resolveProgress");function P(l){if(l===0)return"0 B";const e=["B","KB","MB","GB"],t=Math.min(Math.floor(Math.log(l)/Math.log(1024)),e.length-1);return`${(l/Math.pow(1024,t)).toFixed(t===0?0:1)} ${e[t]}`}function _(l,e){if(!l)return"";const t=Date.parse(l);if(Number.isNaN(t))return"";const r=Math.max(0,Date.now()-t),o=6e4,u=60*o,i=24*u,n=30*i,h=365*i,a=Math.round(r/o);if(a<1)return e("justNow","just now");if(a<60)return e("minutesAgo",{count:a,defaultValue_one:"{{count}} minute ago",defaultValue_other:"{{count}} minutes ago"});const g=Math.round(r/u);if(g<24)return e("hoursAgo",{count:g,defaultValue_one:"{{count}} hour ago",defaultValue_other:"{{count}} hours ago"});const f=Math.round(r/i);if(f<2)return e("yesterday","yesterday");if(f<30)return e("daysAgo",{count:f,defaultValue_one:"{{count}} day ago",defaultValue_other:"{{count}} days ago"});const b=Math.round(r/n);return b<12?e("monthsAgo",{count:b,defaultValue_one:"{{count}} month ago",defaultValue_other:"{{count}} months ago"}):e("yearsAgo",{count:Math.round(r/h),defaultValue_one:"{{count}} year ago",defaultValue_other:"{{count}} years ago"})}exports.SfxProviderBrowser=d;exports.formatRelativeDate=_;
+  `;let d=w;h([g({attribute:!1})],d.prototype,"t");h([g({type:String})],d.prototype,"provider");h([g({type:String})],d.prototype,"companionUrl");h([g({type:Boolean})],d.prototype,"multi");h([g({type:Number})],d.prototype,"maxSelect");h([g({attribute:!1})],d.prototype,"transformThumbnail");h([x()],d.prototype,"_authenticated");h([x()],d.prototype,"_loading");h([x()],d.prototype,"_items");h([x()],d.prototype,"_selectedIds");h([x()],d.prototype,"_breadcrumbs");h([x()],d.prototype,"_nextPagePath");h([x()],d.prototype,"_error");h([x()],d.prototype,"_loadingMore");h([x()],d.prototype,"_username");h([x()],d.prototype,"_resolvingFolders");h([x()],d.prototype,"_resolveProgress");function E(l){if(l===0)return"0 B";const e=["B","KB","MB","GB"],t=Math.min(Math.floor(Math.log(l)/Math.log(1024)),e.length-1);return`${(l/Math.pow(1024,t)).toFixed(t===0?0:1)} ${e[t]}`}function F(l,e){if(!l)return"";const t=Date.parse(l);if(Number.isNaN(t))return"";const r=Math.max(0,Date.now()-t),s=6e4,u=60*s,i=24*u,o=30*i,c=365*i,a=Math.round(r/s);if(a<1)return e("justNow","just now");if(a<60)return e("minutesAgo",{count:a,defaultValue_one:"{{count}} minute ago",defaultValue_other:"{{count}} minutes ago"});const b=Math.round(r/u);if(b<24)return e("hoursAgo",{count:b,defaultValue_one:"{{count}} hour ago",defaultValue_other:"{{count}} hours ago"});const p=Math.round(r/i);if(p<2)return e("yesterday","yesterday");if(p<30)return e("daysAgo",{count:p,defaultValue_one:"{{count}} day ago",defaultValue_other:"{{count}} days ago"});const v=Math.round(r/o);return v<12?e("monthsAgo",{count:v,defaultValue_one:"{{count}} month ago",defaultValue_other:"{{count}} months ago"}):e("yearsAgo",{count:Math.round(r/c),defaultValue_one:"{{count}} year ago",defaultValue_other:"{{count}} years ago"})}export{d as SfxProviderBrowser,F as formatRelativeDate};
