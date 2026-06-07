@@ -1,19 +1,25 @@
 import { UploadFile, UploadResponse } from '../store/store.types';
 /**
- * Backend status code returned when an upload is skipped because a file with
- * the *same content* already exists in the requested directory. This is not a
- * real failure — the asset is already on Filerobot — so the UI treats it as a
- * successful upload (with a neutral "already uploaded" note) rather than an error.
+ * Backend status codes returned when an upload is skipped because a file with
+ * the *same content* already exists. Neither is a real failure — the asset is
+ * already on Filerobot — so the UI treats both as a successful upload (with a
+ * neutral "already uploaded" note) rather than an error.
  *
- * The response body looks like:
+ * - `SAME_ASSET_EXISTS_SKIP_UPLOAD`: identical content exists in the requested
+ *   directory.
+ * - `ERROR_SHA1_CONFLICT`: identical content (matching SHA1) exists somewhere
+ *   in the project. `similar_file_path` points to its location.
+ *
+ * Both response bodies share the same shape:
  * ```json
- * { "status": "error", "code": "SAME_ASSET_EXISTS_SKIP_UPLOAD",
+ * { "status": "error", "code": "…",
  *   "existing_file_uuid": "e176a9d7-…", "similar_file_path": "", "info": { … } }
  * ```
  * Note there is NO `file` object — only `existing_file_uuid` references the
  * pre-existing asset, so `buildSameAssetResponse` synthesizes a `file` from it.
  */
 export declare const SAME_ASSET_EXISTS_CODE = "SAME_ASSET_EXISTS_SKIP_UPLOAD";
+export declare const SHA1_CONFLICT_CODE = "ERROR_SHA1_CONFLICT";
 /** True when the backend reported the identical content already exists. */
 export declare function isSameAssetExists(body: Pick<UploadResponse, 'code'> | null | undefined): boolean;
 /**
