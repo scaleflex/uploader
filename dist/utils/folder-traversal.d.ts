@@ -24,7 +24,17 @@ export declare const SFX_RELATIVE_PATH_KEY = "_sfxRelativePath";
  * `Object.keys(file)` clean so JSON serializers don't pick it up.
  */
 export declare function attachRelativePath(file: File, relativePath: string | undefined | null): void;
-/** Read the relative path off a File, falling back to the browser-native `webkitRelativePath`. */
+/**
+ * Read the relative path off a File. Fallback order:
+ *  1. `_sfxRelativePath` — stashed by our own folder traversal (or by a host
+ *     calling `attachRelativePath`).
+ *  2. `webkitRelativePath` — set by the browser on `<input type="file" webkitdirectory>`.
+ *     Empty strings here are treated as absent so we keep looking — browsers set
+ *     `webkitRelativePath = ""` for files that didn't come from a directory input.
+ *  3. `relativePath` — the de-facto convention across Uppy-style folder-drop
+ *     utilities. Hosts that already attach this for their own pipelines (e.g.
+ *     a custom drop adapter) get folder-structure preservation for free.
+ */
 export declare function getRelativePath(file: File): string;
 /**
  * Extract the dirname portion of a relative path. E.g. `"a/b/c.png"` → `"a/b"`,

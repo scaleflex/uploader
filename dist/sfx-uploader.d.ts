@@ -855,6 +855,11 @@ export declare class SfxUploader extends LitElement {
     private _onFsPanEnd;
     private _onFsTouchStart;
     private _onFsTouchMove;
+    /** Files eligible for fullscreen prev/next: images with a previewUrl or
+     *  playable videos. Returned newest-first so navigation matches the visual
+     *  order of the file grid. Single source of truth — both the overlay's
+     *  disabled-arrow state and the actual navigation step read from this. */
+    private _getFullscreenNavigableFiles;
     private _navigateFs;
     private _onFsClose;
     private _getVideoBlobUrl;

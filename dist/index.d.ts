@@ -15,6 +15,7 @@ export { SfxFileItem } from './components/file-item';
 export { SfxSuccessCard } from './components/success-card';
 export { SfxActionsBar, type UploadButtonState } from './components/actions-bar';
 export type { MetadataConfig, MetadataSchema, MetadataField, MetadataGroup } from './metadata/schema/schema.types';
+export { attachRelativePath, getRelativePath } from './utils/folder-traversal';
 export type { Product, ProductFieldKey } from './product/product.types';
 export { validateProductRef, validateProductPosition, PRODUCT_REF_INVALID_CHARS, } from './product/product.constants';
 //# sourceMappingURL=index.d.ts.map

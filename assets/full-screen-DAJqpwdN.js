@@ -1,4 +1,4 @@
-import{b as i}from"./index-B7SMNQEG.js";const o={render(){return`
+import{b as i}from"./index-CaKuWuAp.js";const o={render(){return`
       <style>
         /* Hide demo chrome for full-screen test */
         .topbar, #sidebar { display: none !important; }

@@ -7,8 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Folder-traversal helpers are now exported from the package root: `attachRelativePath(file, path)` and `getRelativePath(file)`. Host adapters that build their own `File[]` arrays (e.g. a custom drop zone wired into a separate pipeline before the file lands in the uploader) can call `attachRelativePath(file, 'folder/sub/image.png')` to preserve folder structure without poking at the previously private `_sfxRelativePath` key.
+
 ### Changed
 
+- `getRelativePath(file)` now reads a third source as a fallback: `file.relativePath`. Order is `_sfxRelativePath` → `webkitRelativePath` → `relativePath`. Matches the de-facto convention used by Uppy-style folder-drop utilities, so integrators that already attach `relativePath` for their own pipelines get folder-structure preservation in the uploader without writing a bridge adapter. As part of this change, an empty `webkitRelativePath` (`""` — set by the browser on files that didn't come from a directory input) is now treated as absent rather than as a real path, so a host-attached `relativePath` can take over instead of being shadowed by the empty native value.
+
+### Changed
+
+- File lists are now rendered newest-first across every surface — the main asset grid, the floating progress pill, the in-flight upload overlay, the success-card thumbnail collage, and the last-upload review screen. Previously new files were appended at the bottom, so after a fresh upload the user had to scroll past older files to see what they just added; now the most recent file sits at the top where the list naturally starts. Storage order (the underlying `Map`) is unchanged, so engine upload order and callback ordering are unaffected.
 - `onFileLocate(file, url)` callback now receives the resolved Locate URL as a second argument and can return `false` to suppress the uploader's default current-tab navigation — mirrors the `onBeforeUpload` pattern. Hosts running inside a SPA can route to `url` via their own client-side router (e.g. `router.push(url)`) to avoid a full-page reload. The cancelable `sfx-file-locate` event detail now also includes `url`. Existing callbacks that ignore the new argument and return nothing keep working unchanged.
   - **Heads-up for analytics-style notifiers.** Only an explicit `=== false` return suppresses navigation (`undefined`/`null`/`0`/`""` do not), but if your existing single-expression arrow callback's tail call happens to return `false` you will lose Locate navigation. Example: `onFileLocate: (file) => analytics.track('locate', file.id)` — if `track()` returns `false`, that now cancels navigation. Wrap the body in `{ … }` and don't return, or explicitly `return true`, to keep the previous behaviour.
 
