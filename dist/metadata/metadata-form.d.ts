@@ -1,4 +1,4 @@
-import { LitElement } from 'lit';
+import { LitElement, PropertyValues } from 'lit';
 import { MetadataSchema, MetadataConfig } from './schema/schema.types';
 import { TaxonodeEntry } from './taxonomies/taxonomies.types';
 import { Dependency, ResolvedSchema } from './dependencies/dependencies.types';
@@ -27,8 +27,26 @@ export declare class SfxMetadataForm extends LitElement {
      */
     dependencies: Dependency[];
     disabled: boolean;
+    /**
+     * Hide the built-in search + collapse-all toolbar. Default `false` so the
+     * toolbar is visible wherever the form mounts.
+     */
+    hideFilter: boolean;
     private _collapsed;
+    private _filterQuery;
+    /** Schema swap (new project) invalidates filter + collapsed UUIDs. */
+    willUpdate(changed: PropertyValues<this>): void;
     private _toggleGroup;
+    private _onFilterInput;
+    private _onFilterClear;
+    /** Escape clears the query without leaving the input. */
+    private _onFilterKeyDown;
+    /**
+     * True when every (dep-visible) group is in `_collapsed`. Dep-hidden groups
+     * are excluded so the toolbar reflects what the user actually sees.
+     */
+    private _isAllCollapsed;
+    private _onToggleCollapseAll;
     /**
      * Build a lookup of conflicts keyed by field ckey. Computed once per render
      * inside `render()` and passed to each child for the ⚠️ icon.
@@ -39,6 +57,14 @@ export declare class SfxMetadataForm extends LitElement {
      * line. Computed once per render — cheap (small map, small array).
      */
     private _buildDependencyNames;
+    /**
+     * Compute the visible fields for a group, applying dep-hide and the active
+     * text filter. Returns `[]` for groups that should be dropped entirely
+     * (dep-hidden or no matching fields) so the caller can `continue` on
+     * either signal with a single check.
+     */
+    private _visibleFieldsFor;
+    private _renderFilter;
     private _renderGroup;
     render(): import('lit-html').TemplateResult<1>;
 }

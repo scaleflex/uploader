@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`apiDomain` config option** — new optional `UploaderConfig.apiDomain` property routes all Filerobot API calls to a custom host instead of the default `https://api.filerobot.com`. Intended for customers on isolated infrastructure (e.g. Linode/Akamai) where the backend returns an alternative API host via `settings.domains.api`. Pass the bare host (e.g. `"https://akli.api.filerobot.com"`); the container token is appended automatically. Note: large-file tus uploads use a separate Companion endpoint — override that independently via `tusConfig.endpoint` if needed.
+
 - **Metadata dependencies (FRA-8419)** — the uploader now honors pre-upload metadata dependency rules from the Filerobot admin. Rules attached to a metadata field in the admin (under the **Dependencies** tab) conditionally hide/require/restrict/preset other fields based on the file's current metadata. Four action types are supported pre-upload:
   - **`hide`** — the target field/group is removed from the form; any existing value is stripped from the upload payload (so data the user couldn't see never ships to the BE). Group-targeted hides propagate to every child field.
   - **`require`** — the target field becomes required with a red asterisk; upload is blocked until filled, matching the existing required-fields gate.

@@ -1,7 +1,7 @@
-import { G as vt, H as Ot, I as yt, J as _t, K as wt, L as X, M as _e, N as Lt, O as Dt, Q as re, R as lt, T as Ft, V as zt, W as qt, X as dt, Y as Pt, Z as Bt, _ as Kt } from "./sfx-uploader-Dt57dUul.js";
-import { $ as rs, a0 as os, a1 as ns } from "./sfx-uploader-Dt57dUul.js";
-import { LitElement as D, css as y, nothing as g, html as l, svg as $ } from "lit";
-import { property as u, state as m } from "lit/decorators.js";
+import { G as vt, H as Ot, I as yt, J as _t, K as wt, L as X, M as _e, N as Ft, O as Lt, Q as re, R as lt, T as Dt, V as zt, W as Pt, X as dt, Y as qt, Z as Bt, _ as Kt } from "./sfx-uploader-BnjSeVTT.js";
+import { $ as ls, a0 as ds, a1 as cs } from "./sfx-uploader-BnjSeVTT.js";
+import { html as l, LitElement as D, css as y, nothing as g, svg as $ } from "lit";
+import { property as u, state as x } from "lit/decorators.js";
 import { classMap as kt } from "lit/directives/class-map.js";
 function $t(n, e, t = !1) {
   const i = (e == null ? void 0 : e.language) ?? "en", s = n.model ?? [], o = n.store ?? {}, r = s.find((f) => f.applies_to === "FILES");
@@ -29,7 +29,7 @@ function $t(n, e, t = !1) {
   };
 }
 const Nt = "https://hub.scaleflex.com/api", de = /* @__PURE__ */ new Map(), oe = /* @__PURE__ */ new Map();
-async function Ji(n, e, t, i) {
+async function Zi(n, e, t, i) {
   const s = de.get(t);
   if (s) return s;
   const o = oe.get(t);
@@ -42,7 +42,7 @@ async function Ji(n, e, t, i) {
     );
     return de.set(t, a), a;
   }
-  const r = Mt(e, t, i);
+  const r = jt(e, t, i);
   oe.set(t, r);
   try {
     const a = await r;
@@ -51,7 +51,7 @@ async function Ji(n, e, t, i) {
     oe.delete(t);
   }
 }
-async function Mt(n, e, t) {
+async function jt(n, e, t) {
   var p, h, f, b, v;
   const s = `${(t == null ? void 0 : t.hubApiBase) ?? Nt}/project/${encodeURIComponent(e)}`, o = (t == null ? void 0 : t.hubHeaders) ?? n, r = await fetch(s, { headers: o });
   if (!r.ok)
@@ -64,12 +64,12 @@ async function Mt(n, e, t) {
   const c = (t == null ? void 0 : t.productsEnabled) ?? ((v = (b = d == null ? void 0 : d.airstore) == null ? void 0 : b.ui) == null ? void 0 : v.products_enabled) === !0;
   return $t(d.metadata, t, c);
 }
-function Wi(n) {
+function es(n) {
   var e;
   n ? (de.delete(n), (e = oe.get(n)) == null || e.catch(() => {
   }), oe.delete(n)) : (de.clear(), oe.clear());
 }
-const Vt = /* @__PURE__ */ new Set([
+const Mt = /* @__PURE__ */ new Set([
   "image",
   "video",
   "audio",
@@ -77,11 +77,11 @@ const Vt = /* @__PURE__ */ new Set([
   "archive",
   "design_template"
 ]);
-function jt(n) {
+function Vt(n) {
   if (!n || Array.isArray(n)) return [];
   const e = n.format_mimetypes;
   return Array.isArray(e) ? e.filter(
-    (t) => Vt.has(t)
+    (t) => Mt.has(t)
   ) : [];
 }
 function Ut(n) {
@@ -99,7 +99,7 @@ function Ht(n) {
     name: n.dep_name,
     description: n.dep_description,
     active: n.dep_active,
-    formatMimetypes: jt(n.dep_scope),
+    formatMimetypes: Vt(n.dep_scope),
     triggerCkey: n.dep_metadata_trigger_sys_key,
     triggerFieldType: n.dep_metadata_trigger_field_type_key,
     triggerCondition: n.dep_metadata_trigger_condition_key,
@@ -123,29 +123,29 @@ function Yt(n, e, t) {
   ), s = /* @__PURE__ */ new Map(), o = /* @__PURE__ */ new Set();
   for (const r of i) for (const a of r.keys()) o.add(a);
   for (const r of o) {
-    const a = i.map((x) => x.get(r)), d = a.every((x) => (x == null ? void 0 : x.hidden) === !0), c = a.some((x) => (x == null ? void 0 : x.required) === !0);
+    const a = i.map((m) => m.get(r)), d = a.every((m) => (m == null ? void 0 : m.hidden) === !0), c = a.some((m) => (m == null ? void 0 : m.required) === !0);
     let p;
-    if (a.every((x) => Array.isArray(x == null ? void 0 : x.allowedValues))) {
-      let x;
+    if (a.every((m) => Array.isArray(m == null ? void 0 : m.allowedValues))) {
+      let m;
       for (const ie of a) {
         const G = ie.allowedValues;
-        if (x = x === void 0 ? [...G] : x.filter((Rt) => G.includes(Rt)), x.length === 0) break;
+        if (m = m === void 0 ? [...G] : m.filter((Rt) => G.includes(Rt)), m.length === 0) break;
       }
-      p = x;
+      p = m;
     }
     let f;
-    const b = a.map((x) => x == null ? void 0 : x.setValue).filter((x) => x !== void 0);
+    const b = a.map((m) => m == null ? void 0 : m.setValue).filter((m) => m !== void 0);
     b.length === n.length && Jt(b) && (f = b[0]);
     const v = /* @__PURE__ */ new Set();
-    for (const x of a)
-      if (x)
-        for (const ie of x.contributingDependencyUuids) v.add(ie);
-    const S = {
+    for (const m of a)
+      if (m)
+        for (const ie of m.contributingDependencyUuids) v.add(ie);
+    const C = {
       hidden: d,
       required: c,
       contributingDependencyUuids: [...v]
     };
-    p !== void 0 && (S.allowedValues = p), f !== void 0 && (S.setValue = f), s.set(r, S);
+    p !== void 0 && (C.allowedValues = p), f !== void 0 && (C.setValue = f), s.set(r, C);
   }
   return s;
 }
@@ -161,13 +161,13 @@ function Jt(n) {
     return !0;
   });
 }
-const Wt = "https://hub.scaleflex.com/api", be = /* @__PURE__ */ new Map(), ne = /* @__PURE__ */ new Map();
-async function Qi(n, e, t) {
+const Qt = "https://hub.scaleflex.com/api", be = /* @__PURE__ */ new Map(), ne = /* @__PURE__ */ new Map();
+async function ts(n, e, t) {
   const i = be.get(n);
   if (i) return i;
   const s = ne.get(n);
   if (s) return s;
-  const o = Qt(e, t);
+  const o = Wt(e, t);
   ne.set(n, o);
   try {
     const r = await o;
@@ -176,8 +176,8 @@ async function Qi(n, e, t) {
     ne.delete(n);
   }
 }
-async function Qt(n, e) {
-  const i = `${(e == null ? void 0 : e.hubApiBase) ?? Wt}/metadata/dependencies`, s = (e == null ? void 0 : e.hubHeaders) ?? n, o = await fetch(i, { headers: s });
+async function Wt(n, e) {
+  const i = `${(e == null ? void 0 : e.hubApiBase) ?? Qt}/metadata/dependencies`, s = (e == null ? void 0 : e.hubHeaders) ?? n, o = await fetch(i, { headers: s });
   if (!o.ok)
     throw new Error(
       `Failed to fetch metadata dependencies (HTTP ${o.status})`
@@ -185,7 +185,7 @@ async function Qt(n, e) {
   const r = await o.json();
   return Gt(r);
 }
-function Xi(n) {
+function is(n) {
   var e;
   n ? (be.delete(n), (e = ne.get(n)) == null || e.catch(() => {
   }), ne.delete(n)) : (be.clear(), ne.clear());
@@ -193,20 +193,20 @@ function Xi(n) {
 const Xt = 300, ct = 2, Zt = 50, ut = "regvar:api", ei = "#ut", ti = {
   CREATE_ONLY: "create_only",
   UPSERT: "upsert"
-}, ii = (n) => typeof n == "string" && n.startsWith(ei), xe = (n) => `~${n.toUpperCase()}`, si = (n, e) => {
+}, ii = (n) => typeof n == "string" && n.startsWith(ei), me = (n) => `~${n.toUpperCase()}`, si = (n, e) => {
   if (!(!n || !e))
-    return n[e] ?? n[xe(e)];
+    return n[e] ?? n[me(e)];
 }, ve = (n, e, t) => {
   var r, a, d;
   const i = (r = n.i18n) == null ? void 0 : r[e];
   if (i)
     return { value: i, isFallback: !1, sourceLang: e };
-  const s = (a = n.i18n) == null ? void 0 : a[xe(e)];
+  const s = (a = n.i18n) == null ? void 0 : a[me(e)];
   if (s)
-    return { value: s, isFallback: !0, sourceLang: xe(e) };
+    return { value: s, isFallback: !0, sourceLang: me(e) };
   const o = si(n.i18n, t);
   if (o) {
-    const c = (d = n.i18n) != null && d[t] ? t : xe(t);
+    const c = (d = n.i18n) != null && d[t] ? t : me(t);
     return { value: o, isFallback: !0, sourceLang: c };
   }
   return { value: "", isFallback: !1, sourceLang: null };
@@ -351,7 +351,7 @@ function ni(n) {
   }
   return { latitude: "", longitude: "" };
 }
-function Zi(n, e) {
+function ss(n, e) {
   const t = n.replace(/\/$/, "");
   let i = null, s = null, o = !1;
   return {
@@ -391,7 +391,7 @@ function Zi(n, e) {
   };
 }
 const ht = { base_node: null, nodes: [] };
-function es(n, e) {
+function rs(n, e) {
   const t = n.replace(/\/$/, "");
   let i = null, s = null, o = !1, r = null, a = null;
   return {
@@ -427,10 +427,10 @@ function es(n, e) {
         c && h.set("base", c), h.set("limit", String(p));
         const f = `${t}/v5/taxonomy/${encodeURIComponent(d)}/nodes?${h.toString()}`, b = await fetch(f, { headers: e, signal: r.signal });
         if (!b.ok) return ht;
-        const v = await b.json(), S = (v == null ? void 0 : v.data) ?? v;
+        const v = await b.json(), C = (v == null ? void 0 : v.data) ?? v;
         return {
-          base_node: (S == null ? void 0 : S.base_node) ?? null,
-          nodes: Array.isArray(S == null ? void 0 : S.nodes) ? S.nodes : []
+          base_node: (C == null ? void 0 : C.base_node) ?? null,
+          nodes: Array.isArray(C == null ? void 0 : C.nodes) ? C.nodes : []
         };
       } catch {
         return ht;
@@ -456,14 +456,14 @@ function es(n, e) {
           }
           const v = await b.json();
           if (o) return;
-          const S = ((h = v == null ? void 0 : v.data) == null ? void 0 : h.tags) ?? (v == null ? void 0 : v.tags) ?? [];
+          const C = ((h = v == null ? void 0 : v.data) == null ? void 0 : h.tags) ?? (v == null ? void 0 : v.tags) ?? [];
           p(
-            S.map((x) => ({
-              tag: String(x.tag ?? x.path ?? ""),
-              path: String(x.path ?? x.tag ?? ""),
-              suid: String(x.suid ?? ""),
-              uuid: String(x.uuid ?? ""),
-              approx_count: typeof x.approx_count == "number" ? x.approx_count : void 0
+            C.map((m) => ({
+              tag: String(m.tag ?? m.path ?? ""),
+              path: String(m.path ?? m.tag ?? ""),
+              suid: String(m.suid ?? ""),
+              uuid: String(m.uuid ?? ""),
+              approx_count: typeof m.approx_count == "number" ? m.approx_count : void 0
             }))
           );
         } catch {
@@ -476,18 +476,18 @@ function es(n, e) {
     }
   };
 }
-const qe = "/v5/meta/ultratags", ai = (n, e) => {
+const Pe = "/v5/meta/ultratags", ai = (n, e) => {
   const t = new URLSearchParams();
   e.meta && t.set("meta", e.meta), e.q && t.set("q", e.q), e.sort && t.set("sort", e.sort), typeof e.limit == "number" && t.set("limit", String(e.limit)), e.after && t.set("after", e.after), e.format && t.set("format", e.format), e.lang && t.set("lang", e.lang);
   const i = t.toString();
-  return `${n}${qe}${i ? `?${i}` : ""}`;
+  return `${n}${Pe}${i ? `?${i}` : ""}`;
 }, li = (n, e) => {
   const t = new URLSearchParams();
   e.format && t.set("format", e.format), e.lang && t.set("lang", e.lang);
   const i = t.toString();
-  return `${n}${qe}${i ? `?${i}` : ""}`;
+  return `${n}${Pe}${i ? `?${i}` : ""}`;
 };
-function ts(n, e) {
+function os(n, e) {
   let t = null, i = null;
   const s = () => {
     t && (clearTimeout(t), t = null), i && (i.abort(), i = null);
@@ -527,7 +527,7 @@ function ts(n, e) {
       return await a.json();
     },
     async create(o) {
-      const r = `${n}${qe}`, a = await fetch(r, {
+      const r = `${n}${Pe}`, a = await fetch(r, {
         method: "POST",
         headers: { ...e, "Content-Type": "application/json" },
         body: JSON.stringify(o)
@@ -540,18 +540,55 @@ function ts(n, e) {
     }
   };
 }
-var di = Object.defineProperty, P = (n, e, t, i) => {
+var di = Object.defineProperty, O = (n, e, t, i) => {
   for (var s = void 0, o = n.length - 1, r; o >= 0; o--)
     (r = n[o]) && (s = r(e, t, s) || s);
   return s && di(e, t, s), s;
 };
-const Ke = class Ke extends D {
+const ci = l`<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+  <circle cx="7" cy="7" r="4.5"/><line x1="13.5" y1="13.5" x2="10.5" y2="10.5"/>
+</svg>`, ui = l`<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round">
+  <line x1="4" y1="4" x2="12" y2="12"/><line x1="12" y1="4" x2="4" y2="12"/>
+</svg>`, pi = l`<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+  <polyline points="4 6 8 2 12 6"/><polyline points="4 10 8 14 12 10"/>
+</svg>`, hi = l`<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+  <polyline points="4 3 8 7 12 3"/><polyline points="4 9 8 13 12 9"/>
+</svg>`, Ke = class Ke extends D {
   constructor() {
-    super(...arguments), this.schema = null, this.meta = {}, this.config = null, this.taxonodes = null, this.resolvedSchema = null, this.dependencies = [], this.disabled = !1, this._collapsed = /* @__PURE__ */ new Set();
+    super(...arguments), this.schema = null, this.meta = {}, this.config = null, this.taxonodes = null, this.resolvedSchema = null, this.dependencies = [], this.disabled = !1, this.hideFilter = !1, this._collapsed = /* @__PURE__ */ new Set(), this._filterQuery = "";
+  }
+  /** Schema swap (new project) invalidates filter + collapsed UUIDs. */
+  willUpdate(e) {
+    e.has("schema") && e.get("schema") !== this.schema && (this._collapsed = /* @__PURE__ */ new Set(), this._filterQuery = "");
   }
   _toggleGroup(e) {
     const t = new Set(this._collapsed);
     t.has(e) ? t.delete(e) : t.add(e), this._collapsed = t;
+  }
+  _onFilterInput(e) {
+    this._filterQuery = e.target.value;
+  }
+  _onFilterClear() {
+    this._filterQuery = "";
+  }
+  /** Escape clears the query without leaving the input. */
+  _onFilterKeyDown(e) {
+    e.key === "Escape" && this._filterQuery && (e.stopPropagation(), this._filterQuery = "");
+  }
+  /**
+   * True when every (dep-visible) group is in `_collapsed`. Dep-hidden groups
+   * are excluded so the toolbar reflects what the user actually sees.
+   */
+  _isAllCollapsed(e) {
+    return e.length === 0 ? !1 : e.every((t) => this._collapsed.has(t));
+  }
+  _onToggleCollapseAll(e) {
+    const t = new Set(this._collapsed);
+    if (this._isAllCollapsed(e))
+      for (const i of e) t.delete(i);
+    else
+      for (const i of e) t.add(i);
+    this._collapsed = t;
   }
   /**
    * Build a lookup of conflicts keyed by field ckey. Computed once per render
@@ -573,38 +610,86 @@ const Ke = class Ke extends D {
   _buildDependencyNames() {
     return this.dependencies.length === 0 ? /* @__PURE__ */ new Map() : new Map(this.dependencies.map((e) => [e.uuid, e.name]));
   }
-  _renderGroup(e, t, i) {
-    var a;
-    const s = !this._collapsed.has(e.uuid), o = this.resolvedSchema, r = o ? e.fields.filter((d) => !yt(d, e, o)) : e.fields;
-    return o && e.ckey && ((a = o.get(e.ckey)) != null && a.hidden) ? g : r.length === 0 ? g : l`
+  /**
+   * Compute the visible fields for a group, applying dep-hide and the active
+   * text filter. Returns `[]` for groups that should be dropped entirely
+   * (dep-hidden or no matching fields) so the caller can `continue` on
+   * either signal with a single check.
+   */
+  _visibleFieldsFor(e, t) {
+    var o;
+    const i = this.resolvedSchema;
+    if (i && e.ckey && ((o = i.get(e.ckey)) != null && o.hidden)) return [];
+    let s = i ? e.fields.filter((r) => !yt(r, e, i)) : e.fields;
+    return t && !e.name.toLowerCase().includes(t) && (s = s.filter((r) => r.title.toLowerCase().includes(t))), s;
+  }
+  _renderFilter(e, t, i) {
+    if (this.hideFilter) return g;
+    if (!this.schema || this.schema.fields.length === 0) return g;
+    const s = this._filterQuery, o = this._isAllCollapsed(t), r = o ? "Expand all" : "Collapse all";
+    return l`
+      <div class="form-filter" role="search">
+        <div class="filter-input-wrap">
+          <span class="filter-icon" aria-hidden="true">${ci}</span>
+          <input
+            class="filter-input"
+            type="text"
+            placeholder="Search fields..."
+            .value=${s}
+            @input=${this._onFilterInput}
+            @keydown=${this._onFilterKeyDown}
+            aria-label="Search metadata fields"
+          />
+          ${s ? l`<button
+                class="filter-clear"
+                @click=${this._onFilterClear}
+                title="Clear search"
+                aria-label="Clear search"
+                type="button"
+              >${ui}</button>` : g}
+        </div>
+        ${e ? l`<button
+              class="filter-collapse"
+              @click=${() => this._onToggleCollapseAll(t)}
+              ?disabled=${i}
+              title=${i ? "Disabled while searching" : r}
+              aria-label=${o ? "Expand all groups" : "Collapse all groups"}
+              type="button"
+            >${o ? hi : pi}</button>` : g}
+      </div>
+    `;
+  }
+  _renderGroup(e, t, i, s, o) {
+    const r = o ? !0 : !this._collapsed.has(e.uuid);
+    return l`
       <div class="group">
         <button class="group-header"
           @click=${() => this._toggleGroup(e.uuid)}
-          aria-expanded=${s}>
+          aria-expanded=${r}>
           <span>${e.name}</span>
-          <svg class="chevron ${s ? "open" : ""}" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
+          <svg class="chevron ${r ? "open" : ""}" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="4 6 8 10 12 6"/>
           </svg>
         </button>
-        ${s ? l`
+        ${r ? l`
               <div class="group-content">
-                ${r.map(
-      (d) => {
-        var c, p, h;
+                ${t.map(
+      (a) => {
+        var d, c, p;
         return l`
                     <sfx-metadata-field
-                      .field=${d}
-                      .value=${this.meta[d.key]}
+                      .field=${a}
+                      .value=${this.meta[a.key]}
                       .config=${this.config}
                       .autocomplete=${this.autocomplete}
                       .taxonomyService=${this.taxonomyService}
-                      .taxonomyEntry=${((c = this.taxonodes) == null ? void 0 : c[d.key]) ?? null}
+                      .taxonomyEntry=${((d = this.taxonodes) == null ? void 0 : d[a.key]) ?? null}
                       .ultratags=${this.ultratags}
                       .defaultLanguage=${this.defaultLanguage}
-                      .regionalVariantsGroups=${((p = this.schema) == null ? void 0 : p.regionalVariantsGroups) ?? []}
-                      .resolvedState=${((h = this.resolvedSchema) == null ? void 0 : h.get(d.ckey)) ?? null}
-                      .conflict=${t.get(d.ckey) ?? null}
-                      .dependencyNames=${i}
+                      .regionalVariantsGroups=${((c = this.schema) == null ? void 0 : c.regionalVariantsGroups) ?? []}
+                      .resolvedState=${((p = this.resolvedSchema) == null ? void 0 : p.get(a.ckey)) ?? null}
+                      .conflict=${i.get(a.ckey) ?? null}
+                      .dependencyNames=${s}
                       ?disabled=${this.disabled}
                     ></sfx-metadata-field>
                   `;
@@ -617,15 +702,143 @@ const Ke = class Ke extends D {
   }
   render() {
     if (!this.schema || this.schema.groups.length === 0)
-      return l`<div class="empty">No metadata fields configured</div>`;
-    const e = this._buildConflictsByCkey(), t = this._buildDependencyNames();
+      return l`<div class="empty" role="status" aria-live="polite">No metadata fields configured</div>`;
+    const e = this._buildConflictsByCkey(), t = this._buildDependencyNames(), i = this._filterQuery.trim(), s = i.toLowerCase(), o = s !== "", r = [];
+    for (const p of this.schema.groups) {
+      const h = this._visibleFieldsFor(p, s);
+      h.length !== 0 && r.push({ group: p, fields: h });
+    }
+    const a = r.map((p) => p.group.uuid), d = this.schema.groups.length > 1 && (o || r.length > 0), c = this._renderFilter(d, a, o);
+    if (r.length === 0) {
+      const p = o ? l`No fields match "${i}"` : "All metadata fields are currently hidden";
+      return l`
+        ${c}
+        <div class="empty" role="status" aria-live="polite">${p}</div>
+      `;
+    }
     return l`
-      ${this.schema.groups.map((i) => this._renderGroup(i, e, t))}
+      ${c}
+      ${r.map(
+      ({ group: p, fields: h }) => this._renderGroup(p, h, e, t, o)
+    )}
     `;
   }
 };
 Ke.styles = y`
     :host { display: block; }
+
+    .form-filter {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px 12px;
+    }
+    .filter-input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+      flex: 1;
+      min-width: 0;
+      height: 36px;
+      border: 1px solid var(--sfx-up-border, #e2e8f0);
+      border-radius: 8px;
+      background: var(--sfx-up-bg, #fff);
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+      box-sizing: border-box;
+    }
+    .filter-input-wrap:focus-within {
+      border-color: var(--sfx-up-primary, #2563eb);
+      box-shadow:
+        0 0 0 2px var(--sfx-up-bg, #fff),
+        0 0 0 5px var(--sfx-up-ring, oklch(0.578 0.198 268.129 / 0.7));
+    }
+    .filter-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 100%;
+      flex-shrink: 0;
+      color: var(--sfx-up-text-muted, #94a3b8);
+    }
+    .filter-icon svg {
+      width: 16px;
+      height: 16px;
+    }
+    .filter-input {
+      flex: 1;
+      min-width: 0;
+      height: 100%;
+      padding: 0 4px 0 0;
+      border: none;
+      background: transparent;
+      outline: none;
+      font-family: var(--sfx-up-font, 'Inter', system-ui, -apple-system, sans-serif);
+      font-size: 14px;
+      color: var(--sfx-up-text, #1e293b);
+    }
+    .filter-input::placeholder {
+      color: var(--sfx-up-text-muted, #94a3b8);
+      opacity: 1;
+    }
+    .filter-clear {
+      all: unset;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      margin-right: 4px;
+      flex-shrink: 0;
+      border-radius: 6px;
+      color: var(--sfx-up-text-muted, #94a3b8);
+      cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+    .filter-clear:hover {
+      background: var(--sfx-up-hover, #f1f5f9);
+      color: var(--sfx-up-text-secondary, #64748b);
+    }
+    .filter-clear:focus-visible {
+      outline: 2px solid var(--sfx-up-ring, oklch(0.578 0.198 268.129 / 0.7));
+      outline-offset: 1px;
+    }
+    .filter-clear svg {
+      width: 12px;
+      height: 12px;
+    }
+    .filter-collapse {
+      all: unset;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      flex-shrink: 0;
+      border: 1px solid var(--sfx-up-border, #e2e8f0);
+      border-radius: 8px;
+      color: var(--sfx-up-text-muted, #94a3b8);
+      background: var(--sfx-up-bg, #fff);
+      cursor: pointer;
+      transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+      box-sizing: border-box;
+    }
+    .filter-collapse:hover:not(:disabled) {
+      background: var(--sfx-up-hover, #f1f5f9);
+      color: var(--sfx-up-text-secondary, #64748b);
+    }
+    .filter-collapse:focus-visible {
+      outline: 2px solid var(--sfx-up-ring, oklch(0.578 0.198 268.129 / 0.7));
+      outline-offset: 2px;
+    }
+    .filter-collapse:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+    .filter-collapse svg {
+      width: 16px;
+      height: 16px;
+    }
 
     .group-header {
       display: flex;
@@ -675,44 +888,50 @@ Ke.styles = y`
       color: var(--sfx-up-text-muted, #94a3b8);
     }
   `;
-let E = Ke;
-P([
+let S = Ke;
+O([
   u({ attribute: !1 })
-], E.prototype, "schema");
-P([
+], S.prototype, "schema");
+O([
   u({ attribute: !1 })
-], E.prototype, "meta");
-P([
+], S.prototype, "meta");
+O([
   u({ attribute: !1 })
-], E.prototype, "config");
-P([
+], S.prototype, "config");
+O([
   u({ attribute: !1 })
-], E.prototype, "autocomplete");
-P([
+], S.prototype, "autocomplete");
+O([
   u({ attribute: !1 })
-], E.prototype, "taxonomyService");
-P([
+], S.prototype, "taxonomyService");
+O([
   u({ attribute: !1 })
-], E.prototype, "ultratags");
-P([
+], S.prototype, "ultratags");
+O([
   u({ attribute: !1 })
-], E.prototype, "defaultLanguage");
-P([
+], S.prototype, "defaultLanguage");
+O([
   u({ attribute: !1 })
-], E.prototype, "taxonodes");
-P([
+], S.prototype, "taxonodes");
+O([
   u({ attribute: !1 })
-], E.prototype, "resolvedSchema");
-P([
+], S.prototype, "resolvedSchema");
+O([
   u({ attribute: !1 })
-], E.prototype, "dependencies");
-P([
+], S.prototype, "dependencies");
+O([
   u({ type: Boolean })
-], E.prototype, "disabled");
-P([
-  m()
-], E.prototype, "_collapsed");
-customElements.define("sfx-metadata-form", E);
+], S.prototype, "disabled");
+O([
+  u({ type: Boolean, attribute: "hide-filter" })
+], S.prototype, "hideFilter");
+O([
+  x()
+], S.prototype, "_collapsed");
+O([
+  x()
+], S.prototype, "_filterQuery");
+customElements.define("sfx-metadata-form", S);
 const pe = y`
   input, textarea, select {
     width: 100%;
@@ -865,7 +1084,7 @@ const pe = y`
     font-size: 13px;
     color: var(--sfx-up-text-muted, #94a3b8);
   }
-`, Pe = y`
+`, qe = y`
   .chip {
     display: inline-flex;
     align-items: center;
@@ -1045,7 +1264,7 @@ y`
     outline-offset: 2px;
   }
 `;
-const ci = y`
+const fi = y`
   :host { display: block; }
 
   .field-row {
@@ -1153,10 +1372,10 @@ const ci = y`
     }
   }
 `;
-var ui = Object.defineProperty, T = (n, e, t, i) => {
+var gi = Object.defineProperty, T = (n, e, t, i) => {
   for (var s = void 0, o = n.length - 1, r; o >= 0; o--)
     (r = n[o]) && (s = r(e, t, s) || s);
-  return s && ui(e, t, s), s;
+  return s && gi(e, t, s), s;
 };
 const Ne = class Ne extends D {
   constructor() {
@@ -1261,7 +1480,7 @@ Controlled by ${c}: ${d.join(", ")}`;
     var d, c;
     const e = this.field;
     if (!e) return g;
-    const t = X(e, this.config), i = St(e, this.value, t), s = Lt(
+    const t = X(e, this.config), i = St(e, this.value, t), s = Ft(
       e,
       this.regionalVariantsGroups,
       (d = this.config) == null ? void 0 : d.regionalFilters,
@@ -1289,7 +1508,7 @@ Controlled by ${c}: ${d.join(", ")}`;
     `;
   }
 };
-Ne.styles = [ci];
+Ne.styles = [fi];
 let w = Ne;
 T([
   u({ attribute: !1 })
@@ -1334,15 +1553,15 @@ T([
   u({ type: Boolean })
 ], w.prototype, "disabled");
 T([
-  m()
+  x()
 ], w.prototype, "_error");
 customElements.define("sfx-metadata-field", w);
-var pi = Object.defineProperty, Be = (n, e, t, i) => {
+var xi = Object.defineProperty, Be = (n, e, t, i) => {
   for (var s = void 0, o = n.length - 1, r; o >= 0; o--)
     (r = n[o]) && (s = r(e, t, s) || s);
-  return s && pi(e, t, s), s;
+  return s && xi(e, t, s), s;
 };
-class O extends D {
+class F extends D {
   constructor() {
     super(...arguments), this.value = "", this.disabled = !1;
   }
@@ -1359,14 +1578,14 @@ class O extends D {
 }
 Be([
   u({ attribute: !1 })
-], O.prototype, "field");
+], F.prototype, "field");
 Be([
   u({ attribute: !1 })
-], O.prototype, "value");
+], F.prototype, "value");
 Be([
   u({ type: Boolean })
-], O.prototype, "disabled");
-const Me = class Me extends O {
+], F.prototype, "disabled");
+const je = class je extends F {
   _onInput(e) {
     this._emit("field-change", e.target.value);
   }
@@ -1392,10 +1611,10 @@ const Me = class Me extends O {
     `;
   }
 };
-Me.styles = [pe];
-let Ie = Me;
+je.styles = [pe];
+let Ie = je;
 customElements.define("sfx-meta-text-field", Ie);
-const Ve = class Ve extends O {
+const Me = class Me extends F {
   firstUpdated() {
     const e = this.renderRoot.querySelector("textarea");
     e && this._autoResize(e);
@@ -1428,7 +1647,7 @@ const Ve = class Ve extends O {
     `;
   }
 };
-Ve.styles = [
+Me.styles = [
   pe,
   y`
       textarea {
@@ -1439,14 +1658,14 @@ Ve.styles = [
       }
     `
 ];
-let Te = Ve;
+let Te = Me;
 customElements.define("sfx-meta-textarea-field", Te);
-var hi = Object.defineProperty, we = (n, e, t, i) => {
+var mi = Object.defineProperty, we = (n, e, t, i) => {
   for (var s = void 0, o = n.length - 1, r; o >= 0; o--)
     (r = n[o]) && (s = r(e, t, s) || s);
-  return s && hi(e, t, s), s;
+  return s && mi(e, t, s), s;
 };
-const je = class je extends O {
+const Ve = class Ve extends F {
   constructor() {
     super(...arguments), this.allowedValues = null, this._open = !1, this._search = "", this._activeIndex = -1, this._boundOutsideClick = this._onOutsideClick.bind(this);
   }
@@ -1591,27 +1810,27 @@ const je = class je extends O {
     `;
   }
 };
-je.styles = [he];
-let Z = je;
+Ve.styles = [he];
+let Z = Ve;
 we([
   u({ attribute: !1 })
 ], Z.prototype, "allowedValues");
 we([
-  m()
+  x()
 ], Z.prototype, "_open");
 we([
-  m()
+  x()
 ], Z.prototype, "_search");
 we([
-  m()
+  x()
 ], Z.prototype, "_activeIndex");
 customElements.define("sfx-meta-select-field", Z);
-var fi = Object.defineProperty, ke = (n, e, t, i) => {
+var bi = Object.defineProperty, ke = (n, e, t, i) => {
   for (var s = void 0, o = n.length - 1, r; o >= 0; o--)
     (r = n[o]) && (s = r(e, t, s) || s);
-  return s && fi(e, t, s), s;
+  return s && bi(e, t, s), s;
 };
-const Ue = class Ue extends O {
+const Ue = class Ue extends F {
   constructor() {
     super(...arguments), this.allowedValues = null, this._open = !1, this._search = "", this._activeIndex = -1, this._boundOutsideClick = this._onOutsideClick.bind(this);
   }
@@ -1778,7 +1997,7 @@ const Ue = class Ue extends O {
 };
 Ue.styles = [
   he,
-  Pe,
+  qe,
   y`
       .trigger {
         min-height: 36px;
@@ -1846,34 +2065,34 @@ ke([
   u({ attribute: !1 })
 ], ee.prototype, "allowedValues");
 ke([
-  m()
+  x()
 ], ee.prototype, "_open");
 ke([
-  m()
+  x()
 ], ee.prototype, "_search");
 ke([
-  m()
+  x()
 ], ee.prototype, "_activeIndex");
 customElements.define("sfx-meta-multi-select-field", ee);
-function W(n, e) {
+function Q(n, e) {
   var t, i;
   return ((t = n.label) == null ? void 0 : t.trim().toLowerCase()) === ((i = e.label) == null ? void 0 : i.trim().toLowerCase());
 }
 function Ct(n) {
   return n.trim().replace(/\s+/g, " ");
 }
-function gi(n) {
+function vi(n) {
   return Ct(n).replace(/\s/g, "-");
 }
-function me(n) {
-  return { label: Ct(n), value: gi(n) };
+function xe(n) {
+  return { label: Ct(n), value: vi(n) };
 }
-var mi = Object.defineProperty, ae = (n, e, t, i) => {
+var yi = Object.defineProperty, ae = (n, e, t, i) => {
   for (var s = void 0, o = n.length - 1, r; o >= 0; o--)
     (r = n[o]) && (s = r(e, t, s) || s);
-  return s && mi(e, t, s), s;
+  return s && yi(e, t, s), s;
 };
-const He = class He extends O {
+const He = class He extends F {
   constructor() {
     super(...arguments), this._query = "", this._results = [], this._loading = !1, this._dropdownOpen = !1, this._activeIndex = -1, this._blurTimeout = null;
   }
@@ -1896,7 +2115,7 @@ const He = class He extends O {
     });
   }
   _addTag(e) {
-    if (this._tags.some((i) => W(i, e))) return;
+    if (this._tags.some((i) => Q(i, e))) return;
     const t = [...this._tags, e];
     this.value = t, this._query = "", this._results = [], this._dropdownOpen = !1, this._activeIndex = -1, this._emit("field-change", t), this.updateComplete.then(() => {
       var i;
@@ -1904,7 +2123,7 @@ const He = class He extends O {
     });
   }
   _removeTag(e) {
-    const t = this._tags.filter((i) => !W(i, e));
+    const t = this._tags.filter((i) => !Q(i, e));
     this.value = t, this._emit("field-change", t);
   }
   _onBlur() {
@@ -1950,23 +2169,23 @@ const He = class He extends O {
         case "Enter": {
           e.preventDefault();
           const i = this._suggestions;
-          this._activeIndex >= 0 && this._activeIndex < i.length ? this._addTag(i[this._activeIndex]) : this._activeIndex === i.length && this._canCreate ? this._addTag(me(this._query)) : this._activeIndex === -1 && this._canCreate ? this._addTag(me(this._query)) : this._activeIndex === -1 && i.length && this._addTag(i[0]);
+          this._activeIndex >= 0 && this._activeIndex < i.length ? this._addTag(i[this._activeIndex]) : this._activeIndex === i.length && this._canCreate ? this._addTag(xe(this._query)) : this._activeIndex === -1 && this._canCreate ? this._addTag(xe(this._query)) : this._activeIndex === -1 && i.length && this._addTag(i[0]);
           break;
         }
       }
   }
   get _suggestions() {
     var o;
-    const e = this._query.toLowerCase().trim(), t = this._tags, i = (((o = this.field) == null ? void 0 : o.possible_values) ?? []).map((r) => ({ value: r.api_value || r.internal_unique_value, label: r.label })).filter((r) => !t.some((a) => W(a, r))).filter((r) => !e || r.label.toLowerCase().includes(e)), s = this._results.filter(
-      (r) => !t.some((a) => W(a, r)) && !i.some((a) => W(a, r))
+    const e = this._query.toLowerCase().trim(), t = this._tags, i = (((o = this.field) == null ? void 0 : o.possible_values) ?? []).map((r) => ({ value: r.api_value || r.internal_unique_value, label: r.label })).filter((r) => !t.some((a) => Q(a, r))).filter((r) => !e || r.label.toLowerCase().includes(e)), s = this._results.filter(
+      (r) => !t.some((a) => Q(a, r)) && !i.some((a) => Q(a, r))
     );
     return [...i, ...s];
   }
   get _canCreate() {
     const e = this._query.trim();
     if (!e || this._loading) return !1;
-    const t = me(e);
-    return !this._tags.some((i) => W(i, t)) && !this._suggestions.some((i) => W(i, t));
+    const t = xe(e);
+    return !this._tags.some((i) => Q(i, t)) && !this._suggestions.some((i) => Q(i, t));
   }
   render() {
     var s, o;
@@ -2007,7 +2226,7 @@ const He = class He extends O {
           ${this._canCreate ? l`
             <div class="option create ${i === this._activeIndex ? "active" : ""}"
               @mousedown=${(r) => {
-      r.preventDefault(), this._addTag(me(this._query));
+      r.preventDefault(), this._addTag(xe(this._query));
     }}
               @mouseenter=${() => {
       this._activeIndex = i;
@@ -2021,7 +2240,7 @@ const He = class He extends O {
   }
 };
 He.styles = [
-  Pe,
+  qe,
   y`
       :host { display: block; position: relative; }
 
@@ -2096,35 +2315,35 @@ He.styles = [
       }
     `
 ];
-let j = He;
+let V = He;
 ae([
   u({ attribute: !1 })
-], j.prototype, "autocomplete");
+], V.prototype, "autocomplete");
 ae([
-  m()
-], j.prototype, "_query");
+  x()
+], V.prototype, "_query");
 ae([
-  m()
-], j.prototype, "_results");
+  x()
+], V.prototype, "_results");
 ae([
-  m()
-], j.prototype, "_loading");
+  x()
+], V.prototype, "_loading");
 ae([
-  m()
-], j.prototype, "_dropdownOpen");
+  x()
+], V.prototype, "_dropdownOpen");
 ae([
-  m()
-], j.prototype, "_activeIndex");
-customElements.define("sfx-meta-tags-field", j);
-var xi = Object.defineProperty, Et = (n, e, t, i) => {
+  x()
+], V.prototype, "_activeIndex");
+customElements.define("sfx-meta-tags-field", V);
+var _i = Object.defineProperty, Et = (n, e, t, i) => {
   for (var s = void 0, o = n.length - 1, r; o >= 0; o--)
     (r = n[o]) && (s = r(e, t, s) || s);
-  return s && xi(e, t, s), s;
+  return s && _i(e, t, s), s;
 };
-const Q = [
+const W = [
   { label: "True", value: "true" },
   { label: "False", value: "false" }
-], Ge = class Ge extends O {
+], Ge = class Ge extends F {
   constructor() {
     super(...arguments), this._open = !1, this._activeIndex = -1, this._boundOutsideClick = this._onOutsideClick.bind(this);
   }
@@ -2132,7 +2351,7 @@ const Q = [
     var t;
     if (this.value == null) return "";
     const e = String(this.value);
-    return ((t = Q.find((i) => i.value === e)) == null ? void 0 : t.label) ?? "";
+    return ((t = W.find((i) => i.value === e)) == null ? void 0 : t.label) ?? "";
   }
   disconnectedCallback() {
     super.disconnectedCallback(), document.removeEventListener("mousedown", this._boundOutsideClick);
@@ -2140,7 +2359,7 @@ const Q = [
   _openDropdown() {
     this._open = !0;
     const e = this.value == null ? "" : String(this.value);
-    this._activeIndex = Math.max(Q.findIndex((t) => t.value === e), 0), document.addEventListener("mousedown", this._boundOutsideClick), this.updateComplete.then(() => {
+    this._activeIndex = Math.max(W.findIndex((t) => t.value === e), 0), document.addEventListener("mousedown", this._boundOutsideClick), this.updateComplete.then(() => {
       var t;
       (t = this.renderRoot.querySelector(".dropdown")) == null || t.focus();
     });
@@ -2178,7 +2397,7 @@ const Q = [
     }
     switch (e.key) {
       case "ArrowDown":
-        e.preventDefault(), this._activeIndex = Math.min(this._activeIndex + 1, Q.length - 1), this._scrollActive();
+        e.preventDefault(), this._activeIndex = Math.min(this._activeIndex + 1, W.length - 1), this._scrollActive();
         break;
       case "ArrowUp":
         e.preventDefault(), this._activeIndex = Math.max(this._activeIndex - 1, 0), this._scrollActive();
@@ -2187,11 +2406,11 @@ const Q = [
         e.preventDefault(), this._activeIndex = 0, this._scrollActive();
         break;
       case "End":
-        e.preventDefault(), this._activeIndex = Q.length - 1, this._scrollActive();
+        e.preventDefault(), this._activeIndex = W.length - 1, this._scrollActive();
         break;
       case "Enter":
       case " ":
-        this._activeIndex >= 0 && this._activeIndex < Q.length && (e.preventDefault(), this._onSelect(Q[this._activeIndex], !0));
+        this._activeIndex >= 0 && this._activeIndex < W.length && (e.preventDefault(), this._onSelect(W[this._activeIndex], !0));
         break;
     }
   }
@@ -2220,7 +2439,7 @@ const Q = [
 
       ${this._open ? l`
         <div class="dropdown" role="listbox" tabindex="-1" @keydown=${this._onKeydown}>
-          ${Q.map((r, a) => l`
+          ${W.map((r, a) => l`
             <div class="option ${r.value === e ? "selected" : ""} ${a === this._activeIndex ? "active" : ""}"
               role="option" aria-selected=${r.value === e}
               @mousedown=${(d) => {
@@ -2239,13 +2458,13 @@ const Q = [
 Ge.styles = [he];
 let ce = Ge;
 Et([
-  m()
+  x()
 ], ce.prototype, "_open");
 Et([
-  m()
+  x()
 ], ce.prototype, "_activeIndex");
 customElements.define("sfx-meta-boolean-field", ce);
-const Ye = class Ye extends O {
+const Ye = class Ye extends F {
   get _step() {
     var e;
     return ((e = this.field) == null ? void 0 : e.type) === "decimal2" ? "0.01" : "1";
@@ -2287,7 +2506,7 @@ const Ye = class Ye extends O {
 Ye.styles = [pe];
 let Ae = Ye;
 customElements.define("sfx-meta-number-field", Ae);
-const Je = class Je extends O {
+const Je = class Je extends F {
   /** Convert value to "YYYY-MM-DD" string for the native date input. */
   get _dateStr() {
     const e = this.value;
@@ -2392,7 +2611,7 @@ Je.styles = [
 ];
 let Re = Je;
 customElements.define("sfx-meta-date-field", Re);
-const We = class We extends O {
+const Qe = class Qe extends F {
   get _geo() {
     const e = this.value;
     return { latitude: (e == null ? void 0 : e.latitude) ?? "", longitude: (e == null ? void 0 : e.longitude) ?? "" };
@@ -2430,7 +2649,7 @@ const We = class We extends O {
     `;
   }
 };
-We.styles = [
+Qe.styles = [
   pe,
   y`
       .grid {
@@ -2446,14 +2665,14 @@ We.styles = [
       }
     `
 ];
-let Oe = We;
+let Oe = Qe;
 customElements.define("sfx-meta-geo-point-field", Oe);
-var bi = Object.defineProperty, N = (n, e, t, i) => {
+var wi = Object.defineProperty, N = (n, e, t, i) => {
   for (var s = void 0, o = n.length - 1, r; o >= 0; o--)
     (r = n[o]) && (s = r(e, t, s) || s);
-  return s && bi(e, t, s), s;
+  return s && wi(e, t, s), s;
 };
-const se = { uuid: "__root__", name: "", ltree: "" }, Qe = class Qe extends O {
+const se = { uuid: "__root__", name: "", ltree: "" }, We = class We extends F {
   constructor() {
     super(...arguments), this.entry = null, this._open = !1, this._query = "", this._drillStack = [se], this._currentNodes = [], this._searchResults = [], this._loading = !1, this._activeIndex = -1, this._resolvedTaxonomyUuid = null, this._taxonomyResolutionFailed = !1, this._boundOutsideClick = this._onOutsideClick.bind(this), this._searchSeq = 0;
   }
@@ -2765,7 +2984,7 @@ const se = { uuid: "__root__", name: "", ltree: "" }, Qe = class Qe extends O {
     `;
   }
 };
-Qe.styles = [
+We.styles = [
   he,
   y`
       .breadcrumb {
@@ -2894,7 +3113,7 @@ Qe.styles = [
       }
     `
 ];
-let A = Qe;
+let A = We;
 N([
   u({ attribute: !1 })
 ], A.prototype, "taxonomyService");
@@ -2902,39 +3121,39 @@ N([
   u({ attribute: !1 })
 ], A.prototype, "entry");
 N([
-  m()
+  x()
 ], A.prototype, "_open");
 N([
-  m()
+  x()
 ], A.prototype, "_query");
 N([
-  m()
+  x()
 ], A.prototype, "_drillStack");
 N([
-  m()
+  x()
 ], A.prototype, "_currentNodes");
 N([
-  m()
+  x()
 ], A.prototype, "_searchResults");
 N([
-  m()
+  x()
 ], A.prototype, "_loading");
 N([
-  m()
+  x()
 ], A.prototype, "_activeIndex");
 N([
-  m()
+  x()
 ], A.prototype, "_resolvedTaxonomyUuid");
 N([
-  m()
+  x()
 ], A.prototype, "_taxonomyResolutionFailed");
 customElements.define("sfx-meta-taxonomy-node-field", A);
-var vi = Object.defineProperty, H = (n, e, t, i) => {
+var ki = Object.defineProperty, H = (n, e, t, i) => {
   for (var s = void 0, o = n.length - 1, r; o >= 0; o--)
     (r = n[o]) && (s = r(e, t, s) || s);
-  return s && vi(e, t, s), s;
+  return s && ki(e, t, s), s;
 };
-const yi = (n, e) => !!(e.uuid && n.uuid === e.uuid || e.sid && n.sid === e.sid || e.slug && n.slug === e.slug), Xe = class Xe extends O {
+const $i = (n, e) => !!(e.uuid && n.uuid === e.uuid || e.sid && n.sid === e.sid || e.slug && n.slug === e.slug), Xe = class Xe extends F {
   constructor() {
     super(...arguments), this._query = "", this._results = [], this._loading = !1, this._dropdownOpen = !1, this._activeIndex = -1, this._blurTimeout = null, this._enrichmentAttempted = /* @__PURE__ */ new Set();
   }
@@ -3106,7 +3325,7 @@ const yi = (n, e) => !!(e.uuid && n.uuid === e.uuid || e.sid && n.sid === e.sid 
     }
   }
   _removeItem(e) {
-    const t = this._items.filter((i) => !yi(i, e));
+    const t = this._items.filter((i) => !$i(i, e));
     this.value = t, this._emit("field-change", t);
   }
   _onBlur() {
@@ -3215,7 +3434,7 @@ const yi = (n, e) => !!(e.uuid && n.uuid === e.uuid || e.sid && n.sid === e.sid 
   }
 };
 Xe.styles = [
-  Pe,
+  qe,
   y`
       :host { display: block; position: relative; }
 
@@ -3310,19 +3529,19 @@ H([
   u({ attribute: !1 })
 ], q.prototype, "restrictToItems");
 H([
-  m()
+  x()
 ], q.prototype, "_query");
 H([
-  m()
+  x()
 ], q.prototype, "_results");
 H([
-  m()
+  x()
 ], q.prototype, "_loading");
 H([
-  m()
+  x()
 ], q.prototype, "_dropdownOpen");
 H([
-  m()
+  x()
 ], q.prototype, "_activeIndex");
 customElements.define("sfx-meta-ultratags-field", q);
 const ue = "This field is not supported during upload. You can edit it later in the asset library.", It = l`
@@ -3377,12 +3596,12 @@ Ze.styles = y`
       white-space: nowrap;
     }
   `;
-let Le = Ze;
-customElements.define("sfx-meta-unsupported-field", Le);
-var _i = Object.defineProperty, M = (n, e, t, i) => {
+let Fe = Ze;
+customElements.define("sfx-meta-unsupported-field", Fe);
+var Si = Object.defineProperty, j = (n, e, t, i) => {
   for (var s = void 0, o = n.length - 1, r; o >= 0; o--)
     (r = n[o]) && (s = r(e, t, s) || s);
-  return s && _i(e, t, s), s;
+  return s && Si(e, t, s), s;
 };
 const et = class et extends D {
   constructor() {
@@ -3432,44 +3651,44 @@ et.styles = y`
     :host { display: block; }
   `;
 let R = et;
-M([
+j([
   u({ attribute: !1 })
 ], R.prototype, "field");
-M([
+j([
   u({ attribute: !1 })
 ], R.prototype, "value");
-M([
+j([
   u({ attribute: !1 })
 ], R.prototype, "autocomplete");
-M([
+j([
   u({ attribute: !1 })
 ], R.prototype, "taxonomyService");
-M([
+j([
   u({ attribute: !1 })
 ], R.prototype, "taxonomyEntry");
-M([
+j([
   u({ attribute: !1 })
 ], R.prototype, "ultratags");
-M([
+j([
   u({ attribute: !1 })
 ], R.prototype, "language");
-M([
+j([
   u({ attribute: !1 })
 ], R.prototype, "defaultLanguage");
-M([
+j([
   u({ attribute: !1 })
 ], R.prototype, "ultratagsRestrictToItems");
-M([
+j([
   u({ attribute: !1 })
 ], R.prototype, "allowedValues");
-M([
+j([
   u({ type: Boolean })
 ], R.prototype, "disabled");
 customElements.define("sfx-metadata-field-edit", R);
-var wi = Object.defineProperty, fe = (n, e, t, i) => {
+var Ci = Object.defineProperty, fe = (n, e, t, i) => {
   for (var s = void 0, o = n.length - 1, r; o >= 0; o--)
     (r = n[o]) && (s = r(e, t, s) || s);
-  return s && wi(e, t, s), s;
+  return s && Ci(e, t, s), s;
 };
 const tt = class tt extends D {
   constructor() {
@@ -3599,10 +3818,10 @@ fe([
   u({ attribute: !1 })
 ], Y.prototype, "defaultLanguage");
 customElements.define("sfx-metadata-field-view", Y);
-var ki = Object.defineProperty, $e = (n, e, t, i) => {
+var Ei = Object.defineProperty, $e = (n, e, t, i) => {
   for (var s = void 0, o = n.length - 1, r; o >= 0; o--)
     (r = n[o]) && (s = r(e, t, s) || s);
-  return s && ki(e, t, s), s;
+  return s && Ei(e, t, s), s;
 };
 const it = class it extends D {
   constructor() {
@@ -3904,10 +4123,10 @@ $e([
   u({ attribute: !1 })
 ], te.prototype, "selectedFilters");
 $e([
-  m()
+  x()
 ], te.prototype, "_open");
 $e([
-  m()
+  x()
 ], te.prototype, "_activeIndex");
 customElements.define("sfx-regional-settings", te);
 const Se = /* @__PURE__ */ new Set([
@@ -3919,8 +4138,8 @@ const Se = /* @__PURE__ */ new Set([
   "textarea",
   "attachment-uri"
 ]);
-function $i(n) {
-  return Dt(n) ? [] : Se.has(n) ? [
+function Ii(n) {
+  return Lt(n) ? [] : Se.has(n) ? [
     { key: "SET", label: "Set" },
     { key: "ADD", label: "Add to" },
     { key: "DELETE", label: "Remove from" }
@@ -3933,10 +4152,10 @@ function $i(n) {
     { key: "DELETE", label: "Clear" }
   ];
 }
-function De(n, e) {
+function Le(n, e) {
   return n === "DELETE" ? Se.has(e) || Ce.has(e) : !0;
 }
-function Si(n, e, t, i) {
+function Ti(n, e, t, i) {
   const s = Se.has(i), o = Ce.has(i);
   switch (n) {
     case "SET":
@@ -4012,7 +4231,7 @@ function Si(n, e, t, i) {
 function Tt(n, e, t, i, s) {
   const o = s ?? "en", r = !!n.regional_variants_group_uuid, a = {
     meta: { [n.key]: e }
-  }, d = ze(n, t, a, s), c = (b) => r && b !== null && typeof b == "object" && !Array.isArray(b), p = c(e) ? e[o] : e, h = c(d) ? d[o] : d, f = Si(i, p, h, n.type);
+  }, d = ze(n, t, a, s), c = (b) => r && b !== null && typeof b == "object" && !Array.isArray(b), p = c(e) ? e[o] : e, h = c(d) ? d[o] : d, f = Ti(i, p, h, n.type);
   return r ? {
     ...c(e) ? e : {},
     [o]: f
@@ -4064,7 +4283,7 @@ const At = y`
     outline: 2px solid var(--sfx-up-ring, oklch(0.578 0.198 268.129 / 0.7));
     outline-offset: 2px;
   }
-`, Ci = y`
+`, Ai = y`
   :host {
     display: block;
     font-family: var(--sfx-up-font, inherit);
@@ -4418,7 +4637,7 @@ const At = y`
   }
 
   ${At}
-`, Ei = y`
+`, Ri = y`
   :host {
     display: block;
     width: 260px;
@@ -4602,7 +4821,7 @@ const At = y`
       text-overflow: unset;
     }
   }
-`, Ii = y`
+`, Oi = y`
   :host {
     display: block;
     font-family: var(--sfx-up-font, inherit);
@@ -4807,7 +5026,7 @@ const At = y`
       font-size: 14px;
     }
   }
-`, Ti = y`
+`, Fi = y`
   :host {
     display: block;
     font-family: var(--sfx-up-font, inherit);
@@ -4908,7 +5127,7 @@ const At = y`
   }
 
   ${At}
-`, Ai = y`
+`, Li = y`
   :host {
     display: block;
     font-family: var(--sfx-up-font, inherit);
@@ -4986,15 +5205,15 @@ const At = y`
     white-space: nowrap;
     border-width: 0;
   }
-`, Ri = y`
+`, Di = y`
   :host {
     display: block;
   }
 `;
-var Oi = Object.defineProperty, k = (n, e, t, i) => {
+var zi = Object.defineProperty, k = (n, e, t, i) => {
   for (var s = void 0, o = n.length - 1, r; o >= 0; o--)
     (r = n[o]) && (s = r(e, t, s) || s);
-  return s && Oi(e, t, s), s;
+  return s && zi(e, t, s), s;
 };
 const st = class st extends D {
   constructor() {
@@ -5024,7 +5243,7 @@ const st = class st extends D {
       e.shiftKey && r === s ? (e.preventDefault(), o.focus()) : !e.shiftKey && r === o && (e.preventDefault(), s.focus());
     }, this._onPendingChange = (e) => {
       const { operation: t, value: i } = e.detail, s = this._activeField;
-      re(i) && (!s || De(t, s.type)) ? this._pendingOp = null : this._pendingOp = { operation: t, value: i };
+      re(i) && (!s || Le(t, s.type)) ? this._pendingOp = null : this._pendingOp = { operation: t, value: i };
     }, this._onFieldSelect = async (e) => {
       await this._confirmDiscardPending() && (this._pendingOp = null, this._activeFieldKey = e.detail.fieldKey);
     }, this._onJumpToNextRequired = async () => {
@@ -5131,7 +5350,7 @@ const st = class st extends D {
           p.set(h, f);
       if (o) {
         const h = c.product;
-        h.ref !== void 0 && p.set(Ft, h.ref), h.position !== void 0 && p.set(zt, h.position);
+        h.ref !== void 0 && p.set(Dt, h.ref), h.position !== void 0 && p.set(zt, h.position);
       }
       e.set(c.id, p), c.taxonodes && t.set(
         c.id,
@@ -5215,7 +5434,7 @@ const st = class st extends D {
    * actually move.
    */
   _refreshMissingRequired() {
-    const e = this.schema ? qt(
+    const e = this.schema ? Pt(
       this._staged,
       this._originalFiles,
       this.schema,
@@ -5369,7 +5588,7 @@ const st = class st extends D {
   // Render
   // -----------------------------------------------------------------------
   render() {
-    var b, v, S, x, ie;
+    var b, v, C, m, ie;
     if (!((v = (b = this.schema) == null ? void 0 : b.fields) != null && v.length))
       return l`
         <div class="fm-overlay" @click=${this._onClose}>
@@ -5386,14 +5605,14 @@ const st = class st extends D {
           </div>
         </div>
       `;
-    const e = this._activeField, t = this._sortedFiles, i = this._selected.size === this.files.length && this.files.length > 0, s = this._selected.size > 0 && !i, o = this._missingRequiredFieldKey, r = this._cachedBulkResolved, a = this._cachedPerFileResolved, d = e == null ? void 0 : e.ckey, c = d ? r.get(d) : void 0, p = o ? ((S = this.schema.fieldsByKey.get(o)) == null ? void 0 : S.title) || o : "", h = o != null && this._activeFieldKey === o, f = o != null && !h;
+    const e = this._activeField, t = this._sortedFiles, i = this._selected.size === this.files.length && this.files.length > 0, s = this._selected.size > 0 && !i, o = this._missingRequiredFieldKey, r = this._cachedBulkResolved, a = this._cachedPerFileResolved, d = e == null ? void 0 : e.ckey, c = d ? r.get(d) : void 0, p = o ? ((C = this.schema.fieldsByKey.get(o)) == null ? void 0 : C.title) || o : "", h = o != null && this._activeFieldKey === o, f = o != null && !h;
     return l`
       <div class="fm-overlay" @click=${this._onClose}>
         <div class="fm-modal" @click=${(G) => G.stopPropagation()}>
           <!-- Top bar -->
           <div class="fm-topbar">
             <span class="fm-topbar-title">Fill multiple assets</span>
-            ${(x = this.schema.regionalVariantsGroups) != null && x.length ? l`<sfx-regional-settings
+            ${(m = this.schema.regionalVariantsGroups) != null && m.length ? l`<sfx-regional-settings
                   class="fm-topbar-regional"
                   .groups=${this.schema.regionalVariantsGroups}
                   .selectedFilters=${((ie = this.config) == null ? void 0 : ie.regionalFilters) ?? {}}
@@ -5525,7 +5744,7 @@ const st = class st extends D {
     `;
   }
 };
-st.styles = [Ci];
+st.styles = [Ai];
 let _ = st;
 k([
   u({ attribute: !1 })
@@ -5555,31 +5774,31 @@ k([
   u({ attribute: !1 })
 ], _.prototype, "dependencies");
 k([
-  m()
+  x()
 ], _.prototype, "_activeFieldKey");
 k([
-  m()
+  x()
 ], _.prototype, "_staged");
 k([
-  m()
+  x()
 ], _.prototype, "_stagedTaxonodes");
 k([
-  m()
+  x()
 ], _.prototype, "_selected");
 k([
-  m()
+  x()
 ], _.prototype, "_sortAsc");
 k([
-  m()
+  x()
 ], _.prototype, "_pendingOp");
 k([
-  m()
+  x()
 ], _.prototype, "_confirmVisible");
 k([
-  m()
+  x()
 ], _.prototype, "_missingRequiredFieldKey");
 k([
-  m()
+  x()
 ], _.prototype, "_missingRequiredKeys");
 customElements.define("sfx-bulk-metadata-modal", _);
 const ft = {
@@ -5648,13 +5867,13 @@ const ft = {
     ${$`<rect x="5" y="1.5" width="6" height="3" rx="0.5"/><rect x="1.5" y="11.5" width="4.5" height="3" rx="0.5"/><rect x="10" y="11.5" width="4.5" height="3" rx="0.5"/><path d="M8 4.5v3"/><path d="M3.75 11.5V8.5h8.5v3"/>`}
   </svg>`
 };
-function Li(n) {
+function Pi(n) {
   return ft[n] ?? ft.text;
 }
-var Di = Object.defineProperty, J = (n, e, t, i) => {
+var qi = Object.defineProperty, J = (n, e, t, i) => {
   for (var s = void 0, o = n.length - 1, r; o >= 0; o--)
     (r = n[o]) && (s = r(e, t, s) || s);
-  return s && Di(e, t, s), s;
+  return s && qi(e, t, s), s;
 };
 const rt = class rt extends D {
   constructor() {
@@ -5724,7 +5943,7 @@ const rt = class rt extends D {
                     class="field-item ${this.activeFieldKey === r.key ? "active" : ""}"
                     @click=${() => this._onFieldClick(r.key)}
                   >
-                    <span class="field-icon" aria-hidden="true">${Li(r.type)}</span>
+                    <span class="field-icon" aria-hidden="true">${Pi(r.type)}</span>
                     <span class="field-name">${r.title}</span>
                     ${this.filledFields.has(r.key) ? l`<span class="field-dot"></span>` : g}
                     ${this._isRequired(r) ? l`<span
@@ -5742,7 +5961,7 @@ const rt = class rt extends D {
     `;
   }
 };
-rt.styles = [Ei];
+rt.styles = [Ri];
 let K = rt;
 J([
   u({ attribute: !1 })
@@ -5763,18 +5982,18 @@ J([
   u({ attribute: !1 })
 ], K.prototype, "bulkResolvedSchema");
 J([
-  m()
+  x()
 ], K.prototype, "_collapsed");
 J([
-  m()
+  x()
 ], K.prototype, "_isNarrow");
 customElements.define("sfx-bulk-meta-sidebar", K);
-var Fi = Object.defineProperty, F = (n, e, t, i) => {
+var Bi = Object.defineProperty, z = (n, e, t, i) => {
   for (var s = void 0, o = n.length - 1, r; o >= 0; o--)
     (r = n[o]) && (s = r(e, t, s) || s);
-  return s && Fi(e, t, s), s;
-}, V;
-const L = (V = class extends D {
+  return s && Bi(e, t, s), s;
+}, M;
+const L = (M = class extends D {
   constructor() {
     super(...arguments), this.ultratagsPresentOnSelection = [], this.config = null, this.selectedCount = 0, this.allowedValues = null, this._operation = "SET", this._value = void 0, this._pendingTaxonode = null, this._opDropdownOpen = !1, this._availableOps = [], this._onTaxonomyEntryChange = (e) => {
       e.stopPropagation(), this._pendingTaxonode = e.detail.entry;
@@ -5793,7 +6012,7 @@ const L = (V = class extends D {
       var o;
       if (e.key !== "Enter") return;
       const t = (o = this.field) == null ? void 0 : o.type;
-      if (!t || !V._ENTER_APPLY_TYPES.has(t)) return;
+      if (!t || !M._ENTER_APPLY_TYPES.has(t)) return;
       const i = e.composedPath().find((r) => r instanceof HTMLElement);
       if ((i == null ? void 0 : i.tagName) === "TEXTAREA") return;
       e.preventDefault();
@@ -5823,10 +6042,10 @@ const L = (V = class extends D {
   }
   get _effectiveValue() {
     var e;
-    return this._value ?? V._emptyValueForType((e = this.field) == null ? void 0 : e.type);
+    return this._value ?? M._emptyValueForType((e = this.field) == null ? void 0 : e.type);
   }
   willUpdate(e) {
-    e.has("field") && this.field && (this._availableOps = $i(this.field.type), this._operation = "SET", this._value = void 0, this._pendingTaxonode = null, this._emitPendingChange());
+    e.has("field") && this.field && (this._availableOps = Ii(this.field.type), this._operation = "SET", this._value = void 0, this._pendingTaxonode = null, this._emitPendingChange());
   }
   _onOpSelect(e) {
     this._operation = e, this._opDropdownOpen = !1, this._emitPendingChange();
@@ -5861,7 +6080,7 @@ const L = (V = class extends D {
         bubbles: !0,
         composed: !0
       })
-    ), this._value = void 0, this._pendingTaxonode = null, this._operation === "DELETE" && !De(this._operation, (t = this.field) == null ? void 0 : t.type) && (this._operation = "SET"), this._emitPendingChange());
+    ), this._value = void 0, this._pendingTaxonode = null, this._operation === "DELETE" && !Le(this._operation, (t = this.field) == null ? void 0 : t.type) && (this._operation = "SET"), this._emitPendingChange());
   }
   get _isApplyDisabled() {
     var e, t;
@@ -5920,7 +6139,7 @@ const L = (V = class extends D {
               `}
         </div>
 
-        ${De(this._operation, this.field.type) ? l`
+        ${Le(this._operation, this.field.type) ? l`
               <div class="op-field op-field--value">
                 <span class="op-field-label">${this.field.title}</span>
                 <div
@@ -5957,59 +6176,59 @@ const L = (V = class extends D {
       </div>
     `;
   }
-}, V.styles = [Ii], V._ENTER_APPLY_TYPES = /* @__PURE__ */ new Set([
+}, M.styles = [Oi], M._ENTER_APPLY_TYPES = /* @__PURE__ */ new Set([
   "text",
   "numeric",
   "decimal2",
   "date",
   "geopoint",
   "attachment-uri"
-]), V);
-F([
+]), M);
+z([
   u({ attribute: !1 })
 ], L.prototype, "field");
-F([
+z([
   u({ attribute: !1 })
 ], L.prototype, "autocomplete");
-F([
+z([
   u({ attribute: !1 })
 ], L.prototype, "taxonomyService");
-F([
+z([
   u({ attribute: !1 })
 ], L.prototype, "ultratags");
-F([
+z([
   u({ attribute: !1 })
 ], L.prototype, "defaultLanguage");
-F([
+z([
   u({ attribute: !1 })
 ], L.prototype, "ultratagsPresentOnSelection");
-F([
+z([
   u({ attribute: !1 })
 ], L.prototype, "config");
-F([
+z([
   u({ type: Number })
 ], L.prototype, "selectedCount");
-F([
+z([
   u({ attribute: !1 })
 ], L.prototype, "allowedValues");
-F([
-  m()
+z([
+  x()
 ], L.prototype, "_operation");
-F([
-  m()
+z([
+  x()
 ], L.prototype, "_value");
-F([
-  m()
+z([
+  x()
 ], L.prototype, "_pendingTaxonode");
-F([
-  m()
+z([
+  x()
 ], L.prototype, "_opDropdownOpen");
-let zi = L;
-customElements.define("sfx-bulk-meta-op-bar", zi);
-var qi = Object.defineProperty, B = (n, e, t, i) => {
+let Ki = L;
+customElements.define("sfx-bulk-meta-op-bar", Ki);
+var Ni = Object.defineProperty, B = (n, e, t, i) => {
   for (var s = void 0, o = n.length - 1, r; o >= 0; o--)
     (r = n[o]) && (s = r(e, t, s) || s);
-  return s && qi(e, t, s), s;
+  return s && Ni(e, t, s), s;
 };
 const ot = class ot extends D {
   constructor() {
@@ -6048,7 +6267,7 @@ const ot = class ot extends D {
     `;
   }
 };
-ot.styles = [Ri];
+ot.styles = [Di];
 let I = ot;
 B([
   u({ attribute: !1 })
@@ -6087,10 +6306,10 @@ B([
   u({ attribute: !1 })
 ], I.prototype, "perFileResolved");
 customElements.define("sfx-bulk-meta-table", I);
-var Pi = Object.defineProperty, z = (n, e, t, i) => {
+var ji = Object.defineProperty, P = (n, e, t, i) => {
   for (var s = void 0, o = n.length - 1, r; o >= 0; o--)
     (r = n[o]) && (s = r(e, t, s) || s);
-  return s && Pi(e, t, s), s;
+  return s && ji(e, t, s), s;
 };
 const nt = class nt extends D {
   constructor() {
@@ -6169,7 +6388,7 @@ const nt = class nt extends D {
         </div>
 
         ${e.previewUrl ? l`<img class="row-thumb" src=${e.previewUrl} alt="" />` : l`<img class="row-thumb row-thumb-fallback"
-              src=${Pt(this._getExtension(e.name))}
+              src=${qt(this._getExtension(e.name))}
               alt="${this._getExtension(e.name)} file"
               @error=${(s) => {
       const o = s.target, r = Bt();
@@ -6211,61 +6430,61 @@ const nt = class nt extends D {
     `;
   }
 };
-nt.styles = [Ti];
-let C = nt;
-z([
+nt.styles = [Fi];
+let E = nt;
+P([
   u({ attribute: !1 })
-], C.prototype, "file");
-z([
+], E.prototype, "file");
+P([
   u({ attribute: !1 })
-], C.prototype, "field");
-z([
+], E.prototype, "field");
+P([
   u({ attribute: !1 })
-], C.prototype, "value");
-z([
+], E.prototype, "value");
+P([
   u({ attribute: !1 })
-], C.prototype, "taxonomyEntry");
-z([
+], E.prototype, "taxonomyEntry");
+P([
   u({ type: Boolean })
-], C.prototype, "selected");
-z([
+], E.prototype, "selected");
+P([
   u({ attribute: !1 })
-], C.prototype, "pendingOp");
-z([
+], E.prototype, "pendingOp");
+P([
   u({ attribute: !1 })
-], C.prototype, "config");
-z([
+], E.prototype, "config");
+P([
   u({ attribute: !1 })
-], C.prototype, "autocomplete");
-z([
+], E.prototype, "autocomplete");
+P([
   u({ attribute: !1 })
-], C.prototype, "taxonomyService");
-z([
+], E.prototype, "taxonomyService");
+P([
   u({ attribute: !1 })
-], C.prototype, "ultratags");
-z([
+], E.prototype, "ultratags");
+P([
   u({ attribute: !1 })
-], C.prototype, "defaultLanguage");
-z([
+], E.prototype, "defaultLanguage");
+P([
   u({ attribute: !1 })
-], C.prototype, "allowedValues");
-z([
-  m()
-], C.prototype, "_error");
-customElements.define("sfx-bulk-meta-row", C);
-const Bi = /* @__PURE__ */ new Set(["multi-select", "tags", "ultratags"]);
+], E.prototype, "allowedValues");
+P([
+  x()
+], E.prototype, "_error");
+customElements.define("sfx-bulk-meta-row", E);
+const Mi = /* @__PURE__ */ new Set(["multi-select", "tags", "ultratags"]);
 function gt(n, e, t) {
   return !e.regional_variants_group_uuid || n == null || typeof n != "object" || Array.isArray(n) ? n : n[t ?? "en"];
 }
-function mt(n) {
+function xt(n) {
   return Array.isArray(n) ? n : [];
 }
-function xt(n) {
+function mt(n) {
   return n == null || n === "" || Array.isArray(n) && n.length === 0 ? !0 : typeof n == "object" && !Array.isArray(n) ? !Object.values(n).some(
     (e) => e != null && e !== ""
   ) : !1;
 }
-function Fe(n, e) {
+function De(n, e) {
   var i;
   const t = (i = n.possible_values) == null ? void 0 : i.find(
     (s) => s.internal_unique_value === e || s.api_value === e
@@ -6298,7 +6517,7 @@ function bt(n, e) {
       return Number.isFinite(t) ? t.toLocaleString(void 0, { maximumFractionDigits: 2 }) : String(e);
     }
     case "select-one":
-      return Fe(n, String(e));
+      return De(n, String(e));
     case "geopoint": {
       if (typeof e == "object" && e !== null && !Array.isArray(e)) {
         const t = e;
@@ -6314,7 +6533,7 @@ function bt(n, e) {
       return String(e);
   }
 }
-function Ki(n, e) {
+function Vi(n, e) {
   const t = n.map((a) => typeof a == "string" ? a : String(a)), i = e.map((a) => typeof a == "string" ? a : String(a)), s = new Set(t), o = new Set(i), r = [];
   for (const a of i)
     r.push({ label: a, state: s.has(a) ? "kept" : "added" });
@@ -6322,7 +6541,7 @@ function Ki(n, e) {
     o.has(a) || r.push({ label: a, state: "removed" });
   return r;
 }
-function Ni(n, e, t) {
+function Ui(n, e, t) {
   const i = ye(n), s = ye(e), o = t || "en", r = (h) => h.sid || h.slug || h.uuid || "", a = (h) => ve(
     { i18n: h.i18n, slug: h.slug || "" },
     o,
@@ -6338,44 +6557,44 @@ function Ni(n, e, t) {
   }
   return p;
 }
-function Mi(n, e, t) {
+function Hi(n, e, t) {
   const i = new Set(n.map((r) => JSON.stringify(r))), s = new Set(e.map((r) => JSON.stringify(r))), o = [];
   for (const r of e) {
-    const a = JSON.stringify(r), d = typeof r == "string" ? Fe(t, r) : String(r);
+    const a = JSON.stringify(r), d = typeof r == "string" ? De(t, r) : String(r);
     o.push({ label: d, state: i.has(a) ? "kept" : "added" });
   }
   for (const r of n) {
     const a = JSON.stringify(r);
     if (!s.has(a)) {
-      const d = typeof r == "string" ? Fe(t, r) : String(r);
+      const d = typeof r == "string" ? De(t, r) : String(r);
       o.push({ label: d, state: "removed" });
     }
   }
   return o;
 }
-function Vi(n, e, t, i) {
+function Gi(n, e, t, i) {
   const s = X(n, i), o = i == null ? void 0 : i.language, r = gt(e, n, s), a = gt(t, n, s);
-  if (Bi.has(n.type)) {
+  if (Mi.has(n.type)) {
     if (n.type === "ultratags")
       return {
         kind: "array",
-        items: Ni(e, t, o)
+        items: Ui(e, t, o)
       };
-    const d = mt(r), c = mt(a);
-    return n.type === "tags" ? { kind: "array", items: Ki(d, c) } : { kind: "array", items: Mi(d, c, n) };
+    const d = xt(r), c = xt(a);
+    return n.type === "tags" ? { kind: "array", items: Vi(d, c) } : { kind: "array", items: Hi(d, c, n) };
   }
   return {
     kind: "scalar",
     oldDisplay: bt(n, r),
     newDisplay: bt(n, a),
-    oldEmpty: xt(r),
-    newEmpty: xt(a)
+    oldEmpty: mt(r),
+    newEmpty: mt(a)
   };
 }
-var ji = Object.defineProperty, le = (n, e, t, i) => {
+var Yi = Object.defineProperty, le = (n, e, t, i) => {
   for (var s = void 0, o = n.length - 1, r; o >= 0; o--)
     (r = n[o]) && (s = r(e, t, s) || s);
-  return s && ji(e, t, s), s;
+  return s && Yi(e, t, s), s;
 };
 const at = class at extends D {
   constructor() {
@@ -6420,7 +6639,7 @@ const at = class at extends D {
     if (!this.field) return g;
     if (this.field.type === "taxonomy-node")
       return this._renderTaxonomyScalar();
-    const e = Vi(
+    const e = Gi(
       this.field,
       this.oldValue,
       this.newValue,
@@ -6429,7 +6648,7 @@ const at = class at extends D {
     return e.kind === "array" ? this._renderArrayDiff(e) : this._renderScalarDiff(e);
   }
 };
-at.styles = [Ai];
+at.styles = [Li];
 let U = at;
 le([
   u({ attribute: !1 })
@@ -6452,16 +6671,16 @@ le([
 customElements.define("sfx-bulk-meta-diff-view", U);
 export {
   _ as SfxBulkMetadataModal,
-  Xi as clearDependenciesCache,
-  Wi as clearSchemaCache,
-  Zi as createTagsAutocomplete,
-  es as createTaxonomyService,
-  ts as createUltratagsService,
-  rs as deepMergeMeta,
-  Qi as fetchDependencies,
-  Ji as fetchMetadataSchema,
-  os as getFilesWithMissingRequired,
-  ns as isAssetHasMetadataValue,
+  is as clearDependenciesCache,
+  es as clearSchemaCache,
+  ss as createTagsAutocomplete,
+  rs as createTaxonomyService,
+  os as createUltratagsService,
+  ls as deepMergeMeta,
+  ts as fetchDependencies,
+  Zi as fetchMetadataSchema,
+  ds as getFilesWithMissingRequired,
+  cs as isAssetHasMetadataValue,
   re as isEmpty,
   St as mapValueFromBackend,
   ze as mapValueToBackend,

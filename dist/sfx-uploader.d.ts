@@ -113,6 +113,20 @@ declare const SETTINGS_PROTOCOLS: readonly ["hls"];
 type SettingsProtocol = (typeof SETTINGS_PROTOCOLS)[number];
 export interface UploaderConfig {
     auth: AuthConfig;
+    /**
+     * Custom Filerobot API host to use instead of the default "https://api.filerobot.com".
+     * Use this when the project is hosted on a dedicated infrastructure (e.g. Akamai/Linode).
+     * Example: "https://akli.api.filerobot.com"
+     * The container token is appended automatically: "https://akli.api.filerobot.com/{container}"
+     *
+     * Note: strip any trailing `/{token}` segment from `settings.domains.api` before passing here —
+     * only the bare host is expected.
+     *
+     * Note: large files (≥10 MB) use tus resumable uploads via a separate Companion endpoint
+     * (`connector.filerobot.com`). To route those to isolated infrastructure as well, also set
+     * `tusConfig.endpoint` to the appropriate Companion URL.
+     */
+    apiDomain?: string;
     targetFolder?: string;
     mode?: "modal" | "inline";
     /** Header displayed above the uploader in inline mode. All fields are optional. */

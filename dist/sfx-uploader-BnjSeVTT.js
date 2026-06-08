@@ -5127,21 +5127,21 @@ class Va {
 function ui(r) {
   return r === "queued" || r === "uploading" || r === "retrying" || r === "paused";
 }
-function Ri(r) {
-  return `https://api.filerobot.com/${r}`;
+function Ri(r, e) {
+  return `${(e || "https://api.filerobot.com").replace(/\/+$/, "")}/${r}`;
 }
-async function Ka(r, e) {
-  const t = `${Ri(r)}/key/${encodeURIComponent(e)}`, i = new AbortController(), o = setTimeout(() => i.abort(), 3e4);
+async function Ka(r, e, t) {
+  const i = `${Ri(r, t)}/key/${encodeURIComponent(e)}`, o = new AbortController(), s = setTimeout(() => o.abort(), 3e4);
   try {
-    const s = await fetch(t, { signal: i.signal });
-    if (clearTimeout(o), !s.ok)
-      throw new Error(`SASS key exchange failed (HTTP ${s.status})`);
-    const n = await s.json();
-    if (n.status === "error")
-      throw new Error(`SASS key exchange failed: ${n.msg || "Unknown error"}`);
-    return n.key;
-  } catch (s) {
-    throw clearTimeout(o), s instanceof DOMException && s.name === "AbortError" ? new Error("SASS key exchange timed out") : s;
+    const n = await fetch(i, { signal: o.signal });
+    if (clearTimeout(s), !n.ok)
+      throw new Error(`SASS key exchange failed (HTTP ${n.status})`);
+    const a = await n.json();
+    if (a.status === "error")
+      throw new Error(`SASS key exchange failed: ${a.msg || "Unknown error"}`);
+    return a.key;
+  } catch (n) {
+    throw clearTimeout(s), n instanceof DOMException && n.name === "AbortError" ? new Error("SASS key exchange timed out") : n;
   }
 }
 function fi(r, e) {
@@ -5160,13 +5160,13 @@ function fi(r, e) {
   }
   return r.airboxPuid && (t["X-Filerobot-Airbox-Puid"] = r.airboxPuid), t;
 }
-async function Ya(r) {
-  const e = Ri(r.container);
+async function Ya(r, e) {
+  const t = Ri(r.container, e);
   if (r.mode === "security-template") {
-    const t = await Ka(r.container, r.securityTemplateId);
-    return { apiBase: e, headers: fi(r, t), sassKey: t };
+    const i = await Ka(r.container, r.securityTemplateId, e);
+    return { apiBase: t, headers: fi(r, i), sassKey: i };
   }
-  return { apiBase: e, headers: fi(r) };
+  return { apiBase: t, headers: fi(r) };
 }
 const Wa = "https://ai.scaleflex.com", zr = 300, Ga = 0.85, Xa = 3e4;
 function Ir(r) {
@@ -12253,14 +12253,14 @@ const B = (V = class extends pe {
       if ((((s = (o = this.config) == null ? void 0 : o.connectors) == null ? void 0 : s.providers) ?? []).includes(e)) {
         if (Yr.has(e)) {
           if (!customElements.get("sfx-search-provider-browser")) {
-            const { SfxSearchProviderBrowser: a } = await import("./search-provider-browser-DuxbfF5Y.js");
+            const { SfxSearchProviderBrowser: a } = await import("./search-provider-browser-B5yGVUg3.js");
             customElements.define(
               "sfx-search-provider-browser",
               a
             );
           }
         } else if (!customElements.get("sfx-provider-browser")) {
-          const { SfxProviderBrowser: a } = await import("./provider-browser-D8O_Ql-a.js");
+          const { SfxProviderBrowser: a } = await import("./provider-browser-DP-GPbAJ.js");
           customElements.define("sfx-provider-browser", a);
         }
         this._activeConnector = e;
@@ -13105,7 +13105,7 @@ const B = (V = class extends pe {
     var o, s, n, a;
     const t = e.auth;
     if (t.mode === "sass-key") {
-      this._apiBase = Ri(t.container), this._authHeaders = fi(t), this._ensureEngine(), (s = this._engine) == null || s.updateConfig({
+      this._apiBase = Ri(t.container, e.apiDomain), this._authHeaders = fi(t), this._ensureEngine(), (s = this._engine) == null || s.updateConfig({
         apiBase: this._apiBase,
         authHeaders: this._authHeaders,
         tusConfig: this._normalizeTusConfig(),
@@ -13116,7 +13116,7 @@ const B = (V = class extends pe {
     }
     const i = ++this._authResolveId;
     try {
-      const l = await Ya(t);
+      const l = await Ya(t, e.apiDomain);
       if (i !== this._authResolveId) return;
       this._apiBase = l.apiBase, this._authHeaders = l.headers, this._ensureEngine(), (a = this._engine) == null || a.updateConfig({
         apiBase: this._apiBase,
@@ -13233,7 +13233,7 @@ const B = (V = class extends pe {
           createTagsAutocomplete: s,
           createTaxonomyService: n,
           createUltratagsService: a
-        } = await import("./index-BJTjX6Sd.js"), [l, c] = await Promise.all([
+        } = await import("./index-oW24jVQt.js"), [l, c] = await Promise.all([
           i(this._apiBase, this._authHeaders, t.projectUuid, t),
           o(t.projectUuid, this._authHeaders, {
             hubApiBase: t.hubApiBase,
