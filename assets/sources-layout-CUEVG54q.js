@@ -1,4 +1,4 @@
-import{b as r}from"./index--f_ahlMs.js";import{r as a}from"./code-block-C_3oxnLY.js";const t={render(){return`
+import{b as r}from"./index-DZDW7ul7.js";import{r as a}from"./code-block-C_3oxnLY.js";const t={render(){return`
       <div class="page-header">
         <h1>Sources layout</h1>
         <p>Choose how import sources are displayed in the drop zone: compact <code>pills</code> (default) or a grid of square <code>cards</code> with large icons.</p>

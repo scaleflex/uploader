@@ -1,8 +1,8 @@
-import{i as x,a as g,g as b,s as f,c as o,A as c,n as d,r as n}from"./index--f_ahlMs.js";var m=Object.defineProperty,a=(u,e,r,t)=>{for(var s=void 0,p=u.length-1,l;p>=0;p--)(l=u[p])&&(s=l(e,r,s)||s);return s&&m(e,r,s),s};const h=class h extends x{constructor(){super(...arguments),this.t=(e,r)=>typeof r=="string"?r:e,this.provider="unsplash",this.companionUrl="",this.transformThumbnail=e=>e,this.multi=!0,this.maxSelect=null,this._loading=!1,this._loadingMore=!1,this._items=[],this._selectedIds=new Set,this._error=null,this._searchQuery="",this._nextPageQuery=null,this._searched=!1,this._onResultsScroll=e=>{if(!this._nextPageQuery||this._loadingMore)return;const r=e.target;r.scrollHeight-r.scrollTop-r.clientHeight<200&&this._onLoadMore()},this._onSearchInput=e=>{this._searchQuery=e.target.value},this._onSearchKeydown=e=>{e.key==="Enter"&&this._doSearch()},this._onAddSelected=()=>{const r=this._items.filter(t=>this._selectedIds.has(t.id)).map(t=>({companionUrl:this.companionUrl,provider:this.provider,token:"",requestPath:t.requestPath,fileId:t.id,name:t.name||t.id,mimeType:t.mimeType,size:t.size,thumbnail:t.thumbnail}));this.dispatchEvent(new CustomEvent("connector-files-selected",{detail:{files:r},bubbles:!0,composed:!0}))},this._onClose=()=>{this.dispatchEvent(new CustomEvent("connector-close",{bubbles:!0,composed:!0}))}}get _providerLabel(){var r;return((r=b([this.provider])[0])==null?void 0:r.label)??this.provider}async _doSearch(){const e=this._searchQuery.trim();if(e){this._loading=!0,this._error=null,this._items=[],this._selectedIds=new Set,this._nextPageQuery=null,this._searched=!0;try{const r=await f(this.companionUrl,this.provider,e),t=new Set;this._items=r.items.filter(s=>t.has(s.id)?!1:(t.add(s.id),!0)),this._nextPageQuery=r.nextPageQuery}catch(r){this._error=r instanceof Error?r.message:this.t("searchFailed","Search failed")}finally{this._loading=!1}}}async _onLoadMore(){if(!(!this._nextPageQuery||this._loadingMore)){this._loadingMore=!0;try{const e=await f(this.companionUrl,this.provider,this._searchQuery.trim(),this._nextPageQuery),r=new Set(this._items.map(s=>s.id)),t=e.items.filter(s=>!r.has(s.id));this._items=[...this._items,...t],this._nextPageQuery=e.nextPageQuery}catch{}finally{this._loadingMore=!1}}}_toggleSelect(e){if(!this.multi){this._selectedIds=this._selectedIds.has(e.id)?new Set:new Set([e.id]);return}const r=this.maxSelect!==null&&this._selectedIds.size>=this.maxSelect,t=new Set(this._selectedIds);t.has(e.id)?t.delete(e.id):r||t.add(e.id),this._selectedIds=t}render(){return o`
+"use strict";Object.defineProperty(exports,Symbol.toStringTag,{value:"Module"});const s=require("lit"),a=require("lit/decorators.js"),p=require("./sfx-uploader-BzblopkP.cjs");var u=Object.defineProperty,n=(h,e,r,t)=>{for(var i=void 0,l=h.length-1,d;l>=0;l--)(d=h[l])&&(i=d(e,r,i)||i);return i&&u(e,r,i),i};const c=class c extends s.LitElement{constructor(){super(...arguments),this.t=(e,r)=>typeof r=="string"?r:e,this.provider="unsplash",this.companionUrl="",this.transformThumbnail=e=>e,this.multi=!0,this.maxSelect=null,this._loading=!1,this._loadingMore=!1,this._items=[],this._selectedIds=new Set,this._error=null,this._searchQuery="",this._nextPageQuery=null,this._searched=!1,this._onResultsScroll=e=>{if(!this._nextPageQuery||this._loadingMore)return;const r=e.target;r.scrollHeight-r.scrollTop-r.clientHeight<200&&this._onLoadMore()},this._onSearchInput=e=>{this._searchQuery=e.target.value},this._onSearchKeydown=e=>{e.key==="Enter"&&this._doSearch()},this._onAddSelected=()=>{const r=this._items.filter(t=>this._selectedIds.has(t.id)).map(t=>({companionUrl:this.companionUrl,provider:this.provider,token:"",requestPath:t.requestPath,fileId:t.id,name:t.name||t.id,mimeType:t.mimeType,size:t.size,thumbnail:t.thumbnail}));this.dispatchEvent(new CustomEvent("connector-files-selected",{detail:{files:r},bubbles:!0,composed:!0}))},this._onClose=()=>{this.dispatchEvent(new CustomEvent("connector-close",{bubbles:!0,composed:!0}))}}get _providerLabel(){var r;return((r=p.getProviderSources([this.provider])[0])==null?void 0:r.label)??this.provider}async _doSearch(){const e=this._searchQuery.trim();if(e){this._loading=!0,this._error=null,this._items=[],this._selectedIds=new Set,this._nextPageQuery=null,this._searched=!0;try{const r=await p.searchProvider(this.companionUrl,this.provider,e),t=new Set;this._items=r.items.filter(i=>t.has(i.id)?!1:(t.add(i.id),!0)),this._nextPageQuery=r.nextPageQuery}catch(r){this._error=r instanceof Error?r.message:this.t("searchFailed","Search failed")}finally{this._loading=!1}}}async _onLoadMore(){if(!(!this._nextPageQuery||this._loadingMore)){this._loadingMore=!0;try{const e=await p.searchProvider(this.companionUrl,this.provider,this._searchQuery.trim(),this._nextPageQuery),r=new Set(this._items.map(i=>i.id)),t=e.items.filter(i=>!r.has(i.id));this._items=[...this._items,...t],this._nextPageQuery=e.nextPageQuery}catch{}finally{this._loadingMore=!1}}}_toggleSelect(e){if(!this.multi){this._selectedIds=this._selectedIds.has(e.id)?new Set:new Set([e.id]);return}const r=this.maxSelect!==null&&this._selectedIds.size>=this.maxSelect,t=new Set(this._selectedIds);t.has(e.id)?t.delete(e.id):r||t.add(e.id),this._selectedIds=t}render(){return s.html`
       ${this._renderHeader()}
       ${this._renderSearchBar()}
       ${this._loading?this._renderLoading():this._error?this._renderError():this._renderResults()}
-    `}_renderHeader(){return o`
+    `}_renderHeader(){return s.html`
       <div class="browser-header">
         <button
           class="back-btn"
@@ -16,7 +16,7 @@ import{i as x,a as g,g as b,s as f,c as o,A as c,n as d,r as n}from"./index--f_a
         </button>
         <span class="browser-title">${this._providerLabel}</span>
       </div>
-    `}_renderSearchBar(){return o`
+    `}_renderSearchBar(){return s.html`
       <div class="search-bar">
         <input
           class="search-input"
@@ -34,39 +34,39 @@ import{i as x,a as g,g as b,s as f,c as o,A as c,n as d,r as n}from"./index--f_a
           ${this.t("search","Search")}
         </button>
       </div>
-    `}_renderLoading(){return o`
+    `}_renderLoading(){return s.html`
       <div class="loading">
         <div class="spinner"></div>
       </div>
-    `}_renderError(){return o`
+    `}_renderError(){return s.html`
       <div class="error-view">
         <div class="error-text">${this._error}</div>
         <button class="retry-btn" @click=${()=>this._doSearch()}>${this.t("retry","Retry")}</button>
       </div>
-    `}_renderResults(){const e=this._selectedIds.size;return this._searched?this._items.length===0?o`
+    `}_renderResults(){const e=this._selectedIds.size;return this._searched?this._items.length===0?s.html`
         <div class="empty-state">
           <div class="empty-text">${this.t("noSearchResults","No results found")}</div>
         </div>
-      `:o`
+      `:s.html`
       <div class="results" @scroll=${this._onResultsScroll}>
         <div class="results-grid">
-          ${(()=>{const r=this.maxSelect!==null&&this._selectedIds.size>=this.maxSelect;return this._items.map(t=>{var l;const s=this._selectedIds.has(t.id);return o`
+          ${(()=>{const r=this.maxSelect!==null&&this._selectedIds.size>=this.maxSelect;return this._items.map(t=>{var d;const i=this._selectedIds.has(t.id),l=!i&&r;return s.html`
               <div
-                class="result-item ${s?"selected":""} ${!s&&r?"disabled":""}"
+                class="result-item ${i?"selected":""} ${l?"disabled":""}"
                 @click=${()=>this._toggleSelect(t)}
               >
-                ${t.thumbnail?o`<img src=${this.transformThumbnail(t.thumbnail)} alt=${t.name} loading="lazy" referrerpolicy="no-referrer" />`:c}
+                ${t.thumbnail?s.html`<img src=${this.transformThumbnail(t.thumbnail)} alt=${t.name} loading="lazy" referrerpolicy="no-referrer" />`:s.nothing}
                 <div class="check">
-                  ${s?o`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12" /></svg>`:c}
+                  ${i?s.html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12" /></svg>`:s.nothing}
                 </div>
-                ${(l=t.author)!=null&&l.name?o`<div class="author">${t.author.name}</div>`:c}
+                ${(d=t.author)!=null&&d.name?s.html`<div class="author">${t.author.name}</div>`:s.nothing}
               </div>
             `})})()}
         </div>
-        ${this._loadingMore?o`<div class="loading loading-more"><div class="spinner"></div></div>`:c}
+        ${this._loadingMore?s.html`<div class="loading loading-more"><div class="spinner"></div></div>`:s.nothing}
       </div>
 
-      ${this._items.length>0?o`
+      ${this._items.length>0?s.html`
             <div class="browser-footer">
               <span class="selected-count">
                 ${e>0?this.t("imagesSelected",{count:e,defaultValue_one:"{{count}} image selected",defaultValue_other:"{{count}} images selected"}):this.t("selectImagesToAdd","Select images to add")}
@@ -79,12 +79,12 @@ import{i as x,a as g,g as b,s as f,c as o,A as c,n as d,r as n}from"./index--f_a
                 ${this.t("addImages",{count:e>0?e:0,defaultValue_one:"Add {{count}} image",defaultValue_other:"Add {{count}} images"})}
               </button>
             </div>
-          `:c}
-    `:o`
+          `:s.nothing}
+    `:s.html`
         <div class="empty-state">
           <div class="empty-text">${this.t("enterSearchHint","Enter text to search for images")}</div>
         </div>
-      `}};h.styles=g`
+      `}};c.styles=s.css`
     :host {
       display: flex;
       flex-direction: column;
@@ -404,4 +404,4 @@ import{i as x,a as g,g as b,s as f,c as o,A as c,n as d,r as n}from"./index--f_a
     @media (prefers-reduced-motion: reduce) {
       .spinner { animation: none; }
     }
-  `;let i=h;a([d({attribute:!1})],i.prototype,"t");a([d({type:String})],i.prototype,"provider");a([d({type:String})],i.prototype,"companionUrl");a([d({attribute:!1})],i.prototype,"transformThumbnail");a([d({type:Boolean})],i.prototype,"multi");a([d({type:Number})],i.prototype,"maxSelect");a([n()],i.prototype,"_loading");a([n()],i.prototype,"_loadingMore");a([n()],i.prototype,"_items");a([n()],i.prototype,"_selectedIds");a([n()],i.prototype,"_error");a([n()],i.prototype,"_searchQuery");a([n()],i.prototype,"_nextPageQuery");a([n()],i.prototype,"_searched");export{i as SfxSearchProviderBrowser};
+  `;let o=c;n([a.property({attribute:!1})],o.prototype,"t");n([a.property({type:String})],o.prototype,"provider");n([a.property({type:String})],o.prototype,"companionUrl");n([a.property({attribute:!1})],o.prototype,"transformThumbnail");n([a.property({type:Boolean})],o.prototype,"multi");n([a.property({type:Number})],o.prototype,"maxSelect");n([a.state()],o.prototype,"_loading");n([a.state()],o.prototype,"_loadingMore");n([a.state()],o.prototype,"_items");n([a.state()],o.prototype,"_selectedIds");n([a.state()],o.prototype,"_error");n([a.state()],o.prototype,"_searchQuery");n([a.state()],o.prototype,"_nextPageQuery");n([a.state()],o.prototype,"_searched");exports.SfxSearchProviderBrowser=o;

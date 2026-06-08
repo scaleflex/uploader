@@ -12253,14 +12253,14 @@ const B = (V = class extends pe {
       if ((((s = (o = this.config) == null ? void 0 : o.connectors) == null ? void 0 : s.providers) ?? []).includes(e)) {
         if (Yr.has(e)) {
           if (!customElements.get("sfx-search-provider-browser")) {
-            const { SfxSearchProviderBrowser: a } = await import("./search-provider-browser-B5yGVUg3.js");
+            const { SfxSearchProviderBrowser: a } = await import("./search-provider-browser-COueGLH1.js");
             customElements.define(
               "sfx-search-provider-browser",
               a
             );
           }
         } else if (!customElements.get("sfx-provider-browser")) {
-          const { SfxProviderBrowser: a } = await import("./provider-browser-DP-GPbAJ.js");
+          const { SfxProviderBrowser: a } = await import("./provider-browser-CpxZEb9V.js");
           customElements.define("sfx-provider-browser", a);
         }
         this._activeConnector = e;
@@ -13233,7 +13233,7 @@ const B = (V = class extends pe {
           createTagsAutocomplete: s,
           createTaxonomyService: n,
           createUltratagsService: a
-        } = await import("./index-oW24jVQt.js"), [l, c] = await Promise.all([
+        } = await import("./index-DI3dV90A.js"), [l, c] = await Promise.all([
           i(this._apiBase, this._authHeaders, t.projectUuid, t),
           o(t.projectUuid, this._authHeaders, {
             hubApiBase: t.hubApiBase,
@@ -14761,6 +14761,7 @@ const B = (V = class extends pe {
                 </div>
               ` : $}
           ${m === "similar" ? this._renderSimilarPanel(o, u ?? []) : f`
+          <div class="preview-details-body">
           ${o.type.startsWith("video/") && o.file ? f`
                 <div class="preview-media-area">
                   <div class="preview-img-wrap">
@@ -14962,6 +14963,7 @@ const B = (V = class extends pe {
                   </div>
                 </div>
               `}
+          </div>
               `}
           `}
         </div>
@@ -16104,19 +16106,23 @@ const B = (V = class extends pe {
       padding: 0;
     }
 
-    .preview-panel::-webkit-scrollbar {
+    .preview-panel::-webkit-scrollbar,
+    .preview-details-body::-webkit-scrollbar {
       width: 12px;
     }
-    .preview-panel::-webkit-scrollbar-track {
+    .preview-panel::-webkit-scrollbar-track,
+    .preview-details-body::-webkit-scrollbar-track {
       background: transparent;
     }
-    .preview-panel::-webkit-scrollbar-thumb {
+    .preview-panel::-webkit-scrollbar-thumb,
+    .preview-details-body::-webkit-scrollbar-thumb {
       background: rgba(0, 0, 0, 0.15);
       background-clip: padding-box;
       border: 3px solid transparent;
       border-radius: 6px;
     }
-    .preview-panel::-webkit-scrollbar-thumb:hover {
+    .preview-panel::-webkit-scrollbar-thumb:hover,
+    .preview-details-body::-webkit-scrollbar-thumb:hover {
       background: rgba(0, 0, 0, 0.25);
       background-clip: padding-box;
     }
@@ -16260,6 +16266,17 @@ const B = (V = class extends pe {
       font-size: 10.5px;
       font-weight: 600;
       line-height: 1;
+    }
+
+    /* --- Details tab body --- */
+    /* Mirrors .psim-body's layout role: takes the remaining height in the
+       .preview-panel flex column and scrolls internally, so the header +
+       tabs stay pinned. Keeps Details and Similar behaviour identical.
+       Scrollbar styling is shared with .preview-panel above. */
+    .preview-details-body {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
     }
 
     /* --- Similar-assets panel body --- */
