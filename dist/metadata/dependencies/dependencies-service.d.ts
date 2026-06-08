@@ -12,6 +12,4 @@ export interface DependenciesFetchConfig {
  */
 export declare function fetchDependencies(projectUuid: string, fallbackHeaders: AuthHeaders, config?: DependenciesFetchConfig): Promise<Dependency[]>;
 export declare function clearDependenciesCache(projectUuid?: string): void;
-/** Test-only — seed the cache directly. */
-export declare function _setCachedDependencies(projectUuid: string, deps: Dependency[]): void;
 //# sourceMappingURL=dependencies-service.d.ts.map

@@ -455,6 +455,13 @@ export declare class SfxUploader extends LitElement {
     private _isPillExpanded;
     private _metadataSchema;
     /**
+     * Pre-upload metadata dependencies fetched from the Hub. Drives hide /
+     * require / allow_values / set_values for each queued file. Empty array
+     * when the project has no rules or when fetch failed (uploader degrades to
+     * dep-less behavior).
+     */
+    private _metadataDependencies;
+    /**
      * Currently active variant per regional-variants group, keyed by group
      * UUID. Mirrors admin v5's `metadataRegionalFilters` slice. Lets a single
      * project mix LANGUAGES, CURRENCIES, and CUSTOM groups — each field is
@@ -631,6 +638,25 @@ export declare class SfxUploader extends LitElement {
     private _buildUploadParamsResolver;
     private _ensureEngine;
     private _preloadMetadataSchema;
+    /**
+     * Patch `set_values` from firing dependencies onto empty fields. Idempotent
+     * — only writes to empty fields.
+     *
+     * When `targetFileId` is supplied, only that file is re-evaluated (used by
+     * the blur cascade — a blur on one file can't change what fires on a
+     * different file). Without it, every modifiable file is scanned (used after
+     * deps load or after a batch of new files arrives).
+     */
+    private _applyDependencySetValuesPrefill;
+    /**
+     * Strip values from fields hidden by a firing dependency on each queued file.
+     * Called right before `upload()` hands off to the engine so the API payload
+     * doesn't include data for fields the user couldn't even see.
+     *
+     * No-op when no deps or no schema. Only touches modifiable-status files —
+     * fields on already-uploaded files are left alone.
+     */
+    private _stripHiddenFieldsForUpload;
     private _onFileRename;
     /** Handle file rename from the preview sidebar or thumbnail. */
     private _onPreviewRename;
@@ -648,9 +674,28 @@ export declare class SfxUploader extends LitElement {
      * can render both metadata and product inputs.
      */
     private _previewMeta;
+    /**
+     * Per-file dependency resolution for the preview pane. Returns null when no
+     * rules apply, so the form falls back to schema defaults.
+     */
+    private _resolvedSchemaFor;
     private get _metadataEnforcing();
     private _firstMissingRequiredFieldKey;
     private get _hasUnfilledRequiredMetadata();
+    /**
+     * Returns the field key of the first dep-conflict (allow_values / set_values
+     * mismatch). The gate blocks uploads while such a value is unresolved, since
+     * shipping it would store data the project's rules forbid.
+     */
+    private _firstConflictedFieldKey;
+    private get _hasMetadataConflicts();
+    /**
+     * Aggregate gate — true when either a required field is empty or a value
+     * conflicts with a dep rule. Both ask the user to open the editor, so we
+     * combine them behind one boolean and one initial-field for the button to
+     * route to.
+     */
+    private get _hasMetadataIssues();
     private _dispatchPublic;
     /** True once `PANEL_SHOWN` has fired for the current minimize session. */
     private _floatShownDispatched;

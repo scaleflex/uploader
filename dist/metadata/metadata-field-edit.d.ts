@@ -18,6 +18,12 @@ export declare class SfxMetadataFieldEdit extends LitElement {
     language?: string;
     defaultLanguage?: string;
     ultratagsRestrictToItems: UltratagsValueItem[] | null;
+    /**
+     * Optional whitelist of `internal_unique_value` strings for select-one /
+     * multi-select editors. Threaded down from the bulk op-bar or the per-row
+     * editor so dep-driven `allow_values` rules restrict the dropdown.
+     */
+    allowedValues: string[] | null;
     disabled: boolean;
     render(): import('lit-html').TemplateResult<1>;
 }

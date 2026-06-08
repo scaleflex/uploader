@@ -1,5 +1,6 @@
 import { LitElement, nothing } from 'lit';
 import { MetadataSchema, MetadataConfig } from '../schema/schema.types';
+import { ResolvedSchema } from '../dependencies/dependencies.types';
 /**
  * Sidebar field navigator for the bulk metadata modal.
  * Shows fields in collapsible groups (all open by default).
@@ -14,6 +15,12 @@ export declare class SfxBulkMetaSidebar extends LitElement {
         Drives the stronger-red `.unmet` styling on the asterisk. */
     missingRequiredKeys: Set<string>;
     config: MetadataConfig | null;
+    /**
+     * Aggregated resolved schema for the current selection. Drives:
+     *  - hiding fields/groups where every selected file would hide them
+     *  - dep-driven required asterisks (in addition to schema-required)
+     */
+    bulkResolvedSchema: ResolvedSchema | null;
     private _collapsed;
     /** Tracks the mobile breakpoint so collapsed groups don't hide fields
         on narrow viewports where the group-label toggle button is itself

@@ -1,6 +1,7 @@
 import { LitElement, PropertyValues } from 'lit';
 import { MetadataSchema, MetadataConfig } from '../schema/schema.types';
 import { UploadFile } from '../../store/store.types';
+import { Dependency } from '../dependencies/dependencies.types';
 /**
  * Full-screen overlay modal for bulk metadata editing.
  * Orchestrates sidebar, op-bar, and file table.
@@ -16,6 +17,12 @@ export declare class SfxBulkMetadataModal extends LitElement {
     defaultLanguage?: string;
     /** When set, the modal opens with this field active instead of the first one. */
     initialFieldKey: string | null;
+    /**
+     * Pre-upload metadata dependencies, threaded through to the
+     * required-fields check so dep-required / dep-hidden are honored in the
+     * bulk-edit gate. Empty array disables dep handling.
+     */
+    dependencies: Dependency[];
     private _activeFieldKey;
     /**
      * Per-file staged values. Product fields are stored alongside metadata under
@@ -39,6 +46,15 @@ export declare class SfxBulkMetadataModal extends LitElement {
     private _missingRequiredFieldKey;
     private _missingRequiredKeys;
     private _confirmResolve;
+    /**
+     * Cached results for the bulk-aggregated and per-file resolved schemas.
+     * Both are computed in `willUpdate` (and invalidated together when any of
+     * their inputs change) so each render reads stable references — preventing
+     * the sub-components (sidebar / op-bar / table / rows) from re-rendering
+     * on every parent state change.
+     */
+    private _cachedBulkResolved;
+    private _cachedPerFileResolved;
     private _originalFiles;
     connectedCallback(): void;
     disconnectedCallback(): void;
@@ -68,6 +84,28 @@ export declare class SfxBulkMetadataModal extends LitElement {
      * actually move.
      */
     private _refreshMissingRequired;
+    /**
+     * Build a snapshot of selected files' effective meta (staged values layered
+     * over original) for dep evaluation. Skips unselected files because they
+     * can't be affected by bulk operations — the aggregated resolved should
+     * reflect only what the user will edit.
+     */
+    private _selectedFileInputs;
+    /**
+     * Recompute the cached resolved schemas. The bulk aggregate drives the
+     * sidebar (hide/required asterisks) and op-bar (allow_values intersection);
+     * the per-file map drives each table row's own restrictions. Computed once
+     * per change rather than on every render so child components see stable
+     * references and only re-render when the contents actually move.
+     */
+    private _recomputeResolvedSchemas;
+    /**
+     * When the currently-active field becomes hidden by a firing dep (e.g. the
+     * user changed a trigger that hides this column for every selected file),
+     * jump to the first still-visible field instead of leaving the op-bar and
+     * table column rendered for an invisible field.
+     */
+    private _advanceActiveFieldIfHidden;
     /** Fields where ANY file has a non-empty staged value that differs from original. */
     private get _filledFields();
     private get _hasPendingValue();

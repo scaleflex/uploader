@@ -3,6 +3,7 @@ import { MetadataField, MetadataConfig } from '../schema/schema.types';
 import { UploadFile } from '../../store/store.types';
 import { PendingOp } from './bulk-operations';
 import { TaxonodeEntry } from '../taxonomies/taxonomies.types';
+import { ResolvedSchema } from '../dependencies/dependencies.types';
 /**
  * Thin table container — maps files to `<sfx-bulk-meta-row>` elements.
  */
@@ -19,6 +20,11 @@ export declare class SfxBulkMetaTable extends LitElement {
     taxonomyService: unknown;
     ultratags: unknown;
     defaultLanguage?: string;
+    /**
+     * Map of resolved schema per file id — drives per-row `allow_values`
+     * restriction so each row's editor honors the rules firing for its file.
+     */
+    perFileResolved: Map<string, ResolvedSchema>;
     private _getEffectiveValue;
     private _getTaxonodeEntry;
     render(): import('lit-html').TemplateResult<1>;

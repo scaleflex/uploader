@@ -35,7 +35,15 @@ export interface RawDependency {
     dep_metadata_trigger_sys_key: string;
     dep_metadata_trigger_field_type_key: DependencyTriggerFieldType;
     dep_metadata_trigger_condition_key: DependencyTriggerCondition;
+    /**
+     * Sys-key trigger values. The live `/api/metadata/dependencies` endpoint
+     * uses this name; some older docs and the per-field `GET /metadata/:uuid/dependencies`
+     * endpoint show `dep_metadata_trigger_values` instead — see the fallback
+     * in `normalize.ts`.
+     */
     dep_metadata_trigger_values_sys_keys: string[] | null;
+    /** Legacy alias for `dep_metadata_trigger_values_sys_keys`. */
+    dep_metadata_trigger_values?: string[] | null;
     dep_actions: RawDependencyAction[];
 }
 export interface RawDependenciesResponse {

@@ -21,6 +21,12 @@ export declare class SfxBulkMetaOpBar extends LitElement {
     ultratagsPresentOnSelection: UltratagsValueItem[];
     config: MetadataConfig | null;
     selectedCount: number;
+    /**
+     * Intersection of `allow_values` across the current selection (computed
+     * upstream by `aggregateResolvedAcrossFiles`). `null` = unrestricted —
+     * either no rule fires or some files lack the rule.
+     */
+    allowedValues: string[] | null;
     private _operation;
     private _value;
     private _pendingTaxonode;

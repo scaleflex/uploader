@@ -25,6 +25,10 @@ export declare function getFieldState(resolved: ResolvedSchema, ckey: string): R
  * `field.ckey` (sys-key). This helper bridges the two: it rekeys the meta to
  * ckeys for trigger evaluation and returns the resolved map keyed by ckey.
  *
+ * Also drops dependencies whose trigger field is no longer in the schema
+ * (deleted in admin, BE drift, etc.) — otherwise an `is_empty` rule would
+ * fire spuriously when the field simply doesn't exist.
+ *
  * Fields hidden by the schema (`field.hide`) are excluded by the parser before
  * we ever see them, so we only need to translate keys here.
  */

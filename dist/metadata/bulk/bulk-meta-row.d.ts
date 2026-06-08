@@ -24,6 +24,11 @@ export declare class SfxBulkMetaRow extends LitElement {
     taxonomyService: unknown;
     ultratags: unknown;
     defaultLanguage?: string;
+    /**
+     * Allowed values for select/multi-select editors, computed per-row from
+     * this file's resolved deps. `null` = no restriction.
+     */
+    allowedValues: string[] | null;
     private _error;
     willUpdate(changed: Map<string, unknown>): void;
     private _onCheckboxChange;

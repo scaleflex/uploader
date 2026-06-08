@@ -1,6 +1,7 @@
 import { LitElement } from 'lit';
 import { MetadataSchema, MetadataConfig } from './schema/schema.types';
 import { UploadFile } from '../store/store.types';
+import { Dependency } from './dependencies/dependencies.types';
 export declare class SfxMetadataPanel extends LitElement {
     static styles: import('lit').CSSResult[];
     schema: MetadataSchema | null;
@@ -12,6 +13,12 @@ export declare class SfxMetadataPanel extends LitElement {
     taxonomyService: unknown;
     ultratags: unknown;
     defaultLanguage?: string;
+    /**
+     * Metadata dependencies for the active project. Evaluated per-file against
+     * the current MIME + meta to drive hide/require/allow_values/set_values.
+     * Pre-upload only — post-upload, the backend pre-computes this.
+     */
+    dependencies: Dependency[];
     /** Local copy of the current file's taxonomy entries (single-file mode). */
     private _localTaxonodes;
     /** Local copy of the current file's meta (single-file mode). */
@@ -19,6 +26,9 @@ export declare class SfxMetadataPanel extends LitElement {
     /** Accumulated meta for bulk mode. */
     private _bulkMeta;
     willUpdate(changed: Map<string, unknown>): void;
+    private _applySetValuesPreFill;
+    /** Resolved dependency state for the current single-file selection. */
+    private get _resolvedSchema();
     private get _modifiableFiles();
     private get _currentIndex();
     private get _hasPrev();

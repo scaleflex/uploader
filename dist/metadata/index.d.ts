@@ -1,4 +1,6 @@
 export { fetchMetadataSchema, clearSchemaCache } from './schema/schema-service';
+export { fetchDependencies, clearDependenciesCache, resolveForFileWithSchema, } from './dependencies';
+export type { Dependency, ResolvedSchema, ResolvedFieldState, ConflictDetails, } from './dependencies';
 export { parseMetadataSchema } from './schema/schema-parser';
 export { mapValueToBackend, mapValueFromBackend } from './schema/value-transforms';
 export { validateField, isEmpty } from './schema/validation';

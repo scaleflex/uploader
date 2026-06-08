@@ -1,5 +1,6 @@
 import { UploadFile } from '../../store/store.types';
 import { MetadataConfig, MetadataSchema, MetadataField } from './schema.types';
+import { Dependency } from '../dependencies/dependencies.types';
 /**
  * Returns true if the value counts as a non-empty metadata value.
  * Inverse of isEmpty().
@@ -17,27 +18,36 @@ export declare function isFieldRequired(field: MetadataField, config?: MetadataC
  * Returns a map of `{ [fieldKey]: UploadFile[] }` — only entries with
  * at least one file are included.
  */
-export declare function getFilesWithMissingRequired(files: Map<string, UploadFile>, schema: MetadataSchema, config?: MetadataConfig): Record<string, UploadFile[]>;
+export declare function getFilesWithMissingRequired(files: Map<string, UploadFile>, schema: MetadataSchema, config?: MetadataConfig, dependencies?: Dependency[]): Record<string, UploadFile[]>;
 /**
  * Returns the key of the first required field (in schema iteration order) that
  * has at least one modifiable file with an empty value. Returns null when
  * everything is filled or there are no required fields.
  */
-export declare function firstMissingRequiredFieldKey(files: Map<string, UploadFile>, schema: MetadataSchema, config?: MetadataConfig): string | null;
+export declare function firstMissingRequiredFieldKey(files: Map<string, UploadFile>, schema: MetadataSchema, config?: MetadataConfig, dependencies?: Dependency[]): string | null;
 /**
  * Bulk-modal variant of `firstMissingRequiredFieldKey`. Reads from the modal's
  * `staged` map (per-file, per-field pending edits) so the validation reflects
  * the user's unsaved changes, not the original `file.meta`. Only considers
  * files in modifiable statuses.
  */
-export declare function firstMissingRequiredFieldKeyInStaged(staged: Map<string, Map<string, unknown>>, originalFiles: Map<string, UploadFile>, schema: MetadataSchema, config?: MetadataConfig): string | null;
+export declare function firstMissingRequiredFieldKeyInStaged(staged: Map<string, Map<string, unknown>>, originalFiles: Map<string, UploadFile>, schema: MetadataSchema, config?: MetadataConfig, dependencies?: Dependency[]): string | null;
 /**
  * Bulk-modal companion that returns ALL required field keys that have at least
  * one modifiable file with a missing value. Used by the sidebar to highlight
  * which required fields still need attention. Same semantics as
  * `firstMissingRequiredFieldKeyInStaged` but does not short-circuit.
  */
-export declare function missingRequiredFieldKeysInStaged(staged: Map<string, Map<string, unknown>>, originalFiles: Map<string, UploadFile>, schema: MetadataSchema, config?: MetadataConfig): Set<string>;
+export declare function missingRequiredFieldKeysInStaged(staged: Map<string, Map<string, unknown>>, originalFiles: Map<string, UploadFile>, schema: MetadataSchema, config?: MetadataConfig, dependencies?: Dependency[]): Set<string>;
+/**
+ * Walk modifiable files and return the first field (by schema order) whose
+ * current value conflicts with a firing `allow_values` or `set_values`
+ * dependency. Returns `null` when no conflict exists or when deps aren't wired.
+ *
+ * Used by the host's upload-gate to block uploads while the user sees a ⚠️
+ * next to the offending field.
+ */
+export declare function firstConflictedFieldKey(files: Map<string, UploadFile>, schema: MetadataSchema, dependencies?: Dependency[]): string | null;
 /**
  * Deep-merge incoming metadata into existing metadata.
  *
