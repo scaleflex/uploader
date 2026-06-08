@@ -92,20 +92,15 @@ export interface RemoteThumbnailContext {
     /** Provider id when `source === 'connector'`. */
     providerId?: import('./connectors/connector.types').ProviderId;
 }
-/** One similar asset returned by the embedding/similarity endpoint. */
+/** One similar asset returned by the embedding/similarity endpoint. The
+ *  response is a tuple `[uuid, score, url]`; the display name is derived from
+ *  the URL filename. */
 export interface SimilarAsset {
     uuid: string;
     /** Similarity score 0..1. */
     score: number;
     /** CDN url of the similar asset (preview + open target). */
     url: string;
-    /** Display name (defaults to the filename derived from `url`). */
-    name?: string;
-    /** File size in bytes. */
-    size?: number;
-    /** Pixel dimensions. */
-    width?: number;
-    height?: number;
 }
 /** Resolution options for the video-transcode setting (Upload settings panel).
  *  Mirrors admin v5's vocabulary (`auto / mobile / tablet / desktop / hq / sample`).
@@ -147,6 +142,9 @@ export interface UploaderConfig {
     similarityCheck?: {
         enabled: boolean;
         confidence?: "low" | "mid" | "high";
+        /** Override the embedding service base URL. Defaults to
+         *  `https://ai.scaleflex.com`. Useful for staging environments. */
+        endpoint?: string;
     };
     /**
      * The "Upload settings" panel — a gear button in the header opens a global
@@ -417,10 +415,10 @@ export declare class SfxUploader extends LitElement {
     private _similarResults;
     /** Which tab the preview side-panel shows: file details or similar assets. */
     private _previewPanelTab;
-    /** Pending timers for the simulated search progression (demo only). */
-    private _similarSimTimers;
-    /** Counter to vary the mock similar count across ad-hoc single checks. */
-    private _simMockCounter;
+    /** Pending timer that auto-dismisses the post-batch progress banner. */
+    private _similarDismissTimer;
+    /** AbortController for in-flight similarity requests of the active run. */
+    private _similarAbort;
     private _previewFileId;
     private _previewDims;
     private _fileInfoOpen;
@@ -722,40 +720,30 @@ export declare class SfxUploader extends LitElement {
     private _onSimilarSelectAll;
     private _onCheckSimilarRun;
     private _onCheckSimilarSingle;
+    /** Resolves auth credentials for the embedding endpoint. Returns `null` when
+     *  auth hasn't been resolved yet (the caller logs + bails). */
+    private _similarityAuth;
+    /** Mark a file as no longer in flight. */
+    private _similarMarkInactive;
+    /** Persist a per-file result (presence = checked → badge renders). */
+    private _similarSetResults;
     /**
      * Single (per-tile) check: processes one image independently and
      * accumulatively — clicking several tiles spins them all, no click cancels
      * another, and there is no batch progress banner (that's only for the
      * select-all-and-Check batch).
-     *
-     * TODO(dev): replace the simulated timeout with the real per-image API call
-     * (render w=300 → POST embedding). Multiple of these may run concurrently;
-     * add a sensible concurrency limit if needed.
      */
     private _checkSimilarSingleFile;
     /**
      * Runs the similarity check for the given images and drives the loading UI
-     * (per-tile spinner + batch progress banner).
-     *
-     * TODO(dev): replace the simulated per-image progression below with the real
-     * request. For each image: render a w=300 version, POST it to the embedding
-     * endpoint (https://ai.scaleflex.com/images/embedding/...) with the threshold
-     * derived from `this.config?.similarityCheck?.confidence` (low 0.60 / mid 0.75
-     * / high 0.90), collect the returned `similar_assets`, and mark the image done.
-     * Then surface the results in a panel (Open in new window / Discard from
-     * upload) — that screen is the next step. The loading UI, selection mode,
-     * per-tile button and events are already wired; only the network call and the
-     * results rendering remain.
+     * (per-tile spinner + batch progress banner). Per-image requests run with a
+     * concurrency cap of SIMILARITY_CONCURRENCY. Cancellation (via Cancel button
+     * or _clearSimilarRun) aborts in-flight requests through an AbortController.
      */
     private _runSimilarityCheck;
-    /**
-     * TODO(dev): remove. Generates fake similar_assets for the demo so the
-     * results UI is visible. Replace with the real `similar_assets` from the
-     * embedding endpoint response.
-     */
-    private _mockSimilarAssets;
-    /** Clears only the current run (timers, run/active ids). Keeps the persistent
-     *  checked set so finished images stay marked. Used by Cancel / Done. */
+    /** Clears only the current run (timers, run/active ids, abort in-flight).
+     *  Keeps the persistent checked set so finished images stay marked. Used by
+     *  Cancel / Done. */
     private _clearSimilarRun;
     private _onSimilarSearchCancel;
     /** Remove all similarity-check references to a file id (on file removal). */
@@ -766,10 +754,10 @@ export declare class SfxUploader extends LitElement {
     /** Open a similar asset in a new window. */
     private _openSimilarAsset;
     /** Display name for a similar asset: the filename extracted from its URL
-     *  (decoded, query stripped), falling back to an explicit name or the uuid. */
+     *  (decoded, query stripped), falling back to the uuid. */
     private _simAssetName;
-    /** Meta line for a similar asset card: format · size · resolution. Excludes the
-     *  name itself — only a real file extension counts (avoids echoing the name). */
+    /** Meta line for a similar asset card: just the file extension. The BE
+     *  response only carries [uuid, score, url] — size/dimensions aren't known. */
     private _simAssetMeta;
     private _onRequireMetadata;
     private _locateFile;

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Similarity check is now wired to the real backend.** The "Check similar" flow (per-tile and batch) now resizes each selected image to 300 px wide on the client, then POSTs it as multipart form-data to `${endpoint}/images/embedding/vectorize/image?threshold=…` with `Filerobot-Token` (container) and `Filerobot-Key` (resolved SASS key) headers. Results are mapped from the response's `similar_assets` tuples `[uuid, score, url]`. `config.similarityCheck.confidence` maps to `low → 0.60` / `mid → 0.75` (default) / `high → 0.90`. New optional `config.similarityCheck.endpoint` overrides the default `https://ai.scaleflex.com` host (useful for staging). Per-image requests run with a concurrency cap of 3; Cancel aborts in-flight requests.
 - Folder-traversal helpers are now exported from the package root: `attachRelativePath(file, path)` and `getRelativePath(file)`. Host adapters that build their own `File[]` arrays (e.g. a custom drop zone wired into a separate pipeline before the file lands in the uploader) can call `attachRelativePath(file, 'folder/sub/image.png')` to preserve folder structure without poking at the previously private `_sfxRelativePath` key.
 
 ### Changed
