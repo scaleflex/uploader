@@ -377,6 +377,48 @@ uploaderB.config = {
         </table>
         <p>Omit <code>coreSources</code> (or list all four) to keep the default behavior. Pass <code>[]</code> to hide every built-in source and rely solely on cloud <code>providers</code>.</p>
 
+        <h3>Custom connectors</h3>
+        <p>Add your own source pills for third-party SDKs (Canva, Figma, an in-house DAM, etc.) via <code>customSources</code>. Each entry renders a pill alongside the built-in sources; clicking it invokes your <code>onActivate</code> callback, where you open your own UI and push files back into the uploader via <code>uploader.addFiles(File[])</code>.</p>
+        <p>Custom sources run entirely in your code — Companion is not involved. Compose them with Companion providers, or use them standalone by passing an empty <code>companionUrl</code> and empty <code>providers</code>.</p>
+        ${e("typescript",`{
+  connectors: {
+    companionUrl: 'https://companion.example.com',
+    providers: ['google-drive'],
+    customSources: [
+      {
+        id: 'canva',
+        label: 'Canva',
+        brandHtml: '<svg viewBox="0 0 24 24">...</svg>', // brand icon (SVG or text)
+        onActivate: async (uploader) => {
+          // Open the Canva SDK / your own dialog, then hand files back:
+          const exported: File[] = await openCanvaPicker();
+          uploader.addFiles(exported);
+        },
+      },
+    ],
+  },
+}`)}
+        <p>To use custom sources without Companion at all (no cloud providers, no URL import):</p>
+        ${e("typescript",`{
+  connectors: {
+    companionUrl: '',   // disables URL import + cloud providers
+    providers: [],
+    customSources: [/* ... */],
+  },
+}`)}
+        <table>
+          <thead><tr><th>SourceDef field</th><th>Type</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>id</code></td><td><code>string</code></td><td>Unique source id. Custom entries that try to override a reserved built-in id (<code>'device'</code>, <code>'camera'</code>, <code>'url'</code>, <code>'screen-cast'</code>) are skipped with a <code>console.warn</code>.</td></tr>
+            <tr><td><code>label</code></td><td><code>string</code></td><td>Display label shown under the pill / in the More menu.</td></tr>
+            <tr><td><code>labelKey</code></td><td><code>string</code></td><td>Optional i18n key. When set, the label is resolved via <code>t(labelKey, label)</code>.</td></tr>
+            <tr><td><code>brandHtml</code></td><td><code>string</code></td><td>Inner HTML for the brand icon (typically an inline <code>&lt;svg&gt;</code>). Rendered inside a <code>.brand-ico</code> span. Preferred over <code>icon</code> for multi-color brand marks.</td></tr>
+            <tr><td><code>icon</code></td><td><code>string</code></td><td>Inner SVG markup (without the outer <code>&lt;svg&gt;</code>). Use this for simple monochrome icons; pair with <code>iconColor</code> and <code>fillIcon</code> as needed.</td></tr>
+            <tr><td><code>onActivate</code></td><td><code>(uploader: UploaderHandle) =&gt; void</code></td><td>Called when the pill is clicked. Receives a minimal handle exposing <code>addFiles(files: File[])</code> — call it once the user has picked / exported files from your SDK.</td></tr>
+          </tbody>
+        </table>
+        <p>Custom pills are rendered <em>after</em> Companion providers and the remaining core sources, in the order you list them. See the <code>SourceDef</code> and <code>UploaderHandle</code> entries in <a href="#/docs/types">Types</a>, and the live <a href="#/examples/custom-source">Custom connector example</a>.</p>
+
         ${o({href:"#/docs/getting-started",label:"Getting started"},{href:"#/docs/api",label:"API"})}
       </div>
     `},init(){t()}};export{a as default};

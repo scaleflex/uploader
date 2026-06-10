@@ -1,4 +1,4 @@
-import{b as r}from"./index-DZDW7ul7.js";import{r as t}from"./code-block-C_3oxnLY.js";const i={render(){return`
+import{b as r}from"./index-Coz2P4j2.js";import{r as t}from"./code-block-C_3oxnLY.js";const i={render(){return`
       <div class="page-header">
         <h1>Built-in sources (coreSources)</h1>
         <p>The "More" menu always exposes four built-in sources by default: <strong>My Device</strong>, <strong>URL link</strong>, <strong>Camera</strong>, and <strong>Screen capture</strong>. Pass <code>connectors.coreSources</code> to render only a subset.</p>

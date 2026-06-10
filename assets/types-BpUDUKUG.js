@@ -1,4 +1,4 @@
-import{h as r,c as e,d as t}from"./doc-utils-XkOyWBCy.js";const s={render(){return`
+import{h as r,c as e,d as t}from"./doc-utils-XkOyWBCy.js";const n={render(){return`
       <div class="doc-content">
         <h1>Types</h1>
         <p class="doc-lead">All types are exported from the main entry point.</p>
@@ -16,6 +16,8 @@ import{h as r,c as e,d as t}from"./doc-utils-XkOyWBCy.js";const s={render(){retu
   ConnectorConfig,
   ProviderId,
   RemoteFileInfo,
+  SourceDef,
+  UploaderHandle,
 } from '@scaleflex/uploader';`)}
 
         <h2>UploadFile</h2>
@@ -73,6 +75,27 @@ import{h as r,c as e,d as t}from"./doc-utils-XkOyWBCy.js";const s={render(){retu
   mimeType: string;
   size: number;
   thumbnail: string | null;
+  relativeFolder?: string;       // Folder path for files picked from a folder selection
+}`)}
+
+        <h2>SourceDef</h2>
+        <p>Definition of a source pill. Used for both built-in sources and entries passed via <code>connectors.customSources</code>. See <a href="#/docs/configuration">Configuration → Custom connectors</a>.</p>
+        ${e("typescript",`interface SourceDef {
+  id: string;                                       // Unique source id
+  label: string;                                    // Pill / More-menu label
+  labelKey?: string;                                // i18n key (used with t(labelKey, label))
+  icon: string;                                     // Inner SVG markup (no outer <svg>)
+  fillIcon?: boolean;                               // Brand icons that use fill instead of stroke
+  iconColor?: string;                               // CSS color for the icon
+  brandHtml?: string;                               // Inner HTML for a brand icon (preferred for multi-color marks)
+  brandStyle?: Record<string, string>;              // CSSOM styles for the .brand-ico wrapper
+  onActivate?: (uploader: UploaderHandle) => void;  // Custom click handler — required for custom sources
+}`)}
+
+        <h2>UploaderHandle</h2>
+        <p>Minimal interface passed to <code>SourceDef.onActivate</code>. Lets custom-source integrations push files into the upload queue without holding a full reference to the component.</p>
+        ${e("typescript",`interface UploaderHandle extends HTMLElement {
+  addFiles(files: File[]): void;
 }`)}
 
         <h2>File lifecycle</h2>
@@ -101,4 +124,4 @@ import{h as r,c as e,d as t}from"./doc-utils-XkOyWBCy.js";const s={render(){retu
 
         ${t({href:"#/docs/theming",label:"Theming"})}
       </div>
-    `},init(){r()}};export{s as default};
+    `},init(){r()}};export{n as default};
