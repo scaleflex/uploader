@@ -12,17 +12,37 @@ export declare function isAssetHasMetadataValue(value: unknown): boolean;
  */
 export declare function isFieldRequired(field: MetadataField, config?: MetadataConfig): boolean;
 /**
+ * Resolve `config.enforceRequiredBeforeUpload` ('auto' when unset) against
+ * the project schema: should missing required metadata block the upload?
+ *
+ * In 'auto' mode the project's "Require metadata to be filled out on asset
+ * upload" toggle (`schema.forceFillingOnUpload`) is authoritative when the
+ * API provided it — an explicit `false` is an admin decision that mandatory
+ * schema fields must not override. Only when the setting is absent do we
+ * infer enforcement from `config.requiredFields` or schema-required fields.
+ */
+export declare function shouldEnforceRequiredMetadata(schema: MetadataSchema, config: MetadataConfig): boolean;
+/**
  * For each required field, find files (in modifiable statuses) that are
  * missing a value for that field.
  *
  * Returns a map of `{ [fieldKey]: UploadFile[] }` — only entries with
  * at least one file are included.
+ *
+ * NOTE: the missing-required scanners in this file are enforcement-agnostic —
+ * they report what's empty, not whether that should block anything. A caller
+ * that gates an upload/save on the result must first check
+ * {@link shouldEnforceRequiredMetadata}, otherwise it re-introduces the
+ * ignored "Require metadata on upload" toggle bug.
  */
 export declare function getFilesWithMissingRequired(files: Map<string, UploadFile>, schema: MetadataSchema, config?: MetadataConfig, dependencies?: Dependency[]): Record<string, UploadFile[]>;
 /**
  * Returns the key of the first required field (in schema iteration order) that
  * has at least one modifiable file with an empty value. Returns null when
  * everything is filled or there are no required fields.
+ *
+ * Enforcement-agnostic — gate on {@link shouldEnforceRequiredMetadata} first
+ * (see the note on {@link getFilesWithMissingRequired}).
  */
 export declare function firstMissingRequiredFieldKey(files: Map<string, UploadFile>, schema: MetadataSchema, config?: MetadataConfig, dependencies?: Dependency[]): string | null;
 /**
@@ -30,6 +50,9 @@ export declare function firstMissingRequiredFieldKey(files: Map<string, UploadFi
  * `staged` map (per-file, per-field pending edits) so the validation reflects
  * the user's unsaved changes, not the original `file.meta`. Only considers
  * files in modifiable statuses.
+ *
+ * Enforcement-agnostic — gate on {@link shouldEnforceRequiredMetadata} first
+ * (see the note on {@link getFilesWithMissingRequired}).
  */
 export declare function firstMissingRequiredFieldKeyInStaged(staged: Map<string, Map<string, unknown>>, originalFiles: Map<string, UploadFile>, schema: MetadataSchema, config?: MetadataConfig, dependencies?: Dependency[]): string | null;
 /**
@@ -37,6 +60,9 @@ export declare function firstMissingRequiredFieldKeyInStaged(staged: Map<string,
  * one modifiable file with a missing value. Used by the sidebar to highlight
  * which required fields still need attention. Same semantics as
  * `firstMissingRequiredFieldKeyInStaged` but does not short-circuit.
+ *
+ * Enforcement-agnostic — gate on {@link shouldEnforceRequiredMetadata} first
+ * (see the note on {@link getFilesWithMissingRequired}).
  */
 export declare function missingRequiredFieldKeysInStaged(staged: Map<string, Map<string, unknown>>, originalFiles: Map<string, UploadFile>, schema: MetadataSchema, config?: MetadataConfig, dependencies?: Dependency[]): Set<string>;
 /**

@@ -85,7 +85,15 @@ export interface MetadataSchema {
     groups: MetadataGroup[];
     fields: MetadataField[];
     fieldsByKey: Map<string, MetadataField>;
-    forceFillingOnUpload: boolean;
+    /**
+     * The project's "Require metadata to be filled out on asset upload" toggle
+     * (`store.force_filling_metadata_on_upload`). Tri-state: `undefined` means
+     * the API response didn't carry the setting (e.g. `rawMetadata` without a
+     * `store` block), which lets `enforceRequiredBeforeUpload: 'auto'` fall back
+     * to inferring enforcement from required fields. An explicit `false` is an
+     * admin decision and must NOT be overridden by that inference.
+     */
+    forceFillingOnUpload?: boolean;
     regionalVariantsGroups: RegionalVariantsGroup[];
     language: string;
     /**
@@ -159,10 +167,12 @@ export interface MetadataConfig {
      *
      * - `true`  — always enforce
      * - `false` — never enforce
-     * - `'auto'` (default) — enforce when any of:
-     *   1. the API schema has `store.force_filling_metadata_on_upload === true`
-     *   2. any schema field has `required === 1`
-     *   3. `requiredFields` is set and non-empty
+     * - `'auto'` (default) — follow the project's "Require metadata to be
+     *   filled out on asset upload" toggle when the API provides it
+     *   (`store.force_filling_metadata_on_upload`, true or false). When the
+     *   setting is absent from the response, infer enforcement: enforce if
+     *   `requiredFields` is set and non-empty, or any schema field has
+     *   `required` truthy.
      *
      * When enforcing and the user clicks **Upload** with a required field still
      * empty, the bulk metadata editor opens positioned on the first missing
