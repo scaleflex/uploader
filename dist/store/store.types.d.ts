@@ -75,6 +75,9 @@ export interface UploadResponse {
         company_uuid?: string;
     };
 }
+/** The `response.file.url` map from a successful upload (`public`, `cdn`,
+ *  `cdn_permalink`, `permalink`). */
+export type UploadResponseUrls = UploadResponse['file']['url'];
 export interface RetryConfig {
     maxRetries: number;
     baseDelay: number;

@@ -8,6 +8,8 @@ export declare class SfxFileItem extends LitElement {
     /** 'upload' (default): full controls; 'review': read-only post-upload
      *  view with status badges and hover actions (Locate / Copy CDN). */
     mode: 'upload' | 'review';
+    /** Whether the file name is editable (off under `forceName` / `allowFileRename: false`). */
+    allowRename: boolean;
     /** Whether to show the "Locate" hover action on completed review tiles. */
     showLocateButton: boolean;
     /** Whether to show the "Copy CDN" hover action on completed review tiles. */

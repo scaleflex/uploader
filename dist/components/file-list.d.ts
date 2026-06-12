@@ -12,6 +12,8 @@ export declare class SfxFileList extends LitElement {
     multi: boolean;
     /** When true, the drop-tile renders both a file picker and a `webkitdirectory` folder picker. */
     directory: boolean;
+    /** Whether file names are editable on the tiles (off under `forceName` / `allowFileRename: false`). */
+    allowRename: boolean;
     /** 'upload' (default): full controls; 'review': read-only post-upload review
      *  with status badges, Open links, and a Local-edit pill on edited files. */
     mode: 'upload' | 'review';

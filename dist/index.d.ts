@@ -2,7 +2,7 @@ export { SfxUploader, type UploaderConfig, type UploaderCallbacks, type InlineHe
 export { createStore, Store } from './store';
 export { UploadEngine, type UploadEngineConfig, type TusConfig } from './engine';
 export { PublicEvents } from './events/public-events';
-export type { UploaderState, UploadFile, FileStatus, UploadResponse, QueueConfig, RetryConfig, UploadRestrictions, } from './store';
+export type { UploaderState, UploadFile, FileStatus, UploadResponse, UploadResponseUrls, QueueConfig, RetryConfig, UploadRestrictions, } from './store';
 export type { AuthConfig, SecurityTemplateAuth, SassKeyAuth, AuthHeaders, } from './auth';
 export { resolveAuth, exchangeSassKey, getApiBase, buildAuthHeaders } from './auth';
 export type { ProviderId, ConnectorConfig, CoreSourceId, RemoteFileInfo } from './connectors';

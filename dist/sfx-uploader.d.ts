@@ -91,6 +91,16 @@ export interface RemoteThumbnailContext {
     source: 'url-import' | 'connector' | 'cdn-complete';
     /** Provider id when `source === 'connector'`. */
     providerId?: import('./connectors/connector.types').ProviderId;
+    /**
+     * The complete `response.file.url` map from the upload response when
+     * `source === 'cdn-complete'` (`public`, `cdn`, `cdn_permalink`,
+     * `permalink`). Lets the host pick a different variant outright — e.g.
+     * return `urls.permalink` (which carries the `?vh=` version hash) when
+     * uploading a new version of an existing asset, where the `cdn` URL
+     * points at the same path and the CDN still serves the previous
+     * version's cached image.
+     */
+    urls?: import('./store/store.types').UploadResponseUrls;
 }
 /** One similar asset returned by the embedding/similarity endpoint. The
  *  response is a tuple `[uuid, score, url]`; the display name is derived from
@@ -337,6 +347,15 @@ export interface UploaderConfig {
      */
     forceName?: string | (() => string);
     /**
+     * Allow users to edit file names in the pre-upload list. Defaults to
+     * `true`. Set to `false` when the stored name must not change — e.g.
+     * uploading a new version of an existing asset, where the name decides
+     * which asset gets versioned. Treated as `false` whenever `forceName`
+     * is set, since the server overrides the name anyway and an editable
+     * field would be misleading.
+     */
+    allowFileRename?: boolean;
+    /**
      * Append arbitrary query parameters (typically Filerobot `opt_*` flags)
      * to every upload request. Called once per file just before its
      * request is sent and merged into the URL of whichever upload path
@@ -368,12 +387,13 @@ export interface UploaderConfig {
      *    (`source: 'url-import'`).
      *  - Connector listing/selection thumbnails — Google Drive, Unsplash, etc.
      *    (`source: 'connector'`).
-     *  - Post-upload preview swap — when the upload response's `cdn` URL is on
-     *    a custom CNAME that isn't CSP-allowed (`source: 'cdn-complete'`). The
-     *    engine already defaults to `permalink` (`api.filerobot.com/.../v4/get`
-     *    — always on `*.filerobot.com`), then falls back to `cdn_permalink` and
-     *    `cdn`. This branch usually only fires for hosts whose CSP is even
-     *    tighter than that.
+     *  - Post-upload preview swap (`source: 'cdn-complete'`) — the engine
+     *    prefers `cdn`, then falls back to `cdn_permalink` and `permalink`.
+     *    `ctx.urls` carries the complete `response.file.url` map so the host
+     *    can pick a different variant outright — e.g. return
+     *    `ctx.urls.permalink` for "new version" uploads, where the `cdn` URL
+     *    points at the unchanged path and the CDN still serves the previous
+     *    version's cached image.
      *
      * @example
      * transformRemoteThumbnail: (url) =>
@@ -672,6 +692,12 @@ export declare class SfxUploader extends LitElement {
      */
     private _stripHiddenFieldsForUpload;
     private _onFileRename;
+    /**
+     * Whether users may edit file names in the pre-upload list. Off when the
+     * host sets `allowFileRename: false`, and always off under `forceName`
+     * (the server overrides the name anyway).
+     */
+    private get _renameAllowed();
     /** Handle file rename from the preview sidebar or thumbnail. */
     private _onPreviewRename;
     /**

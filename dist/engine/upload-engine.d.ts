@@ -1,5 +1,5 @@
 import { Store } from '../store/store';
-import { UploaderState, UploadFile, FileStatus } from '../store/store.types';
+import { UploaderState, UploadFile, FileStatus, UploadResponseUrls } from '../store/store.types';
 import { AuthHeaders } from '../auth/auth.types';
 import { TusConfig } from './tus-upload';
 export interface UploadEngineConfig {
@@ -22,12 +22,17 @@ export interface UploadEngineConfig {
      */
     resolveUploadParams?: (file: UploadFile) => Record<string, string> | undefined;
     /**
-     * Rewrite the post-upload preview URL (defaulting to `cdn_permalink ??
-     * cdn` from the upload response) before it replaces a file's preview.
-     * Hosts with CSPs that disallow a project's custom CDN CNAME can route
-     * the URL through a Filerobot/Cloudimage proxy here.
+     * Rewrite the post-upload preview URL (defaulting to `cdn ??
+     * cdn_permalink ?? permalink` from the upload response) before it
+     * replaces a file's preview. Hosts with CSPs that disallow a project's
+     * custom CDN CNAME can route the URL through a Filerobot/Cloudimage
+     * proxy here. `urls` carries the complete `response.file.url` map so the
+     * host can pick a different variant outright (e.g. `permalink`, which
+     * carries the version hash, when the `cdn` path is cached stale).
+     * Called only when the swap will actually apply — image MIME type and no
+     * local `blob:` preview — never for results the engine would discard.
      */
-    transformPreviewUrl?: (url: string) => string;
+    transformPreviewUrl?: (url: string, urls?: UploadResponseUrls) => string;
 }
 export declare class UploadEngine {
     private store;
