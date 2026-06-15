@@ -12,6 +12,8 @@ import { TaxonodeEntry } from '../taxonomies/taxonomies.types';
  * Otherwise always shows the editable field input.
  */
 export declare class SfxBulkMetaRow extends LitElement {
+    /** Re-render when translations load / language changes (render uses the module-level t). */
+    private readonly _i18nController;
     static styles: import('lit').CSSResult[];
     file: UploadFile;
     field: MetadataField;

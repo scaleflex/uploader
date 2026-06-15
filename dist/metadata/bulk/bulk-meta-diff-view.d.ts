@@ -6,6 +6,8 @@ import { TaxonodeEntry } from '../taxonomies/taxonomies.types';
  * Renders color-coded chips for array fields, "old → new" for scalars.
  */
 export declare class SfxBulkMetaDiffView extends LitElement {
+    /** Re-render when translations load / language changes (render uses the module-level t). */
+    private readonly _i18nController;
     static styles: import('lit').CSSResult[];
     field: MetadataField;
     oldValue: unknown;

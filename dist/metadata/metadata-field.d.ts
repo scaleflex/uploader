@@ -54,6 +54,6 @@ export declare class SfxMetadataFieldEl extends LitElement {
     private _handleChildBlur;
     /** Render the correct field editor based on field.type. */
     private _renderField;
-    render(): typeof nothing | import('lit-html').TemplateResult<1>;
+    render(): import('lit-html').TemplateResult<1> | typeof nothing;
 }
 //# sourceMappingURL=metadata-field.d.ts.map

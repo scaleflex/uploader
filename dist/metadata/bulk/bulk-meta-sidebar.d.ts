@@ -36,6 +36,6 @@ export declare class SfxBulkMetaSidebar extends LitElement {
     private _toggleGroup;
     private _onFieldClick;
     updated(changed: Map<string, unknown>): void;
-    render(): typeof nothing | import('lit-html').TemplateResult<1>;
+    render(): import('lit-html').TemplateResult<1> | typeof nothing;
 }
 //# sourceMappingURL=bulk-meta-sidebar.d.ts.map

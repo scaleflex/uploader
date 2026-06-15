@@ -496,6 +496,13 @@ export declare class SfxUploader extends LitElement {
      */
     private _metadataDependencies;
     /**
+     * Once-per-instance guards for the missing-Hub-auth warnings — the preload
+     * runs on every config assignment (per parent render with inline config
+     * objects in React), and the condition + remedy don't change between runs.
+     */
+    private _warnedHubSchemaSkip;
+    private _warnedHubDepsSkip;
+    /**
      * Currently active variant per regional-variants group, keyed by group
      * UUID. Mirrors admin v5's `metadataRegionalFilters` slice. Lets a single
      * project mix LANGUAGES, CURRENCIES, and CUSTOM groups — each field is
@@ -845,6 +852,14 @@ export declare class SfxUploader extends LitElement {
      *  response only carries [uuid, score, url] — size/dimensions aren't known. */
     private _simAssetMeta;
     private _onRequireMetadata;
+    /** The single completed file the aggregate views (collapsed pill,
+     *  success-card) can offer a Locate shortcut for, or `null` when there
+     *  isn't exactly one. Locating a whole batch has no meaningful single
+     *  destination, so multi-file batches locate per-row in the expanded pill
+     *  / review screen instead. Mirrors the per-row gate: requires
+     *  `showLocateButton` and a resolved UUID. */
+    private _soleLocatableFile;
+    private _onSuccessCardLocate;
     private _locateFile;
     private _onFileLocate;
     private _onFileCopyCdn;

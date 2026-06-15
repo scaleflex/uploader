@@ -3,6 +3,8 @@ import { MetadataSchema, MetadataConfig } from './schema/schema.types';
 import { UploadFile } from '../store/store.types';
 import { Dependency } from './dependencies/dependencies.types';
 export declare class SfxMetadataPanel extends LitElement {
+    /** Re-render when translations load / language changes (render uses the module-level t). */
+    private readonly _i18nController;
     static styles: import('lit').CSSResult[];
     schema: MetadataSchema | null;
     file: UploadFile | null;

@@ -6,6 +6,8 @@ import { UltratagsValueItem } from '../ultratags/ultratags.types';
  * Operation dropdown + value input + Apply button.
  */
 export declare class SfxBulkMetaOpBar extends LitElement {
+    /** Re-render when translations load / language changes (render uses the module-level t). */
+    private readonly _i18nController;
     static styles: import('lit').CSSResult[];
     field: MetadataField;
     autocomplete: unknown;
@@ -31,7 +33,8 @@ export declare class SfxBulkMetaOpBar extends LitElement {
     private _value;
     private _pendingTaxonode;
     private _opDropdownOpen;
-    private _availableOps;
+    /** Recomputed per access so operation labels resolve through the current locale. */
+    private get _availableOps();
     private static _emptyValueForType;
     private get _effectiveValue();
     willUpdate(changed: Map<string, unknown>): void;
@@ -60,6 +63,6 @@ export declare class SfxBulkMetaOpBar extends LitElement {
     private _onValueKeydown;
     private _onApply;
     private get _isApplyDisabled();
-    render(): typeof nothing | import('lit-html').TemplateResult<1>;
+    render(): import('lit-html').TemplateResult<1> | typeof nothing;
 }
 //# sourceMappingURL=bulk-meta-op-bar.d.ts.map

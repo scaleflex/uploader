@@ -75,7 +75,7 @@ export declare class SfxFileItem extends LitElement {
     private _simPopoverClose;
     private _locate;
     private _copyCdn;
-    render(): typeof nothing | import('lit-html').TemplateResult<1>;
+    render(): import('lit-html').TemplateResult<1> | typeof nothing;
     /** Hover preview popover (variant C: best match large + the rest stacked). */
     private _renderSimPopover;
     private _formatDuration;

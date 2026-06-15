@@ -16,6 +16,8 @@ import { RegionalVariantsGroup, RegionalVariant } from '../schema/schema.types';
  *   Escape            — close
  */
 export declare class SfxRegionalSettings extends LitElement {
+    /** Re-render when translations load / language changes (render uses the module-level t). */
+    private readonly _i18nController;
     static styles: import('lit').CSSResult[];
     groups: RegionalVariantsGroup[];
     /** Active variant value per group, keyed by group UUID. */
@@ -44,7 +46,7 @@ export declare class SfxRegionalSettings extends LitElement {
      * "Languages: English, Currencies: USD".
      */
     private _triggerSummary;
-    render(): typeof nothing | import('lit-html').TemplateResult<1>;
+    render(): import('lit-html').TemplateResult<1> | typeof nothing;
     private _renderOption;
 }
 export type { RegionalVariant };

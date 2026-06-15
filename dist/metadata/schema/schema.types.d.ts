@@ -154,6 +154,19 @@ export interface MetadataConfig {
      * Auth headers for the Hub API (project endpoint).
      * The Hub uses session-based auth, not the SASS key.
      * Required: x-session-token, x-company-token, x-project-token.
+     *
+     * Effectively mandatory on the default Hub base: without usable headers
+     * (an empty object counts as absent) the uploader skips the metadata
+     * schema/dependencies fetch — with a console warning and a toast —
+     * because the Hub rejects the SASS-key fallback with 401 SESSION_EXPIRED.
+     * Metadata still works without hubHeaders when: `hubApiBase` points at a
+     * custom (non-default) proxy that handles auth itself; `rawMetadata`
+     * supplies the schema locally (dependency rules are then loaded only if
+     * the Hub is reachable); or another uploader instance on the page already
+     * cached the project's schema/dependencies.
+     *
+     * If the session token arrives asynchronously, assign a NEW config object
+     * once it's available — in-place mutation of the config is not detected.
      */
     hubHeaders?: Record<string, string>;
     fields?: 'all' | string[];

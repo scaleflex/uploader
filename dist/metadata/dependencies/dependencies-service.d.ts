@@ -1,5 +1,7 @@
 import { AuthHeaders } from '../../auth/auth.types';
 import { Dependency } from './dependencies.types';
+/** Whether dependencies for this project are already cached (no network needed). */
+export declare function hasCachedDependencies(projectUuid: string): boolean;
 export interface DependenciesFetchConfig {
     hubApiBase?: string;
     hubHeaders?: AuthHeaders;

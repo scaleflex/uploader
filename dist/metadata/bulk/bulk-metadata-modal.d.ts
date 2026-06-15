@@ -7,6 +7,8 @@ import { Dependency } from '../dependencies/dependencies.types';
  * Orchestrates sidebar, op-bar, and file table.
  */
 export declare class SfxBulkMetadataModal extends LitElement {
+    /** Re-render when translations load / language changes (render uses the module-level t). */
+    private readonly _i18nController;
     static styles: import('lit').CSSResult[];
     schema: MetadataSchema;
     files: UploadFile[];

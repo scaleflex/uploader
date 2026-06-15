@@ -73,6 +73,13 @@ export interface UploadResponse {
         uniq_id?: string;
         project_uuid?: string;
         company_uuid?: string;
+        /**
+         * Detailed, human-readable failure reason (e.g. why a postprocess rule
+         * refused the file). More specific than the generic top-level `hint`, so
+         * it is preferred when surfacing the error to the user.
+         */
+        msg?: string;
+        status?: string;
     };
 }
 /** The `response.file.url` map from a successful upload (`public`, `cdn`,

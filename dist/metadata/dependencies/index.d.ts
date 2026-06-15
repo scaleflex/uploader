@@ -8,6 +8,6 @@ export { coerceSetValueForField, isFieldHiddenByDeps, stripHiddenFieldsFromMeta,
 export { detectConflicts } from './conflicts';
 export { aggregateResolvedAcrossFiles } from './bulk';
 export type { BulkFileInput } from './bulk';
-export { clearDependenciesCache, fetchDependencies, } from './dependencies-service';
+export { clearDependenciesCache, fetchDependencies, hasCachedDependencies, } from './dependencies-service';
 export type { DependenciesFetchConfig } from './dependencies-service';
 //# sourceMappingURL=index.d.ts.map

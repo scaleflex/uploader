@@ -3,6 +3,8 @@ import { MetadataSchema, MetadataConfig } from './schema/schema.types';
 import { TaxonodeEntry } from './taxonomies/taxonomies.types';
 import { Dependency, ResolvedSchema } from './dependencies/dependencies.types';
 export declare class SfxMetadataForm extends LitElement {
+    /** Re-render when translations load / language changes (render uses the module-level t). */
+    private readonly _i18nController;
     static styles: import('lit').CSSResult;
     schema: MetadataSchema | null;
     meta: Record<string, unknown>;
