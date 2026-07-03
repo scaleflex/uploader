@@ -27,6 +27,6 @@ export declare class SfxScreenCastDialog extends LitElement {
     private _useRecording;
     private _discard;
     private _cancel;
-    render(): import('lit-html').TemplateResult<1>;
+    render(): import('lit').TemplateResult<1>;
 }
 //# sourceMappingURL=screen-cast-dialog.d.ts.map

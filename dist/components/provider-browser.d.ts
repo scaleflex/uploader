@@ -53,7 +53,7 @@ export declare class SfxProviderBrowser extends LitElement {
     private _onAddSelected;
     private _onClose;
     private _handleLogout;
-    render(): import('lit-html').TemplateResult<1>;
+    render(): import('lit').TemplateResult<1>;
     private _renderHeader;
     private _onBack;
     private _renderAuthView;

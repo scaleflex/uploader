@@ -1,6 +1,5 @@
 import { RemoteFileInfo } from '../connectors/connector.types';
-import { Product } from '../product/product.types';
-import { TaxonodeEntry } from '../metadata/taxonomies/taxonomies.types';
+import { Product, TaxonodeEntry } from '@scaleflex/dam-metadata';
 export type FileStatus = 'idle' | 'queued' | 'uploading' | 'paused' | 'complete' | 'error' | 'retrying' | 'failed' | 'rejected' | 'cancelled';
 export interface UploadFile {
     id: string;

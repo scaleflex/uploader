@@ -1,5 +1,5 @@
 import { UploadFile, UploadResponse } from '../store/store.types';
-import { AuthHeaders } from '../auth/auth.types';
+import { AuthHeaders } from '@scaleflex/dam-core';
 export interface TusConfig {
     /** Files larger than this (bytes) use tus. Default: 10 MB. Set to 0 to always use tus. */
     sizeThreshold?: number;

@@ -22,7 +22,7 @@
   <a href="https://scaleflex.github.io/uploader/">Live Demo</a> |
   <a href="https://scaleflex.github.io/uploader/#/docs/getting-started">Documentation</a> |
   <a href="https://scaleflex.github.io/uploader/#/examples/basic">Examples</a> |
-  <a href="https://cdn.scaleflex.com/uploader/1.7.0/sfx-uploader.min.js">CDN</a> |
+  <a href="https://cdn.scaleflex.com/uploader/1.8.5/sfx-uploader.min.js">CDN</a> |
   <a href="https://www.npmjs.com/package/@scaleflex/uploader">npm</a> |
   <a href="https://www.scaleflex.com">Scaleflex</a>
 </p>
@@ -52,11 +52,11 @@ npm install @scaleflex/uploader
 Or use the CDN for a no-bundler setup:
 
 ```
-https://cdn.scaleflex.com/uploader/1.7.0/sfx-uploader.min.js
+https://cdn.scaleflex.com/uploader/1.8.5/sfx-uploader.min.js
 ```
 
 ```html
-<script src="https://cdn.scaleflex.com/uploader/1.7.0/sfx-uploader.min.js"></script>
+<script src="https://cdn.scaleflex.com/uploader/1.8.5/sfx-uploader.min.js"></script>
 ```
 
 ## Quick start
@@ -65,18 +65,18 @@ https://cdn.scaleflex.com/uploader/1.7.0/sfx-uploader.min.js
 
 ```html
 <script type="module">
-    import '@scaleflex/uploader/define';
+  import '@scaleflex/uploader/define';
 
-    const uploader = document.querySelector('sfx-uploader');
-    uploader.config = {
-        auth: {
-            mode: 'security-template',
-            container: 'YOUR_CONTAINER',
-            securityTemplateId: 'SECU_...',
-        },
-        locale: 'fr', // optional — defaults to navigator.language
-    };
-    uploader.open();
+  const uploader = document.querySelector('sfx-uploader');
+  uploader.config = {
+    auth: {
+      mode: 'security-template',
+      container: 'YOUR_CONTAINER',
+      securityTemplateId: 'SECU_...',
+    },
+    locale: 'fr', // optional — defaults to navigator.language
+  };
+  uploader.open();
 </script>
 
 <sfx-uploader></sfx-uploader>
@@ -120,13 +120,13 @@ function App() {
 
 The uploader modal and the bulk metadata editor expose CSS custom properties so hosts can make them larger (or smaller) without forking styles.
 
-| Variable | Default | Affects |
-|---|---|---|
-| `--sfx-up-modal-max-width` | `1100px` | Main uploader modal max width |
-| `--sfx-up-max-height` | `88vh` | Main uploader modal height |
-| `--sfx-up-content-max-width` | `1600px` | Inner content max width |
-| `--sfx-up-bulk-modal-width` | `980px` | Bulk metadata edit modal width |
-| `--sfx-up-bulk-modal-height` | `82vh` | Bulk metadata edit modal height |
+| Variable                     | Default  | Affects                         |
+| ---------------------------- | -------- | ------------------------------- |
+| `--sfx-up-modal-max-width`   | `1100px` | Main uploader modal max width   |
+| `--sfx-up-max-height`        | `88vh`   | Main uploader modal height      |
+| `--sfx-up-content-max-width` | `1600px` | Inner content max width         |
+| `--sfx-up-bulk-modal-width`  | `980px`  | Bulk metadata edit modal width  |
+| `--sfx-up-bulk-modal-height` | `82vh`   | Bulk metadata edit modal height |
 
 Example — enlarge both modals:
 
@@ -143,19 +143,19 @@ The bulk modal still clamps to `calc(100vw - 40px)` / `calc(100vh - 40px)` so it
 
 ## Package exports
 
-| Specifier | Description |
-|---|---|
-| `@scaleflex/uploader` | Core `SfxUploader` class (use with `customElements.define`) |
-| `@scaleflex/uploader/define` | Auto-registers `<sfx-uploader>` — import for side-effect |
-| `@scaleflex/uploader/react` | React wrapper component |
+| Specifier                    | Description                                                 |
+| ---------------------------- | ----------------------------------------------------------- |
+| `@scaleflex/uploader`        | Core `SfxUploader` class (use with `customElements.define`) |
+| `@scaleflex/uploader/define` | Auto-registers `<sfx-uploader>` — import for side-effect    |
+| `@scaleflex/uploader/react`  | React wrapper component                                     |
 
 ## Browser support
 
-| Browser | Version |
-|---|---|
-| Chrome / Edge | 90+ |
-| Firefox | 100+ |
-| Safari | 15.4+ |
+| Browser       | Version |
+| ------------- | ------- |
+| Chrome / Edge | 90+     |
+| Firefox       | 100+    |
+| Safari        | 15.4+   |
 
 ## Claude Code Integration
 

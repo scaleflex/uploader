@@ -1,10 +1,17 @@
-import { LitElement } from 'lit';
-import { UploadFile, TFunction } from '../store/store.types';
+import { LitElement, PropertyValues } from 'lit';
+import { UploadFile, TFunction, UploaderState } from '../store/store.types';
+import { Store } from '../store/store';
 import { SourceDef } from '../types/source.types';
 export declare class SfxFileList extends LitElement {
     static styles: import('lit').CSSResult;
     t: TFunction;
     files: UploadFile[];
+    /**
+     * The store, forwarded to each <sfx-file-item> so a tile can subscribe to its
+     * own file and re-render itself on progress. That lets this list skip its own
+     * (O(n)) re-render on progress-only changes — see `shouldUpdate`.
+     */
+    store?: Store<UploaderState>;
     showDropTile: boolean;
     sources: SourceDef[];
     accept: string;
@@ -70,6 +77,21 @@ export declare class SfxFileList extends LitElement {
     /** Per-tile similarity-search status (done is shown via the result badge,
      *  not a status here). */
     private _statusFor;
-    render(): import('lit-html').TemplateResult<1>;
+    /** Signature of the current tile set (ids + order) — see `shouldUpdate`. */
+    private _fileIdsKey;
+    /**
+     * Skip re-rendering the whole grid when the ONLY thing that changed is the
+     * `files` array and its set/order of ids is unchanged — i.e. a progress/status
+     * update on existing tiles. Each <sfx-file-item> subscribes to the store and
+     * re-renders itself, so the list doesn't need to re-run its (O(n)) `repeat`
+     * for those. Any structural change (a tile added/removed/reordered) or any
+     * other property change (selection, search, mode, …) re-renders as normal.
+     *
+     * Conservative by design: if anything other than `files` is in the change set
+     * we render, so a wrong assumption only costs an extra render, never a stale
+     * tile. Requires store-driven items (`store` set); without it, fall through.
+     */
+    shouldUpdate(changed: PropertyValues): boolean;
+    render(): import('lit').TemplateResult<1>;
 }
 //# sourceMappingURL=file-list.d.ts.map

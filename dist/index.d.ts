@@ -1,21 +1,20 @@
-export { SfxUploader, type UploaderConfig, type UploaderCallbacks, type InlineHeaderConfig, type RemoteThumbnailContext, type UploaderPhase, type UploaderPhase as UploaderStatus } from './sfx-uploader';
+export { SfxUploader, type UploaderConfig, type UploaderCallbacks, type InlineHeaderConfig, type RemoteThumbnailContext, type UploaderPhase, type UploaderPhase as UploaderStatus, } from './sfx-uploader';
 export { createStore, Store } from './store';
 export { UploadEngine, type UploadEngineConfig, type TusConfig } from './engine';
 export { PublicEvents } from './events/public-events';
 export type { UploaderState, UploadFile, FileStatus, UploadResponse, UploadResponseUrls, QueueConfig, RetryConfig, UploadRestrictions, } from './store';
-export type { AuthConfig, SecurityTemplateAuth, SassKeyAuth, AuthHeaders, } from './auth';
+export type { AuthConfig, SecurityTemplateAuth, SassKeyAuth, AuthHeaders } from './auth';
 export { resolveAuth, exchangeSassKey, getApiBase, buildAuthHeaders } from './auth';
 export type { ProviderId, ConnectorConfig, CoreSourceId, RemoteFileInfo } from './connectors';
 export { getProviderSources } from './connectors';
 export { SfxDropZone } from './components/drop-zone';
 export { SfxImportDivider } from './components/import-divider';
-export { SfxSourcePills, CORE_SOURCES, type SourceDef, type UploaderHandle } from './components/source-pills';
+export { SfxSourcePills, CORE_SOURCES, type SourceDef, type UploaderHandle, } from './components/source-pills';
 export { SfxFileList } from './components/file-list';
 export { SfxFileItem } from './components/file-item';
-export { SfxSuccessCard } from './components/success-card';
 export { SfxActionsBar, type UploadButtonState } from './components/actions-bar';
-export type { MetadataConfig, MetadataSchema, MetadataField, MetadataGroup } from './metadata/schema/schema.types';
+export type { MetadataConfig, MetadataSchema, MetadataField, MetadataGroup, } from '@scaleflex/dam-metadata';
 export { attachRelativePath, getRelativePath } from './utils/folder-traversal';
-export type { Product, ProductFieldKey } from './product/product.types';
-export { validateProductRef, validateProductPosition, PRODUCT_REF_INVALID_CHARS, } from './product/product.constants';
+export type { Product, ProductFieldKey } from '@scaleflex/dam-metadata';
+export { validateProductRef, validateProductPosition, PRODUCT_REF_INVALID_CHARS, } from '@scaleflex/dam-metadata';
 //# sourceMappingURL=index.d.ts.map

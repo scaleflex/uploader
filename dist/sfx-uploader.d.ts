@@ -1,11 +1,9 @@
 import { LitElement } from 'lit';
 import { TusConfig } from './engine';
 import { UploadFile, UploadRestrictions, UploadResponse } from './store/store.types';
-import { AuthConfig } from './auth/auth.types';
+import { AuthConfig } from '@scaleflex/dam-core';
 import { ConnectorConfig } from './connectors/connector.types';
-import { MetadataConfig } from './metadata/schema/schema.types';
-import { TaxonodeEntry } from './metadata/taxonomies/taxonomies.types';
-import { Product } from './product/product.types';
+import { MetadataConfig, TaxonodeEntry, Product } from '@scaleflex/dam-metadata';
 export interface UploaderCallbacks {
     onFileAdded?: (file: UploadFile) => void;
     onFileRemoved?: (file: UploadFile) => void;
@@ -138,7 +136,7 @@ export interface UploaderConfig {
      */
     apiDomain?: string;
     targetFolder?: string;
-    mode?: "modal" | "inline";
+    mode?: 'modal' | 'inline';
     /** Header displayed above the uploader in inline mode. All fields are optional. */
     inlineHeader?: InlineHeaderConfig;
     /**
@@ -148,7 +146,7 @@ export interface UploaderConfig {
      * - `true`    — header visible, no button (default for inline without inlineHeader)
      * - `false`   — no header at all
      */
-    header?: boolean | "close" | "back";
+    header?: boolean | 'close' | 'back';
     restrictions?: Partial<UploadRestrictions>;
     concurrency?: number;
     autoProceed?: boolean;
@@ -165,7 +163,7 @@ export interface UploaderConfig {
      */
     similarityCheck?: {
         enabled: boolean;
-        confidence?: "low" | "mid" | "high";
+        confidence?: 'low' | 'mid' | 'high';
         /** Override the embedding service base URL. Defaults to
          *  `https://ai.scaleflex.com`. Useful for staging environments. */
         endpoint?: string;
@@ -210,7 +208,7 @@ export interface UploaderConfig {
     /** Metadata editing configuration. When provided, enables the built-in metadata form. */
     metadataConfig?: MetadataConfig;
     /** Layout for the import-from sources section: horizontal pills (default) or cards grid. */
-    sourcesLayout?: "pills" | "cards";
+    sourcesLayout?: 'pills' | 'cards';
     /**
      * Host-supplied builder for the "Locate" button URL. Receives the
      * completed file and returns the URL Locate should open. Return
@@ -427,7 +425,7 @@ export interface UploaderConfig {
      */
     preserveFolderStructure?: boolean;
 }
-export type UploaderPhase = "empty" | "ready" | "uploading" | "complete";
+export type UploaderPhase = 'empty' | 'ready' | 'uploading' | 'complete';
 export declare class SfxUploader extends LitElement {
     static styles: import('lit').CSSResult;
     config: UploaderConfig | null;
@@ -489,6 +487,19 @@ export declare class SfxUploader extends LitElement {
     private _isPillExpanded;
     private _metadataSchema;
     /**
+     * Field-label and option-label translations for the active regional
+     * language. `null` until loaded (or when the project has no LANGUAGES
+     * regional group). Drives `_localizedMetadataSchema`.
+     */
+    private _metadataTranslations;
+    /** Language `_metadataTranslations` was loaded for (active LANGUAGES variant). */
+    private _metadataTranslationsLang;
+    /** Monotonic counter to discard stale translation fetches on rapid switches. */
+    private _translationsRequestId;
+    private _fieldI18nService;
+    /** Memo for `_localizedMetadataSchema` keyed by (base schema, translations). */
+    private _localizedSchemaCache;
+    /**
      * Pre-upload metadata dependencies fetched from the Hub. Drives hide /
      * require / allow_values / set_values for each queued file. Empty array
      * when the project has no rules or when fetch failed (uploader degrades to
@@ -514,9 +525,9 @@ export declare class SfxUploader extends LitElement {
     private _bulkMetadataOpen;
     /** When non-null, the bulk modal opens with this field active. */
     private _bulkMetadataInitialFieldKey;
-    /** True when the user has clicked "Review files" on the success-card or
-     *  the "View last upload" pill on the drop-zone screen. Renders the
-     *  read-only last-upload-review screen instead of the normal phase view. */
+    /** True when the user has clicked the "View last upload" pill on the
+     *  drop-zone screen. Renders the read-only last-upload-review screen
+     *  instead of the normal phase view. */
     private _isReviewing;
     /** Files loaded from sessionStorage for the review screen. */
     private _reviewFiles;
@@ -562,6 +573,22 @@ export declare class SfxUploader extends LitElement {
      */
     private get _effectiveMetadataConfig();
     private _onRegionalChange;
+    /**
+     * The metadata schema with field titles and select/multi-select option
+     * labels swapped to the active-language translations (falling back to the
+     * default-language strings). Passed to the rendering components only; all
+     * logic keeps using the untranslated `_metadataSchema`. Memoized so repeated
+     * renders don't rebuild the localized copy.
+     */
+    private get _localizedMetadataSchema();
+    /**
+     * Fetch field-label + option-label translations for the active regional
+     * language and store them in `_metadataTranslations` (triggering a re-render
+     * with localized labels). No-op when the project has no LANGUAGES regional
+     * group, when there's no active language, or when the active language is
+     * already loaded. Failures degrade gracefully to default-language labels.
+     */
+    private _loadMetadataTranslations;
     private _videoBlobUrls;
     /** Persisted ETA — holds the last computed value so the display doesn't flicker when speed momentarily drops to 0. */
     private _lastEta;
@@ -575,6 +602,7 @@ export declare class SfxUploader extends LitElement {
     private _apiBase;
     private _authHeaders;
     private _authResolveId;
+    private _metadataSchemaResolveId;
     private _prevStoreState;
     private _unsubStoreEvents;
     /**
@@ -726,6 +754,16 @@ export declare class SfxUploader extends LitElement {
      * rules apply, so the form falls back to schema defaults.
      */
     private _resolvedSchemaFor;
+    /**
+     * Initial `meta` for a newly added file — seeded from
+     * `metadataConfig.defaults` (backend-format values under the same keys as
+     * `file.meta` / the upload `meta` payload, i.e. `field.key`). Seeded values
+     * pre-fill the metadata form and are sent with the upload; the user can
+     * still edit them beforehand. Rejected files are not seeded. Cloned per
+     * file so nested values (regional maps, arrays) are never shared across
+     * files or with the host's config object.
+     */
+    private _initialFileMeta;
     private get _metadataEnforcing();
     private _firstMissingRequiredFieldKey;
     private get _hasUnfilledRequiredMetadata();
@@ -852,14 +890,12 @@ export declare class SfxUploader extends LitElement {
      *  response only carries [uuid, score, url] — size/dimensions aren't known. */
     private _simAssetMeta;
     private _onRequireMetadata;
-    /** The single completed file the aggregate views (collapsed pill,
-     *  success-card) can offer a Locate shortcut for, or `null` when there
-     *  isn't exactly one. Locating a whole batch has no meaningful single
-     *  destination, so multi-file batches locate per-row in the expanded pill
-     *  / review screen instead. Mirrors the per-row gate: requires
+    /** The single completed file the collapsed floating pill can offer a Locate
+     *  shortcut for, or `null` when there isn't exactly one. Locating a whole
+     *  batch has no meaningful single destination, so multi-file batches locate
+     *  per-row on the completed tiles instead. Mirrors the per-row gate: requires
      *  `showLocateButton` and a resolved UUID. */
     private _soleLocatableFile;
-    private _onSuccessCardLocate;
     private _locateFile;
     private _onFileLocate;
     private _onFileCopyCdn;
@@ -888,12 +924,11 @@ export declare class SfxUploader extends LitElement {
     private _onPrimaryAction;
     /** Dismiss handler for inline mode X button */
     private _onInlineDismiss;
-    /** Close button on the success card — route to the right dismiss based on mode */
-    private _onSuccessCardClose;
     /** Shared dismiss handler for X button, backdrop click, Escape */
     private _onModalDismiss;
     private _onCancelUpload;
     private _onMinimize;
+    /** Toggle the floating pill between the collapsed bar and the expanded card. */
     private _onPillClick;
     private _onPillExpand;
     private _onPillDismiss;
@@ -904,7 +939,7 @@ export declare class SfxUploader extends LitElement {
     private _onBodyDragLeave;
     private _onBodyDrop;
     private _onKeyDown;
-    render(): import('lit-html').TemplateResult<1>;
+    render(): import('lit').TemplateResult<1>;
     /** Fullscreen image/video overlay. Rendered at the top level (sibling
         of modal-backdrop) so it never inherits a containing block from the
         modal-card on mobile, where modal-card is position:fixed itself and
@@ -913,13 +948,28 @@ export declare class SfxUploader extends LitElement {
         their position:fixed always resolves to the viewport, even if some
         ancestor of fs-overlay establishes a containing block on first paint. */
     private _renderFsOverlay;
+    /** Right-aligned header controls shown during the uploading / complete phases:
+     *  Minimize-to-pill (when enabled) and Close. The standard idle header builds
+     *  its own buttons, so this only serves the progress headers. */
+    private _renderProgressHeaderActions;
     private _renderInlineHeader;
     private _renderHeader;
     private _dimCache;
     private _getImageDimensions;
-    private _renderUploadOverlay;
-    private _renderOverlayFiles;
+    /**
+     * Derive the shared outcome model for a batch — icon, title, breakdown
+     * summary and segmented-bar shares. Used by both the dialog header (during
+     * the uploading / complete phases) and the minimized floating pill so the
+     * two never disagree on counts, colour or wording.
+     */
+    private _batchOutcome;
     private _renderFloatingPill;
+    /**
+     * One row in the expanded floating card's item list — shared by the failed /
+     * active / completed buckets so all three render identically. `t` is threaded
+     * in so the row stays a pure function of (file, translator).
+     */
+    private _renderFloatItem;
     private _onSplitPointerDown;
     private _onSplitPointerMove;
     private _onSplitPointerUp;
@@ -955,7 +1005,7 @@ export declare class SfxUploader extends LitElement {
 }
 declare global {
     interface HTMLElementTagNameMap {
-        "sfx-uploader": SfxUploader;
+        'sfx-uploader': SfxUploader;
     }
 }
 export {};

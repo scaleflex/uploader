@@ -18,6 +18,15 @@ export interface ConnectorConfig {
     customSources?: SourceDef[];
     /** Allowlist of built-in sources to render. When omitted, all core sources are shown. */
     coreSources?: CoreSourceId[];
+    /**
+     * Google Picker API credentials. When provided, Google Drive uses the
+     * Picker API (non-sensitive `drive.file` scope) instead of Companion OAuth.
+     */
+    googlePicker?: {
+        clientId: string;
+        apiKey: string;
+        appId: string;
+    };
 }
 /** A file or folder item returned by Companion's list endpoint. */
 export interface CompanionItem {
@@ -73,5 +82,11 @@ export interface RemoteFileInfo {
      * one or more entire folders from a connector (e.g. `"myFolder/sub"`).
      */
     relativeFolder?: string;
+    /**
+     * Google OAuth access token from the Picker API flow. When present, the
+     * upload engine POSTs to `/google-picker/get` instead of the standard
+     * `/{provider}/get/{requestPath}` Companion endpoint.
+     */
+    pickerAccessToken?: string;
 }
 //# sourceMappingURL=connector.types.d.ts.map

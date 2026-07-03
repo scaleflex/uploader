@@ -1,6 +1,6 @@
 import { Store } from '../store/store';
 import { UploaderState, UploadFile, FileStatus, UploadResponseUrls } from '../store/store.types';
-import { AuthHeaders } from '../auth/auth.types';
+import { AuthHeaders } from '@scaleflex/dam-core';
 import { TusConfig } from './tus-upload';
 export interface UploadEngineConfig {
     apiBase: string;
@@ -41,6 +41,10 @@ export declare class UploadEngine {
     private pausedUploads;
     private retryTimers;
     private unsubscribe;
+    /** Latest un-flushed progress patch per file, keyed by file id. */
+    private pendingProgress;
+    /** Handle for the scheduled rAF flush, or null when none is pending. */
+    private progressFlushHandle;
     constructor(store: Store<UploaderState>, config: UploadEngineConfig);
     /**
      * Start processing the queue. Subscribes to store changes to
@@ -98,7 +102,31 @@ export declare class UploadEngine {
     private handleError;
     private abortPausedUpload;
     private abortUpload;
+    /**
+     * Schedule a progress flush on the next animation frame. Idempotent: many
+     * progress events between frames collapse into a single scheduled flush.
+     */
+    private scheduleProgressFlush;
+    /** Cancel any pending flush and drop buffered progress (used on destroy). */
+    private cancelProgressFlush;
+    /**
+     * Apply all buffered progress patches in one immutable Map rebuild and write
+     * the file set + recomputed totals in a single setState. Patches for files
+     * that left the `uploading` state between the byte event and this frame
+     * (completed, cancelled, paused, errored) are dropped, so a stale progress
+     * value can never clobber a terminal status that landed via the immediate
+     * (non-batched) `updateFile` path.
+     */
+    private flushProgress;
     private updateTotalProgress;
+    /**
+     * Compute aggregate queue totals from a given files Map without writing to
+     * the store. Split out from {@link updateTotalProgress} so the batched
+     * progress flush can fold `files` and these totals into a single
+     * `setState` — one store notification (and one render) per frame instead of
+     * one for the file patch and another for the totals.
+     */
+    private computeTotals;
     private checkAllComplete;
 }
 export declare function isActive(status: FileStatus): boolean;

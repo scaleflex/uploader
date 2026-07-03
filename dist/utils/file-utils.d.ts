@@ -13,10 +13,7 @@ export declare function getFileCategory(file: {
 export declare function getFileExtension(name: string): string;
 /** OS-generated metadata files (e.g. .DS_Store, Thumbs.db) that should be silently skipped on upload. */
 export declare function isSystemFile(name: string): boolean;
-/** Get the CDN-hosted file type icon URL for a given extension. */
-export declare function getFileTypeIconUrl(extension: string): string;
-/** Get the default/generic file type icon URL. */
-export declare function getDefaultFileTypeIconUrl(): string;
+export { getFileTypeIconUrl, getDefaultFileTypeIconUrl } from '@scaleflex/dam-core';
 /** Guess MIME type from a filename. */
 export declare function guessMimeType(name: string): string;
 /** Returns true for image MIME types that browsers cannot render natively as <img>. */

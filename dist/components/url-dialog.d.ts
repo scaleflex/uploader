@@ -22,6 +22,6 @@ export declare class SfxUrlDialog extends LitElement {
     private _cancel;
     private _submit;
     connectedCallback(): void;
-    render(): import('lit-html').TemplateResult<1>;
+    render(): import('lit').TemplateResult<1>;
 }
 //# sourceMappingURL=url-dialog.d.ts.map

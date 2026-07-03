@@ -26,5 +26,5 @@ export declare const PublicEvents: {
     readonly FILE_LOCATE: "sfx-file-locate";
     readonly FILE_COPY_CDN: "sfx-file-copy-cdn";
 };
-export type PublicEventName = typeof PublicEvents[keyof typeof PublicEvents];
+export type PublicEventName = (typeof PublicEvents)[keyof typeof PublicEvents];
 //# sourceMappingURL=public-events.d.ts.map

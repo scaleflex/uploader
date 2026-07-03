@@ -30,7 +30,7 @@ export declare class SfxSearchProviderBrowser extends LitElement {
     private _toggleSelect;
     private _onAddSelected;
     private _onClose;
-    render(): import('lit-html').TemplateResult<1>;
+    render(): import('lit').TemplateResult<1>;
     private _renderHeader;
     private _renderSearchBar;
     private _renderLoading;

@@ -7,5 +7,5 @@ import { SourceDef } from '../types/source.types';
  *
  * Call only when `s.brandHtml` is truthy.
  */
-export declare function brandIcon(s: SourceDef): import('lit-html/directive.js').DirectiveResult<typeof import('lit-html/directives/unsafe-html.js').UnsafeHTMLDirective>;
+export declare function brandIcon(s: SourceDef): import('lit/directive.js').DirectiveResult<typeof import('lit/directives/unsafe-html.js').UnsafeHTMLDirective>;
 //# sourceMappingURL=brand-icon.d.ts.map

@@ -25,6 +25,6 @@ export declare class SfxCameraDialog extends LitElement {
     private _retake;
     private _usePhoto;
     private _cancel;
-    render(): import('lit-html').TemplateResult<1>;
+    render(): import('lit').TemplateResult<1>;
 }
 //# sourceMappingURL=camera-dialog.d.ts.map

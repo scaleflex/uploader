@@ -15,6 +15,6 @@ export declare class SfxToast extends LitElement {
     show(message: string, type?: ToastType): void;
     private _dismiss;
     private _iconForType;
-    render(): import('lit-html').TemplateResult<1>;
+    render(): import('lit').TemplateResult<1>;
 }
 //# sourceMappingURL=toast.d.ts.map

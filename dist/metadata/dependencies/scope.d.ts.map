@@ -1,1 +1,0 @@
-{"version":3,"file":"scope.d.ts","sourceRoot":"","sources":["../../../src/metadata/dependencies/scope.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EACV,UAAU,EACV,uBAAuB,EACxB,MAAM,sBAAsB,CAAC;AAS9B;;;;GAIG;AACH,wBAAgB,cAAc,CAAC,IAAI,EAAE,MAAM,GAAG,GAAG,CAAC,uBAAuB,CAAC,CAkBzE;AAED,oFAAoF;AACpF,wBAAgB,SAAS,CAAC,UAAU,EAAE,UAAU,EAAE,IAAI,EAAE,MAAM,GAAG,OAAO,CAMvE"}

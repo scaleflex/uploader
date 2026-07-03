@@ -1,23 +1,30 @@
 {
   "name": "@scaleflex/uploader",
-  "version": "1.7.0",
-  "description": "Framework-agnostic file upload widget for Scaleflex VXP",
+  "version": "1.11.0",
+  "description": "Framework-agnostic file uploader web component for Scaleflex / Filerobot DAM.",
   "type": "module",
-  "main": "dist/index.cjs",
-  "module": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "license": "SEE LICENSE IN LICENSE",
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
     "./react": {
+      "source": "./src/react.ts",
       "types": "./dist/react.d.ts",
       "import": "./dist/react.js",
       "require": "./dist/react.cjs"
     },
     "./define": {
+      "source": "./src/define.ts",
       "types": "./dist/define.d.ts",
       "import": "./dist/define.js",
       "require": "./dist/define.cjs"
@@ -25,41 +32,20 @@
   },
   "files": [
     "dist",
-    ".claude/skills",
     "README.md",
-    "LICENSE",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "LICENSE"
   ],
-  "scripts": {
-    "dev": "vite serve dev",
-    "dev:demo": "vite serve --config vite.demo.config.ts",
-    "build": "vite build",
-    "build:demo": "vite build --config vite.demo.config.ts",
-    "preview": "vite preview",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
-    "release": "node scripts/release-cdn.mjs plugin",
-    "publish:github": "./scripts/publish-github.sh",
-    "push:source": "git push gitlab main"
-  },
   "dependencies": {
-    "i18next": "^26.2.0",
+    "@lit-labs/virtualizer": "^2.1.1",
+    "i18next": "^23.16.8",
     "i18next-http-backend": "^4.0.0",
     "lit": "^3.2.0",
-    "tus-js-client": "^4.3.1"
-  },
-  "devDependencies": {
-    "@playwright/test": "^1.58.2",
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
-    "@vitest/coverage-v8": "^4.1.0",
-    "jsdom": "^29.0.0",
-    "typescript": "^5.5.3",
-    "vite": "^6.0.0",
-    "vite-plugin-dts": "^4.0.0",
-    "vitest": "^4.1.0"
+    "tus-js-client": "^4.3.1",
+    "@scaleflex/dam-metadata": "^0.3.5",
+    "@scaleflex/bulk-edit": "^0.3.4",
+    "@scaleflex/dam-core": "^0.3.0",
+    "@scaleflex/dam-ui": "^0.3.0"
   },
   "peerDependencies": {
     "react": ">=18",
@@ -73,6 +59,16 @@
       "optional": true
     }
   },
-  "license": "SEE LICENSE IN LICENSE",
-  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3"
+  },
+  "scripts": {
+    "dev": "vite serve --config vite.demo.config.ts",
+    "build": "vite build",
+    "build:demo": "vite build --config vite.demo.config.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "build:cdn": "vite build --config vite.cdn.config.ts"
+  }
 }

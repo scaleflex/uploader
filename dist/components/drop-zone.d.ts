@@ -19,10 +19,10 @@ export declare class SfxDropZone extends LitElement {
      */
     directory: boolean;
     sources: SourceDef[];
-    sourcesLayout: "pills" | "cards";
+    sourcesLayout: 'pills' | 'cards';
     /** Set by sfx-uploader to scope the wide-host frame to inline mode only.
      *  Modal mode is excluded (no dashed card frame even on big modals). */
-    mode: "modal" | "inline";
+    mode: 'modal' | 'inline';
     /** Threshold (px) at which the host is considered "wide enough" for the
      *  inline-fullscreen bordered-card layout. Tuned to fire on the actual
      *  full-screen demo (1400+) while skipping embedded inline uploaders
@@ -41,7 +41,7 @@ export declare class SfxDropZone extends LitElement {
      * pass `'folder'` (only honored when `directory` is enabled) to open the
      * directory picker instead.
      */
-    browse(mode?: "files" | "folder"): void;
+    browse(mode?: 'files' | 'folder'): void;
     private _onDragEnter;
     private _onDragOver;
     private _onDragLeave;
@@ -71,6 +71,6 @@ export declare class SfxDropZone extends LitElement {
     private _renderCard;
     private _renderMoreCard;
     private _renderMoreDropdown;
-    render(): import('lit-html').TemplateResult<1>;
+    render(): import('lit').TemplateResult<1>;
 }
 //# sourceMappingURL=drop-zone.d.ts.map

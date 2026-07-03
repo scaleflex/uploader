@@ -1,1 +1,0 @@
-{"version":3,"file":"i18n-controller.d.ts","sourceRoot":"","sources":["../../src/i18n/i18n-controller.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,kBAAkB,EAAE,sBAAsB,EAAE,MAAM,KAAK,CAAA;AAGrE;;;;;;;;;GASG;AACH,qBAAa,cAAe,YAAW,kBAAkB;IACvD,OAAO,CAAC,KAAK,CAAwB;IACrC,OAAO,CAAC,YAAY,CAA4B;gBAEpC,IAAI,EAAE,sBAAsB;IAKxC,aAAa,IAAI,IAAI;IAIrB,gBAAgB,IAAI,IAAI;CAIzB"}

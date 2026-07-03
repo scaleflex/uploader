@@ -1,7 +1,7 @@
 import { CSSProperties } from 'react';
 import { SfxUploader as SfxUploaderElement, UploaderConfig, UploaderPhase } from './sfx-uploader';
 import { UploadFile, UploadResponse } from './store/store.types';
-import { Product } from './product/product.types';
+import { Product } from '@scaleflex/dam-metadata';
 export interface UploaderRef {
     element: SfxUploaderElement | null;
     open(): void;

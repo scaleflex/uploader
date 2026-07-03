@@ -1,5 +1,5 @@
 import { UploadFile, UploadResponse } from '../store/store.types';
-import { AuthHeaders } from '../auth/auth.types';
+import { AuthHeaders } from '@scaleflex/dam-core';
 export interface XhrUploadOptions {
     apiBase: string;
     authHeaders: AuthHeaders;

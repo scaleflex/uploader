@@ -1,1 +1,0 @@
-{"version":3,"file":"number-field.d.ts","sourceRoot":"","sources":["../../../src/metadata/fields/number-field.ts"],"names":[],"mappings":"AAEA,OAAO,EAAE,iBAAiB,EAAE,MAAM,cAAc,CAAC;AAEjD,qBAAa,kBAAmB,SAAQ,iBAAiB;IACvD,MAAM,CAAC,MAAM,4BAAyB;IAEtC,OAAO,KAAK,KAAK,GAEhB;IAED,OAAO,KAAK,UAAU,GAErB;IAED,OAAO,CAAC,QAAQ;IAIhB,OAAO,CAAC,OAAO;IAIf,OAAO,CAAC,UAAU;IAUlB,MAAM;CAeP"}

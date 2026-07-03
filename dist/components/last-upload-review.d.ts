@@ -19,6 +19,6 @@ export declare class SfxLastUploadReview extends LitElement {
     private _setFilter;
     private _onBack;
     private _onClear;
-    render(): import('lit-html').TemplateResult<1>;
+    render(): import('lit').TemplateResult<1>;
 }
 //# sourceMappingURL=last-upload-review.d.ts.map

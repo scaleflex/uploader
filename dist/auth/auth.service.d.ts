@@ -1,4 +1,4 @@
-import { AuthConfig, AuthHeaders } from './auth.types';
+import { AuthConfig, AuthHeaders } from '@scaleflex/dam-core';
 /**
  * Derive the Scaleflex API base URL from a container name.
  * When apiDomain is provided (e.g. "https://akli.api.filerobot.com"), it is used
@@ -8,9 +8,17 @@ import { AuthConfig, AuthHeaders } from './auth.types';
 export declare function getApiBase(container: string, apiDomain?: string): string;
 /**
  * Exchange a security template ID for a SASS key.
- * Mirrors asset-picker's `exchangeSassKey()` pattern.
+ *
+ * Resilience: the response is fetched with `cache: 'no-store'` (the key is
+ * short-lived and security-sensitive — never serve a cached key or a cached
+ * transient 404), and transient failures (404/408/429/5xx, network errors) are
+ * retried a few times with linear backoff. This fixes the intermittent
+ * "SASS key exchange failed (HTTP 404)" seen with a valid container + template.
  */
-export declare function exchangeSassKey(container: string, securityTemplateId: string, apiDomain?: string): Promise<string>;
+export declare function exchangeSassKey(container: string, securityTemplateId: string, apiDomain?: string, opts?: {
+    retries?: number;
+    retryDelayMs?: number;
+}): Promise<string>;
 /**
  * Build auth headers from a resolved SASS key.
  */

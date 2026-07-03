@@ -1,1 +1,0 @@
-{"version":3,"file":"geo-point-field.d.ts","sourceRoot":"","sources":["../../../src/metadata/fields/geo-point-field.ts"],"names":[],"mappings":"AAGA,OAAO,EAAE,iBAAiB,EAAE,MAAM,cAAc,CAAC;AAGjD,qBAAa,oBAAqB,SAAQ,iBAAiB;IACzD,MAAM,CAAC,MAAM,4BAeX;IAEF,OAAO,KAAK,IAAI,GAGf;IAED,OAAO,CAAC,QAAQ;IAOhB,OAAO,CAAC,OAAO;IAMf,OAAO,CAAC,UAAU;IAIlB,MAAM;CAqBP"}

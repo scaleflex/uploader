@@ -1,12 +1,2 @@
-declare class UploaderMissingKeysHelper {
-    private enabled;
-    private _missingKeys;
-    private _timer;
-    private readonly debounceDelay;
-    constructor();
-    handleMissingKey(key: string, value?: string, ns?: string): void;
-    private _renderCurl;
-}
-export declare const missingKeysHelper: UploaderMissingKeysHelper;
-export {};
+export declare const missingKeysHelper: import('@scaleflex/dam-ui').MissingKeysHelper;
 //# sourceMappingURL=missing-keys-helper.d.ts.map
