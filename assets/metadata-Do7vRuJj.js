@@ -1,4 +1,4 @@
-import{b as F}from"./index-C9uMgY1U.js";import{r as B}from"./code-block-C_3oxnLY.js";const S="sfx-uploader-demo-meta",R={projectUuid:"",enforceRequired:"auto",language:"",sessionToken:"",companyToken:"",projectToken:""};function D(){try{const t=localStorage.getItem(S);if(t)return{...R,...JSON.parse(t)}}catch{}return{...R}}function L(t){localStorage.setItem(S,JSON.stringify(t))}let s=null;function m(t){return t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}function c(t,n){if(!s)return;const r=new Date().toLocaleTimeString(),d=document.createElement("div"),p=n?` <span class="log-data">${m(JSON.stringify(n,null,0))}</span>`:"";d.innerHTML=`<span class="log-time">${m(r)}</span> <span class="log-event">${m(t)}</span>${p}`,s.appendChild(d),s.scrollTop=s.scrollHeight}const x={render(){return`
+import{b as B}from"./index-DeK5oxjQ.js";import{r as F}from"./code-block-C_3oxnLY.js";const q="sfx-uploader-demo-meta",R={projectUuid:"",enforceRequired:"auto",language:"",sessionToken:"",companyToken:"",projectToken:""};function O(){try{const t=localStorage.getItem(q);if(t)return{...R,...JSON.parse(t)}}catch{}return{...R}}function D(t){localStorage.setItem(q,JSON.stringify(t))}let l=null;function m(t){return t.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}function c(t,n){if(!l)return;const r=new Date().toLocaleTimeString(),d=document.createElement("div"),p=n?` <span class="log-data">${m(JSON.stringify(n,null,0))}</span>`:"";d.innerHTML=`<span class="log-time">${m(r)}</span> <span class="log-event">${m(t)}</span>${p}`,l.appendChild(d),l.scrollTop=l.scrollHeight}const x={render(){return`
       <div class="page-header">
         <h1>Metadata editing</h1>
         <p>
@@ -36,7 +36,7 @@ import{b as F}from"./index-C9uMgY1U.js";import{r as B}from"./code-block-C_3oxnLY
           </div>
         </div>
         <details style="margin-bottom: 12px;">
-          <summary style="cursor: pointer; font-size: 13px; color: #64748b; margin-bottom: 8px;">Hub auth tokens (required for schema fetch)</summary>
+          <summary style="cursor: pointer; font-size: 13px; color: #64748b; margin-bottom: 8px;">Hub auth tokens (optional — leave empty to load the schema from /v5/settings)</summary>
           <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: end; margin-top: 8px;">
             <div>
               <label style="display: block; font-size: 12px; color: #94a3b8; margin-bottom: 2px;">x-session-token</label>
@@ -79,11 +79,13 @@ import{b as F}from"./index-C9uMgY1U.js";import{r as B}from"./code-block-C_3oxnLY
       <section class="page-section">
         <h2>How it works</h2>
         <ol style="font-size: 14px; line-height: 1.8; color: #475569; padding-left: 20px;">
-          <li>The uploader loads the metadata schema in one of two ways:
+          <li>The uploader loads the metadata schema in one of three ways:
             <ul style="margin: 4px 0 4px 16px; list-style: disc;">
-              <li><strong>Hub API fetch</strong> &mdash; calls <code>hub.scaleflex.com/api/project/{projectUuid}</code> using <code>hubHeaders</code>.</li>
+              <li><strong>Hub API fetch</strong> &mdash; calls <code>hub.scaleflex.com/api/project/{projectUuid}</code> using <code>hubHeaders</code>. Preferred when session headers are available: it is the only source of dependency rules and of the <code>force_filling_metadata_on_upload</code> toggle.</li>
+              <li><strong>Container settings (no Hub session)</strong> &mdash; when <code>hubHeaders</code> are absent, the schema comes from <code>{apiBase}/v5/settings</code>, authenticated with the SASS key the uploader already holds. This works in <code>security-template</code> auth mode, so <code>metadataConfig: { projectUuid }</code> alone is enough. Dependency rules stay disabled.</li>
               <li><strong>Pre-fetched (rawMetadata)</strong> &mdash; if your app already has the schema (e.g. from the airbox/sharebox API response), pass it via <code>rawMetadata</code> and no extra fetch is made.</li>
             </ul>
+            Override the choice with <code>schemaSource</code>: <code>'auto'</code> (default), <code>'settings'</code>, or <code>'hub'</code>.
           </li>
           <li>A "Fill Metadata" button appears in the actions bar (auto-enabled when <code>metadataConfig</code> is set).</li>
           <li>Click a file to open the preview sidebar &mdash; edit that file's metadata inline.</li>
@@ -185,7 +187,7 @@ import{b as F}from"./index-C9uMgY1U.js";import{r as B}from"./code-block-C_3oxnLY
               <td style="padding: 8px 12px;"><code>rawMetadata</code></td>
               <td style="padding: 8px 12px;"><code>RawMetadata</code></td>
               <td style="padding: 8px 12px;">&mdash;</td>
-              <td style="padding: 8px 12px;">Pre-fetched metadata schema object (e.g. <code>airboxResponse.airbox.metadata</code>). When provided, the Hub API call is skipped entirely &mdash; no <code>hubHeaders</code> needed.</td>
+              <td style="padding: 8px 12px;">Pre-fetched metadata schema object (e.g. <code>airboxResponse.airbox.metadata</code>). When provided, no schema is fetched at all &mdash; neither the Hub nor <code>/v5/settings</code> is called.</td>
             </tr>
             <tr style="border-bottom: 1px solid #f1f5f9;">
               <td style="padding: 8px 12px;"><code>hubHeaders</code></td>
@@ -244,7 +246,27 @@ import{b as F}from"./index-C9uMgY1U.js";import{r as B}from"./code-block-C_3oxnLY
           </tbody>
         </table>
       </section>
-    `},init(t){s=document.getElementById("event-log"),B("#code-container",[{label:"Basic",lang:"javascript",code:`
+    `},init(t){l=document.getElementById("event-log"),F("#code-container",[{label:"Basic (no Hub session)",lang:"javascript",code:`
+uploader.config = {
+  auth: {
+    mode: 'security-template',
+    container: 'YOUR_CONTAINER',
+    securityTemplateId: 'SECU_...',
+  },
+  metadataConfig: {
+    projectUuid: 'YOUR_PROJECT_UUID',
+    enforceRequiredBeforeUpload: 'auto',
+  },
+  // showFillMetadata is auto-enabled when metadataConfig is set
+};
+
+// That's it — no session token needed. Without hubHeaders the schema is
+// fetched from {apiBase}/v5/settings using the SASS key the uploader already
+// exchanged from the security template. Dependency rules stay disabled
+// (they are Hub-only); everything else works: groups, options, regional
+// variants, required-field enforcement, product fields.`},{label:"With Hub session",lang:"javascript",code:`
+// Pass hubHeaders when your app HAS a Hub session. You then also get
+// dependency rules and the project's "require metadata on upload" toggle.
 uploader.config = {
   auth: {
     mode: 'security-template',
@@ -261,8 +283,10 @@ uploader.config = {
       'x-project-token': projectUuid,
     },
   },
-  // showFillMetadata is auto-enabled when metadataConfig is set
-};`},{label:"Airbox / rawMetadata",lang:"javascript",code:`
+};
+
+// If the session token arrives asynchronously, assign a NEW config object
+// once it is available — in-place mutation is not detected.`},{label:"Airbox / rawMetadata",lang:"javascript",code:`
 // Fetch airbox config — metadata schema is included
 const res = await fetch(airboxUrl + '?format=json');
 const { airbox } = await res.json();
@@ -329,4 +353,4 @@ sfx-uploader {
 uploader.style.setProperty('--sfx-up-modal-max-width', 'min(90vw, 1600px)');
 uploader.style.setProperty('--sfx-up-bulk-modal-width', '90vw');
 uploader.open();
-*/`}]);const n=[["sfx-file-added",e=>{var o;return c("file-added",{name:(o=e.detail.file)==null?void 0:o.name})}],["sfx-fill-metadata",e=>{var o;return c("fill-metadata",{files:(o=e.detail.files)==null?void 0:o.length})}],["sfx-metadata-schema",e=>{var a,l;const o=((a=e.detail.schema)==null?void 0:a.fields)??[];c("metadata-schema",{totalFields:o.length,requiredFieldKeys:e.detail.requiredFieldKeys??[],forceFillingOnUpload:(l=e.detail.schema)==null?void 0:l.forceFillingOnUpload})}],["sfx-upload-complete",e=>{var o,a,l;return c("upload-complete",{name:(o=e.detail.file)==null?void 0:o.name,meta:(l=(a=e.detail.response)==null?void 0:a.file)==null?void 0:l.meta})}],["sfx-all-complete",e=>{var o,a;return c("all-complete",{ok:(o=e.detail.successful)==null?void 0:o.length,failed:(a=e.detail.failed)==null?void 0:a.length})}]],r=[];n.forEach(([e,o])=>{const a=o;t.addEventListener(e,a),r.push([e,a])}),x._listeners=r,document.getElementById("clear-log").addEventListener("click",()=>{s&&(s.innerHTML='<div><span class="log-time">--:--:--</span> Log cleared.</div>')});const d=D(),p=document.getElementById("project-uuid"),i=document.getElementById("enforce-required-wrap"),A=i.querySelector(".meta-select-trigger"),z=i.querySelector(".meta-select-label"),b=i.querySelector(".meta-select-chevron"),y=i.querySelector(".meta-select-menu"),v=i.querySelectorAll(".meta-select-option"),w=document.getElementById("profile-language"),k=document.getElementById("hub-session"),U=document.getElementById("hub-company"),E=document.getElementById("hub-project"),u=e=>{i.dataset.value=e,z.textContent=e,v.forEach(o=>{const a=o.dataset.value===e;o.style.color=a?"#2563eb":"#1e293b",o.style.background=a?"#eff6ff":"transparent",o.style.fontWeight=a?"500":"400"})};let f=!1;const g=()=>{f=!1,y.style.display="none",b.style.transform="rotate(0deg)"},M=()=>{f=!0,y.style.display="block",b.style.transform="rotate(180deg)"};A.addEventListener("click",e=>{e.stopPropagation(),f?g():M()}),v.forEach(e=>{e.addEventListener("mouseenter",()=>{e.dataset.value!==i.dataset.value&&(e.style.background="#f1f5f9")}),e.addEventListener("mouseleave",()=>{e.dataset.value!==i.dataset.value&&(e.style.background="transparent")}),e.addEventListener("click",()=>{u(e.dataset.value||"auto"),g()})}),document.addEventListener("click",e=>{i.contains(e.target)||g()}),d.projectUuid&&(p.value=d.projectUuid),d.enforceRequired?u(d.enforceRequired):u("auto"),d.language&&(w.value=d.language),d.sessionToken&&(k.value=d.sessionToken),d.companyToken&&(U.value=d.companyToken),d.projectToken&&(E.value=d.projectToken),document.getElementById("open-btn").addEventListener("click",()=>{var T,q;const e=p.value.trim(),o=i.dataset.value||"auto",a=w.value.trim(),l=k.value.trim(),h=U.value.trim(),I=E.value.trim()||e;if(L({projectUuid:e,enforceRequired:o,language:a,sessionToken:l,companyToken:h,projectToken:I}),!e){alert("Please enter a project UUID");return}const j=o==="true"?!0:o==="auto"?"auto":!1,C=l&&h?{"x-session-token":l,"x-company-token":h,"x-project-token":I}:void 0,_=((T=document.getElementById("main-modal-large"))==null?void 0:T.checked)??!1;_?(t.style.setProperty("--sfx-up-modal-max-width","min(90vw, 1600px)"),t.style.setProperty("--sfx-up-max-height","92vh")):(t.style.removeProperty("--sfx-up-modal-max-width"),t.style.removeProperty("--sfx-up-max-height"));const P=((q=document.getElementById("bulk-modal-large"))==null?void 0:q.checked)??!1;P?(t.style.setProperty("--sfx-up-bulk-modal-width","90vw"),t.style.setProperty("--sfx-up-bulk-modal-height","90vh")):(t.style.removeProperty("--sfx-up-bulk-modal-width"),t.style.removeProperty("--sfx-up-bulk-modal-height")),c("config",{projectUuid:e,enforce:j,language:a||void 0,hasHubHeaders:!!C,largeMain:_,largeBulk:P}),t.config=F({...a?{locale:a}:{},metadataConfig:{projectUuid:e,enforceRequiredBeforeUpload:j,hubHeaders:C,...a?{language:a}:{}}}),t.open()})},destroy(){const t=document.getElementById("uploader"),n=x._listeners;t&&n&&n.forEach(([r,d])=>t.removeEventListener(r,d)),t&&(t.style.removeProperty("--sfx-up-modal-max-width"),t.style.removeProperty("--sfx-up-max-height"),t.style.removeProperty("--sfx-up-bulk-modal-width"),t.style.removeProperty("--sfx-up-bulk-modal-height")),x._listeners=void 0,s=null}};export{x as default};
+*/`}]);const n=[["sfx-file-added",e=>{var o;return c("file-added",{name:(o=e.detail.file)==null?void 0:o.name})}],["sfx-fill-metadata",e=>{var o;return c("fill-metadata",{files:(o=e.detail.files)==null?void 0:o.length})}],["sfx-metadata-schema",e=>{var a,s;const o=((a=e.detail.schema)==null?void 0:a.fields)??[];c("metadata-schema",{totalFields:o.length,requiredFieldKeys:e.detail.requiredFieldKeys??[],forceFillingOnUpload:(s=e.detail.schema)==null?void 0:s.forceFillingOnUpload})}],["sfx-upload-complete",e=>{var o,a,s;return c("upload-complete",{name:(o=e.detail.file)==null?void 0:o.name,meta:(s=(a=e.detail.response)==null?void 0:a.file)==null?void 0:s.meta})}],["sfx-all-complete",e=>{var o,a;return c("all-complete",{ok:(o=e.detail.successful)==null?void 0:o.length,failed:(a=e.detail.failed)==null?void 0:a.length})}]],r=[];n.forEach(([e,o])=>{const a=o;t.addEventListener(e,a),r.push([e,a])}),x._listeners=r,document.getElementById("clear-log").addEventListener("click",()=>{l&&(l.innerHTML='<div><span class="log-time">--:--:--</span> Log cleared.</div>')});const d=O(),p=document.getElementById("project-uuid"),i=document.getElementById("enforce-required-wrap"),A=i.querySelector(".meta-select-trigger"),z=i.querySelector(".meta-select-label"),y=i.querySelector(".meta-select-chevron"),b=i.querySelector(".meta-select-menu"),v=i.querySelectorAll(".meta-select-option"),w=document.getElementById("profile-language"),k=document.getElementById("hub-session"),U=document.getElementById("hub-company"),E=document.getElementById("hub-project"),u=e=>{i.dataset.value=e,z.textContent=e,v.forEach(o=>{const a=o.dataset.value===e;o.style.color=a?"#2563eb":"#1e293b",o.style.background=a?"#eff6ff":"transparent",o.style.fontWeight=a?"500":"400"})};let f=!1;const h=()=>{f=!1,b.style.display="none",y.style.transform="rotate(0deg)"},M=()=>{f=!0,b.style.display="block",y.style.transform="rotate(180deg)"};A.addEventListener("click",e=>{e.stopPropagation(),f?h():M()}),v.forEach(e=>{e.addEventListener("mouseenter",()=>{e.dataset.value!==i.dataset.value&&(e.style.background="#f1f5f9")}),e.addEventListener("mouseleave",()=>{e.dataset.value!==i.dataset.value&&(e.style.background="transparent")}),e.addEventListener("click",()=>{u(e.dataset.value||"auto"),h()})}),document.addEventListener("click",e=>{i.contains(e.target)||h()}),d.projectUuid&&(p.value=d.projectUuid),d.enforceRequired?u(d.enforceRequired):u("auto"),d.language&&(w.value=d.language),d.sessionToken&&(k.value=d.sessionToken),d.companyToken&&(U.value=d.companyToken),d.projectToken&&(E.value=d.projectToken),document.getElementById("open-btn").addEventListener("click",()=>{var T,P;const e=p.value.trim(),o=i.dataset.value||"auto",a=w.value.trim(),s=k.value.trim(),g=U.value.trim(),I=E.value.trim()||e;if(D({projectUuid:e,enforceRequired:o,language:a,sessionToken:s,companyToken:g,projectToken:I}),!e){alert("Please enter a project UUID");return}const j=o==="true"?!0:o==="auto"?"auto":!1,_=s&&g?{"x-session-token":s,"x-company-token":g,"x-project-token":I}:void 0,C=((T=document.getElementById("main-modal-large"))==null?void 0:T.checked)??!1;C?(t.style.setProperty("--sfx-up-modal-max-width","min(90vw, 1600px)"),t.style.setProperty("--sfx-up-max-height","92vh")):(t.style.removeProperty("--sfx-up-modal-max-width"),t.style.removeProperty("--sfx-up-max-height"));const S=((P=document.getElementById("bulk-modal-large"))==null?void 0:P.checked)??!1;S?(t.style.setProperty("--sfx-up-bulk-modal-width","90vw"),t.style.setProperty("--sfx-up-bulk-modal-height","90vh")):(t.style.removeProperty("--sfx-up-bulk-modal-width"),t.style.removeProperty("--sfx-up-bulk-modal-height")),c("config",{projectUuid:e,enforce:j,language:a||void 0,hasHubHeaders:!!_,largeMain:C,largeBulk:S}),t.config=B({...a?{locale:a}:{},metadataConfig:{projectUuid:e,enforceRequiredBeforeUpload:j,hubHeaders:_,...a?{language:a}:{}}}),t.open()})},destroy(){const t=document.getElementById("uploader"),n=x._listeners;t&&n&&n.forEach(([r,d])=>t.removeEventListener(r,d)),t&&(t.style.removeProperty("--sfx-up-modal-max-width"),t.style.removeProperty("--sfx-up-max-height"),t.style.removeProperty("--sfx-up-bulk-modal-width"),t.style.removeProperty("--sfx-up-bulk-modal-height")),x._listeners=void 0,l=null}};export{x as default};

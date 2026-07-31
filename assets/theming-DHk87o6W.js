@@ -38,8 +38,9 @@ import{h as t,c as d,d as e}from"./doc-utils-XkOyWBCy.js";const r={render(){retu
             <tr><td><code>--sfx-up-modal-max-width</code></td><td><code>1100px</code></td><td>Main uploader modal max width</td></tr>
             <tr><td><code>--sfx-up-max-height</code></td><td><code>88vh</code></td><td>Main uploader modal height</td></tr>
             <tr><td><code>--sfx-up-content-max-width</code></td><td><code>1600px</code></td><td>Inner content max width inside the modal</td></tr>
-            <tr><td><code>--sfx-up-bulk-modal-width</code></td><td><code>980px</code></td><td>Bulk metadata edit modal width (clamps to <code>calc(100vw - 40px)</code>)</td></tr>
+            <tr><td><code>--sfx-up-bulk-modal-width</code></td><td><code>980px</code></td><td>Bulk metadata edit modal width (clamps to <code>calc(100vw - 40px)</code> and <code>--sfx-up-bulk-modal-max-width</code>)</td></tr>
             <tr><td><code>--sfx-up-bulk-modal-height</code></td><td><code>82vh</code></td><td>Bulk metadata edit modal height (clamps to <code>calc(100vh - 40px)</code>)</td></tr>
+            <tr><td><code>--sfx-up-bulk-modal-max-width</code></td><td><code>1600px</code></td><td>Bulk metadata edit modal absolute max width</td></tr>
           </tbody>
         </table>
 
