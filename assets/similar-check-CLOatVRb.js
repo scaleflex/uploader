@@ -1,4 +1,4 @@
-import{b as a}from"./index-B6n7x3mh.js";import{r as l}from"./code-block-C_3oxnLY.js";import{i as c}from"./custom-select-mLCaw8r4.js";let t=!0,i="mid";function n(){const e=document.getElementById("code-container");e&&(e.innerHTML="",l("#code-container",[{label:"JavaScript",lang:"javascript",code:`
+import{b as a}from"./index-D1s3Tt9e.js";import{r as l}from"./code-block-C_3oxnLY.js";import{i as c}from"./custom-select-mLCaw8r4.js";let t=!0,i="mid";function n(){const e=document.getElementById("code-container");e&&(e.innerHTML="",l("#code-container",[{label:"JavaScript",lang:"javascript",code:`
 uploader.config = {
   auth: { /* ... */ },
   similarityCheck: {

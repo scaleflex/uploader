@@ -97,13 +97,14 @@ import{h as t,c as e,d as o}from"./doc-utils-XkOyWBCy.js";const a={render(){retu
         <p>The uploader supports two display modes (<code>mode</code>) and a configurable header (<code>header</code>).</p>
 
         <h3>Modal (default)</h3>
-        <p>Opens as a centered overlay with a backdrop. The header shows a close (X) button by default.</p>
+        <p>Opens as a centered overlay with a backdrop. The header shows a close (X) button by default. On phone-sized viewports it goes edge-to-edge instead of centered.</p>
         ${e("typescript",`uploader.config = {
   auth: { /* ... */ },
   mode: 'modal',           // default
   // header: 'close' // default for modal
 };
 uploader.open();`)}
+        <p>While the modal is open the host page's scroll is frozen (the uploader sets <code>position: fixed</code> on <code>&lt;body&gt;</code> at the current offset and restores both the styles and the scroll position on close). Without it a touch scroll that starts on the modal drags the page underneath, which on iOS visibly slides the page out from behind a full-screen modal. Inline mode never touches the page scroll.</p>
 
         <h3>Inline</h3>
         <p>Embeds directly into the page. The standard header is shown with no button by default.</p>
@@ -373,13 +374,14 @@ uploaderB.config = {
         <table>
           <thead><tr><th>Source ID</th><th>Label</th></tr></thead>
           <tbody>
-            <tr><td><code>'device'</code></td><td>My Device</td></tr>
+            <tr><td><code>'device'</code></td><td>My Device <em>(desktop only)</em></td></tr>
             <tr><td><code>'url'</code></td><td>URL link</td></tr>
             <tr><td><code>'camera'</code></td><td>Camera</td></tr>
-            <tr><td><code>'screen-cast'</code></td><td>Screen capture</td></tr>
+            <tr><td><code>'screen-cast'</code></td><td>Screen capture <em>(desktop only)</em></td></tr>
           </tbody>
         </table>
         <p>Omit <code>coreSources</code> (or list all four) to keep the default behavior. Pass <code>[]</code> to hide every built-in source and rely solely on cloud <code>providers</code>.</p>
+        <p>Two sources are dropped automatically on touch-primary devices regardless of this list. <strong>Screen capture</strong> goes because no mobile browser implements <code>getDisplayMedia</code>. <strong>My Device</strong> goes because it is a duplicate: on a phone the drop zone itself is one large tap target that opens the same file picker, so the pill would repeat the surface it sits on. <strong>Camera</strong> is promoted to first place in its stead — it is the one source a phone cannot reach any other way, since Chrome for Android opens the file browser directly and never offers a camera entry unless <code>accept</code> is narrowed to images or video. Camera itself is dropped on touch when <code>restrictions.allowedFileTypes</code> admits neither a photo nor a video (e.g. <code>['application/pdf']</code>): a camera can only hand back an image or a video, so the pill would either reopen the plain file browser or produce a file the uploader rejects on arrival.</p>
 
         <h3>Custom connectors</h3>
         <p>Add your own source pills for third-party SDKs (Canva, Figma, an in-house DAM, etc.) via <code>customSources</code>. Each entry renders a pill alongside the built-in sources; clicking it invokes your <code>onActivate</code> callback, where you open your own UI and push files back into the uploader via <code>uploader.addFiles(File[])</code>.</p>
