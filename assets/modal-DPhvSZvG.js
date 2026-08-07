@@ -1,4 +1,4 @@
-import{b as t}from"./index-Bt3t_QBV.js";import{r as a}from"./code-block-C_3oxnLY.js";const n={render(){return`
+import{b as t}from"./index-C7yrGp-_.js";import{r as a}from"./code-block-C_3oxnLY.js";const n={render(){return`
       <div class="page-header">
         <h1>Modal display</h1>
         <p>Open the uploader as a modal overlay (the default mode). Call <code>.open()</code> to show it.</p>
