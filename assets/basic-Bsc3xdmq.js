@@ -1,4 +1,4 @@
-import{b as o}from"./index-D1s3Tt9e.js";import{r as t}from"./code-block-C_3oxnLY.js";const l={render(){return`
+import{b as o}from"./index-Bt3t_QBV.js";import{r as t}from"./code-block-C_3oxnLY.js";const l={render(){return`
       <div class="page-header">
         <h1>Basic usage</h1>
         <p>The minimal configuration to open the uploader. Only authentication is required.</p>
