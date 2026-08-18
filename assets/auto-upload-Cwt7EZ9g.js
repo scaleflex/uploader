@@ -1,4 +1,4 @@
-import{b as d}from"./index-C7yrGp-_.js";import{r as i}from"./code-block-C_3oxnLY.js";let o=!1,n=0;function c(){const t=document.getElementById("code-container");if(!t)return;t.innerHTML="";const e=o?`
+import{b as d}from"./index-JQBgdY4i.js";import{r as i}from"./code-block-C_3oxnLY.js";let o=!1,n=0;function c(){const t=document.getElementById("code-container");if(!t)return;t.innerHTML="";const e=o?`
     closeOnComplete: ${n},`:"";i("#code-container",[{label:"HTML",lang:"markup",code:`
 <sfx-uploader id="uploader"></sfx-uploader>
 

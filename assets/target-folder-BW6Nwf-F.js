@@ -1,4 +1,4 @@
-import{b as n}from"./index-C7yrGp-_.js";import{r as s}from"./code-block-C_3oxnLY.js";let e="/uploads",t=!0;function r(){s("#code-container",[{label:"HTML",lang:"markup",code:`
+import{b as n}from"./index-JQBgdY4i.js";import{r as s}from"./code-block-C_3oxnLY.js";let e="/uploads",t=!0;function r(){s("#code-container",[{label:"HTML",lang:"markup",code:`
 <sfx-uploader id="uploader"></sfx-uploader>
 
 <script>

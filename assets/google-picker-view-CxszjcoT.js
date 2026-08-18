@@ -1,14 +1,14 @@
-import{i as C,f as P,a as E,g as $,A as g,c as S,d as v,e as d,n as h,r as _}from"./index-C7yrGp-_.js";const A="https://accounts.google.com/gsi/client",T="https://apis.google.com/js/api.js",z="https://www.googleapis.com/auth/drive.file";let w=!1,u=null;const y=new Map;function k(t){return new Promise((e,n)=>{if(document.querySelector(`script[src="${t}"]`)){e();return}const i=document.createElement("script");i.src=t,i.async=!0,i.onload=()=>e(),i.onerror=()=>n(new Error(`Failed to load ${t}`)),document.head.appendChild(i)})}function I(){return w?Promise.resolve():u||(u=Promise.all([k(A),k(T)]).then(()=>new Promise((t,e)=>{if(!window.gapi){e(new Error("gapi failed to initialise"));return}window.gapi.load("picker",{callback:()=>t(),onerror:()=>e(new Error("Failed to load Google Picker library")),timeout:1e4,ontimeout:()=>e(new Error("Timed out loading Google Picker library"))})})).then(()=>{w=!0}).catch(t=>{throw u=null,t}),u)}function L(t){const e=y.get(t);return e&&Date.now()<e.expiresAt-6e4?Promise.resolve(e.token):new Promise((n,i)=>{var a,c;if(!((c=(a=window.google)==null?void 0:a.accounts)!=null&&c.oauth2)){i(new Error("Google Identity Services not loaded"));return}window.google.accounts.oauth2.initTokenClient({client_id:t,scope:z,callback:o=>{if(o.error){i(new Error(o.error_description||o.error));return}y.set(t,{token:o.access_token,expiresAt:Date.now()+o.expires_in*1e3}),n(o.access_token)},error_callback:o=>{if(o.type==="popup_closed"){n("");return}i(new Error(o.message||"OAuth token request failed"))}}).requestAccessToken({prompt:""})})}function D(t,e,n,i=!0,r){return new Promise((a,c)=>{var m;if(!((m=window.google)!=null&&m.picker)){c(new Error("Google Picker library not loaded"));return}const o=new window.google.picker.DocsView;o.setIncludeFolders(!0),o.setSelectFolderEnabled(!1);const x=new window.google.picker.PickerBuilder().addView(o).setOAuthToken(t).setDeveloperKey(e).setAppId(n).setCallback(s=>{s.action===google.picker.Action.PICKED&&s.docs?a(s.docs.map(f=>({id:f.id,name:f.name,mimeType:f.mimeType,sizeBytes:f.sizeBytes??0}))):s.action===google.picker.Action.CANCEL?a([]):s.action!=="loaded"&&s.action!=="ready"&&a([])});i&&x.enableFeature(window.google.picker.Feature.MULTISELECT_ENABLED),r!=null&&r>0&&x.setMaxItems(r);try{x.build().setVisible(!0)}catch(s){c(s instanceof Error?s:new Error(String(s)))}})}var U=Object.defineProperty,p=(t,e,n,i)=>{for(var r=void 0,a=t.length-1,c;a>=0;a--)(c=t[a])&&(r=c(e,n,r)||r);return r&&U(e,n,r),r};const b=class b extends C{constructor(){super(...arguments),this.t=P,this.companionUrl="",this.googlePickerConfig={clientId:"",apiKey:"",appId:""},this.multi=!0,this.maxSelect=null,this._busy=!1,this._error=null,this._onClose=()=>{this.dispatchEvent(new CustomEvent("connector-close",{bubbles:!0,composed:!0}))},this._handleConnect=async()=>{if(!this._busy){this._busy=!0,this._error=null;try{await I();const e=await L(this.googlePickerConfig.clientId);if(!e){this._busy=!1;return}const n=await D(e,this.googlePickerConfig.apiKey,this.googlePickerConfig.appId,this.multi,this.maxSelect);if(n.length===0){this._busy=!1;return}const i=n.map(r=>({companionUrl:this.companionUrl,provider:"google-drive",token:"",requestPath:"",fileId:r.id,name:r.name,mimeType:r.mimeType,size:r.sizeBytes,thumbnail:null,pickerAccessToken:e}));this.dispatchEvent(new CustomEvent("connector-files-selected",{detail:{files:i},bubbles:!0,composed:!0}))}catch(e){this._error=e instanceof Error?e.message:String(e)}finally{this._busy=!1}}}}get _providerDef(){return $(["google-drive"])[0]??null}get _providerLabel(){var e;return((e=this._providerDef)==null?void 0:e.label)??"Google Drive"}render(){const e=this._providerDef;return d`
+import{i as P,f as S,a as $,g as T,A as m,c as z,d as v,e as h,n as g,r as E}from"./index-JQBgdY4i.js";const A="https://accounts.google.com/gsi/client",I="https://apis.google.com/js/api.js",L="https://www.googleapis.com/auth/drive.file";let w=!1,f=null;const y=new Map;function k(r){return new Promise((e,o)=>{if(document.querySelector(`script[src="${r}"]`)){e();return}const i=document.createElement("script");i.src=r,i.async=!0,i.onload=()=>e(),i.onerror=()=>o(new Error(`Failed to load ${r}`)),document.head.appendChild(i)})}function _(){return w?Promise.resolve():f||(f=Promise.all([k(A),k(I)]).then(()=>new Promise((r,e)=>{if(!window.gapi){e(new Error("gapi failed to initialise"));return}window.gapi.load("picker",{callback:()=>r(),onerror:()=>e(new Error("Failed to load Google Picker library")),timeout:1e4,ontimeout:()=>e(new Error("Timed out loading Google Picker library"))})})).then(()=>{w=!0}).catch(r=>{throw f=null,r}),f)}function D(r){const e=y.get(r);return e&&Date.now()<e.expiresAt-6e4?Promise.resolve(e.token):new Promise((o,i)=>{var p,u;if(!((u=(p=window.google)==null?void 0:p.accounts)!=null&&u.oauth2)){i(new Error("Google Identity Services not loaded"));return}let t=!1;const s=setTimeout(()=>{t||(t=!0,i(new Error("Google authentication timed out. The current domain may not be authorized.")))},3e4);window.google.accounts.oauth2.initTokenClient({client_id:r,scope:L,callback:n=>{if(!t){if(t=!0,clearTimeout(s),n.error){i(new Error(n.error_description||n.error));return}y.set(r,{token:n.access_token,expiresAt:Date.now()+n.expires_in*1e3}),o(n.access_token)}},error_callback:n=>{if(!t){if(t=!0,clearTimeout(s),n.type==="popup_closed"){o("");return}i(new Error(n.message||"OAuth token request failed"))}}}).requestAccessToken({prompt:""})})}let C=!1;function U(){if(C)return;const r=document.createElement("style");r.textContent=".picker-dialog-bg { z-index: 100000 !important; } .picker-dialog { z-index: 100001 !important; }",document.head.appendChild(r),C=!0}function B(r,e,o,i=!0,t){return new Promise((s,d)=>{var n;if(!((n=window.google)!=null&&n.picker)){d(new Error("Google Picker library not loaded"));return}const p=new window.google.picker.DocsView;p.setIncludeFolders(!0),p.setSelectFolderEnabled(!1);const u=new window.google.picker.PickerBuilder().addView(p).setOAuthToken(r).setDeveloperKey(e).setAppId(o).setCallback(a=>{a.action===google.picker.Action.PICKED&&a.docs?s(a.docs.map(x=>({id:x.id,name:x.name,mimeType:x.mimeType,sizeBytes:x.sizeBytes??0}))):a.action===google.picker.Action.CANCEL?s([]):a.action!=="loaded"&&a.action!=="ready"&&s([])});i&&u.enableFeature(window.google.picker.Feature.MULTISELECT_ENABLED),t!=null&&t>0&&u.setMaxItems(t),U();try{u.build().setVisible(!0)}catch(a){d(a instanceof Error?a:new Error(String(a)))}})}var F=Object.defineProperty,c=(r,e,o,i)=>{for(var t=void 0,s=r.length-1,d;s>=0;s--)(d=r[s])&&(t=d(e,o,t)||t);return t&&F(e,o,t),t};const b=class b extends P{constructor(){super(...arguments),this.t=S,this.companionUrl="",this.googlePickerConfig={clientId:"",apiKey:"",appId:""},this.multi=!0,this.maxSelect=null,this._busy=!1,this._error=null,this._onClose=()=>{this.dispatchEvent(new CustomEvent("connector-close",{bubbles:!0,composed:!0}))},this._handleConnect=async()=>{if(!this._busy){this._busy=!0,this._error=null;try{await _();const e=await D(this.googlePickerConfig.clientId);if(!e){this._busy=!1;return}const o=await B(e,this.googlePickerConfig.apiKey,this.googlePickerConfig.appId,this.multi,this.maxSelect);if(o.length===0){this._busy=!1;return}const i=o.map(t=>({companionUrl:this.companionUrl,provider:"google-drive",token:"",requestPath:"",fileId:t.id,name:t.name,mimeType:t.mimeType,size:t.sizeBytes,thumbnail:null,pickerAccessToken:e}));this.dispatchEvent(new CustomEvent("connector-files-selected",{detail:{files:i},bubbles:!0,composed:!0}))}catch(e){this._error=e instanceof Error?e.message:String(e)}finally{this._busy=!1}}}}get _providerDef(){return T(["google-drive"])[0]??null}get _providerLabel(){var e;return((e=this._providerDef)==null?void 0:e.label)??"Google Drive"}connectedCallback(){super.connectedCallback(),_().catch(()=>{})}render(){const e=this._providerDef;return h`
       ${this._renderHeader()}
       <div class="auth-view">
         <div class="auth-glow"></div>
         <div class="auth-logo-wrap">
           <div class="auth-ring">
             <div class="auth-logo">
-              ${e!=null&&e.brandHtml?d`<span
-                    ${S({display:"flex","align-items":"center","justify-content":"center",transform:"scale(2.2)"})}
+              ${e!=null&&e.brandHtml?h`<span
+                    ${z({display:"flex","align-items":"center","justify-content":"center",transform:"scale(2.2)"})}
                     >${v(e)}</span
-                  >`:g}
+                  >`:m}
             </div>
           </div>
         </div>
@@ -19,11 +19,11 @@ import{i as C,f as P,a as E,g as $,A as g,c as S,d as v,e as d,n as h,r as _}fro
           <div class="auth-text">
             ${this.t("pickerHint","Select files from your {{provider}} account",{provider:this._providerLabel})}
           </div>
-          ${this.maxSelect!=null&&this.maxSelect>0?d`<div class="auth-text">
+          ${this.maxSelect!=null&&this.maxSelect>0?h`<div class="auth-text">
                 ${this.t("pickerMaxFiles","You can select up to {{count}} files",{count:this.maxSelect})}
-              </div>`:g}
+              </div>`:m}
         </div>
-        ${this._error?d`<div class="error-text">${this._error}</div>`:g}
+        ${this._error?h`<div class="error-text">${this._error}</div>`:m}
         <button class="connect-btn" ?disabled=${this._busy} @click=${this._handleConnect}>
           <svg
             viewBox="0 0 24 24"
@@ -37,10 +37,10 @@ import{i as C,f as P,a as E,g as $,A as g,c as S,d as v,e as d,n as h,r as _}fro
           ${this._busy?this.t("connecting","Connecting…"):this.t("selectFromProvider","Select from {{provider}}",{provider:this._providerLabel})}
         </button>
       </div>
-    `}_renderHeader(){const e=this._providerDef;return d`
+    `}_renderHeader(){const e=this._providerDef;return h`
       <div class="browser-header">
         <div class="header-brand">
-          ${e!=null&&e.brandHtml?d`<div class="header-logo">${v(e)}</div>`:g}
+          ${e!=null&&e.brandHtml?h`<div class="header-logo">${v(e)}</div>`:m}
           <span class="browser-title">${this._providerLabel}</span>
         </div>
         <button
@@ -61,7 +61,7 @@ import{i as C,f as P,a as E,g as $,A as g,c as S,d as v,e as d,n as h,r as _}fro
           </svg>
         </button>
       </div>
-    `}};b.styles=E`
+    `}};b.styles=$`
     :host {
       display: flex;
       flex-direction: column;
@@ -297,4 +297,4 @@ import{i as C,f as P,a as E,g as $,A as g,c as S,d as v,e as d,n as h,r as _}fro
         animation: none;
       }
     }
-  `;let l=b;p([h({attribute:!1})],l.prototype,"t");p([h({attribute:!1})],l.prototype,"companionUrl");p([h({attribute:!1})],l.prototype,"googlePickerConfig");p([h({type:Boolean})],l.prototype,"multi");p([h({attribute:!1})],l.prototype,"maxSelect");p([_()],l.prototype,"_busy");p([_()],l.prototype,"_error");export{l as SfxGooglePickerView};
+  `;let l=b;c([g({attribute:!1})],l.prototype,"t");c([g({attribute:!1})],l.prototype,"companionUrl");c([g({attribute:!1})],l.prototype,"googlePickerConfig");c([g({type:Boolean})],l.prototype,"multi");c([g({attribute:!1})],l.prototype,"maxSelect");c([E()],l.prototype,"_busy");c([E()],l.prototype,"_error");export{l as SfxGooglePickerView};
