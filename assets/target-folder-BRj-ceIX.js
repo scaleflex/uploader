@@ -1,4 +1,4 @@
-import{b as c}from"./index-BRdlKkfd.js";import{r as p}from"./code-block-C_3oxnLY.js";let t="/uploads",o=!0,l=!0;function d(){p("#code-container",[{label:"HTML",lang:"markup",code:`
+import{b as c}from"./index-DnLOF-DV.js";import{r as p}from"./code-block-C_3oxnLY.js";let t="/uploads",o=!0,l=!0;function d(){p("#code-container",[{label:"HTML",lang:"markup",code:`
 <sfx-uploader id="uploader"></sfx-uploader>
 
 <script>
